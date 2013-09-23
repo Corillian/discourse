@@ -140,12 +140,38 @@ class AzureStore
     azure_blob_service
   end
 
+  def get_content_type(filename)
+    ext = File.extname(filename)
+    content_type = "application/octet-stream"
+
+    if ext != nil
+      ext = ext.downcase
+
+      if ext == ".png"
+        content_type = "image/png"
+      elsif ext == ".jpg" || ext == ".jpeg" || ext == ".jfif"
+        content_type = "image/jpeg"
+      elsif ext == ".gif"
+        content_type = "image/gif"
+      elsif ext == ".tiff"
+        content_type = "image/tiff"
+      end
+    end
+
+    content_type
+  end
+
   def upload(file, unique_filename, filename=nil, content_type=nil)
     metadata = { }
     metadata[:content_disposition] = "attachment; filename=\"#{filename}\"" if filename
 
     options = { :metadata => metadata }
-    options[:content_type] = content_type if content_type
+
+    if content_type
+      options[:content_type] = content_type
+    else
+      options[:content_type] = get_content_type(unique_filename)
+    end
 
     get_or_create_directory(azure_container).create_block_blob(azure_container, unique_filename, file.read(), options)
   end
