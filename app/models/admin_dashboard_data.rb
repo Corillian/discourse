@@ -30,6 +30,7 @@ class AdminDashboardData
       twitter_config_check,
       github_config_check,
       s3_config_check,
+      azure_config_check,
       image_magick_check,
       failing_emails_check,
       default_logo_check,
@@ -117,6 +118,10 @@ class AdminDashboardData
 
   def s3_config_check
     I18n.t('dashboard.s3_config_warning') if SiteSetting.enable_s3_uploads and (SiteSetting.s3_access_key_id.blank? or SiteSetting.s3_secret_access_key.blank? or SiteSetting.s3_upload_bucket.blank?)
+  end
+
+  def azure_config_check
+    I18n.t('dashboard.azure_config_warning') if SiteSetting.enable_azure_uploads and (SiteSetting.azure_blob_container.blank? or SiteSetting.azure_storage_account.blank? or SiteSetting.azure_storage_access_key.blank?)
   end
 
   def image_magick_check

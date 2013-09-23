@@ -142,6 +142,9 @@ module Discourse
     if SiteSetting.enable_s3_uploads?
       @s3_store_loaded ||= require 'file_store/s3_store'
       S3Store.new
+    elsif SiteSetting.enable_azure_uploads?
+      @azure_store_loaded ||= require 'file_store/azure_store'
+      AzureStore.new
     else
       @local_store_loaded ||= require 'file_store/local_store'
       LocalStore.new

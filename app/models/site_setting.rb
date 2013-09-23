@@ -185,6 +185,11 @@ class SiteSetting < ActiveRecord::Base
   setting(:s3_region, '', enum: 'S3RegionSiteSetting')
   setting(:s3_upload_bucket, '')
 
+  setting(:enable_azure_uploads, false)
+  setting(:azure_blob_container, '')
+  setting(:azure_storage_account, '')
+  setting(:azure_storage_access_key, '')
+
   setting(:enable_flash_video_onebox, false)
 
   setting(:default_trust_level, 0)
