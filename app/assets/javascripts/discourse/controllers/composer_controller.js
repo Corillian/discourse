@@ -17,13 +17,28 @@ Discourse.ComposerController = Discourse.Controller.extend({
     this.set('similarTopics', Em.A());
   },
 
-  togglePreview: function() {
-    this.get('model').togglePreview();
-  },
+  actions: {
+    // Toggle the reply view
+    toggle: function() {
+      this.toggle();
+    },
 
-  // Import a quote from the post
-  importQuote: function() {
-    this.get('model').importQuote();
+    togglePreview: function() {
+      this.get('model').togglePreview();
+    },
+
+    // Import a quote from the post
+    importQuote: function() {
+      this.get('model').importQuote();
+    },
+
+    cancel: function() {
+      this.cancelComposer();
+    },
+
+    save: function() {
+      this.save();
+    }
   },
 
   updateDraftStatus: function() {
@@ -38,6 +53,26 @@ Discourse.ComposerController = Discourse.Controller.extend({
   categories: function() {
     return Discourse.Category.list();
   }.property(),
+
+
+  toggle: function() {
+    this.closeAutocomplete();
+    switch (this.get('model.composeState')) {
+      case Discourse.Composer.OPEN:
+        if (this.blank('model.reply') && this.blank('model.title')) {
+          this.close();
+        } else {
+          this.shrink();
+        }
+        break;
+      case Discourse.Composer.DRAFT:
+        this.set('model.composeState', Discourse.Composer.OPEN);
+        break;
+      case Discourse.Composer.SAVING:
+        this.close();
+    }
+    return false;
+  },
 
   save: function(force) {
     var composer = this.get('model'),
@@ -230,7 +265,7 @@ Discourse.ComposerController = Discourse.Controller.extend({
       } else {
         opts.tested = true;
         if (!opts.ignoreIfChanged) {
-          this.cancel().then(function() { composerController.open(opts); },
+          this.cancelComposer().then(function() { composerController.open(opts); },
                              function() { return promise.reject(); });
         }
         return promise;
@@ -278,7 +313,7 @@ Discourse.ComposerController = Discourse.Controller.extend({
     }
   },
 
-  cancel: function() {
+  cancelComposer: function() {
     var composerController = this;
 
     return Ember.Deferred.promise(function (promise) {
@@ -330,26 +365,6 @@ Discourse.ComposerController = Discourse.Controller.extend({
 
   closeAutocomplete: function() {
     $('#wmd-input').autocomplete({ cancel: true });
-  },
-
-  // Toggle the reply view
-  toggle: function() {
-    this.closeAutocomplete();
-    switch (this.get('model.composeState')) {
-      case Discourse.Composer.OPEN:
-        if (this.blank('model.reply') && this.blank('model.title')) {
-          this.close();
-        } else {
-          this.shrink();
-        }
-        break;
-      case Discourse.Composer.DRAFT:
-        this.set('model.composeState', Discourse.Composer.OPEN);
-        break;
-      case Discourse.Composer.SAVING:
-        this.close();
-    }
-    return false;
   },
 
   // ESC key hit
