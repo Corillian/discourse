@@ -14,11 +14,7 @@ Discourse.TopicRoute = Discourse.Route.extend({
     // Modals that can pop up within a topic
 
     showPosterExpansion: function(post) {
-      var self = this;
-
-      Discourse.User.findByUsername(post.get('username')).then(function (user) {
-        self.controllerFor('posterExpansion').show(user, post);
-      });
+      this.controllerFor('posterExpansion').show(post);
     },
 
     composePrivateMessage: function(user) {
@@ -95,7 +91,7 @@ Discourse.TopicRoute = Discourse.Route.extend({
 
     // Clear the search context
     this.controllerFor('search').set('searchContext', null);
-    this.controllerFor('posterExpansion').set('model', null);
+    this.controllerFor('posterExpansion').set('visible', false);
 
     var topicController = this.controllerFor('topic'),
         postStream = topicController.get('postStream');
