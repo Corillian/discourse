@@ -2,7 +2,9 @@
   {{boundAvatar model imageSize="huge"}}
 
   <h1><a {{bindAttr href="usernameUrl"}}>{{username}}</a></h1>
-  <h2>{{name}}</h2>
+  {{#if showName}}
+    <h2><a {{bindAttr href="usernameUrl"}}>{{name}}</a></h2>
+  {{/if}}
 
   {{#if user}}
     <h3>{{i18n last_post}} {{date path="user.last_posted_at" leaveAgo="true"}}</h3>
@@ -17,7 +19,7 @@
       {{#link-to 'user' user class="btn"}}<i class='icon icon-user'></i>{{i18n user.show_profile}}{{/link-to}}
 
       {{#if showFilter}}
-        <button class='btn' {{action togglePosts user}}><i class='icon icon-filter'></i>{{i18n topic.filter_to username="username"}}</button>
+        <button class='btn' {{action togglePosts user}}><i class='icon icon-filter'></i>{{i18n topic.filter_to username="username" post_count="participant.post_count"}}</button>
       {{/if}}
 
     </div>

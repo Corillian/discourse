@@ -139,7 +139,7 @@ class UsersController < ApplicationController
     register_nickname(user)
 
     if user.save
-      activator = UserActivator.new(user, session, cookies)
+      activator = UserActivator.new(user, request, session, cookies)
       message = activator.activation_message
       create_third_party_auth_records(user, auth)
 
@@ -314,7 +314,7 @@ class UsersController < ApplicationController
     user.use_uploaded_avatar = true
     user.save!
 
-    Jobs.enqueue(:generate_avatars, upload_id: upload.id)
+    Jobs.enqueue(:generate_avatars, user_id: user.id, upload_id: upload.id)
 
     render json: {
       url: upload.url,
