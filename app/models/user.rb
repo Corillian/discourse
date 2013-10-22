@@ -51,6 +51,7 @@ class User < ActiveRecord::Base
   validates :email, presence: true, uniqueness: true
   validates :email, email: true, if: :email_changed?
   validate :password_validator
+  validates :ip_address, allowed_ip_address: {on: :create, message: :signup_not_allowed}
 
   before_save :cook
   before_save :update_username_lower
@@ -456,7 +457,7 @@ class User < ActiveRecord::Base
     admin = Discourse.system_user
     topic_links.includes(:post).each do |tl|
       begin
-        PostAction.act(admin, tl.post, PostActionType.types[:spam])
+        PostAction.act(admin, tl.post, PostActionType.types[:spam], message: I18n.t('flag_reason.spam_hosts'))
       rescue PostAction::AlreadyActed
         # If the user has already acted, just ignore it
       end
@@ -465,6 +466,17 @@ class User < ActiveRecord::Base
 
   def has_uploaded_avatar
     uploaded_avatar.present?
+  end
+
+  def added_a_day_ago?
+    created_at > 1.day.ago
+  end
+
+  def update_avatar(upload)
+    self.uploaded_avatar_template = nil
+    self.uploaded_avatar = upload
+    self.use_uploaded_avatar = true
+    self.save!
   end
 
   protected

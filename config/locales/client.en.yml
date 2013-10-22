@@ -183,6 +183,14 @@ en:
       "12": "Sent Items"
       "13": "Inbox"
 
+    categories:
+      category: "Category"
+      posts: "Posts"
+      topics: "Topics"
+      latest: "Latest"
+      latest_by: "latest by"
+      toggle_ordering: "toggle ordering control"
+
     user:
       said: "{{username}} said:"
       profile: "Profile"
@@ -584,6 +592,12 @@ en:
       private_message: 'Start a private message'
       list: 'Topics'
       new: 'new topic'
+      new_topics:
+        one: '1 new topic'
+        other: '{{count}} new topics'
+      unread_topics:
+        one: '1 unread topic'
+        other: '{{count}} unread topics'
       title: 'Topic'
       loading_more: "Loading more Topics..."
       loading: 'Loading topic...'
@@ -960,6 +974,8 @@ en:
       auto_close_label: "Auto-close topics after:"
       edit_permissions: "Edit Permissions"
       add_permission: "Add Permission"
+      this_year: "this year"
+      position: "position"
 
     flagging:
       title: 'Why are you flagging this post?'
@@ -967,7 +983,7 @@ en:
       take_action: "Take Action"
       notify_action: 'Notify'
       delete_spammer: "Delete Spammer"
-      delete_confirm: "You are about to delete <b>%{posts}</b> posts and <b>%{topics}</b> topics from this user, remove their account, and add their email address <b>%{email}</b> to a permanent block list. Are you sure this user is really a spammer?"
+      delete_confirm: "You are about to delete <b>%{posts}</b> posts and <b>%{topics}</b> topics from this user, remove their account, block signups from their IP address <b>%{ip_address}</b>, and add their email address <b>%{email}</b> to a permanent block list. Are you sure this user is really a spammer?"
       yes_delete_spammer: "Yes, Delete Spammer"
       cant: "Sorry, you can't flag this post at this time."
       custom_placeholder_notify_user: "Why does this post require you to speak to this user directly and privately? Be specific, be constructive, and always be kind."
@@ -1241,6 +1257,10 @@ en:
           title: "Screened URLs"
           description: "The URLs listed here were used in posts by users who have been identified as spammers."
           url: "URL"
+        screened_ips:
+          title: "Screened IPs"
+          description: "IP addresses that are being watched."
+          allow: "allow"
 
       impersonate:
         title: "Impersonate User"
@@ -1336,8 +1356,8 @@ en:
           one: "Users can't be deleted if they registered more than %{count} day ago, or if they have posts. Delete all posts before trying to delete a user."
           other: "Users can't be deleted if they registered more than %{count} days ago, or if they have posts. Delete all posts before trying to delete a user."
         delete_confirm: "Are you SURE you want to delete this user? This action is permanent!"
-        delete_and_block: "<b>Yes</b>, and <b>block</b> signups from this email address"
-        delete_dont_block: "<b>Yes</b>, but <b>allow</b> signups from this email address"
+        delete_and_block: "<b>Yes</b>, and <b>block</b> signups from this email and IP address"
+        delete_dont_block: "<b>Yes</b>, but <b>allow</b> signups from this email and IP address"
         deleted: "The user was deleted."
         delete_failed: "There was an error deleting that user. Make sure all posts are deleted before trying to delete the user."
         send_activation_email: "Send Activation Email"

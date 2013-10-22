@@ -226,7 +226,6 @@ describe User do
       end
     end
 
-
     context 'after_save' do
       before do
         subject.save
@@ -235,6 +234,21 @@ describe User do
       its(:email_tokens) { should be_present }
       its(:bio_cooked) { should be_present }
       its(:bio_summary) { should be_present }
+    end
+  end
+
+  describe 'ip address validation' do
+    it 'validates ip_address for new users' do
+      u = Fabricate.build(:user)
+      AllowedIpAddressValidator.any_instance.expects(:validate_each).with(u, :ip_address, u.ip_address)
+      u.valid?
+    end
+
+    it 'does not validate ip_address when updating an existing user' do
+      u = Fabricate(:user)
+      u.ip_address = '87.123.23.11'
+      AllowedIpAddressValidator.any_instance.expects(:validate_each).never
+      u.valid?
     end
   end
 
@@ -820,6 +834,33 @@ describe User do
 
         expect { User.find_by_username_or_email('bob') }.to raise_error(Discourse::TooManyMatches)
       end
+    end
+  end
+
+  describe "#added_a_day_ago?" do
+    context "when user is more than a day old" do
+      subject(:user) { Fabricate(:user, created_at: Date.today - 2.days) }
+
+      it "returns false" do
+        expect(user).to_not be_added_a_day_ago
+      end
+    end
+
+    context "is less than a day old" do
+      subject(:user) { Fabricate(:user) }
+
+      it "returns true" do
+        expect(user).to be_added_a_day_ago
+      end
+    end
+  end
+
+  describe "#update_avatar" do
+    let(:upload) { Fabricate(:upload) }
+    let(:user)   { Fabricate(:user) }
+
+    it "should update use's avatar" do
+      expect(user.update_avatar(upload)).to be_true
     end
   end
 end

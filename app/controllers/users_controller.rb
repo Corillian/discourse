@@ -64,11 +64,7 @@ class UsersController < ApplicationController
         end
       end
 
-      if u.save
-        u
-      else
-        nil
-      end
+      u.save ? u : nil
     end
   end
 
@@ -135,42 +131,18 @@ class UsersController < ApplicationController
     return fake_success_response if suspicious? params
 
     user = User.new_from_params(params)
+    user.ip_address = request.ip
     auth = authenticate_user(user, params)
     register_nickname(user)
 
-    if user.save
-      activator = UserActivator.new(user, request, session, cookies)
-      message = activator.activation_message
-      create_third_party_auth_records(user, auth)
+    user.save ? user_create_successful(user, auth) : user_create_failed(user)
 
-      # Clear authentication session.
-      session[:authentication] = nil
-
-      render json: { success: true, active: user.active?, message: message }
-    else
-      render json: {
-        success: false,
-        message: I18n.t("login.errors", errors: user.errors.full_messages.join("\n")),
-        errors: user.errors.to_hash,
-        values: user.attributes.slice("name", "username", "email")
-      }
-    end
   rescue ActiveRecord::StatementInvalid
     render json: { success: false, message: I18n.t("login.something_already_taken") }
-  rescue DiscourseHub::NicknameUnavailable=> e
+  rescue DiscourseHub::NicknameUnavailable => e
     render json: e.response_message
   rescue RestClient::Forbidden
     render json: { errors: [I18n.t("discourse_hub.access_token_problem")] }
-  end
-
-  def authenticate_user(user, params)
-    auth = session[:authentication]
-    if valid_session_authentication?(auth, params[:email])
-      user.active = true
-    end
-    user.password_required! unless auth
-
-    auth
   end
 
   def get_honeypot_value
@@ -302,21 +274,33 @@ class UsersController < ApplicationController
 
     file = params[:file] || params[:files].first
 
-    unless SiteSetting.authorized_image?(file)
+    # Only allow url uploading for API users
+    # TODO: Does not protect from huge uploads
+    # https://github.com/discourse/discourse/pull/1512
+    if file.is_a?(String) && is_api?
+      adapted   = ::UriAdapter.new(file)
+      file      = adapted.build_uploaded_file
+      filesize  = adapted.file_size
+    elsif file.is_a?(String)
       return render status: 422, text: I18n.t("upload.images.unknown_image_type")
     end
 
     # check the file size (note: this might also be done in the web server)
-    filesize = File.size(file.tempfile)
+    filesize ||= File.size(file.tempfile)
     max_size_kb = SiteSetting.max_image_size_kb * 1024
-    return render status: 413, text: I18n.t("upload.images.too_large", max_size_kb: max_size_kb) if filesize > max_size_kb
+
+    if filesize > max_size_kb
+      return render status: 413,
+                    text: I18n.t("upload.images.too_large",
+                                  max_size_kb: max_size_kb)
+    end
+
+    unless SiteSetting.authorized_image?(file)
+      return render status: 422, text: I18n.t("upload.images.unknown_image_type")
+    end
 
     upload = Upload.create_for(user.id, file, filesize)
-
-    user.uploaded_avatar_template = nil
-    user.uploaded_avatar = upload
-    user.use_uploaded_avatar = true
-    user.save!
+    user.update_avatar(upload)
 
     Jobs.enqueue(:generate_avatars, user_id: user.id, upload_id: upload.id)
 
@@ -326,6 +310,8 @@ class UsersController < ApplicationController
       height: upload.height,
     }
 
+  rescue Discourse::InvalidParameters
+    render status: 422, text: I18n.t("upload.images.unknown_image_type")
   rescue FastImage::ImageFetchFailure
     render status: 422, text: I18n.t("upload.images.fetch_failure")
   rescue FastImage::UnknownImageType
@@ -396,4 +382,30 @@ class UsersController < ApplicationController
         DiscourseHub.register_nickname(user.username, user.email)
       end
     end
+
+    def user_create_successful(user, auth)
+      activator = UserActivator.new(user, request, session, cookies)
+      create_third_party_auth_records(user, auth)
+
+      # Clear authentication session.
+      session[:authentication] = nil
+      render json: { success: true, active: user.active?, message: activator.activation_message }
+    end
+
+    def user_create_failed(user)
+      render json: {
+        success: false,
+        message: I18n.t("login.errors", errors: user.errors.full_messages.join("\n")),
+        errors: user.errors.to_hash,
+        values: user.attributes.slice("name", "username", "email")
+      }
+    end
+
+    def authenticate_user(user, params)
+      auth = session[:authentication]
+      user.active = true if valid_session_authentication?(auth, params[:email])
+      user.password_required! unless auth
+      auth
+    end
+
 end
