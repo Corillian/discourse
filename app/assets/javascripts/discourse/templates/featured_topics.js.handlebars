@@ -1,7 +1,7 @@
 <table id='topic-list'>
   <tr>
     <th class="main-link">
-      {{categoryLink this}}
+      {{categoryLink this allowUncategorized=true}}
 
       <div class='posters'>
       {{#each featured_users}}
@@ -55,6 +55,19 @@
       <td class='num age'><span {{bindAttr class=":age ageCold"}} title='{{unboundDate created_at}}'>{{{unboundAge created_at}}}</span></td>
     </tr>
   {{/each}}
+
+  {{#if subcategories}}
+    <tr>
+      <td>
+        <div class='subcategories'>
+          {{i18n categories.subcategories}}
+          {{#each subcategory in subcategories}}
+            {{categoryLink subcategory}}
+          {{/each}}
+        </div>
+      </td>
+    </tr>
+  {{/if}}
 
 </table>
 <footer class="clearfix">

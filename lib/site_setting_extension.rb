@@ -30,25 +30,38 @@ module SiteSettingExtension
     @defaults ||= {}
   end
 
+  def categories
+    @categories ||= {}
+  end
+
   def enums
     @enums ||= {}
   end
 
-  def setting(name, default = nil, opts = {})
+  def hidden_settings
+    @hidden_settings ||= []
+  end
+
+  def setting(name_arg, default = nil, category = nil, opts = {})
+    name = name_arg.to_sym
     mutex.synchronize do
       self.defaults[name] = default
+      categories[name] = category.try(:to_sym) || :uncategorized
       current_value = current.has_key?(name) ? current[name] : default
       if opts[:enum]
         enum = opts[:enum]
         enums[name] = enum.is_a?(String) ? enum.constantize : enum
+      end
+      if opts[:hidden] == true
+        hidden_settings << name
       end
       setup_methods(name, current_value)
     end
   end
 
   # just like a setting, except that it is available in javascript via DiscourseSession
-  def client_setting(name, default = nil)
-    setting(name,default)
+  def client_setting(name, default = nil, category = nil)
+    setting(name, default, category)
     @@client_settings ||= []
     @@client_settings << name
   end
@@ -76,16 +89,19 @@ module SiteSettingExtension
   end
 
   # Retrieve all settings
-  def all_settings
-    @defaults.map do |s, v|
-      value = send(s)
-      type = types[get_data_type(s, value)]
-      {setting: s,
-       description: description(s),
-       default: v,
-       type: type.to_s,
-       value: value.to_s}.merge( type == :enum ? {valid_values: enum_class(s).values, translate_names: enum_class(s).translate_names?} : {})
-    end
+  def all_settings(include_hidden=false)
+    @defaults
+      .reject{|s, v| hidden_settings.include?(s) || include_hidden}
+      .map do |s, v|
+        value = send(s)
+        type = types[get_data_type(s, value)]
+        {setting: s,
+         description: description(s),
+         default: v,
+         type: type.to_s,
+         value: value.to_s,
+         category: categories[s]}.merge( type == :enum ? {valid_values: enum_class(s).values, translate_names: enum_class(s).translate_names?} : {})
+      end
   end
 
   def description(setting)

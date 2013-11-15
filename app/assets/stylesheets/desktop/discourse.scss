@@ -35,6 +35,9 @@ body {
   }
 }
 
+/**/
+
+
 @include small-width {
   body {
     min-width: $small-width;
@@ -117,9 +120,6 @@ body {
       color: #e45735;
     }
     a.star {
-      display: inline-block;
-      font-size: 15px;
-      line-height: 1;
       color: #cacaca;
       &:before {
         font-family: "FontAwesome";
@@ -167,6 +167,8 @@ body {
       }
     }
   }
+
+  /**/
   .message {
     @include border-radius-all(8px);
     background-color: $white;
@@ -220,24 +222,22 @@ form {
 
 blockquote {
   /* 13px left is intentional here to properly align with post quotes */
-  padding: 10px 8px 1px 13px;
+  padding: 10px 4px 4px 13px;
   background-color: $quote-background;
   border-left: 5px solid darken($quote-background, 20%);
   p {
-    margin: 0 0 10px 0;
   }
 }
 
 .topic-statuses {
-  display: inline-block;
-  margin: 0;
+  float: left;
+  margin: 1px 3px 0 0;
   padding: 0;
   .topic-status {
-    padding: 5px 2px 0 0;
+    padding: 0 2px 0 0;
     margin: 0;
-    display: inline-block;
     i {
-      font-size: 15px;
+        font-size: 15px;
       color: darken($white, 60%);
     }
   }
@@ -667,10 +667,8 @@ body {
   .alert {
     padding: 8px 35px 8px 14px;
     margin-bottom: 18px;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
     background-color: #fcf8e3;
     border: 1px solid #fbeed5;
-    border-radius: 4px;
     color: #c09853;
   }
   .alert .close {

@@ -5,6 +5,7 @@ require_dependency 'rate_limiter'
 require_dependency 'text_sentinel'
 require_dependency 'text_cleaner'
 require_dependency 'trashable'
+require_dependency 'archetype'
 
 class Topic < ActiveRecord::Base
   include ActionView::Helpers::SanitizeHelper
@@ -56,11 +57,13 @@ class Topic < ActiveRecord::Base
                                         :case_sensitive => false,
                                         :collection => Proc.new{ Topic.listable_topics } }
 
-  # The allow_uncategorized_topics site setting can be changed at any time, so there may be
-  # existing topics with nil category. We'll allow that, but when someone tries to make a new
-  # topic or change a topic's category, perform validation.
-  attr_accessor :do_category_validation
-  validates :category_id, :presence => { :if => Proc.new { @do_category_validation && !SiteSetting.allow_uncategorized_topics } }
+  validates :category_id, :presence => true ,:exclusion => {:in => [SiteSetting.uncategorized_category_id]},
+                                     :if => Proc.new { |t|
+                                           (t.new_record? || t.category_id_changed?) &&
+                                           !SiteSetting.allow_uncategorized_topics &&
+                                           (t.archetype.nil? || t.archetype == Archetype.default)
+                                       }
+
 
   before_validation do
     self.sanitize_title
@@ -105,7 +108,7 @@ class Topic < ActiveRecord::Base
 
   # Return private message topics
   scope :private_messages, lambda {
-    where(archetype: Archetype::private_message)
+    where(archetype: Archetype.private_message)
   }
 
   scope :listable_topics, lambda { where('topics.archetype <> ?', [Archetype.private_message]) }
@@ -142,13 +145,16 @@ class Topic < ActiveRecord::Base
   before_create do
     self.bumped_at ||= Time.now
     self.last_post_user_id ||= user_id
-    self.do_category_validation = true
     if !@ignore_category_auto_close and self.category and self.category.auto_close_days and self.auto_close_at.nil?
       set_auto_close(self.category.auto_close_days)
     end
   end
 
+  attr_accessor :skip_callbacks
+
   after_create do
+    return if skip_callbacks
+
     changed_to_category(category)
     if archetype == Archetype.private_message
       DraftSequence.next!(user, Draft::NEW_PRIVATE_MESSAGE)
@@ -158,17 +164,36 @@ class Topic < ActiveRecord::Base
   end
 
   before_save do
+    return if skip_callbacks
+
     if (auto_close_at_changed? and !auto_close_at_was.nil?) or (auto_close_user_id_changed? and auto_close_at)
       self.auto_close_started_at ||= Time.zone.now if auto_close_at
       Jobs.cancel_scheduled_job(:close_topic, {topic_id: id})
       true
     end
+    if category_id.nil? && (archetype.nil? || archetype == Archetype.default)
+      self.category_id = SiteSetting.uncategorized_category_id
+    end
   end
 
   after_save do
+    return if skip_callbacks
+
     if auto_close_at and (auto_close_at_changed? or auto_close_user_id_changed?)
       Jobs.enqueue_at(auto_close_at, :close_topic, {topic_id: id, user_id: auto_close_user_id || user_id})
     end
+  end
+
+  def self.top_viewed(max = 10)
+    Topic.listable_topics.visible.secured.order('views desc').limit(max)
+  end
+
+  def self.recent(max = 10)
+    Topic.listable_topics.visible.secured.order('created_at desc').limit(max)
+  end
+
+  def self.count_exceeds_minimum?
+    count > SiteSetting.minimum_topics_similar
   end
 
   def best_post
@@ -212,14 +237,21 @@ class Topic < ActiveRecord::Base
 
   # Returns hot topics since a date for display in email digest.
   def self.for_digest(user, since)
-    Topic
-      .visible
-      .secured(Guardian.new(user))
-      .where(closed: false, archived: false)
-      .created_since(since)
-      .listable_topics
-      .order(:percent_rank)
-      .limit(100)
+    topics = Topic
+              .visible
+              .secured(Guardian.new(user))
+              .where(closed: false, archived: false)
+              .created_since(since)
+              .listable_topics
+              .order(:percent_rank)
+              .limit(100)
+
+    category_topic_ids = Category.pluck(:topic_id).compact!
+    if category_topic_ids.present?
+      topics = topics.where("id NOT IN (?)", category_topic_ids)
+    end
+
+    topics
   end
 
   def update_meta_data(data)
@@ -333,8 +365,13 @@ class Topic < ActiveRecord::Base
         Category.where(['id = ?', category_id]).update_all 'topic_count = topic_count - 1'
       end
 
-      self.category_id = cat.id
-      if save
+      success = true
+      if self.category_id != cat.id
+        self.category_id = cat.id
+        success = save
+      end
+
+      if success
         CategoryFeaturedTopic.feature_topics_for(old_category)
         Category.where(id: cat.id).update_all 'topic_count = topic_count + 1'
         CategoryFeaturedTopic.feature_topics_for(cat) unless old_category.try(:id) == cat.try(:id)
@@ -372,20 +409,15 @@ class Topic < ActiveRecord::Base
 
   # Changes the category to a new name
   def change_category(name)
-    self.do_category_validation = true
-
     # If the category name is blank, reset the attribute
     if name.blank?
-      if category_id.present?
-        CategoryFeaturedTopic.feature_topics_for(category)
-        Category.where(id: category_id).update_all 'topic_count = topic_count - 1'
-      end
-      self.category_id = nil
-      return save
+      cat = Category.where(id: SiteSetting.uncategorized_category_id).first
+    else
+      cat = Category.where(name: name).first
     end
 
-    cat = Category.where(name: name).first
     return true if cat == category
+    return false unless cat
     changed_to_category(cat)
   end
 
@@ -427,28 +459,8 @@ class Topic < ActiveRecord::Base
     end
   end
 
-  # Invite a user by email and return the invite. Return the previously existing invite
-  # if already exists. Returns nil if the invite can't be created.
   def invite_by_email(invited_by, email)
-    lower_email = Email.downcase(email)
-    invite = Invite.with_deleted.where('invited_by_id = ? and email = ?', invited_by.id, lower_email).first
-
-    if invite.blank?
-      invite = Invite.create(invited_by: invited_by, email: lower_email)
-      unless invite.valid?
-
-        grant_permission_to_user(lower_email) if email_already_exists_for?(invite)
-
-        return
-      end
-    end
-
-    # Recover deleted invites if we invite them again
-    invite.recover if invite.deleted_at.present?
-
-    topic_invites.create(invite_id: invite.id)
-    Jobs.enqueue(:invite_email, invite_id: invite.id)
-    invite
+    Invite.invite_by_email(email, invited_by, self)
   end
 
   def email_already_exists_for?(invite)
@@ -470,7 +482,7 @@ class Topic < ActiveRecord::Base
     if opts[:destination_topic_id]
       post_mover.to_topic opts[:destination_topic_id]
     elsif opts[:title]
-      post_mover.to_new_topic opts[:title]
+      post_mover.to_new_topic(opts[:title], opts[:category_id])
     end
   end
 
@@ -593,6 +605,21 @@ class Topic < ActiveRecord::Base
   def auto_close_days=(num_days)
     @ignore_category_auto_close = true
     set_auto_close(num_days)
+  end
+
+  def self.auto_close
+    Topic.where("NOT closed AND auto_close_at < ? AND auto_close_user_id IS NOT NULL", 5.minutes.from_now).each do |t|
+      t.auto_close
+    end
+  end
+
+  def auto_close(closer = nil)
+    if auto_close_at && !closed? && !deleted_at && auto_close_at < 5.minutes.from_now
+      closer ||= auto_close_user
+      if Guardian.new(closer).can_moderate?(self)
+        update_status('autoclosed', true, closer)
+      end
+    end
   end
 
   def set_auto_close(num_days, by_user=nil)

@@ -27,8 +27,9 @@ Discourse.FilteredListRoute = Discourse.Route.extend({
   },
 
   setupController: function() {
-    var listController = this.controllerFor('list');
-    var listTopicsController = this.controllerFor('listTopics');
+    var listController = this.controllerFor('list'),
+        listTopicsController = this.controllerFor('listTopics');
+
     listController.set('filterMode', this.filter);
 
     var listContent = listTopicsController.get('model');
@@ -36,8 +37,8 @@ Discourse.FilteredListRoute = Discourse.Route.extend({
       listContent.set('loaded', false);
     }
 
+    listController.set('category', null);
     listController.load(this.filter).then(function(topicList) {
-      listController.set('category', null);
       listController.set('canCreateTopic', topicList.get('can_create_topic'));
       listTopicsController.set('model', topicList);
 

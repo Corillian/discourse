@@ -25,6 +25,7 @@ Discourse = Ember.Application.createWithMixins(Discourse.Ajax, {
     if (u[u.length-1] === '/') {
       u = u.substring(0, u.length-1);
     }
+    if (url.indexOf(u) !== -1) return url;
     return u + url;
   },
 
@@ -189,6 +190,8 @@ Discourse = Ember.Application.createWithMixins(Discourse.Ajax, {
       var bus = Discourse.MessageBus;
       bus.callbackInterval = Discourse.SiteSettings.polling_interval;
       bus.enableLongPolling = true;
+      bus.baseUrl = Discourse.getURL("/");
+
       if (user.admin || user.moderator) {
         bus.subscribe("/flagged_counts", function(data) {
           user.set('site_flagged_posts_count', data.total);
@@ -248,4 +251,3 @@ Discourse = Ember.Application.createWithMixins(Discourse.Ajax, {
 });
 
 Discourse.Router = Discourse.Router.reopen({ location: 'discourse_location' });
-

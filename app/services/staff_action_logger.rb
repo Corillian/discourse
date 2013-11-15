@@ -9,9 +9,8 @@ class StaffActionLogger
     raise Discourse::InvalidParameters.new('user is nil') unless deleted_user and deleted_user.is_a?(User)
     UserHistory.create( params(opts).merge({
       action: UserHistory.actions[:delete_user],
-      target_user_id: deleted_user.id,
       email: deleted_user.email,
-      ip_address: deleted_user.ip_address,
+      ip_address: deleted_user.ip_address.to_s,
       details: [:id, :username, :name, :created_at, :trust_level, :last_seen_at, :last_emailed_at].map { |x| "#{x}: #{deleted_user.send(x)}" }.join(', ')
     }))
   end
@@ -55,6 +54,23 @@ class StaffActionLogger
       action: UserHistory.actions[:delete_site_customization],
       subject: site_customization.name,
       previous_value: site_customization.attributes.slice(*SITE_CUSTOMIZATION_LOGGED_ATTRS).to_json
+    }))
+  end
+
+  def log_user_suspend(user, reason, opts={})
+    raise Discourse::InvalidParameters.new('user is nil') unless user
+    UserHistory.create( params(opts).merge({
+      action: UserHistory.actions[:suspend_user],
+      target_user_id: user.id,
+      details: reason
+    }))
+  end
+
+  def log_user_unsuspend(user, opts={})
+    raise Discourse::InvalidParameters.new('user is nil') unless user
+    UserHistory.create( params(opts).merge({
+      action: UserHistory.actions[:unsuspend_user],
+      target_user_id: user.id
     }))
   end
 

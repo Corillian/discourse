@@ -489,7 +489,6 @@ pt_BR:
     company_full_name: "Nome completo da companhia que mantém este site, usada nos documentos legais como o /tos"
     company_short_name: "Nome curto da companhia que mantém este site, usada nos documentos legais como o /tos"
     company_domain: "Nome de domínio pertencente a companhia que mantém este site, usada nos documentos legais como o /tos"
-    api_key: "A chave de API segura usada para criar e modificar tópicos, acesse a seção /admin/api para defini-lá"
     queue_jobs: "APENAS DESENVOLVEDORES! ATENÇÃO! Por padrão, enfileira tarefas no sidekiq. Se desativado, seu site ficará defeituoso."
     crawl_images: "permitir mostrar imagens de sites terceiros"
     ninja_edit_window: "quão rápido é possivél fazer uma alteração sem guardar uma nova versão, em segundos."
@@ -601,10 +600,6 @@ pt_BR:
 
     active_user_rate_limit_secs: "Qual a frequencia de atualização do campo 'última vez visto em', em segundos."
     previous_visit_timeout_hours: "Quanto tempo uma visita dura antes de considerarmos como 'última visita', em horas."
-
-    uncategorized_name: "Nome para tópicos sem categoria na lista de categorias"
-    uncategorized_color: "Cor de fundo da etiqueta da categoria que tem tópicos sem nenhuma categoria"
-    uncategorized_text_color: "Cor do texto da etiqueta da categoria que tem tópicos sem nenhuma categoria"
 
     rate_limit_create_topic: "Quantos segundos você precisa aguardar antes de poder criar um novo tópico"
     rate_limit_create_post: "Quantos segundos você precisa aguardar antes de poder fazer uma nova postagem"
@@ -770,7 +765,7 @@ pt_BR:
     active: "A sua conta está ativa e pronta."
     activate_email: "Estamos quase prontos! Enviamos um email de ativação para <b>%{email}</b>. Por favor siga as instruções no email para ativar a sua conta."
     not_activated: "Ainda não podes fazer log in. Enviamos um email de ativação para você. Por favor siga as instruções no email para ativar a sua conta."
-    banned: "Você não pode entrar antes de %{date}."
+    suspended: "Você não pode entrar antes de %{date}."
     errors: "%{errors}"
     not_available: "Não disponível. Tente %{suggestion}?"
     something_already_taken: "Algo deu errado, talvez o nome de usuário ou o email já estejam registrados. Tente o link Esqueci minha Senha."

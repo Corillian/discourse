@@ -79,6 +79,9 @@ Spork.prefork do
       DiscoursePluginRegistry.clear
       Discourse.current_user_provider = TestCurrentUserProvider
 
+      # a bit odd, but this setting is actually preloaded
+      SiteSetting.defaults[:uncategorized_category_id] = SiteSetting.uncategorized_category_id
+
       require_dependency 'site_settings/local_process_provider'
       SiteSetting.provider = SiteSettings::LocalProcessProvider.new
     end

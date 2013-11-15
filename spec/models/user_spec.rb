@@ -782,59 +782,30 @@ describe User do
   end
 
   describe '.find_by_username_or_email' do
-    it 'finds user by username' do
-      bob = Fabricate(:user, username: 'bob')
+    it 'finds users' do
+      bob = Fabricate(:user, username: 'bob', email: 'bob@example.com')
+      found_user = User.find_by_username_or_email('Bob')
+      expect(found_user).to eq bob
 
-      found_user = User.find_by_username_or_email('bob')
+      found_user = User.find_by_username_or_email('bob@Example.com')
+      expect(found_user).to eq bob
 
+      found_user = User.find_by_username_or_email('Bob@Example.com')
+      expect(found_user).to be_nil
+
+      found_user = User.find_by_username_or_email('bob1')
+      expect(found_user).to be_nil
+
+      found_user = User.find_by_email('bob@Example.com')
+      expect(found_user).to eq bob
+
+      found_user = User.find_by_email('bob')
+      expect(found_user).to be_nil
+
+      found_user = User.find_by_username('bOb')
       expect(found_user).to eq bob
     end
 
-    it 'finds user by email' do
-      bob = Fabricate(:user, email: 'bob@example.com')
-
-      found_user = User.find_by_username_or_email('bob@example.com')
-
-      expect(found_user).to eq bob
-    end
-
-    context 'when user does not exist' do
-      it 'returns nil' do
-        found_user = User.find_by_username_or_email('doesnotexist@example.com') ||
-          User.find_by_username_or_email('doesnotexist')
-
-        expect(found_user).to be_nil
-      end
-    end
-
-    context 'when username case does not match' do
-      it 'finds user' do
-        bob = Fabricate(:user, username: 'bob')
-
-        found_user = User.find_by_username_or_email('Bob')
-
-        expect(found_user).to eq bob
-      end
-    end
-
-    context 'when email domain case does not match' do
-      it 'finds user' do
-        bob = Fabricate(:user, email: 'bob@example.com')
-
-        found_user = User.find_by_username_or_email('bob@Example.com')
-
-        expect(found_user).to eq bob
-      end
-    end
-
-    context 'when multiple users are found' do
-      it 'raises an exception' do
-        user_query = stub(to_a: [stub, stub])
-        User.stubs(:where).with(username_lower: 'bob').returns(user_query)
-
-        expect { User.find_by_username_or_email('bob') }.to raise_error(Discourse::TooManyMatches)
-      end
-    end
   end
 
   describe "#added_a_day_ago?" do
@@ -855,12 +826,63 @@ describe User do
     end
   end
 
-  describe "#update_avatar" do
+  describe "#upload_avatar" do
     let(:upload) { Fabricate(:upload) }
     let(:user)   { Fabricate(:user) }
 
-    it "should update use's avatar" do
-      expect(user.update_avatar(upload)).to be_true
+    it "should update user's avatar" do
+      expect(user.upload_avatar(upload)).to be_true
     end
   end
+
+  describe 'api keys' do
+    let(:admin) { Fabricate(:admin) }
+    let(:other_admin) { Fabricate(:admin) }
+    let(:user) { Fabricate(:user) }
+
+    describe '.generate_api_key' do
+
+      it "generates an api key when none exists, and regenerates when it does" do
+        expect(user.api_key).to be_blank
+
+        # Generate a key
+        api_key = user.generate_api_key(admin)
+        expect(api_key.user).to eq(user)
+        expect(api_key.key).to be_present
+        expect(api_key.created_by).to eq(admin)
+
+        user.reload
+        expect(user.api_key).to eq(api_key)
+
+        # Regenerate a key. Keeps the same record, updates the key
+        new_key = user.generate_api_key(other_admin)
+        expect(new_key.id).to eq(api_key.id)
+        expect(new_key.key).to_not eq(api_key.key)
+        expect(new_key.created_by).to eq(other_admin)
+      end
+
+    end
+
+    describe '.revoke_api_key' do
+
+      it "revokes an api key when exists" do
+        expect(user.api_key).to be_blank
+
+        # Revoke nothing does nothing
+        user.revoke_api_key
+        user.reload
+        expect(user.api_key).to be_blank
+
+        # When a key is present it is removed
+        user.generate_api_key(admin)
+        user.reload
+        user.revoke_api_key
+        user.reload
+        expect(user.api_key).to be_blank
+      end
+
+    end
+
+  end
+
 end

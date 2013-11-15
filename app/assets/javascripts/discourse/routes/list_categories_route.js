@@ -8,7 +8,7 @@
 **/
 Discourse.ListCategoriesRoute = Discourse.Route.extend({
 
-  template: function(){
+  template: function() {
     return Discourse.SiteSettings.enable_wide_category_list ? 'listWideCategories' : 'listCategories';
   }.property(),
 
@@ -26,7 +26,7 @@ Discourse.ListCategoriesRoute = Discourse.Route.extend({
 
   model: function() {
     var listTopicsController = this.controllerFor('listTopics');
-    if (listTopicsController) listTopicsController.set('content', null);
+    if (listTopicsController) { listTopicsController.set('content', null); }
     return this.controllerFor('list').load('categories');
   },
 
@@ -46,7 +46,7 @@ Discourse.ListCategoriesRoute = Discourse.Route.extend({
     });
   },
 
-  enter: function() {
+  activate: function() {
     this.controllerFor('list').setProperties({
       filterMode: 'categories',
       category: null

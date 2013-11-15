@@ -11,6 +11,7 @@
 
     <link rel="icon" type="image/png" href="<%=SiteSetting.favicon_url%>">
     <link rel="apple-touch-icon" type="image/png" href="<%=SiteSetting.apple_touch_icon_url%>">
+
     <%= javascript_include_tag "preload_store" %>
 
     <%= javascript_include_tag "locales/#{I18n.locale}" %>
@@ -30,7 +31,10 @@
   <body>
     <!--[if IE 9]><script type="text/javascript">ie = "new";</script><![endif]-->
 
-    <%= SiteCustomization.custom_header(session[:preview_style], mobile_view? ? :mobile : :desktop) %>
+    <%- unless customization_disabled? %>
+      <%= SiteCustomization.custom_header(session[:preview_style], mobile_view? ? :mobile : :desktop) %>
+    <%- end %>
+
     <section id='main'>
     </section>
 
@@ -56,6 +60,7 @@
     <footer id='bottom'></footer>
 
     <%= render :partial => "common/discourse_javascript" %>
+
     <%= render_google_analytics_code %>
 
     <noscript data-path="<%= request.env['PATH_INFO'] %>">

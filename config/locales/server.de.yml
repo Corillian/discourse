@@ -463,7 +463,6 @@ de:
     company_full_name: "Voller Name des Unternehmens, das diese Seite betreibt. Wird in rechtlich relevanten Dokumenten wie den Nutzungsbestimmungen (/tos) verwendet."
     company_short_name: "Kurzname des Unternehmens, das diese Seite betreibt. Wird in rechtlich relevanten Dokumenten wie den Nutzungsbestimmungen (/tos) verwendet."
     company_domain: "Domainname des Unternehmens, das diese Seite betreibt. Wird in rechtlich relevanten Dokumenten wie den Nutzungsbestimmungen (/tos) verwendet."
-    api_key: "Sicherer API-Schlüssel, um Themen zu erstellen und zu aktualisieren. Benutze /admin/api, um ihn einzurichten."
     queue_jobs: "Benutze die Sidekiq-Queue, falls falsche Queues inline sind."
     crawl_images: "Lade Bilder von Dritten herunter, um ihre Höhe und Breite zu bestimmen."
     ninja_edit_window: "Sekunden nach Empfang eines Beitrag, in denen Bearbeitungen nicht als neue Version gelten."
@@ -570,10 +569,6 @@ de:
 
     active_user_rate_limit_secs: "Sekunden, nach denen das 'last_seen_at'-Feld aktualisiert wird."
     previous_visit_timeout_hours: "Stunden, die ein Besuch dauert bevor er als 'früherer' Besuch gezählt wird."
-
-    uncategorized_name: "Name der Standardkategorie für Themen, die keiner Kategorie zugeordnet wurden in der Kategorieübersicht /categories."
-    uncategorized_color: "Die Hintergrundfarbe der Plakette für die Kategorie der Themen welche keine Kategorie haben"
-    uncategorized_text_color: "Die Textfarbe der Plakette für die Kategorie der Themen welche keine Kategorie haben"
 
     rate_limit_create_topic: "Sekunden Wartezeit nach Erstellung eines Themas, bevor man ein neues Thema erstellen kann."
     rate_limit_create_post: "Sekunden Wartezeit nach Erstellung eines Beitrags, bevor man einen neuen Beitrag erstellen kann."
@@ -723,7 +718,7 @@ de:
     active: "Dein Konto ist nun freigeschaltet und einsatzbereit."
     activate_email: "Fast fertig! Wir haben eine Aktivierungsmail an <b>%{email}</b> verschickt. Bitte folge den Anweisungen in der Mail, um Dein Konto zu aktivieren."
     not_activated: "Du kannst Dich noch nicht anmelden. Wir haben Dir eine Aktivierungsmail geschickt. Bitte folge zunächst den Anweisungen aus der Mail, um Dein Konto zu aktivieren."
-    banned: "Du kannst dich bis am %{date} nicht mehr anmelden."
+    suspended: "Du kannst dich bis am %{date} nicht mehr anmelden."
     errors: "%{errors}"
     not_available: " Nicht verfügbar. Versuche %{suggestion}?"
     something_already_taken: "Etwas ist schief gelaufen. Möglicherweise ist der Benutzername bereits registriert. Probiere den 'Passwort vergessen'-Link."

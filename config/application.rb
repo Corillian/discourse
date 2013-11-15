@@ -18,6 +18,14 @@ module Discourse
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
 
+    # HACK!! regression in rubygems / bundler in ruby-head
+    if RUBY_VERSION == "2.1.0"
+      $:.map! do |path|
+        path = File.expand_path(path.sub("../../","../")) if path =~ /fast_xor/ && !File.directory?(File.expand_path(path))
+        path
+      end
+    end
+
     require 'discourse'
     require 'js_locale_helper'
 
@@ -42,7 +50,13 @@ module Discourse
 
     config.assets.paths += %W(#{config.root}/config/locales)
 
+    # explicitly precompile any images in plugins ( /assets/images ) path
+    config.assets.precompile += [lambda do |filename, path|
+      path =~ /assets\/images/ && !%w(.js .css).include?(File.extname(filename))
+    end]
+
     config.assets.precompile += ['common.css', 'desktop.css', 'mobile.css', 'admin.js', 'admin.css', 'shiny/shiny.css', 'preload_store.js']
+
 
     # Precompile all defer
     Dir.glob("#{config.root}/app/assets/javascripts/defer/*.js").each do |file|
@@ -120,16 +134,11 @@ module Discourse
     config.ember.ember_location = "#{Rails.root}/vendor/assets/javascripts/production/ember.js"
     config.ember.handlebars_location = "#{Rails.root}/vendor/assets/javascripts/handlebars.js"
 
-    # Since we are using strong_parameters, we can disable and remove
-    # attr_accessible.
-    config.active_record.whitelist_attributes = false
+    # Since we are using strong_parameters, we can disable and remove attr_accessible.
+    config.active_record.whitelist_attributes = false unless rails4?
 
-
-    require 'plugin'
     require 'auth'
-    unless Rails.env.test?
-      Discourse.activate_plugins!
-    end
+    Discourse.activate_plugins! unless Rails.env.test?
 
     config.after_initialize do
       # So open id logs somewhere sane

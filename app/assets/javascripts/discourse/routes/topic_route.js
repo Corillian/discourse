@@ -19,7 +19,7 @@ Discourse.TopicRoute = Discourse.Route.extend({
 
     composePrivateMessage: function(user) {
       var self = this;
-      this.transitionTo('userPrivateMessages', user).then(function () {
+      this.transitionTo('userActivity', user).then(function () {
         self.controllerFor('userActivity').send('composePrivateMessage');
       });
     },
@@ -36,12 +36,7 @@ Discourse.TopicRoute = Discourse.Route.extend({
 
     showInvite: function() {
       Discourse.Route.showModal(this, 'invite', this.modelFor('topic'));
-      this.controllerFor('invite').setProperties({
-        email: null,
-        error: false,
-        saving: false,
-        finished: false
-      });
+      this.controllerFor('invite').reset();
     },
 
     showPrivateInvite: function() {

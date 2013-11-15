@@ -22,7 +22,7 @@
     <div class='value'><a href="mailto:{{unbound email}}">{{email}}</a></div>
   </div>
 
-  <div class='display-row' style='height: 50px'>
+  <div class='display-row'>
     <div class='field'>{{i18n user.avatar.title}}</div>
     <div class='value'>{{avatar content imageSize="large"}}</div>
   </div>
@@ -39,14 +39,14 @@
     <div class='controls'>
       {{#if editingTitle}}
         <button class='btn' {{action saveTitle}}>{{i18n admin.user.save_title}}</button>
-        <a href="#" {{action toggleTitleEdit}}>Cancel</a>
+        <a href="#" {{action toggleTitleEdit}}>{{i18n cancel}}</a>
       {{else}}
         <button class='btn' {{action toggleTitleEdit}}>{{i18n admin.user.edit_title}}</button>
       {{/if}}
     </div>
   </div>
 
-  <div class='display-row' style='height: 50px'>
+  <div class='display-row'>
     <div class='field'>{{i18n user.ip_address.title}}</div>
     <div class='value'>{{ip_address}}</div>
     <div class='controls'>
@@ -126,6 +126,25 @@
   </div>
 
   <div class='display-row'>
+    <div class='field'>{{i18n admin.api.key}}</div>
+
+    {{#if api_key}}
+      <div class='long-value'>
+        {{api_key.key}}
+        <button class='btn' {{action regenerateApiKey}}>{{i18n admin.api.regenerate}}</button>
+        <button {{action revokeApiKey}} class="btn">{{i18n admin.api.revoke}}</button>
+      </div>
+    {{else}}
+      <div class='value'>
+      &mdash;
+      </div>
+      <div class='controls'>
+        <button {{action generateApiKey}} class="btn">{{i18n admin.api.generate}}</button>
+      </div>
+    {{/if}}
+  </div>
+
+  <div class='display-row'>
     <div class='field'>{{i18n admin.user.admin}}</div>
     <div class='value'>{{admin}}</div>
     <div class='controls'>
@@ -179,29 +198,44 @@
     </div>
   </div>
 
-  <div class='display-row'>
-    <div class='field'>{{i18n admin.user.banned}}</div>
-    <div class='value'>{{isBanned}}</div>
+  <div {{bindAttr class=":display-row isSuspended:highlight-danger"}}>
+    <div class='field'>{{i18n admin.user.suspended}}</div>
+    <div class='value'>{{isSuspended}}</div>
     <div class='controls'>
-    {{#if isBanned}}
-      <button class='btn btn-danger' {{action unban target="content"}}>
+    {{#if isSuspended}}
+      <button class='btn btn-danger' {{action unsuspend target="content"}}>
         <i class='icon icon-ban-circle'></i>
-        {{i18n admin.user.unban}}
+        {{i18n admin.user.unsuspend}}
       </button>
-      {{banDuration}}
-      {{i18n admin.user.banned_explanation}}
+      {{suspendDuration}}
+      {{i18n admin.user.suspended_explanation}}
     {{else}}
-      {{#if canBan}}
-        <button class='btn btn-danger' {{action ban target="content"}}>
+      {{#if canSuspend}}
+        <button class='btn btn-danger' {{action showSuspendModal this}}>
           <i class='icon icon-ban-circle'></i>
-          {{i18n admin.user.ban}}
+          {{i18n admin.user.suspend}}
         </button>
-        {{i18n admin.user.banned_explanation}}
+        {{i18n admin.user.suspended_explanation}}
       {{/if}}
     {{/if}}
     </div>
   </div>
-  <div class='display-row'>
+
+  {{#if isSuspended}}
+  <div class='display-row highlight-danger'>
+    <div class='field'>{{i18n admin.user.suspended_by}}</div>
+    <div class='value'>
+      {{#link-to 'adminUser' suspended_by}}{{avatar suspended_by imageSize="tiny"}}{{/link-to}}
+      {{#link-to 'adminUser' suspended_by}}{{suspended_by.username}}{{/link-to}}
+    </div>
+    <div class='controls'>
+      <b>{{i18n admin.user.suspend_reason}}</b>:
+      {{suspend_reason}}
+    </div>
+  </div>
+  {{/if}}
+
+  <div class='display-row' {{bindAttr class=":display-row blocked:highlight-danger"}}>
     <div class='field'>{{i18n admin.user.blocked}}</div>
     <div class='value'>{{blocked}}</div>
     <div class='controls'>

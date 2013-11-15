@@ -423,7 +423,6 @@ it:
     company_full_name: "Il nome completo di chi gestisce il sito, usato in documenti legali come /tos"
     company_short_name: "Il nome abbreviato di chi gestisce il sito, usato in documenti legali come /tos"
     company_domain: "Il dominio di chi gestisce il sito, usato in documenti legali come /tos"
-    api_key: "La chiave API segreta usata per creare e aggiornare topic, usa la sezione /admin/api per impostarla"
     queue_jobs: "Metti in coda diversi job in sidekiq, se false le code sono inline"
     crawl_images: "Abilita la ricezione di immagini da sorgenti terze parti"
     ninja_edit_window: "Numero di secondi trascorsi affinché una modifica del post appena inviato, non venga considerata come nuova revisione"
@@ -506,10 +505,6 @@ it:
 
     active_user_rate_limit_secs: "Quanto frequentemente viene aggiornato il campo 'last_seen_at' field, in secondi"
     previous_visit_timeout_hours: "Durata di una visita prima che venga considerata la visita 'precedente', in ore"
-
-    uncategorized_name: "La categoria di default per i topic non categorizzati nella pagina /categories"
-    uncategorized_color: "Il colore di sfondo del badge per la categoria con i topic privi di categoria"
-    uncategorized_text_color: "Il colore del testo del badge per la categoria con i topic privi di categoria"
 
     rate_limit_create_topic: "Quanti secondi, dopo aver creato un topic, per poter creare un nuovo topic"
     rate_limit_create_post: "Quanti secondi, dopo aver creato un post, per poter creare un nuovo post"

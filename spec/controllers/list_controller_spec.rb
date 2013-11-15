@@ -27,7 +27,8 @@ describe ListController do
     end
 
     it 'allows users to filter on a set of topic ids' do
-      p = Fabricate(:post)
+      p = create_post
+
       xhr :get, :latest, format: :json, topic_ids: "#{p.topic_id}"
       response.should be_success
       parsed = JSON.parse(response.body)
@@ -92,6 +93,35 @@ describe ListController do
         end
       end
 
+      context 'a child category' do
+        let(:sub_category) { Fabricate(:category, parent_category_id: category.id) }
+
+        context 'when parent and child are requested' do
+          before do
+            xhr :get, :category, parent_category: category.slug, category: sub_category.slug
+          end
+
+          it { should respond_with(:success) }
+        end
+
+        context 'when child is requested with the wrong parent' do
+          before do
+            xhr :get, :category, parent_category: 'not_the_right_slug', category: sub_category.slug
+          end
+
+          it { should_not respond_with(:success) }
+        end
+
+        context 'when child is requested without a parent' do
+          before do
+            xhr :get, :category, category: sub_category.slug
+          end
+
+          it { should_not respond_with(:success) }
+        end
+
+      end
+
       describe 'feed' do
         it 'renders RSS' do
           get :category_feed, category: category.slug, format: :rss
@@ -99,38 +129,7 @@ describe ListController do
           response.content_type.should == 'application/rss+xml'
         end
       end
-
     end
-
-    context 'uncategorized' do
-
-      it "doesn't check access to see the category, since we didn't provide one" do
-        Guardian.any_instance.expects(:can_see?).never
-        xhr :get, :category, category: SiteSetting.uncategorized_name
-      end
-
-      it "responds with success" do
-        xhr :get, :category, category: SiteSetting.uncategorized_name
-        response.should be_success
-      end
-
-      context 'SiteSetting.uncategorized_name is non standard' do
-        before do
-          SiteSetting.stubs(:uncategorized_name).returns('testing')
-        end
-
-        it "responds with success given SiteSetting.uncategorized_name" do
-          xhr :get, :category, category: SiteSetting.uncategorized_name
-          response.should be_success
-        end
-
-        it 'responds with success given "uncategorized"' do
-          xhr :get, :category, category: 'uncategorized'
-          response.should be_success
-        end
-      end
-    end
-
   end
 
   describe "topics_by" do

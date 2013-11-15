@@ -1,7 +1,7 @@
 <div class='container'>
   <div class='contents clearfix'>
 
-    {{view.logoHTML}}
+    {{discourse-logo minimized=showExtraInfo}}
 
     {{#if showExtraInfo}}
       <div class="extra-info-wrapper">
@@ -10,6 +10,7 @@
             <a {{bindAttr class=":star topic.starred:starred"}} {{action toggleStar}} href='#' {{bindAttr title="topic.favoriteTooltip"}}></a>
           {{/if}}
           <h1>
+          {{boundCategoryLink topic.category}}
           {{#if topic.details.loaded}}
             {{topicStatus topic=topic}}
             <a class='topic-link' href='{{unbound topic.url}}'>{{{topic.fancy_title}}}</a>
@@ -20,7 +21,6 @@
               {{i18n topic.loading}}
             {{/if}}
           {{/if}}
-          {{boundCategoryLink topic.category}}
           </h1>
         </div>
       </div>
@@ -94,20 +94,7 @@
 
       {{render search}}
 
-      <section class='d-dropdown' id='notifications-dropdown'>
-        {{#if view.notifications}}
-          <ul>
-            {{#each view.notifications}}
-            <li class="{{unbound readClass}}">{{{unbound rendered}}}</li>
-            {{/each}}
-            <li class='read last'>
-              <a {{bindAttr href="currentUser.path"}}>{{i18n notifications.more}} &hellip;</a>
-            </li>
-          </ul>
-        {{else}}
-          <div class='none'>{{i18n notifications.none}}</div>
-        {{/if}}
-      </section>
+      {{render notifications notifications}}
 
       <section class='d-dropdown' id='site-map-dropdown'>
       <ul class="location-links">
@@ -144,7 +131,7 @@
 
           {{#each categories}}
             <li class='category'>
-              {{categoryLink this}}
+              {{categoryLink this allowUncategorized=true}}
               <b>{{unbound topic_count}}</b></a>
             </li>
           {{/each}}

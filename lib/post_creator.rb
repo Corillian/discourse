@@ -76,7 +76,7 @@ class PostCreator
                            { user: @user,
                              limit_once_per: 24.hours,
                              message_params: {domains: @post.linked_hosts.keys.join(', ')} } )
-    else
+    elsif @post && !@post.errors.present?
       SpamRulesEnforcer.enforce!(@post)
     end
 
@@ -112,9 +112,9 @@ class PostCreator
 
   def track_latest_on_category
     if @post && @post.errors.count == 0 && @topic && @topic.category_id
-      Category.update_all( {latest_post_id: @post.id}, {id: @topic.category_id} )
+      Category.where(id: @topic.category_id).update_all(latest_post_id: @post.id)
       if @post.post_number == 1
-        Category.update_all( {latest_topic_id: @topic.id}, {id: @topic.category_id} )
+        Category.where(id: @topic.category_id).update_all(latest_topic_id: @topic.id)
       end
     end
   end
@@ -140,7 +140,6 @@ class PostCreator
   end
 
   def after_topic_create
-
     # Don't publish invisible topics
     return unless @topic.visible?
 

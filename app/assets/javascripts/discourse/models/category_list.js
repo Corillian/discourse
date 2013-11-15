@@ -24,42 +24,41 @@ Discourse.CategoryList = Ember.ArrayProxy.extend({
 Discourse.CategoryList.reopenClass({
 
   categoriesFrom: function(result) {
-    var categories = Discourse.CategoryList.create();
-    var users = Discourse.Model.extractByKey(result.featured_users, Discourse.User);
+    var categories = Discourse.CategoryList.create(),
+        users = Discourse.Model.extractByKey(result.featured_users, Discourse.User),
+        list = Discourse.Category.list();
 
+    result.category_list.categories.forEach(function(c) {
 
-    _.each(result.category_list.categories,function(c) {
+      if (c.parent_category_id) {
+        c.parentCategory = list.findBy('id', c.parent_category_id);
+      }
+
+      if (c.subcategory_ids) {
+        c.subcategories = c.subcategory_ids.map(function(scid) { return list.findBy('id', parseInt(scid, 10)); });
+      }
+
       if (c.featured_user_ids) {
-        c.featured_users = _.map(c.featured_user_ids,function(u) {
+        c.featured_users = c.featured_user_ids.map(function(u) {
           return users[u];
         });
       }
       if (c.topics) {
-        c.topics = _.map(c.topics,function(t) {
+        c.topics = c.topics.map(function(t) {
           return Discourse.Topic.create(t);
         });
       }
 
-      if (c.is_uncategorized) {
-        var uncategorized = Discourse.Category.uncategorizedInstance();
-        uncategorized.setProperties({
-          topics: c.topics,
-          featured_users: c.featured_users,
-          topics_week: c.topics_week,
-          topics_month: c.topics_month,
-          topics_year: c.topics_year
-        });
-        categories.pushObject(uncategorized);
-      } else {
-        categories.pushObject(Discourse.Category.create(c));
-      }
+      categories.pushObject(Discourse.Category.create(c));
+
     });
     return categories;
   },
 
   list: function(filter) {
-    var self = this;
-    var finder = null;
+    var self = this,
+        finder = null;
+
     if (filter === 'categories') {
       finder = PreloadStore.getAndRemove("categories_list", function() {
         return Discourse.ajax("/categories.json");

@@ -8,7 +8,7 @@
 // List controls
 // --------------------------------------------------
 
-#list-controls {
+.list-controls {
   .nav {
     float: left;
     margin-bottom: 15px;
@@ -16,7 +16,30 @@
   .btn {
     float: right;
     margin-left: 8px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: normal;
   }
+
+  a.badge-category {padding: 3px 12px;  font-size: 16px;
+
+    &.category-dropdown-button {
+    padding: 3px 9px 2px 9px;
+
+    i {height: 20px;}
+
+    }
+
+  }
+
+  .badge-category {
+
+    font-weight: normal;
+    text-transform: capitalize;
+
+
+  }
+
 }
 
 #category-filter {
@@ -36,19 +59,15 @@
 // --------------------------------------------------
 
 #topic-list {
+  border: 1px solid #ddd;
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid $topic-list-border-color;
-  @include border-radius-all(4px 4px 0 0);
-  @include box-shadow(0 1px 3px rgba($black, 0.22));
-
-  a:visited {color: #888;}
+  a.title:visited:not(.badge-notification) {color: #888;}
 
   tbody tr {
-    background-color: $white;
     &:nth-child(even) {
-      background-color: darken($white, 2%);
+      background-color: #f8f8f8;
     }
     &.archived a {
       opacity: 0.6;
@@ -68,7 +87,7 @@
   }
   th,
   td {
-    padding: 7px 5px;
+    padding: 9px 5px;
     line-height: 1.25;
     text-align: left;
     vertical-align: middle;
@@ -83,13 +102,9 @@
     color: $topic-list-th-color;
     font-weight: bold;
     font-size: 13px;
-    background: #f6f6f6;
-    &:first-of-type {
-      @include border-radius-all(4px 0 0 0);
-    }
-    &:last-of-type {
-      @include border-radius-all(0 4px 0 0);
-    }
+    background: #eee;
+
+
   }
   td {
     //border-top: 1px solid $topic-list-td-border-color;
@@ -102,11 +117,9 @@
     padding-right: 0;
     .icon-star {
       position: relative;
-      top: -1px;
-      font-size: 15px !important;
     }
     + .main-link {
-      padding-left: 0;
+      padding-left: 5px;
     }
   }
   .main-link {
@@ -165,7 +178,7 @@
     width: 140px;
   }
   .posters {
-    width: 150px;
+    width: 170px;
     > a {
       float: left;
       margin-right: 4px;
@@ -185,8 +198,21 @@
       color: inherit;
     }
   }
+  .sortable {
+    cursor: pointer;
+    &:hover {
+      background-color: #e6e6e6;
+    }
+    @include unselectable;
+  }
   .likes {
-    width: 50px;
+    width: 65px;
+  }
+  .views {
+    width: 65px;
+  }
+  .posts {
+    width: 65px;
   }
   .activity {
     width: 50px;
@@ -195,6 +221,7 @@
     width: 60px;
   }
 }
+
 
 #topic-list tbody tr.has-excerpt .star {
   vertical-align: top;
@@ -225,9 +252,23 @@
   tbody td {
     padding-bottom: 20px;
   }
+
+  td.category {
+    padding-top: 15px;
+  }
+
   .category{
     position: relative;
     width: 55%;
+
+    .subcategories {
+      margin-top: 10px;
+      .badge-category {
+        font-size: 12px;
+        padding: 4px;
+      }
+    }
+
     .featured-users {
       position: absolute;
       right: 18px;
@@ -277,7 +318,7 @@
   #topic-list tbody tr:nth-child(even) {
     background-color: $white;
   }
-  .badge-category {
+  th .badge-category {
     float: left;
     margin: 1px 4px 0 0;
   }
@@ -285,12 +326,10 @@
     float: left;
   }
   > footer {
-    border: 1px solid $topic-list-border-color;
+    border: 1px solid #ddd;
     border-top: 0;
     padding: 7px 10px;
     background-color: lighten($topic-list-th-background-color, 2%);
-    @include border-radius-all(0 0 4px 4px);
-    @include box-shadow(0 1px 3px rgba($black, 0.22));
     figure {
       float: left;
       margin: 3px 7px 0 0;
@@ -349,52 +388,112 @@
 // Misc. stuff
 // --------------------------------------------------
 
-#main {
-  #list-controls {
-    .badge-category {
-      display: inline-block;
-      background-color: yellow;
-      margin: 8px 0 0 8px;
-      float: left;
-    }
-    clear: both;
+.list-controls {
+  .home {
+    background-color: #eee;
+    color: #333;
   }
-  #list-area {
-    margin-bottom: 300px;
+
+  .badge-category {
+    padding: 4px 10px;
+    display: inline-block;
+    line-height: 24px;
+    float: left;
+  }
+  .category-dropdown-button {
+    border-left: 1px solid rgba(0, 0, 0, 0.15);
+    font-size: 16px;
+    width: 10px;
+    text-align: center;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+  clear: both;
+}
+#list-area {
+  margin-bottom: 300px;
 
 
 .topic-statuses .topic-status i {font-size: 15px;}
 
-
-
-    .empty-topic-list {
-      padding: 10px;
-    }
-    .unseen {
-      background-color: transparent;
-      padding: 0;
-      border: 0;
-      color: lighten($red, 10%);
-      font-size: 13px;
-      cursor: default;
-    }
+  .empty-topic-list {
+    padding: 10px;
   }
-  #topic-list {
-    .alert {
-      margin-bottom: 0;
-      font-size: 14px;
-    }
-    .spinner {
-      margin-top: 40px;
-    }
-  }
-  span.posted {
-    display: inline-block;
-    text-indent: -9999em;
-    width: 15px;
-    height: 15px;
-    background: {
-      image: image-url("posted.png");
-    };
+  .unseen {
+    background-color: transparent;
+    padding: 0;
+    border: 0;
+    color: lighten($red, 10%);
+    font-size: 13px;
+    cursor: default;
   }
 }
+#topic-list {
+  .alert {
+    margin-bottom: 0;
+    font-size: 14px;
+  }
+  .spinner {
+    margin-top: 40px;
+  }
+}
+span.posted {
+  display: inline-block;
+  text-indent: -9999em;
+  width: 15px;
+  height: 15px;
+  background: {
+    image: image-url("posted.png");
+  };
+}
+
+ol.category-breadcrumb {
+  display: block;
+  float: left;
+  list-style: none;
+  margin: 0 10px 0 0;
+  padding: 0;
+
+  li {
+    float: left;
+    margin-right: 5px;
+  }
+}
+
+.category-dropdown-menu {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  position: absolute;
+  border: 1px solid #ccc;
+  background-color: white;
+  height: 200px;
+  padding: 8px 7px 0 7px;
+  z-index: 100;
+  margin-top: 30px;
+  min-width: 116px;
+
+
+  a.badge-category {
+    font-size: 13px;
+    font-weight: bold;
+    padding: 4px 0;
+    float: none;
+    line-height: 19px;
+    text-transform: none;
+    width: 100%;
+    min-width: 102px;
+
+    text-align: center;
+    margin-right: 20px;
+
+
+  }
+
+
+  div {
+    margin-bottom: 10px;
+  }
+}
+

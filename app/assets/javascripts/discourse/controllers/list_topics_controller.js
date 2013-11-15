@@ -15,6 +15,14 @@ Discourse.ListTopicsController = Discourse.ObjectController.extend({
 
   latest: Ember.computed.equal('filter', 'latest'),
 
+  topicListReloading: function() {
+    return (!this.get('controllers.list.loading')) && (!this.get('loaded'));
+  }.property('loaded', 'controllers.list.loading'),
+
+  categories: function() {
+    return Discourse.Category.list();
+  }.property(),
+
   draftLoaded: function() {
     var draft = this.get('content.draft');
     if (draft) {
@@ -84,7 +92,7 @@ Discourse.ListTopicsController = Discourse.ObjectController.extend({
 
   loadMore: function() {
     var topicList = this.get('model');
-    return topicList.loadMoreTopics().then(function(moreUrl) {
+    return topicList.loadMore().then(function(moreUrl) {
       if (!Em.isEmpty(moreUrl)) {
         Discourse.URL.replaceState(Discourse.getURL("/") + topicList.get('filter') + "/more");
       }

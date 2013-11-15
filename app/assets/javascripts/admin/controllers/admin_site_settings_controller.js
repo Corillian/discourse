@@ -13,63 +13,48 @@ Discourse.AdminSiteSettingsController = Ember.ArrayController.extend(Discourse.P
   /**
     The list of settings based on the current filters
 
-    @property filteredContent
+    @property filterContent
   **/
-  filteredContent: function() {
+  filterContent: function() {
 
     // If we have no content, don't bother filtering anything
-    if (!this.present('content')) return null;
+    if (!this.present('allSiteSettings')) return;
 
     var filter;
     if (this.get('filter')) {
       filter = this.get('filter').toLowerCase();
     }
 
-    var adminSettingsController = this;
-    return this.get('content').filter(function(item, index, enumerable) {
-      if (adminSettingsController.get('onlyOverridden') && !item.get('overridden')) return false;
-      if (filter) {
-        if (item.get('setting').toLowerCase().indexOf(filter) > -1) return true;
-        if (item.get('description').toLowerCase().indexOf(filter) > -1) return true;
-        if (item.get('value').toLowerCase().indexOf(filter) > -1) return true;
-        return false;
-      }
-
-      return true;
-    });
-  }.property('filter', 'content.@each', 'onlyOverridden'),
-
-  actions: {
-    /**
-      Reset a setting to its default value
-
-      @method resetDefault
-      @param {Discourse.SiteSetting} setting The setting we want to revert
-    **/
-    resetDefault: function(setting) {
-      setting.set('value', setting.get('default'));
-      setting.save();
-    },
-
-    /**
-      Save changes to a site setting
-
-      @method save
-      @param {Discourse.SiteSetting} setting The setting we've changed
-    **/
-    save: function(setting) {
-      setting.save();
-    },
-
-    /**
-      Cancel changes to a site setting
-
-      @method cancel
-      @param {Discourse.SiteSetting} setting The setting we've changed but want to revert
-    **/
-    cancel: function(setting) {
-      setting.resetValue();
+    if ((filter === undefined || filter.length < 1) && !this.get('onlyOverridden')) {
+      this.set('model', this.get('allSiteSettings'));
+      return;
     }
-  }
+
+    var self = this,
+        matches,
+        matchesGroupedByCategory = Em.A();
+
+    _.each(this.get('allSiteSettings'), function(settingsCategory) {
+      matches = settingsCategory.siteSettings.filter(function(item) {
+        if (self.get('onlyOverridden') && !item.get('overridden')) return false;
+        if (filter) {
+          if (item.get('setting').toLowerCase().indexOf(filter) > -1) return true;
+          if (item.get('description').toLowerCase().indexOf(filter) > -1) return true;
+          if (item.get('value').toLowerCase().indexOf(filter) > -1) return true;
+          return false;
+        } else {
+          return true;
+        }
+      });
+      if (matches.length > 0) {
+        matchesGroupedByCategory.pushObject({
+          nameKey: settingsCategory.nameKey,
+          name: settingsCategory.name,
+          siteSettings: matches});
+      }
+    });
+
+    this.set('model', matchesGroupedByCategory);
+  }.observes('filter', 'onlyOverridden')
 
 });

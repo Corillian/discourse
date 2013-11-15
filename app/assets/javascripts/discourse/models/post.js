@@ -32,6 +32,11 @@ Discourse.Post = Discourse.Model.extend({
   notDeleted: Em.computed.not('deleted'),
   userDeleted: Em.computed.empty('user_id'),
 
+  showName: function() {
+    var name = this.get('name');
+    return name && (name !== this.get('username'))  && Discourse.SiteSettings.display_name_on_posts;
+  }.property('name', 'username'),
+
   postDeletedBy: function() {
     if (this.get('firstPost')) { return this.get('topic.deleted_by'); }
     return this.get('deleted_by');
@@ -356,7 +361,9 @@ Discourse.Post = Discourse.Model.extend({
   }.property('reply_count'),
 
   canViewEditHistory: function() {
-    return (Discourse.SiteSettings.edit_history_visible_to_public || (Discourse.User.current() && Discourse.User.current().get('staff')));
+    return (Discourse.SiteSettings.edit_history_visible_to_public ||
+            (Discourse.User.current() &&
+              (Discourse.User.current().get('staff') || Discourse.User.current().get('id') === this.get('user_id'))));
   }.property()
 
 });
@@ -378,7 +385,7 @@ Discourse.Post.reopenClass({
   },
 
   create: function(obj) {
-    var result = this._super(obj);
+    var result = this._super.apply(this, arguments);
     this.createActionSummary(result);
     if (obj && obj.reply_to_user) {
       result.set('reply_to_user', Discourse.User.create(obj.reply_to_user));

@@ -527,7 +527,6 @@ zh_TW:
       title: 主題排名詳細
 
     topic:
-      create_in: '創建一個 {{categoryName}} 分類的主題'
       create: '創建主題'
       create_long: '創建一個新主題'
       private_message: '開啓一段私下交流'
@@ -844,7 +843,6 @@ zh_TW:
       none: '（未分類）'
       edit: '編輯'
       edit_long: "編輯分類"
-      edit_uncategorized: "編輯未分類的"
       view: '浏覽分類下的主題'
       general: '通常'
       settings: '設置'
@@ -994,7 +992,7 @@ zh_TW:
         moderators: '版主：'
         admins: '管理員：'
         blocked: '已封鎖:'
-        banned: '已禁止:'
+        suspended: '已禁止:'
         private_messages_short: "私信"
         private_messages_title: "私密信息"
 
@@ -1154,7 +1152,7 @@ zh_TW:
           pending: "待定"
           admins: '管理員'
           moderators: '版主'
-          banned: '已禁止'
+          suspended: '已禁止'
           blocked: '已封鎖'
         approved: "已批准？"
         approved_selected:
@@ -1171,17 +1169,17 @@ zh_TW:
           elder: '信用等級爲4的用戶（年長用戶）'
           admins: '管理員'
           moderators: '版主'
-          banned: '已禁止的用戶'
+          suspended: '已禁止的用戶'
           blocked: '已封鎖的用戶'
 
       user:
-        ban_failed: "禁止此用戶時發生了錯誤 {{error}}"
-        unban_failed: "解禁此用戶時發生了錯誤 {{error}}"
-        ban_duration: "你計劃禁止該用戶多久？（天）"
+        suspend_failed: "禁止此用戶時發生了錯誤 {{error}}"
+        unsuspend_failed: "解禁此用戶時發生了錯誤 {{error}}"
+        suspend_duration: "你計劃禁止該用戶多久？（天）"
         delete_all_posts: "刪除所有帖子"
-        ban: "禁止"
-        unban: "解禁"
-        banned: "已禁止？"
+        suspend: "禁止"
+        unsuspend: "解禁"
+        suspended: "已禁止？"
         moderator: "版主？"
         admin: "管理員？"
         show_admin_profile: "管理員"

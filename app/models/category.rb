@@ -7,14 +7,14 @@ class Category < ActiveRecord::Base
   belongs_to :topic, dependent: :destroy
   if rails4?
     belongs_to :topic_only_relative_url,
-    -> { select "id, title, slug" },
-    class_name: "Topic",
-    foreign_key: "topic_id"
+                -> { select "id, title, slug" },
+                class_name: "Topic",
+                foreign_key: "topic_id"
   else
     belongs_to :topic_only_relative_url,
-    select: "id, title, slug",
-    class_name: "Topic",
-    foreign_key: "topic_id"
+                select: "id, title, slug",
+                class_name: "Topic",
+                foreign_key: "topic_id"
   end
 
   belongs_to :user
@@ -32,7 +32,7 @@ class Category < ActiveRecord::Base
 
   validates :user_id, presence: true
   validates :name, presence: true, uniqueness: true, length: { in: 1..50 }
-  validate :uncategorized_validator
+  validate :parent_category_validator
 
   before_validation :ensure_slug
   after_save :invalidate_site_cache
@@ -43,6 +43,7 @@ class Category < ActiveRecord::Base
   after_destroy :publish_categories_list
 
   has_one :category_search_data
+  belongs_to :parent_category, class_name: 'Category'
 
   scope :latest, ->{ order('topic_count desc') }
 
@@ -74,7 +75,7 @@ class Category < ActiveRecord::Base
 
   # permission is just used by serialization
   # we may consider wrapping this in another spot
-  attr_accessor :displayable_topics, :permission
+  attr_accessor :displayable_topics, :permission, :subcategory_ids
 
 
   def self.scoped_to_permissions(guardian, permission_types)
@@ -115,7 +116,7 @@ class Category < ActiveRecord::Base
 
     topics_with_post_count = Topic
                               .select("topics.category_id, COUNT(*) topic_count, SUM(topics.posts_count) post_count")
-                              .where("topics.id NOT IN (select cc.topic_id from categories cc)")
+                              .where("topics.id NOT IN (select cc.topic_id from categories cc WHERE topic_id IS NOT NULL)")
                               .group("topics.category_id")
                               .visible.to_sql
 
@@ -148,10 +149,11 @@ SQL
   end
 
   def create_category_definition
-    create_topic!(title: I18n.t("category.topic_prefix", category: name), user: user, pinned_at: Time.now)
-    update_column(:topic_id, topic.id)
-    topic.update_column(:category_id, id)
-    topic.posts.create(raw: post_template, user: user)
+    t = Topic.new(title: I18n.t("category.topic_prefix", category: name), user: user, pinned_at: Time.now, category_id: id)
+    t.skip_callbacks = true
+    t.save!
+    update_column(:topic_id, t.id)
+    t.posts.create(raw: post_template, user: user)
   end
 
   def topic_url
@@ -183,9 +185,13 @@ SQL
     MessageBus.publish('/categories', {categories: ActiveModel::ArraySerializer.new(Category.latest).as_json})
   end
 
-  def uncategorized_validator
-    errors.add(:name, I18n.t(:is_reserved)) if name == SiteSetting.uncategorized_name
-    errors.add(:slug, I18n.t(:is_reserved)) if slug == SiteSetting.uncategorized_name
+  def parent_category_validator
+    if parent_category_id
+      errors.add(:parent_category_id, I18n.t("category.errors.self_parent")) if parent_category_id == id
+
+      grandfather_id = Category.where(id: parent_category_id).pluck(:parent_category_id).first
+      errors.add(:base, I18n.t("category.errors.depth")) if grandfather_id
+    end
   end
 
   def group_names=(names)

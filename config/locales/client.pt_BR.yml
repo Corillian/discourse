@@ -585,7 +585,6 @@ pt_BR:
 
     topic:
       filter_to: "Mostrar apenas os {{post_count}} de {{username}} neste tópico"
-      create_in: 'Criar Tópico sobre {{categoryName}}'
       create: 'Criar Tópico'
       create_long: 'Criar um novo Tópico'
       private_message: 'Começar uma nova conversa privada'
@@ -944,7 +943,6 @@ pt_BR:
       choose: 'Selecione uma categoria&hellip;'
       edit: 'editar'
       edit_long: "Editar Categoria"
-      edit_uncategorized: "Editar Sem Categoria"
       view: 'Visualizar Tópicos na Categoria'
       general: 'Geral'
       settings: 'Configurações'
@@ -1096,7 +1094,7 @@ pt_BR:
         moderators: 'Moderadores:'
         admins: 'Admins:'
         blocked: 'Bloqueado:'
-        banned: 'Banido:'
+        suspended: 'Banido:'
         private_messages_short: "MPs"
         private_messages_title: "Mensagens Particulares"
 
@@ -1275,7 +1273,7 @@ pt_BR:
           pending: "Pendentes"
           admins: 'Administradores'
           moderators: 'Moderadores'
-          banned: 'Banidos'
+          suspended: 'Banidos'
           blocked: 'Bloqueados'
         approved: "Aprovado?"
         approved_selected:
@@ -1296,7 +1294,7 @@ pt_BR:
           admins: 'Usuários Administradores'
           moderators: 'Moderadores'
           blocked: 'Usuários Boqueados'
-          banned: 'Usuários Banidos'
+          suspended: 'Usuários Banidos'
         reject_successful:
           one: "1 usuário rejeitado com sucesso."
           other: "%{count} usuários rejeitados com sucesso"
@@ -1305,14 +1303,14 @@ pt_BR:
           other: "Falha ao rejeitar %{count} usuários."
 
       user:
-        ban_failed: "Ocorreu um erro ao banir este usuário {{error}}"
-        unban_failed: "Ocorreu um erro ao desbanir este usuário {{error}}"
-        ban_duration: "Por quanto tempo gostaria de banir a pessoa? (dias)"
+        suspend_failed: "Ocorreu um erro ao banir este usuário {{error}}"
+        unsuspend_failed: "Ocorreu um erro ao desbanir este usuário {{error}}"
+        suspend_duration: "Por quanto tempo gostaria de banir a pessoa? (dias)"
         delete_all_posts: "Apagar todas postagens"
         delete_all_posts_confirm: "Você irá deletar %{posts} posts e %{topics} tópicos. Tem certeza?"
-        ban: "Banir"
-        unban: "Desbanir"
-        banned: "Banido?"
+        suspend: "Banir"
+        unsuspend: "Desbanir"
+        suspended: "Banido?"
         moderator: "Moderador?"
         admin: "Admin?"
         blocked: "Bloqueado?"

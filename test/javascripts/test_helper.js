@@ -6,7 +6,7 @@
 //= require ../../app/assets/javascripts/preload_store.js
 
 // probe framework first
-//= require ../../app/assets/javascripts/discourse/components/probes.js
+//= require ../../app/assets/javascripts/discourse/lib/probes.js
 
 // Externals we need to load first
 //= require development/jquery-2.0.3.js
@@ -50,6 +50,7 @@
 //= require mousetrap.js
 //= require rsvp.js
 //= require show-html.js
+//= require htmlparser.js
 
 // Stuff we need to load first
 //= require main_include
@@ -65,6 +66,7 @@
 //= require helpers/assertions
 
 //= require_tree ./fixtures
+//= require_tree ./lib
 //= require_tree .
 //= require_self
 //= require jshint_all
@@ -82,13 +84,16 @@ window.assetPath = function() { return null; };
 
 var oldAjax = $.ajax;
 $.ajax = function() {
-  console.error("Discourse.Ajax called in test environment (" + arguments[0] + ")");
+  try {
+    this.undef();
+  } catch(e) {
+    console.error("Discourse.Ajax called in test environment (" + arguments[0] + ")\n caller: " + e.stack.split("\n").slice(2).join("\n"));
+  }
   return oldAjax.apply(this, arguments);
 };
 
 // Trick JSHint into allow document.write
 var d = document;
-d.write('<div id="qunit-scratch" style="display:none"></div>');
 d.write('<div id="ember-testing-container"><div id="ember-testing"></div></div>');
 d.write('<style>#ember-testing-container { position: absolute; background: white; bottom: 0; right: 0; width: 640px; height: 384px; overflow: auto; z-index: 9999; border: 1px solid #ccc; } #ember-testing { zoom: 50%; }</style>');
 

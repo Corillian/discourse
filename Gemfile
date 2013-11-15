@@ -12,7 +12,7 @@ end
 
 module ::Kernel
   def rails4?
-    !!ENV["RAILS4"]
+    !ENV["RAILS3"]
   end
 end
 
@@ -35,7 +35,7 @@ end
 gem 'seed-fu' , github: 'SamSaffron/seed-fu'
 
 if rails4?
-  gem 'rails', :git => 'git://github.com/rails/rails.git', :branch => '4-0-stable'
+  gem 'rails'
   gem 'redis-rails', :git => 'git://github.com/SamSaffron/redis-store.git'
   gem 'rails-observers'
   gem 'actionpack-action_caching'
@@ -64,7 +64,7 @@ gem 'ember-source', '1.0.0.rc6.2'
 gem 'handlebars-source', '1.0.12'
 gem 'barber'
 
-gem 'vestal_versions', git: 'https://github.com/zhangyuan/vestal_versions'
+gem 'vestal_versions', git: 'https://github.com/SamSaffron/vestal_versions'
 
 gem 'message_bus', git: 'https://github.com/SamSaffron/message_bus'
 gem 'rails_multisite', path: 'vendor/gems/rails_multisite'
@@ -77,8 +77,8 @@ gem 'eventmachine'
 gem 'fast_xs'
 gem 'fast_xor', git: 'https://github.com/CodeMonkeySteve/fast_xor.git'
 gem 'fastimage'
-gem 'fog', require: false
 gem 'azure', require: false
+gem 'fog', '1.18.0', require: false
 
 gem 'email_reply_parser', git: 'https://github.com/lawrencepit/email_reply_parser.git'
 
@@ -109,7 +109,7 @@ gem 'rest-client'
 gem 'rinku'
 gem 'sanitize'
 gem 'sass'
-gem 'sidekiq'
+gem 'sidekiq', '2.15.1'
 gem 'sidekiq-failures'
 gem 'sinatra', require: nil
 gem 'slim'  # required for sidekiq-web
@@ -117,6 +117,7 @@ gem 'therubyracer', require: 'v8'
 gem 'thin', require: false
 gem 'diffy', '>= 3.0', require: false
 gem 'highline', require: false
+gem 'rack-protection' # security
 
 # Gem that enables support for plugins. It is required.
 gem 'discourse_plugin', path: 'vendor/gems/discourse_plugin'
@@ -132,7 +133,6 @@ gem 'discourse_emoji', path: 'vendor/gems/discourse_emoji'
 # in production environments by default.
 # allow everywhere for now cause we are allowing asset debugging in prd
 group :assets do
-  gem 'sass'
   gem 'sass-rails'
   # Sam: disabling for now, having issues with our jenkins build
   # gem 'turbo-sprockets-rails3'
@@ -146,13 +146,9 @@ end
 
 group :test, :development do
   gem 'mock_redis'
-  gem 'listen', require: false
+  gem 'listen', '0.7.3', require: false
   gem 'certified', require: false
-  if rails4?
-    gem 'fabrication', github: 'paulelliott/fabrication', require: false
-  else
-    gem 'fabrication', require: false
-  end
+  gem 'fabrication', require: false
   gem 'qunit-rails'
   gem 'mocha', require: false
   gem 'rb-fsevent', require: RUBY_PLATFORM =~ /darwin/i ? 'rb-fsevent' : false

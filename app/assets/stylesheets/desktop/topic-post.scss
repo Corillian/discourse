@@ -1,6 +1,6 @@
 @import "common/foundation/variables";
+@import "common/foundation/mixins";
 
-html {background-color: #fff;}
 
 .container {
   @extend .clearfix;
@@ -9,18 +9,24 @@ html {background-color: #fff;}
   margin-left: auto;
 }
 
-
 .full-width {
   margin-left: 0px;
 }
+
+h1 .topic-statuses .topic-status i {margin-right: 5px;}
 
 .logo-small {margin-right: 8px;}
 
 .topic-post {
   padding: 0;
+
   &:first-of-type {
     border-top: none;
   }
+
+  &:last-of-type {
+    border-bottom: 1px solid #ddd;
+}
 
 .reply-to-tab {
   display: block;
@@ -29,34 +35,37 @@ html {background-color: #fff;}
   z-index: 400;
   padding: 5px 12px;
   border: 1px solid #ddd;
-  background: #fff;
   font-size: 12px;
   margin-left: -8px;
+  background: #fff;
 }
 
-.avoid-tab {padding-top: 25px;
-
-.topic-meta-data-inside {margin-top: -30px;}
+.avoid-tab {
+  padding-top: 25px;
+  .topic-meta-data-inside {margin-top: -30px;}
 }
 
 .gutter {
-      .reply-new {
-        opacity:0;
-          transition: linear 0.15s;
-    -webkit-transition: linear 0.15s;
-      }
+  .reply-new {
+    .discourse-no-touch & {
+     opacity:0;
+     transition: linear 0.15s;
+     -webkit-transition: linear 0.15s;
     }
+    .discourse-touch & {opacity: 1;}
+  }
+}
 
-
-section.post-menu-area {
+section.post-menu-area, .post-actions {
     .discourse-no-touch & {
       opacity: 0.2;
        transition: linear 0.15s;
     -webkit-transition: linear 0.15s;
     }
+    .discourse-touch & {opacity: 1;}
   }
 
-  &:hover section.post-menu-area {
+  &:hover section.post-menu-area, &:hover .post-actions {
     opacity: 1;
 
   }
@@ -67,21 +76,12 @@ section.post-menu-area {
         opacity:1;
       }
     }
-
-
-  }
-
-
-
-
+}
 
 nav.post-controls {
-    background-color: #fff;
     padding: 0;
-    margin-top: 20px;
     button {color: #aaa;
     margin-right: 2px;
-
   }
 
   span.badge-posts {
@@ -95,9 +95,8 @@ nav.post-controls {
     }
   }
 
-
   button.show-replies {
-    padding: 8px 20px;
+    padding: 8px 15px;
     margin-left: 0px;
   }
 
@@ -106,22 +105,24 @@ nav.post-controls {
     margin-right: 0;
     color: darken(#e4f2f8, 35%);
     background: #e4f2f8;
-    padding: 7px 20px;
-    border: 1px solid #e4f2f8;
+    padding: 8px 20px;
     margin-left: 10px;
 
     &:hover {  color: darken(#e4f2f8, 45%);
       background: darken(#e4f2f8, 10%);
-        border: 1px solid darken(#e4f2f8, 10%);
+    }
+
+    &:active {
+    @include linear-gradient(darken(#e4f2f8, 15%), darken(#e4f2f8, 10%));
+    @include box-shadow(inset 0 1px 3px rgba($black, 0.2));
+
     }
 
   }
 
-
   .create i {
     margin-right: 5px;
   }
-
 
   button {
     font-size: 16px;
@@ -129,20 +130,18 @@ nav.post-controls {
     vertical-align: top;
     background: transparent;
     border: none;
-    margin-left: 1px;
+    margin-left: 3px;
     transition: all linear 0.15s;
-    outline: none; //removes the pesky square button highlight from some browsers
+    outline: none;
          &:hover {
           background: #eee;
           color: #888;
-
-
         }
-
-        &:active {margin-top: 1px; margin-bottom: -1px;}
 
         &:active {
+            @include box-shadow(inset 0 1px 3px rgba($black, 0.2));
         }
+
         &.hidden {
           display: none;
         }
@@ -181,80 +180,46 @@ nav.post-controls {
           }
         }
       }
+  }
+
+  .embedded-posts {
+    background: #eee;
+    .quote .title {background: #ddd;}
+    blockquote {background: #ddd;}
+    &.bottom { margin-top: -11px;}
+    .topic-meta-data h5 {margin: 5px;}
+    .topic-meta-data-inside {
+    margin: -3px 0 0 0;
+    color: #aaa;
     }
-
-
-
-.embedded-posts {
-  background: #eee;
-
-  .quote .title {background: #ddd;}
-  blockquote {background: #ddd;}
-
-  .reply {padding-bottom: 10px;}
-
-  .topic-body {
-    padding-top: 7px;
-    padding-bottom: 10px;
+    .topic-meta-data {padding-top: 20px;}
   }
-
-  .topic-meta-data h5 {margin: 5px;}
-
-  .topic-meta-data-inside {
-  margin: -3px 15px 0 0;
-  color: #aaa;
-  }
-
-  .topic-meta-data {padding-top: 20px;}
-}
-
-
-
-
 
 .post-action {
-  margin-top: 3px;
-  margin-bottom: 3px;
   .relative-date {
     margin-left: 5px;
   }
-  .avatar {margin-right: 2px;}
+  .avatar { margin-right: 2px; }
 }
-
-
 
 a.star {
   display: inline-block;
   float: left;
-  font-size: 20px !important;
 }
 
 #main a.star.starred {
   text-shadow: none !important;
 }
 
-.profiler-results {
-  display: none;
-}
-
-.topic-link {margin-left: -8px;}
-
-
 .topic-summary {
+  margin: 20px 0 0 0;
+  border: 1px solid #ddd;
 
   button {border-radius: 0;}
-
-  .btn {
-  }
 
   .topic-links li {
     word-wrap: break-word;
   }
-
-
-
-  margin: 15px 0 20px 0;
-  border: 1px solid #ddd;
 
   h3 {
     margin-bottom: 4px;
@@ -336,14 +301,14 @@ a.star {
   }
 
 
-.participants {
-
-.user:not(:first-of-type) {margin-top: 10px;}
-
-
+.participants { // PMs //
+  .user {float: left; margin: 7px 20px 7px 0;}
 }
 
   .topic-links {
+    li > a {
+      margin-left: 5px;
+    }
     .badge-notification {
       margin: 0 0 4px;
     }
@@ -363,6 +328,11 @@ a.star {
         border-bottom: 1px solid #ccc;
 
       }
+
+      &:active {
+    @include box-shadow(inset 0 1px 3px rgba($black, 0.2));
+      }
+
       &.collapsed {
         border-bottom: 0;
         padding-bottom: 1px;
@@ -377,8 +347,7 @@ a.star {
 }
 
 #topic-footer-buttons {
-  padding: 20px 10px 0 10px;
-
+  padding: 10px 10px 0 10px;
   p {
     line-height: 32px;
     color: #888;
@@ -388,6 +357,9 @@ a.star {
 
 #suggested-topics {
   clear: left;
+  padding: 20px 10px 15px 10px;
+
+  .topics table tbody tr {background: #fff;}
 
   table {
     box-shadow: none;
@@ -395,14 +367,11 @@ a.star {
     border-color: #ddd;
     margin-top: 10px;
   }
-  padding: 20px 10px 15px 10px;
+
    .title {
     font-size: 14px; line-height: 8px;
-
-  }
-
+   }
 }
-
 
 span.post-count {
   background: #000;
@@ -419,12 +388,6 @@ span.post-count {
   }
 }
 
-#topic-title {
-  z-index: 1000;
-  padding: 20px 10px 15px 10px;
-.chzn-container {vertical-align: middle;}
-}
-
 article.boxed {
   img, svg {
     max-width: 100%;
@@ -437,6 +400,7 @@ article.boxed {
   background-color: #666;
   color: #fff;
   padding: 10px;
+  z-index: 401;
 
   &:hover {
     background-color: #999;
@@ -452,28 +416,30 @@ iframe {
   max-width: 100%;
 }
 
-
-.extra-info-wrapper {float: left; width: 78%;}
-
-#main .inner a.star {margin-top: 6px;}
+.extra-info-wrapper {
+  float: left;
+  width: 78%;
+  .topic-statuses {margin-right: 5px;}
+}
 
 .extra-info {
   h1 {
-    margin: 7px 0 0 25px;
-    line-height: 1em;
-  a:not(.badge-category) {margin-left: -10px;}
-
+    margin: 5px 0 0 0;
+    font-size: 2em;
+    line-height: 1.2em;
+    overflow: hidden;
   }
-
-
 
   a.star {
     margin-right: 8px;
-    margin-top: 6px;
+    font-size: 20px;
+    margin-top: 8px;
   }
 
+  .topic-statuses {margin-top: -2px;}
+
   .badge-category {
-    vertical-align: middle  ;
+    vertical-align: top;
   }
 
 }
@@ -482,15 +448,13 @@ iframe {
   margin-bottom: 10px;
   width: 92px;
   border-top: 1px solid #ddd;
-  padding-top: 25px;
-  img { text-align: center; }
-.contents {
+  padding-top: 30px;
 
-  text-align: center;}
-h3 {display: block;}
+  img { text-align: center; }
+  .contents { text-align: center;}
+  h3 { display: block; }
 
 }
-
 
 .open>.dropdown-menu {
   display: block;
@@ -501,7 +465,7 @@ h3 {display: block;}
 }
 
 .btn-group {
-  margin-top: 50px;
+  margin-top: 25px;
   position: relative;
 }
 
@@ -515,17 +479,23 @@ h3 {display: block;}
 }
 
 .contents .cooked {
-
-h1, h2, h3 {margin: 10px 0;}
-
+  margin-right: 50px;
+  word-wrap: break-word;
+  h1, h2, h3 {margin: 10px 0;}
+  ul, ol {margin: 15px 0 0 20px;}
+  li p {margin: 3px 0;}
 }
+
+  a.mention {
+    padding: 2px 4px;
+    color: #666;
+    background: #eee;
+  }
 
 
 .modal-body {
   input[type=text] {
     font-size: 16px;
-    display: block;
-    margin-top: 10px;
   }
 }
 
@@ -533,16 +503,13 @@ h1, h2, h3 {margin: 10px 0;}
 .deleted {
   .topic-body {
   background-color: lighten(red, 45%);
+  }
 }
-}
-
 
 .moderator {
-
   .topic-body {
   background-color: lighten(yellow, 45%);
-}
-
+  }
 }
 
 #share-link {
@@ -573,22 +540,12 @@ h1, h2, h3 {margin: 10px 0;}
   margin-top: -20px;
 }
 
-
-
-
 #show-topic-admin {
-  color: #7b7b7b;
   right: 20px;
   padding: 5px 8px;
   margin-top: 5px;
 
-
-
 }
-
-
-
-
 
 .topic-admin-menu {
 
@@ -604,43 +561,62 @@ h1, h2, h3 {margin: 10px 0;}
 .staff a {
   padding: 4px;
   margin: -4px 0 0 0;
-  background-color: lighten(yellow, 35%);}
+  background-color: lighten(yellow, 35%);
+}
 
 .topic-meta-data {
 float: left;
 position: relative;
 
-
-h3 {
-  font-size: 13px;
-  margin-top: 5px;
-  word-wrap: break-word;
-  line-height: 1.2em;
-}
-
-
+  h3 {
+    font-size: 13px;
+    margin-top: 5px;
+    word-wrap: break-word;
+    line-height: 1.2em;
+  }
 }
 
 .user-title {
-  margin-top: 5px;
+  margin-top: 8px;
   color: #aaa;
   overflow: hidden;
   font-size: 80%;
-}
-
-
-blockquote {
-  clear:both;
-  margin: 0;
-  padding: 12px;
+  line-height: 13px;
 }
 
 .info-line {
-  margin: 10px 0; 
+  margin: 10px 0;
   color: #666;
 }
 
-.quote .title {margin-right: 0;}
+
+blockquote { /* solo quotes */
+  margin: 14px 0;
+  padding: 12px;
+    p:first-of-type {margin-top: 0;}
+    p:last-of-type {margin-bottom: 0;}
+}
+
+.quote { /* quotes with attribution */
+  margin-top: 14px;
+  blockquote {margin-top: 0; padding-top: 0;
+  .onebox-result {background-color: #ddd;}
+
+  
+  }
+
+  .title {
+  border-left: 5px solid #bebebe;
+  background-color: #f1f1f1;
+  padding: 12px;
+  .avatar { margin-right: 7px; }
+  img {margin-top: -4px;}
+
+}
+}
+
+
+
 
 .quote-controls {
   float: right;
@@ -666,21 +642,6 @@ blockquote {
 }
 
 
-.quote .title {
-  border-left: 5px solid #bebebe;
-  background-color: #f1f1f1;
-  padding: 10px 10px 0 12px;
-  .avatar { margin-right: 7px; }
-  img {margin-top: -4px;}
-
-
-  .controls {}
-}
-
-
-
-
-
 
 .gutter {
   float: left;
@@ -689,10 +650,12 @@ blockquote {
       ul {margin: 0;}
       padding-left: 10px;
 
+  i {font-size: 12px;}
+
   .post-links {
-    margin-top: 6px;
+    margin-top: 3px;
     list-style-type: none;
-    padding-left: 20px;
+    padding-left: 19px;
     position: relative;
     margin-left: 5px;
     a i {
@@ -702,12 +665,8 @@ blockquote {
       margin-bottom: 20px;
     }
     a {color: #aaa;}
-
     li {margin-bottom: 7px;}
-
-
   }
-
 }
 
 .topic-body {
@@ -715,15 +674,25 @@ blockquote {
   float: left;
   position: relative;
   width: 720px;
-  padding: 10px 10px 10px 20px;
+  padding: 10px 10px 15px 20px;
+
+.highlighted {
+  background-color: lighten(yellow, 45%) !important;
+        }
+
+}
+
+
+.bottom-round.contents.regular {
+
+ -webkit-transition: background-color .25s linear;
+ transition: background-color .25s linear;
 
 }
 
 .posts-wrapper {
   position: relative;
-  border-bottom: 1px solid #ddd;
 }
-
 
 //columns
 
@@ -734,50 +703,46 @@ blockquote {
 
 
 @media screen and (max-width: 966px) {
-
-.gutter {display: none;}
-
-.span14 { width: 80%; max-width: 720px; } //main content
-
-  }
-
-
+  .gutter {display: none;}
+  .span14 { width: 80%; max-width: 720px; } //main content
+}
 
 .row:before, .row:after {display: table; content: "";}
 .row:after {clear: both;}
+
 .embedded-posts {
   h1, h2, h3 {margin: 10px 0;}
+  &.bottom {
+    &.hidden {display: block; opacity: 0; }
 
-  &.bottom .arrow {float: right; margin: 0 15px 0 0;}
+  }
+  &.bottom .arrow {float: right; margin: 0 0 0 0;}
   &.top {margin-left: 112px;}
   .topic-body img {max-width: 100%; height: auto;}
   .topic-body, .topic-meta-data {border: none;}
   .row {border-top: 1px solid #ddd; padding-top: 7px;}
   .reply:first-of-type .row {border-top: none;}
 }
+
 .contents.regular  {
 
 button.show-replies {
-
   background: #eee;
-  border-bottom: 10px solid #eee;
+  padding-bottom: 20px;
+     &:hover {background: #ddd;
+  .badge-posts {color: #888;}
 
   }
-
+}
 
   &.bottom-round button.show-replies {
-
-  background: #fff;
+  background: #eee;
   margin-bottom: 0;
-  border-bottom: none;
-
-  &:hover {background: #eee;
-    .badge-posts {color: #888;}
-
+  padding-bottom: 8px;
+    &:hover {background: #ddd;
+       .badge-posts {color: #888;}
+    }
   }
-
-  }
-
 
 }
 
@@ -819,12 +784,8 @@ button.show-replies {
   margin: 1px 0 0;
   list-style: none;
   background-color: #ffffff;
-  border: 1px solid #ccc;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  *border-right-width: 2px;
-  *border-bottom-width: 2px;
-  border-radius: 5px;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 5px rgba(70, 70, 70, .4);
   background-clip: padding-box;
   span {font-size: 12px;}
 .title {font-weight: bold; display: block; font-size: 14px;}
@@ -860,16 +821,10 @@ clear: both;
   opacity: 1;
 }
 
-
 #selected-posts {
 
- margin-left: 330px;
-    width: 12%;
-    p {
-      font-size: 13px;
-    }
-
-
+  margin-left: 330px;
+  width: 12%;
   position: fixed;
   z-index: 1000;
   left: 50%;
@@ -877,6 +832,8 @@ clear: both;
   border: 1px solid lighten($blue, 40%);
   padding: 5px;
   margin-bottom: 5px;
+
+
 
   button {
     width: 160px;
@@ -892,6 +849,7 @@ clear: both;
     margin-top: 10px;
   }
   p {
+    font-size: 13px;
     margin: 0 0 10px 0;
   }
   p.cancel {
@@ -903,6 +861,33 @@ clear: both;
     margin-bottom: 5px;
     i {
       margin-right: 7px;
+    }
+  }
+  .btn {
+    border: none;
+    color: $white;
+    font-weight: normal;
+
+      color: #fff;
+      background: $btn-primary-background-color;
+
+    &[href] {
+      color: $white;
+    }
+    &:hover
+    {
+      color: #fff;
+      background: darken($btn-primary-background-color, 12%);
+    }
+    &:active {
+      @include linear-gradient(darken($btn-primary-background-color, 18%), darken($btn-primary-background-color, 12%));
+      @include box-shadow(inset 0 1px 3px rgba($black, 0.2));
+      color: #fff;
+    }
+    &[disabled] {
+      text-shadow: 0 1px 0 rgba($black, 0.2);
+      @include linear-gradient($btn-primary-background-color, $btn-primary-background-color-dark);
+      @include box-shadow((inset 0 1px 0 rgba($white, 0.33), inset 0 -1px 2px rgba($black, 0.2)));
     }
   }
 }
@@ -926,7 +911,7 @@ clear: both;
   }
  article.boxed {
     position: relative;
-    line-height: 20px;
+    line-height: 21px;
 
     .select-posts {
       position: absolute;
@@ -947,5 +932,32 @@ clear: both;
   }
 }
 
-input#edit-title {margin-left: 10px;}
 
+a.attachment:before {
+  display: inline-block;
+  margin-right: 4px;
+  font-family: "FontAwesome";
+  content: "\f019";
+}
+
+.private_message .gutter, .deleted-topic .gutter,.read_restricted .gutter {
+    position: relative;
+}
+
+.private_message .gutter:before, .deleted-topic .gutter:before, .read_restricted .gutter:before {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 10px;
+    color: rgba(0,0,0,0.05);
+    font: 90px/1 FontAwesome;
+    content: "\f05c";
+}
+
+.read_restricted .gutter:before {
+    content: "\f0c0";
+}
+
+.private_message .gutter:before {
+    content: "\f0e0";
+}

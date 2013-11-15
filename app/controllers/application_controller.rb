@@ -27,6 +27,7 @@ class ApplicationController < ActionController::Base
 
   before_filter :set_mobile_view
   before_filter :inject_preview_style
+  before_filter :disable_customization
   before_filter :block_if_maintenance_mode
   before_filter :authorize_mini_profiler
   before_filter :store_incoming_links
@@ -36,8 +37,10 @@ class ApplicationController < ActionController::Base
   before_filter :redirect_to_login_if_required
 
   rescue_from Exception do |exception|
-    unless [ ActiveRecord::RecordNotFound, ActionController::RoutingError,
-             ActionController::UnknownController, AbstractController::ActionNotFound].include? exception.class
+    unless [ActiveRecord::RecordNotFound,
+            ActionController::RoutingError,
+            ActionController::UnknownController,
+            AbstractController::ActionNotFound].include? exception.class
       begin
         ErrorLog.report_async!(exception, self, request, current_user)
       rescue
@@ -121,10 +124,13 @@ class ApplicationController < ActionController::Base
     session[:mobile_view] = params[:mobile_view] if params.has_key?(:mobile_view)
   end
 
-
   def inject_preview_style
     style = request['preview-style']
     session[:preview_style] = style if style
+  end
+
+  def disable_customization
+    session[:disable_customization] = params[:customization] == "0" if params.has_key?(:customization)
   end
 
   def guardian
@@ -134,7 +140,7 @@ class ApplicationController < ActionController::Base
   def serialize_data(obj, serializer, opts={})
     # If it's an array, apply the serializer as an each_serializer to the elements
     serializer_opts = {scope: guardian}.merge!(opts)
-    if obj.is_a?(Array)
+    if obj.is_a?(Array) or obj.is_a?(ActiveRecord::Associations::CollectionProxy)
       serializer_opts[:each_serializer] = serializer
       ActiveModel::ArraySerializer.new(obj, serializer_opts).as_json
     else
@@ -193,7 +199,7 @@ class ApplicationController < ActionController::Base
     end
 
     def preload_current_user_data
-      store_preloaded("currentUser", MultiJson.dump(CurrentUserSerializer.new(current_user, root: false)))
+      store_preloaded("currentUser", MultiJson.dump(CurrentUserSerializer.new(current_user, scope: guardian, root: false)))
       serializer = ActiveModel::ArraySerializer.new(TopicTrackingState.report([current_user.id]), each_serializer: TopicTrackingStateSerializer)
       store_preloaded("topicTrackingStates", MultiJson.dump(serializer))
     end
@@ -268,8 +274,8 @@ class ApplicationController < ActionController::Base
     end
 
     def build_not_found_page(status=404, layout=false)
-      @top_viewed = TopicQuery.top_viewed(10)
-      @recent = TopicQuery.recent(10)
+      @top_viewed = Topic.top_viewed(10)
+      @recent = Topic.recent(10)
       @slug =  params[:slug].class == String ? params[:slug] : ''
       @slug =  (params[:id].class == String ? params[:id] : '') if @slug.blank?
       @slug.gsub!('-',' ')
@@ -279,7 +285,7 @@ class ApplicationController < ActionController::Base
   protected
 
     def api_key_valid?
-      request["api_key"] && SiteSetting.api_key_valid?(request["api_key"])
+      request["api_key"] && ApiKey.where(key: request["api_key"]).exists?
     end
 
     # returns an array of integers given a param key

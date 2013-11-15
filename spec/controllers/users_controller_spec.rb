@@ -249,7 +249,7 @@ describe UsersController do
     context 'valid token' do
       before do
         EmailToken.expects(:confirm).with('asdfasdf').returns(user)
-        get :password_reset, token: 'asdfasdf'
+        put :password_reset, token: 'asdfasdf', password: 'newpassword'
       end
 
       it 'returns success' do
@@ -813,51 +813,187 @@ describe UsersController do
     end
   end
 
-  describe '.invited' do
-
-    let(:user) { Fabricate(:user) }
-
+  describe '#invited' do
     it 'returns success' do
+      user = Fabricate(:user)
+
       xhr :get, :invited, username: user.username
-      response.should be_success
+
+      expect(response).to be_success
     end
 
+    it 'filters by email' do
+      inviter = Fabricate(:user)
+      invitee = Fabricate(:user)
+      invite = Fabricate(
+        :invite,
+        email: 'billybob@example.com',
+        invited_by: inviter,
+        user: invitee
+      )
+      Fabricate(
+        :invite,
+        email: 'jimtom@example.com',
+        invited_by: inviter,
+        user: invitee
+      )
+
+      xhr :get, :invited, username: inviter.username, filter: 'billybob'
+
+      invites = JSON.parse(response.body)
+      expect(invites).to have(1).item
+      expect(invites.first).to include('email' => 'billybob@example.com')
+    end
+
+    it 'filters by username' do
+      inviter = Fabricate(:user)
+      invitee = Fabricate(:user, username: 'billybob')
+      invite = Fabricate(
+        :invite,
+        invited_by: inviter,
+        email: 'billybob@example.com',
+        user: invitee
+      )
+      Fabricate(
+        :invite,
+        invited_by: inviter,
+        user: Fabricate(:user, username: 'jimtom')
+      )
+
+      xhr :get, :invited, username: inviter.username, filter: 'billybob'
+
+      invites = JSON.parse(response.body)
+      expect(invites).to have(1).item
+      expect(invites.first).to include('email' => 'billybob@example.com')
+    end
+
+    context 'with guest' do
+      context 'with pending invites' do
+        it 'does not return invites' do
+          inviter = Fabricate(:user)
+          Fabricate(:invite, invited_by: inviter)
+
+          xhr :get, :invited, username: inviter.username
+
+          invites = JSON.parse(response.body)
+          expect(invites).to be_empty
+        end
+      end
+
+      context 'with redeemed invites' do
+        it 'returns invites' do
+          inviter = Fabricate(:user)
+          invitee = Fabricate(:user)
+          invite = Fabricate(:invite, invited_by: inviter, user: invitee)
+
+          xhr :get, :invited, username: inviter.username
+
+          invites = JSON.parse(response.body)
+          expect(invites).to have(1).item
+          expect(invites.first).to include('email' => invite.email)
+        end
+      end
+    end
+
+    context 'with authenticated user' do
+      context 'with pending invites' do
+        context 'with permission to see pending invites' do
+          it 'returns invites' do
+            user = log_in
+            inviter = Fabricate(:user)
+            invite = Fabricate(:invite, invited_by: inviter)
+            stub_guardian(user) do |guardian|
+              guardian.stubs(:can_see_pending_invites_from?).
+                with(inviter).returns(true)
+            end
+
+            xhr :get, :invited, username: inviter.username
+
+            invites = JSON.parse(response.body)
+            expect(invites).to have(1).item
+            expect(invites.first).to include("email" => invite.email)
+          end
+        end
+
+        context 'without permission to see pending invites' do
+          it 'does not return invites' do
+            user = log_in
+            inviter = Fabricate(:user)
+            invitee = Fabricate(:user)
+            Fabricate(:invite, invited_by: inviter)
+            stub_guardian(user) do |guardian|
+              guardian.stubs(:can_see_pending_invites_from?).
+                with(inviter).returns(false)
+            end
+
+            xhr :get, :invited, username: inviter.username
+
+            invites = JSON.parse(response.body)
+            expect(invites).to be_empty
+          end
+        end
+      end
+
+      context 'with redeemed invites' do
+        it 'returns invites' do
+          user = log_in
+          inviter = Fabricate(:user)
+          invitee = Fabricate(:user)
+          invite = Fabricate(:invite, invited_by: inviter, user: invitee)
+
+          xhr :get, :invited, username: inviter.username
+
+          invites = JSON.parse(response.body)
+          expect(invites).to have(1).item
+          expect(invites.first).to include('email' => invite.email)
+        end
+      end
+    end
   end
 
-  describe '.update' do
-
-    context 'not logged in' do
-      it 'raises an error when not logged in' do
+  describe '#update' do
+    context 'with guest' do
+      it 'raises an error' do
         expect do
-          xhr :put, :update, username: 'somename'
+          xhr :put, :update, username: 'guest'
         end.to raise_error(Discourse::NotLoggedIn)
       end
     end
 
-    context 'logged in' do
-      let!(:user) { log_in }
+    context 'with authenticated user' do
+      context 'with permission to update' do
+        it 'allows the update' do
+          user = Fabricate(:user, name: 'Billy Bob')
+          log_in_user(user)
 
-      context 'without a token' do
-        it 'should ensure you can update the user' do
-          Guardian.any_instance.expects(:can_edit?).with(user).returns(false)
-          put :update, username: user.username
-          response.should be_forbidden
+          put :update, username: user.username, name: 'Jim Tom'
+
+          expect(response).to be_success
+          expect(user.reload.name).to eq 'Jim Tom'
         end
 
-        context 'as a user who can edit the user' do
+        it 'returns user JSON' do
+          user = log_in
 
-          before do
-            put :update, username: user.username, bio_raw: 'brand new bio'
-            user.reload
-          end
+          put :update, username: user.username
 
-          it 'updates the user' do
-            user.bio_raw.should == 'brand new bio'
-          end
+          json = JSON.parse(response.body)
+          expect(json['user']['id']).to eq user.id
+        end
+      end
 
-          it 'returns json success' do
-            response.should be_success
-          end
+      context 'without permission to update' do
+        it 'does not allow the update' do
+          user = Fabricate(:user, name: 'Billy Bob')
+          log_in_user(user)
+          guardian = Guardian.new(user)
+          guardian.stubs(:ensure_can_edit!).with(user).raises(Discourse::InvalidAccess.new)
+          Guardian.stubs(new: guardian).with(user)
+
+          put :update, username: user.username, name: 'Jim Tom'
+
+          expect(response).to be_forbidden
+          expect(user.reload.name).not_to eq 'Jim Tom'
         end
       end
     end
@@ -891,6 +1027,30 @@ describe UsersController do
       response.should be_success
       json = JSON.parse(response.body)
       json["users"].map { |u| u["username"] }.should include(user.username)
+    end
+
+    context "when `enable_names` is true" do
+      before do
+        SiteSetting.stubs(:enable_names?).returns(true)
+      end
+
+      it "returns names" do
+        xhr :post, :search_users, term: user.name
+        json = JSON.parse(response.body)
+        json["users"].map { |u| u["name"] }.should include(user.name)
+      end
+    end
+
+    context "when `enable_names` is false" do
+      before do
+        SiteSetting.stubs(:enable_names?).returns(false)
+      end
+
+      it "returns names" do
+        xhr :post, :search_users, term: user.name
+        json = JSON.parse(response.body)
+        json["users"].map { |u| u["name"] }.should_not include(user.name)
+      end
     end
 
   end
@@ -963,7 +1123,7 @@ describe UsersController do
         end
 
         it 'rejects large images' do
-          SiteSetting.stubs(:max_image_size_kb).returns(1)
+          AvatarUploadPolicy.any_instance.stubs(:too_big?).returns(true)
           xhr :post, :upload_avatar, username: user.username, file: avatar
           response.status.should eq 413
         end
@@ -1008,7 +1168,7 @@ describe UsersController do
           end
 
           it 'rejects large images' do
-            SiteSetting.stubs(:max_image_size_kb).returns(1)
+            AvatarUploadPolicy.any_instance.stubs(:too_big?).returns(true)
             xhr :post, :upload_avatar, username: user.username, file: avatar_url
             response.status.should eq 413
           end
@@ -1078,5 +1238,4 @@ describe UsersController do
     end
 
   end
-
 end

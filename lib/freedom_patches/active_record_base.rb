@@ -11,10 +11,22 @@ class ActiveRecord::Base
     exec_sql(*args).cmd_tuples
   end
 
-  # note: update_attributes still spins up a transaction this can cause contention
-  # this method performs the raw update sidestepping the locking
-  def update_columns(hash)
-    self.class.update_all(hash, self.class.primary_key => self.id)
+  def self.sql_fragment(*sql_array)
+    ActiveRecord::Base.send(:sanitize_sql_array, sql_array)
+  end
+
+  # exists fine in rails4
+  unless rails4?
+    # note: update_attributes still spins up a transaction this can cause contention
+    # this method performs the raw update sidestepping the locking
+    # exists in rails 4
+    def update_columns(hash)
+      self.class.where(self.class.primary_key => self.id).update_all(hash)
+
+      hash.each do |k,v|
+        raw_write_attribute k, v
+      end
+    end
   end
 
   def exec_sql(*args)

@@ -460,7 +460,6 @@ fr:
     company_full_name: "Le nom complet de la société qui gère ce site, utilisé dans les documents légaux, tels que /tos"
     company_short_name: "Le nom de la société qui gère ce site, utilisé dans les documents légaux, tels que /tos"
     company_domain: "Le nom de domaine de la société qui gère ce site, utilisé dans les documents légaux, tels que /tos"
-    api_key: "La clé API sécurisé à utiliser pour créer et mettre à jour des discussions. Utilisez la section /admin/api pour la configurer."
     queue_jobs: "DÉVELOPPEURS SEULEMENT ! ATTENTION ! Par  défaut, empiler les travaux dans sidekiq. Si désactivé, votre site sera cassé."
     crawl_images: "Permettre aux images provenant de sources tierces d'insérer la hauteur et la largeur de celles-ci"
     ninja_edit_window: "Temps d'édition avant de sauvegarder une nouvelle version, en secondes."
@@ -548,9 +547,6 @@ fr:
     allow_import: "Autoriser l'importation qui remplacera TOUTES les données du site. Laisser non coché, sauf si vous prévoyez d'importer des données."
     active_user_rate_limit_secs: "A quelle fréquence mettre à jour le champ 'dernier_vu_a', en secondes."
     previous_visit_timeout_hours: "Combien de temps dure une visite avant de la considérer comme la visite 'précédente', en heures."
-    uncategorized_name: "Catégorie par défaut pour les discussions sans catégorie sur la pages /categories"
-    uncategorized_color: "La couleur de fond de la catégorie des discussions sans catégorie"
-    uncategorized_text_color: "La couleur du texte de la catégorie des discussions sans catégorie"
     rate_limit_create_topic: "Après la création d'une discussion, les utilisateurs doivent attendre ce nombre de secondes avant de pouvoir créer une nouvelle discussion"
     rate_limit_create_post: "Après avoir posté un message, les utilisateurs doivent attendre ce nombre de secondes avant de pouvoir en poster un nouveau"
     max_likes_per_day: "Quantité maximale de J'aime qu'un utilisateur peut effectuer en un jour"
@@ -679,7 +675,7 @@ fr:
     active: "Votre compte est activé et prêt à l'emploi."
     activate_email: "Vous avez presque fini ! Un mail de confirmation a été envoyé à <b>%{email}</b>. Suivez les instructions pour activer votre compte."
     not_activated: "Vous ne pouvez pas vous connecter pour le moment. Nous vous avons envoyé un mail d'activation. Merci de suivre les instructions qui y sont contenues pour activer votre compte."
-    banned: "Vous ne pouvez pas vous connecter jusqu'au %{date}."
+    suspended: "Vous ne pouvez pas vous connecter jusqu'au %{date}."
     errors: "%{errors}"
     not_available: "Pas disponible. Essayez %{suggestion} ?"
     something_already_taken: "Quelque chose s'est mal passé. Peut-être que votre nom d'utilisateur ou adresse email est déjà enregistré ? Essayez le lien : j'ai oublié mon mot de passe."
@@ -703,7 +699,7 @@ fr:
 
       Si cela vous intéresse, cliquez sur le lien ci-dessous pour suivre la discussion :
 
-      [Visit %{site_name}][1]
+      [Visiter %{site_name}][1]
 
       Vous avez été invité(e) par un utilisateur de confiance, donc vous avez la possibilité de répondre sans même avoir besoin de vous connecter.
 

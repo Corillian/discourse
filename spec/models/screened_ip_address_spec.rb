@@ -8,6 +8,29 @@ describe ScreenedIpAddress do
     it 'sets a default action_type' do
       described_class.create(valid_params).action_type.should == described_class.actions[:block]
     end
+
+    it 'sets an error when ip_address is invalid' do
+      described_class.create(valid_params.merge(ip_address: '99.99.99')).errors[:ip_address].should be_present
+    end
+
+    it 'can set action_type using the action_name virtual attribute' do
+      described_class.new(valid_params.merge(action_name: :do_nothing)).action_type.should == described_class.actions[:do_nothing]
+      described_class.new(valid_params.merge(action_name: :block)).action_type.should == described_class.actions[:block]
+      described_class.new(valid_params.merge(action_name: 'do_nothing')).action_type.should == described_class.actions[:do_nothing]
+      described_class.new(valid_params.merge(action_name: 'block')).action_type.should == described_class.actions[:block]
+    end
+
+    it 'raises a useful exception when action is invalid' do
+      expect {
+        described_class.new(valid_params.merge(action_name: 'dance'))
+      }.to raise_error(ArgumentError)
+    end
+
+    it 'raises a useful exception when action is nil' do
+      expect {
+        described_class.new(valid_params.merge(action_name: nil))
+      }.to raise_error(ArgumentError)
+    end
   end
 
   describe '#watch' do
@@ -120,6 +143,41 @@ describe ScreenedIpAddress do
       it 'returns true when when record matches and action is :block' do
         Fabricate(:screened_ip_address, ip_address: '2001:db8::ff00:42:8329', action_type: described_class.actions[:block])
         described_class.should_block?('2001:db8::ff00:42:8329').should eq(true)
+      end
+    end
+  end
+
+  describe '#is_whitelisted?' do
+    it 'returns false when record does not exist' do
+      described_class.is_whitelisted?(ip_address).should eq(false)
+    end
+
+    it 'returns false when no record matches' do
+      Fabricate(:screened_ip_address, ip_address: '111.234.23.11', action_type: described_class.actions[:do_nothing])
+      described_class.is_whitelisted?('222.12.12.12').should eq(false)
+    end
+
+    context 'IPv4' do
+      it 'returns true when when record matches and action is :do_nothing' do
+        Fabricate(:screened_ip_address, ip_address: '111.234.23.11', action_type: described_class.actions[:do_nothing])
+        described_class.is_whitelisted?('111.234.23.11').should eq(true)
+      end
+
+      it 'returns false when when record matches and action is :block' do
+        Fabricate(:screened_ip_address, ip_address: '111.234.23.11', action_type: described_class.actions[:block])
+        described_class.is_whitelisted?('111.234.23.11').should eq(false)
+      end
+    end
+
+    context 'IPv6' do
+      it 'returns true when when record matches and action is :do_nothing' do
+        Fabricate(:screened_ip_address, ip_address: '2001:db8::ff00:42:8329', action_type: described_class.actions[:do_nothing])
+        described_class.is_whitelisted?('2001:db8::ff00:42:8329').should eq(true)
+      end
+
+      it 'returns false when when record matches and action is :block' do
+        Fabricate(:screened_ip_address, ip_address: '2001:db8::ff00:42:8329', action_type: described_class.actions[:block])
+        described_class.is_whitelisted?('2001:db8::ff00:42:8329').should eq(false)
       end
     end
   end
