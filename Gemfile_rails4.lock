@@ -144,12 +144,12 @@ GEM
       activesupport
       builder
     arel (4.0.1)
+    atomic (1.1.14)
     azure (0.5.0)
       json
       mime-types (~> 1.0)
       nokogiri (~> 1.5)
       uuid
-    atomic (1.1.14)
     barber (0.4.2)
       ember-source
       execjs
@@ -240,6 +240,8 @@ GEM
     libv8 (3.16.14.3)
     listen (0.7.3)
     lru_redux (0.8.1)
+    macaddr (1.6.1)
+      systemu (~> 2.5.0)
     mail (2.5.4)
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
@@ -429,6 +431,7 @@ GEM
       actionpack (>= 3.0)
       activesupport (>= 3.0)
       sprockets (~> 2.8)
+    systemu (2.5.2)
     temple (0.6.7)
     therubyracer (0.12.0)
       libv8 (~> 3.16.14.0)
@@ -454,6 +457,8 @@ GEM
       kgio (~> 2.6)
       rack
       raindrops (~> 0.7)
+    uuid (2.3.7)
+      macaddr (~> 1.0)
 
 PLATFORMS
   ruby
@@ -463,6 +468,7 @@ DEPENDENCIES
   active_model_serializers
   airbrake (= 3.1.2)
   annotate!
+  azure
   barber
   better_errors
   binding_of_caller
