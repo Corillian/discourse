@@ -144,6 +144,11 @@ GEM
       activesupport
       builder
     arel (4.0.1)
+    azure (0.5.0)
+      json
+      mime-types (~> 1.0)
+      nokogiri (~> 1.5)
+      uuid
     atomic (1.1.14)
     barber (0.4.2)
       ember-source
