@@ -5,14 +5,16 @@
 #  hook unicorn
 module Middleware::UnicornOobgc
 
-  MIN_REQUESTS_PER_OOBGC = 6
-  MAX_DELTAS = 20
+  MIN_REQUESTS_PER_OOBGC = 5
+  MAX_DELTAS = 25
 
   def self.init
     # hook up HttpServer intercept
     ObjectSpace.each_object(Unicorn::HttpServer) do |s|
       s.extend(self)
     end
+  rescue
+    puts "Attempted to patch Unicorn but it is not loaded"
   end
 
   def process_client(client)
@@ -43,14 +45,22 @@ module Middleware::UnicornOobgc
 
       if @gc_live_num && @num_requests > MIN_REQUESTS_PER_OOBGC
         largest = @previous_deltas.max
-        if largest * (2 + Random.rand(2)) + new_live_num > @gc_live_num
+        if (largest * 3) + new_live_num > @gc_live_num
+          # While tuning consider printing this out, each time this happens you saved
+          # a user from running a GC inline
+
+          # t = Time.now
           GC.start
+          # puts "OobGC invoked req count: #{@num_requests} largest delta: #{largest} #{((Time.now - t) * 1000).to_i}ms saved"
           @num_requests = 0
         end
       end
     else
-      puts "OobGC, GC live num adjusted, GC was not avoided: #{live_num}"
+      puts "OobGC: GC live num adjusted: old live_num #{@gc_live_num}  new: #{live_num} - reqs since GC: #{@num_requests} largest delta: #{@previous_deltas.max}"
+
+      @num_requests = 0
       @gc_live_num = live_num
+
     end
 
   end

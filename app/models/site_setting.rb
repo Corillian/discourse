@@ -7,14 +7,13 @@ class SiteSetting < ActiveRecord::Base
   validates_presence_of :name
   validates_presence_of :data_type
 
-  SiteSettings::YamlLoader.new("#{Rails.root}/config/site_settings.yml").load do |category, name, default, opts|
+  SiteSettings::YamlLoader.new( File.join( Rails.root, 'config', 'site_settings.yml') ).load do |category, name, default, opts|
     if opts.delete(:client)
-      client_setting(name, default, category)
+      client_setting(name, default, opts.merge(category: category))
     else
-      setting(name, default, category, opts)
+      setting(name, default, opts.merge(category: category))
     end
   end
-
 
   def self.call_discourse_hub?
     self.enforce_global_nicknames? && self.discourse_org_access_key.present?
