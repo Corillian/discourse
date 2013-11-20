@@ -24,12 +24,14 @@ if rails4?
     # A bit messy, this can be called multiple times by bundler, avoid blowing the stack
     unless self.method_defined? :to_definition_unpatched
       alias_method :to_definition_unpatched, :to_definition
-      puts "Booting in Rails 4 mode"
     end
     def to_definition(bad_lockfile, unlock)
       to_definition_unpatched(Bundler::SharedHelpers.default_lockfile, unlock)
     end
   end
+else
+  # Note to be deprecated, in place of a dual boot master
+  puts "Booting in Rails 3 mode"
 end
 
 gem 'seed-fu' , github: 'SamSaffron/seed-fu'
@@ -119,16 +121,6 @@ gem 'diffy', '>= 3.0', require: false
 gem 'highline', require: false
 gem 'rack-protection' # security
 
-# Gem that enables support for plugins. It is required.
-gem 'discourse_plugin', path: 'vendor/gems/discourse_plugin'
-
-# Discourse Plugins (optional)
-# Polls and Tasks have been disabled for launch, we need think all sorts of stuff through before adding them back in
-#   biggest concern is core support for custom sort orders, but there is also styling that just gets mishmashed into our core theme.
-# gem 'discourse_poll', path: 'vendor/gems/discourse_poll'
-gem 'discourse_emoji', path: 'vendor/gems/discourse_emoji'
-# gem 'discourse_task', path: 'vendor/gems/discourse_task'
-
 # Gems used only for assets and not required
 # in production environments by default.
 # allow everywhere for now cause we are allowing asset debugging in prd
@@ -171,7 +163,9 @@ group :development do
   gem 'annotate', :git => 'https://github.com/SamSaffron/annotate_models.git'
 end
 
-
+# Gem that enables support for plugins. It is required.
+# TODO: does this really need to be a gem ? 
+gem 'discourse_plugin', path: 'vendor/gems/discourse_plugin'
 
 # this is an optional gem, it provides a high performance replacement
 # to String#blank? a method that is called quite frequently in current
@@ -192,6 +186,7 @@ gem 'rack-mini-profiler',  git: 'https://github.com/MiniProfiler/rack-mini-profi
 gem 'rack-cors', require: false
 gem 'unicorn', require: false
 gem 'puma', require: false
+gem 'rbtrace', require: false
 
 # perftools only works on 1.9 atm
 group :profile do

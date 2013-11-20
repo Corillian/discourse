@@ -379,8 +379,7 @@ nl:
     unmute: Tonen
     last_post: Laatste bericht
 
-    best_of:
-      title: Best of
+    summary:
       enabled_description: "Je kijkt nu naar de beste berichten van deze topic. Klik hieronder om alle berichten te zien."
       description: "Er zijn <b>{{count}}</b> berichten in deze topic. Dat zijn een hoop! Zou je tijd willen besparen door alleen de berichten te zien met de meeste interactie en reacties?"
       enable: "Schakel naar 'Best of'-weergave"
@@ -754,8 +753,8 @@ nl:
           one: van één specifiek lid
           other: "van {{count}} specifieke leden"
 
-        best_of: "Je ziet momenteel alleen {{n_best_posts}} {{of_n_posts}}"
-        n_best_posts:
+        summary: "Je ziet momenteel alleen {{n_summarized_posts}} {{of_n_posts}}"
+        n_summarized_posts:
           one: "het enige 'Best of' bericht."
           other: "de {{count}} 'Best of' berichten"
         of_n_posts:
@@ -998,11 +997,10 @@ nl:
         more: "Nog {{n}} te gaan..."
         left: "Nog {{n}} resterend"
 
-    topic_summary:
+    topic_map:
       title: "Topic samenvatting"
       links_shown: "laat alle {{totalLinks}} links zien..."
       clicks: clicks
-      topic_link: link naar topic
 
     topic_statuses:
       locked:
@@ -1023,7 +1021,7 @@ nl:
     activity: Activiteit
     likes: Leuk
     likes_long: "er zijn {{count}} likes in deze topic"
-    top_contributors: Deelnemers
+    users: Deelnemers
     category_title: Categorie
     history: Geschiedenis
     changed_by: "door {{author}}"

@@ -390,8 +390,7 @@ ru:
     first_post: 'Первое сообщение'
     mute: Отключить
     unmute: Включить
-    best_of:
-      title: 'Наиболее популярное'
+    summary:
       enabled_description: 'Вы просматриваете только популярные сообщения в данной теме. Для просмотра всех сообщений нажмите кнопку ниже.'
       description: 'В теме <b>{{count}}</b> сообщений. Хотите сэкономить время и просмотреть только те сообщения, которые привлекли к себе больше всего внимания и ответов?'
       enable: 'Просмотреть наиболее популярные сообщения'
@@ -727,8 +726,8 @@ ru:
           other: 'от {{count}} пользователей'
           few: 'от {{count}} пользователя'
           many: 'от {{count}} пользователей'
-        best_of: 'Отображено только {{n_best_posts}} из {{of_n_posts}}.'
-        n_best_posts:
+        summary: 'Отображено только {{n_summarized_posts}} из {{of_n_posts}}.'
+        n_summarized_posts:
           one: '1 лучшее'
           other: '{{count}} лучших'
           few: '{{count}} лучших'
@@ -1010,11 +1009,10 @@ ru:
         at_least: 'введите как минимум {{n}} символов'
         more: 'ещё {{n}} символов...'
         left: 'осталось {{n}} символов'
-    topic_summary:
+    topic_map:
       title: 'Сводка по теме'
       links_shown: 'показать все {{totalLinks}} ссылок...'
       clicks: переходов
-      topic_link: 'ссылка на тему'
     topic_statuses:
       locked:
         help: 'закрытая тема (в этой теме больше нельзя отвечать)'
@@ -1033,7 +1031,7 @@ ru:
     activity: Активность
     likes: Нрав.
     likes_long: '{{number}} лайков в теме'
-    top_contributors: Участники
+    users: Участники
     category_title: Категория
     history: История
     changed_by: 'автором {{author}}'
