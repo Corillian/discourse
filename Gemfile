@@ -81,6 +81,7 @@ gem 'fast_xor', git: 'https://github.com/CodeMonkeySteve/fast_xor.git'
 gem 'fastimage'
 gem 'azure', require: false
 gem 'fog', '1.18.0', require: false
+gem 'unf', require: false
 
 gem 'email_reply_parser', git: 'https://github.com/lawrencepit/email_reply_parser.git'
 
@@ -164,7 +165,7 @@ group :development do
 end
 
 # Gem that enables support for plugins. It is required.
-# TODO: does this really need to be a gem ? 
+# TODO: does this really need to be a gem ?
 gem 'discourse_plugin', path: 'vendor/gems/discourse_plugin'
 
 # this is an optional gem, it provides a high performance replacement
