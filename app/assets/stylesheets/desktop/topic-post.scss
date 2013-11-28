@@ -17,7 +17,7 @@ h1 .topic-statuses .topic-status i {margin-right: 5px;}
 
 .logo-small {margin-right: 8px;}
 
-.topic-post {
+.post-cloak {
   padding: 0;
 
   &:first-of-type {
@@ -482,7 +482,7 @@ iframe {
   margin-right: 50px;
   word-wrap: break-word;
   h1, h2, h3 {margin: 10px 0;}
-  ul, ol {margin: 15px 0 0 20px;}
+  ul, ol {margin: 15px 0 0 30px;}
   li p {margin: 3px 0;}
 }
 

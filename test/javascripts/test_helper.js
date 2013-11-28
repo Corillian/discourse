@@ -13,6 +13,7 @@
 //= require jquery.ui.widget.js
 //= require handlebars.js
 //= require development/ember.js
+//= require message-bus.js
 
 //= require ../../app/assets/javascripts/locales/i18n
 //= require ../../app/assets/javascripts/discourse/helpers/i18n_helpers
@@ -91,6 +92,9 @@ $.ajax = function() {
   }
   return oldAjax.apply(this, arguments);
 };
+
+// Stop the message bus so we don't get ajax calls
+Discourse.MessageBus.stop();
 
 // Trick JSHint into allow document.write
 var d = document;

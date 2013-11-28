@@ -11,7 +11,6 @@
 //= require bootstrap-dropdown.js
 //= require bootstrap-modal.js
 //= require bootstrap-transition.js
-//= require browser-update.js
 //= require chosen.jquery.js
 //= require ember-renderspeed.js
 //= require favcount.js
@@ -32,6 +31,7 @@
 //= require mousetrap.js
 //= require rsvp.js
 //= require show-html.js
+//= require lock-on.js
 
 //= require ./discourse/helpers/i18n_helpers
 //= require ./discourse/mixins/ajax
@@ -70,5 +70,3 @@
 //= require_tree ./discourse/helpers
 //= require_tree ./discourse/templates
 //= require_tree ./discourse/routes
-
-//= require browser-update.js
