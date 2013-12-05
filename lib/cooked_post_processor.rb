@@ -147,6 +147,7 @@ class CookedPostProcessor
   def add_lightbox!(img, original_width, original_height, upload=nil)
     # first, create a div to hold our lightbox
     lightbox = Nokogiri::XML::Node.new("div", @doc)
+    lightbox["class"] = "lightbox-wrapper"
     img.add_next_sibling(lightbox)
     lightbox.add_child(img)
 
@@ -169,6 +170,8 @@ class CookedPostProcessor
     filename = get_filename(upload, img["src"])
     informations = "#{original_width}x#{original_height}"
     informations << " #{number_to_human_size(upload.filesize)}" if upload
+
+    a["title"] = filename
 
     meta.add_child create_span_node("filename", filename)
     meta.add_child create_span_node("informations", informations)

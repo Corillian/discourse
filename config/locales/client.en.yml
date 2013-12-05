@@ -984,6 +984,7 @@ en:
       already_used: 'This color has been used by another category'
       security: "Security"
       auto_close_label: "Auto-close topics after:"
+      auto_close_units: "days"
       edit_permissions: "Edit Permissions"
       add_permission: "Add Permission"
       this_year: "this year"
@@ -1438,3 +1439,6 @@ en:
           rate_limits: 'Rate Limits'
           developer: 'Developer'
           uncategorized: 'Uncategorized'
+
+    lightbox:
+      download: "download"

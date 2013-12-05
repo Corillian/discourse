@@ -79,7 +79,7 @@ en:
 
   education:
     until_posts:
-      one: "post"
+      one: "1 post"
       other: "%{count} posts"
 
     'new-topic': |
@@ -1050,7 +1050,7 @@ en:
       text_body_template: |
         There are new user signups waiting to be approved (or rejected) before they can access this forum.
 
-        [Please review them in the admin section](/admin/users/list/pending).
+        [Please review them in the admin section](%{base_url}/admin/users/list/pending).
 
   unsubscribe_link: "To unsubscribe from these emails, visit your [user preferences](%{user_preferences_url})."
 
@@ -1123,6 +1123,10 @@ en:
       from: "%{site_name} digest"
       read_more: "Read More"
 
+      posts:
+        one: "1 post"
+        other: "%{count} posts"
+
     forgot_password:
       subject_template: "[%{site_name}] Password reset"
       text_body_template: |
@@ -1192,7 +1196,7 @@ en:
   deleted: 'deleted'
 
   upload:
-    edit_reason: "We have downloaded a copy of the remotes images"
+    edit_reason: "We have downloaded copies of the remote images"
     unauthorized: "Sorry, the file you are trying to upload is not authorized (authorized extensions: %{authorized_extensions})."
     pasted_image_filename: "Pasted image"
     attachments:
