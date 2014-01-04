@@ -63,6 +63,7 @@ class User < ActiveRecord::Base
   before_save :ensure_password_is_hashed
   after_initialize :add_trust_level
   after_initialize :set_default_email_digest
+  after_initialize :set_default_external_links_in_new_tab
 
   after_save :update_tracked_topics
 
@@ -142,6 +143,7 @@ class User < ActiveRecord::Base
   def self.find_by_username(username)
     where(username_lower: username.downcase).first
   end
+
 
   def enqueue_welcome_message(message_type)
     return unless SiteSetting.send_welcome_message?
@@ -245,9 +247,21 @@ class User < ActiveRecord::Base
     @raw_password = password unless password.blank?
   end
 
+  def password
+    '' # so that validator doesn't complain that a password attribute doesn't exist
+  end
+
   # Indicate that this is NOT a passwordless account for the purposes of validation
   def password_required!
     @password_required = true
+  end
+
+  def password_required?
+    !!@password_required
+  end
+
+  def password_validator
+    PasswordValidator.new(attributes: :password).validate_each(self, :password, @raw_password)
   end
 
   def confirm_password?(password)
@@ -338,6 +352,14 @@ class User < ActiveRecord::Base
 
   def private_topics_count
     topics_allowed.where(archetype: Archetype.private_message).count
+  end
+
+  def posted_too_much_in_topic?(topic_id)
+
+    # Does not apply to staff or your own topics
+    return false if staff? || Topic.where(id: topic_id, user_id: id).exists?
+
+    trust_level == TrustLevel.levels[:newuser] && (Post.where(topic_id: topic_id, user_id: id).count >= SiteSetting.newuser_max_replies_per_topic)
   end
 
   def bio_excerpt
@@ -537,7 +559,7 @@ class User < ActiveRecord::Base
   end
 
   def add_trust_level
-    # there is a possiblity we did not load trust level column, skip it
+    # there is a possibility we did not load trust level column, skip it
     return unless has_attribute? :trust_level
     self.trust_level ||= SiteSetting.default_trust_level
   end
@@ -553,12 +575,6 @@ class User < ActiveRecord::Base
       if username_changed? && existing && existing.id != self.id
         errors.add(:username, I18n.t(:'user.username.unique'))
       end
-    end
-  end
-
-  def password_validator
-    if (@raw_password && @raw_password.length < 6) || (@password_required && !@raw_password)
-      errors.add(:password, "must be 6 letters or longer")
     end
   end
 
@@ -578,6 +594,12 @@ class User < ActiveRecord::Base
         self.email_digests = true
         self.digest_after_days ||= SiteSetting.default_digest_email_frequency.to_i if has_attribute?(:digest_after_days)
       end
+    end
+  end
+
+  def set_default_external_links_in_new_tab
+    if has_attribute?(:external_links_in_new_tab) && self.external_links_in_new_tab.nil?
+      self.external_links_in_new_tab = !SiteSetting.default_external_links_in_new_tab.blank?
     end
   end
 
@@ -635,7 +657,7 @@ end
 #  auto_track_topics_after_msecs :integer
 #  views                         :integer          default(0), not null
 #  flag_level                    :integer          default(0), not null
-#  ip_address                    :string
+#  ip_address                    :inet
 #  new_topic_duration_minutes    :integer
 #  external_links_in_new_tab     :boolean          default(FALSE), not null
 #  enable_quoting                :boolean          default(TRUE), not null
@@ -656,4 +678,3 @@ end
 #  index_users_on_username        (username) UNIQUE
 #  index_users_on_username_lower  (username_lower) UNIQUE
 #
-

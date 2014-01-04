@@ -31,6 +31,9 @@ Discourse.LoginController = Discourse.Controller.extend(Discourse.ModalFunctiona
     return this.get('loggingIn') || this.blank('loginName') || this.blank('loginPassword');
   }.property('loginName', 'loginPassword', 'loggingIn'),
 
+  showSignupLink: function() {
+    return !Discourse.SiteSettings.invite_only && !this.get('loggingIn');
+  }.property('loggingIn'),
 
   actions: {
     login: function() {
@@ -61,7 +64,7 @@ Discourse.LoginController = Discourse.Controller.extend(Discourse.ModalFunctiona
           $hidden_login_form.submit();
         }
 
-      }, function(result) {
+      }, function() {
         // Failed to login
         loginController.flash(I18n.t('login.error'), 'error');
         loginController.set('loggingIn', false);
