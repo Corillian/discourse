@@ -75,6 +75,11 @@ GEM
       rake (>= 0.8.7)
     arel (5.0.0)
     atomic (1.1.14)
+	azure (0.6.0)
+      json
+      mime-types (~> 1.0)
+      nokogiri (~> 1.5)
+      uuid
     barber (0.4.2)
       ember-source
       execjs
@@ -186,7 +191,7 @@ GEM
     metaclass (0.0.1)
     method_source (0.8.2)
     mime-types (1.25.1)
-    mini_portile (0.5.1)
+    mini_portile (0.5.2)
     minitest (5.1.0)
     mocha (0.14.0)
       metaclass (~> 0.0.1)
@@ -198,7 +203,7 @@ GEM
     net-scp (1.1.2)
       net-ssh (>= 2.6.5)
     net-ssh (2.7.0)
-    nokogiri (1.6.0)
+    nokogiri (1.6.1)
       mini_portile (~> 0.5.0)
     oauth (0.4.7)
     oauth2 (0.8.1)
@@ -416,6 +421,7 @@ DEPENDENCIES
   active_model_serializers
   airbrake (= 3.1.2)
   annotate
+  azure
   barber
   better_errors
   binding_of_caller
