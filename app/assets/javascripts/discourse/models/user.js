@@ -26,7 +26,6 @@ Discourse.User = Discourse.Model.extend({
   **/
   staff: Em.computed.or('admin', 'moderator'),
 
-
   searchContext: function() {
     return {
       type: 'user',
@@ -181,8 +180,13 @@ Discourse.User = Discourse.Model.extend({
                                'external_links_in_new_tab',
                                'watch_new_topics',
                                'enable_quoting');
-    data.watched_category_ids = this.get('watchedCategories').map(function(c){ return c.get('id')});
-    data.muted_category_ids = this.get('mutedCategories').map(function(c){ return c.get('id')});
+
+    _.each(['muted','watched','tracked'], function(s){
+      var cats = user.get(s + 'Categories').map(function(c){ return c.get('id')});
+      // HACK: denote lack of categories
+      if(cats.length === 0) { cats = [-1]; }
+      data[s + '_category_ids'] = cats;
+    });
 
     return Discourse.ajax("/users/" + this.get('username_lower'), {
       data: data,
@@ -357,21 +361,20 @@ Discourse.User = Discourse.Model.extend({
   }.property("trust_level", "hasBeenSeenInTheLastMonth"),
 
   updateMutedCategories: function() {
-    this.set("mutedCategories", _.map(this.muted_category_ids, function(id){
-      return Discourse.Category.findById(id);
-    }));
+    this.set("mutedCategories", Discourse.Category.findByIds(this.muted_category_ids));
   }.observes("muted_category_ids"),
 
+  updateTrackedCategories: function() {
+    this.set("trackedCategories", Discourse.Category.findByIds(this.tracked_category_ids));
+  }.observes("tracked_category_ids"),
+
   updateWatchedCategories: function() {
-    this.set("watchedCategories", _.map(this.watched_category_ids, function(id){
-      return Discourse.Category.findById(id);
-    }));
+    this.set("watchedCategories", Discourse.Category.findByIds(this.watched_category_ids));
   }.observes("watched_category_ids")
+
 });
 
 Discourse.User.reopenClass(Discourse.Singleton, {
-
-
   /**
     Find a `Discourse.User` for a given username.
 

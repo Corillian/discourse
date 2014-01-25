@@ -762,20 +762,39 @@ describe User do
     context "with a user that has a link in their bio" do
       let(:user) { Fabricate.build(:user, bio_raw: "im sissy and i love http://ponycorns.com") }
 
-      before do
-        # Let's cook that bio up good
+      it "includes the link as nofollow if the user is not new" do
         user.send(:cook)
-      end
-
-      it "includes the link if the user is not new" do
         expect(user.bio_excerpt).to eq("im sissy and i love <a href='http://ponycorns.com' rel='nofollow'>http://ponycorns.com</a>")
         expect(user.bio_processed).to eq("<p>im sissy and i love <a href=\"http://ponycorns.com\" rel=\"nofollow\">http://ponycorns.com</a></p>")
       end
 
       it "removes the link if the user is new" do
         user.trust_level = TrustLevel.levels[:newuser]
+        user.send(:cook)
         expect(user.bio_excerpt).to eq("im sissy and i love http://ponycorns.com")
         expect(user.bio_processed).to eq("<p>im sissy and i love http://ponycorns.com</p>")
+      end
+
+      it "includes the link without nofollow if the user is trust level 3 or higher" do
+        user.trust_level = TrustLevel.levels[:leader]
+        user.send(:cook)
+        expect(user.bio_excerpt).to eq("im sissy and i love <a href='http://ponycorns.com'>http://ponycorns.com</a>")
+        expect(user.bio_processed).to eq("<p>im sissy and i love <a href=\"http://ponycorns.com\">http://ponycorns.com</a></p>")
+      end
+
+      it "removes nofollow from links in bio when trust level is increased" do
+        user.save
+        user.change_trust_level!(:leader)
+        expect(user.bio_excerpt).to eq("im sissy and i love <a href='http://ponycorns.com'>http://ponycorns.com</a>")
+        expect(user.bio_processed).to eq("<p>im sissy and i love <a href=\"http://ponycorns.com\">http://ponycorns.com</a></p>")
+      end
+
+      it "adds nofollow to links in bio when trust level is decreased" do
+        user.trust_level = TrustLevel.levels[:leader]
+        user.save
+        user.change_trust_level!(:regular)
+        expect(user.bio_excerpt).to eq("im sissy and i love <a href='http://ponycorns.com' rel='nofollow'>http://ponycorns.com</a>")
+        expect(user.bio_processed).to eq("<p>im sissy and i love <a href=\"http://ponycorns.com\" rel=\"nofollow\">http://ponycorns.com</a></p>")
       end
     end
 
@@ -964,7 +983,7 @@ describe User do
 
   describe ".small_avatar_url" do
 
-    let(:user) { build(:user, use_uploaded_avatar: true, uploaded_avatar_template: "http://test.localhost/uploaded/avatar/template/{size}.png") }
+    let(:user) { build(:user, use_uploaded_avatar: true, uploaded_avatar_template: "/uploaded/avatar/template/{size}.png") }
 
     it "returns a 45-pixel-wide avatar" do
       user.small_avatar_url.should == "//test.localhost/uploaded/avatar/template/45.png"
@@ -974,7 +993,7 @@ describe User do
 
   describe ".uploaded_avatar_path" do
 
-    let(:user) { build(:user, use_uploaded_avatar: true, uploaded_avatar_template: "http://test.localhost/uploaded/avatar/template/{size}.png") }
+    let(:user) { build(:user, use_uploaded_avatar: true, uploaded_avatar_template: "/uploaded/avatar/template/{size}.png") }
 
     it "returns nothing when uploaded avatars are not allowed" do
       SiteSetting.expects(:allow_uploaded_avatars).returns(false)
@@ -985,6 +1004,11 @@ describe User do
       user.uploaded_avatar_path.should == "//test.localhost/uploaded/avatar/template/{size}.png"
     end
 
+    it "returns a schemaless cdn-based avatar template" do
+      Rails.configuration.action_controller.stubs(:asset_host).returns("http://my.cdn.com")
+      user.uploaded_avatar_path.should == "//my.cdn.com/uploaded/avatar/template/{size}.png"
+    end
+
   end
 
   describe ".avatar_template" do
@@ -992,8 +1016,8 @@ describe User do
     let(:user) { build(:user, email: "em@il.com") }
 
     it "returns the uploaded_avatar_path by default" do
-      user.expects(:uploaded_avatar_path).returns("/uploaded/avatar.png")
-      user.avatar_template.should == "/uploaded/avatar.png"
+      user.expects(:uploaded_avatar_path).returns("//discourse.org/uploaded/avatar.png")
+      user.avatar_template.should == "//discourse.org/uploaded/avatar.png"
     end
 
     it "returns the gravatar when no avatar has been uploaded" do

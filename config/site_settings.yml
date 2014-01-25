@@ -30,9 +30,6 @@ basic:
   ga_domain_name:
     client: true
     default: ''
-  enable_wide_category_list:
-    client: true
-    default: true
   category_featured_topics:
     client: true
     default: 3
@@ -46,7 +43,7 @@ basic:
     default: true
   top_menu:
     client: true
-    default: 'latest|new|unread|favorited|categories'
+    default: 'latest|new|unread|starred|categories'
   post_menu:
     client: true
     default: 'like|edit|flag|delete|share|bookmark|reply'
@@ -59,8 +56,10 @@ basic:
   relative_date_duration:
     client: true
     default: 30
-  topics_per_period_in_summary:
-    default: 10
+  topics_per_period_in_top_summary:
+    default: 20
+  topics_per_period_in_top_page:
+    default: 50
 
 users:
   enable_local_logins:
@@ -113,7 +112,7 @@ users:
     default: false
   enforce_global_nicknames: false
   discourse_org_access_key: ''
-  invite_expiry_days: 14
+  invite_expiry_days: 4
   username_change_period: 3
   email_editable: true
   enable_names:
@@ -124,7 +123,7 @@ users:
     default: 30
   delete_user_max_age:
     client: true
-    default: 14
+    default: 60
   delete_all_posts_max: 15
   default_external_links_in_new_tab: false
 
@@ -167,6 +166,7 @@ posting:
     default: 15
   enable_private_messages: true
   ninja_edit_window: 300
+  post_edit_time_limit: 525600
   edit_history_visible_to_public:
     client: true
     default: true
@@ -299,7 +299,7 @@ trust:
 
 security:
   enable_flash_video_onebox: false
-  use_ssl: false
+  use_https: false
   enable_escaped_fragments:
     client: true
     default: false
@@ -342,7 +342,7 @@ rate_limits:
   max_bookmarks_per_day: 20
   max_flags_per_day: 20
   max_edits_per_day: 30
-  max_favorites_per_day: 20
+  max_stars_per_day: 20
 
 developer:
   force_hostname: ''
@@ -360,6 +360,7 @@ embedding:
   feed_polling_enabled: false
   feed_polling_url: ''
   embed_by_username: ''
+  embed_category: ''
   embed_post_limit: 100
 
 uncategorized:
@@ -424,5 +425,13 @@ uncategorized:
   minimum_topics_similar: 50
   sequential_replies_threshold: 2
   dominating_topic_minimum_percent: 20
-
+  suppress_uncategorized_badge:
+    client: true
+    default: true
+  lounge_category_id:
+    default: -1
+    hidden: true
+  meta_category_id:
+    default: -1
+    hidden: true
 

@@ -20,7 +20,6 @@ Discourse.URL = Em.Object.createWithMixins({
     @param {String} path The path we are replacing our history state with.
   **/
   replaceState: function(path) {
-
     if (window.history &&
         window.history.pushState &&
         window.history.replaceState &&
@@ -48,6 +47,11 @@ Discourse.URL = Em.Object.createWithMixins({
     @param {String} path The path we are routing to.
   **/
   routeTo: function(path) {
+
+    if(Discourse.get("requiresRefresh")){
+      document.location.href = path;
+      return;
+    }
 
     var oldPath = window.location.pathname;
     path = path.replace(/https?\:\/\/[^\/]+/, '');
@@ -92,6 +96,23 @@ Discourse.URL = Em.Object.createWithMixins({
   },
 
   /**
+   * Determines whether a URL is internal or not
+   *
+   * @method isInternal
+   * @param {String} url
+  **/
+  isInternal: function(url) {
+    if (url && url.length) {
+      if (url.indexOf('/') === 0) { return true; }
+      if (url.indexOf(this.origin()) === 0) { return true; }
+      if (url.replace(/^http/, 'https').indexOf(this.origin()) === 0) { return true; }
+      if (url.replace(/^https/, 'http').indexOf(this.origin()) === 0) { return true; }
+    }
+    return false;
+  },
+
+
+  /**
     @private
 
     If we're viewing more topics, scroll to where we were previously.
@@ -120,7 +141,6 @@ Discourse.URL = Em.Object.createWithMixins({
     @param {String} path the path we're navigating to
   **/
   navigatedToPost: function(oldPath, path) {
-
     var newMatches = this.TOPIC_REGEXP.exec(path),
         newTopicId = newMatches ? newMatches[2] : null;
 
@@ -168,12 +188,15 @@ Discourse.URL = Em.Object.createWithMixins({
     @param {String} path the path we're navigating to
   **/
   navigatedToHome: function(oldPath, path) {
+    var homepage = Discourse.User.current() ? Discourse.User.currentProp('homepage') : Discourse.Utilities.defaultHomepage();
 
-    var defaultFilter = "/" + Discourse.ListController.filters[0];
-
-    if (path === "/" && (oldPath === "/" || oldPath === defaultFilter)) {
-      // Refresh our list
-      this.controllerFor('list').refresh();
+    if (path === "/" && (oldPath === "/" || oldPath === "/" + homepage)) {
+      // refresh the list
+      switch (homepage) {
+        case "top" :       { this.controllerFor('discoveryTop').send('refresh'); break; }
+        case "categories": { this.controllerFor('discoveryCategories').send('refresh'); break; }
+        default:           { this.controllerFor('discoveryTopics').send('refresh'); break; }
+      }
       return true;
     }
 
@@ -216,6 +239,5 @@ Discourse.URL = Em.Object.createWithMixins({
   controllerFor: function(name) {
     return Discourse.__container__.lookup('controller:' + name);
   }
-
 
 });

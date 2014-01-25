@@ -59,7 +59,7 @@ module PrettyText
               "vendor/assets/javascripts/rsvp.js",
               Rails.configuration.ember.handlebars_location)
 
-    ctx.eval("var Discourse = {}; Discourse.SiteSettings = #{SiteSetting.client_settings_json};")
+    ctx.eval("var Discourse = {}; Discourse.SiteSettings = {};")
     ctx.eval("var window = {}; window.devicePixelRatio = 2;") # hack to make code think stuff is retina
     ctx.eval("var I18n = {}; I18n.t = function(a,b){ return helpers.t(a,b); }");
 
@@ -167,7 +167,7 @@ module PrettyText
     # we have a minor inconsistency
     cloned[:topicId] = opts[:topic_id]
     sanitized = markdown(text.dup, cloned)
-    sanitized = add_rel_nofollow_to_user_content(sanitized) if SiteSetting.add_rel_nofollow_to_user_content
+    sanitized = add_rel_nofollow_to_user_content(sanitized) if !cloned[:omit_nofollow] && SiteSetting.add_rel_nofollow_to_user_content
     sanitized
   end
 

@@ -1,13 +1,10 @@
 <header>
-  <%- if @topic_view.posts.present? %>
-    <%= link_to(I18n.t('embed.continue'), @second_post_url, class: 'button', target: '_blank') %>
-    <span class='replies'><%= I18n.t('embed.replies', count: @topic_view.topic.posts_count) %></span>
-
-  <%- else %>
+  <% if @topic_view.topic.posts_count < 2 %>
     <%= link_to(I18n.t('embed.start_discussion'), @topic_view.topic.url, class: 'button', target: '_blank') %>
-  <%- end if %>
-
-  <%= link_to(image_tag(SiteSetting.logo_url, class: 'logo'), Discourse.base_url, target: '_blank') %>
+  <% elsif @topic_view.topic.posts_count > 10 %>
+    <%= link_to(I18n.t('embed.continue'), @second_post_url, class: 'button', target: '_blank') %>
+  <% end %>
+  <span class='replies'><%= I18n.t('embed.replies', count: @topic_view.topic.posts_count - 1) %></span>
 </header>
 
 <%- if @topic_view.posts.present? %>
@@ -38,13 +35,15 @@
     </article>
   <%- end %>
 
-  <footer>
-    <%= link_to(I18n.t('embed.continue'), @topic_view.posts.last.url, class: 'button', target: '_blank') %>
-    <%- if @posts_left > 0 %>
-      <span class='replies'><%= I18n.t('embed.more_replies', count: @posts_left) %></span>
-    <%- end %>
-    <%= link_to(image_tag(SiteSetting.logo_url, class: 'logo'), Discourse.base_url, target: '_blank') %>
-  </footer>
+  <% if @topic_view.topic.posts_count > 0 %>
+    <footer>
+      <%= link_to(I18n.t('embed.continue'), @topic_view.posts.last.url, class: 'button', target: '_blank') %>
+      <%- if @posts_left > 0 %>
+        <span class='replies'><%= I18n.t('embed.more_replies', count: @posts_left) %></span>
+      <%- end %>
+      <%= link_to(image_tag(SiteSetting.logo_url, class: 'logo'), Discourse.base_url, target: '_blank') %>
+    </footer>
+  <% end %>
 
 <% end %>
 

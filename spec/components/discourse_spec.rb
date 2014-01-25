@@ -16,19 +16,19 @@ describe Discourse do
   end
 
   context 'base_url' do
-    context 'when ssl is off' do
+    context 'when https is off' do
       before do
-        SiteSetting.expects(:use_ssl?).returns(false)
+        SiteSetting.expects(:use_https?).returns(false)
       end
 
-      it 'has a non-ssl base url' do
+      it 'has a non https base url' do
         Discourse.base_url.should == "http://foo.com"
       end
     end
 
-    context 'when ssl is on' do
+    context 'when https is on' do
       before do
-        SiteSetting.expects(:use_ssl?).returns(true)
+        SiteSetting.expects(:use_https?).returns(true)
       end
 
       it 'has a non-ssl base url' do
@@ -54,6 +54,11 @@ describe Discourse do
 
     it 'returns the user specified by the site setting site_contact_username' do
       SiteSetting.stubs(:site_contact_username).returns(another_admin.username)
+      Discourse.site_contact_user.should == another_admin
+    end
+
+    it 'returns the user specified by the site setting site_contact_username regardless of its case' do
+      SiteSetting.stubs(:site_contact_username).returns(another_admin.username.upcase)
       Discourse.site_contact_user.should == another_admin
     end
 

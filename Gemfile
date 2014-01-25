@@ -65,13 +65,12 @@ else
   gem 'active_attr'
 end
 
-gem 'redis-rails'
+#gem 'redis-rails'
 gem 'hiredis'
 gem 'redis', :require => ["redis", "redis/connection/hiredis"]
 
 gem 'active_model_serializers'
 
-gem 'html_truncator'
 
 # we had issues with latest, stick to the rev till we figure this out
 # PR that makes it all hang together welcome
@@ -199,7 +198,7 @@ gem 'lru_redux'
 #  we are open to it. by deferring require to the initializer we can configure disourse installs without it
 
 gem 'flamegraph', require: false
-gem 'rack-mini-profiler',  '0.9.0.pre ', require: false
+gem 'rack-mini-profiler', require: false
 
 # used for caching, optional
 gem 'rack-cors', require: false

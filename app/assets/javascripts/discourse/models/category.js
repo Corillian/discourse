@@ -44,7 +44,7 @@ Discourse.Category = Discourse.Model.extend({
   }.property('url'),
 
   style: function() {
-    return "background-color: #" + this.get('category.color') + "; color: #" + (this.get('category.text_color')) + ";";
+    return "background-color: #" + this.get('category.color') + "; color: #" + this.get('category.text_color') + ";";
   }.property('color', 'text_color'),
 
   moreTopics: function() {
@@ -54,7 +54,7 @@ Discourse.Category = Discourse.Model.extend({
   save: function() {
     var url = "/categories";
     if (this.get('id')) {
-      url = "/categories/" + (this.get('id'));
+      url = "/categories/" + this.get('id');
     }
 
     return Discourse.ajax(url, {
@@ -195,7 +195,7 @@ Discourse.Category.reopenClass({
   },
 
   list: function() {
-    return Discourse.Site.currentProp('categories');
+    return Discourse.Site.currentProp('sortedCategories');
   },
 
   findSingleBySlug: function(slug) {
@@ -207,6 +207,12 @@ Discourse.Category.reopenClass({
   // TODO: optimise, slow for no real reason
   findById: function(id){
     return Discourse.Category.list().findBy('id', id);
+  },
+
+  findByIds: function(ids){
+    return ids.map(function(id){
+      return Discourse.Category.findById(id);
+    });
   },
 
   findBySlug: function(slug, parentSlug) {

@@ -15,11 +15,15 @@ Discourse.CategoryGroupComponent = Ember.Component.extend({
         });
       },
       onChangeItems: function(items) {
-        self.set("categories", items);
+        var categories = _.map(items, function(link) {
+          var slug = link.match(/href=['"]\/category\/([^'"]+)/)[1];
+          return Discourse.Category.findSingleBySlug(slug);
+        });
+        self.set("categories", categories);
       },
       template: Discourse.CategoryGroupComponent.templateFunction(),
-      transformComplete: function(category){
-        return Discourse.HTML.categoryLink(category);
+      transformComplete: function(category) {
+        return Discourse.HTML.categoryLink(category, {allowUncategorized: true});
       }
     });
   }
@@ -32,7 +36,7 @@ Discourse.CategoryGroupComponent.reopenClass({
                                     "<ul>" +
                                     "{{#each options}}" +
                                       "<li>" +
-                                          "{{categoryLinkRaw this}}" +
+                                          "{{categoryLinkRaw this allowUncategorized=true}}" +
                                       "</li>" +
                                       "{{/each}}" +
                                     "</ul>" +
