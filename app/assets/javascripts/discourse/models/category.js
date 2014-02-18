@@ -62,7 +62,6 @@ Discourse.Category = Discourse.Model.extend({
         name: this.get('name'),
         color: this.get('color'),
         text_color: this.get('text_color'),
-        hotness: this.get('hotness'),
         secure: this.get('secure'),
         permissions: this.get('permissionsForUpdate'),
         auto_close_hours: this.get('auto_close_hours'),
@@ -210,9 +209,14 @@ Discourse.Category.reopenClass({
   },
 
   findByIds: function(ids){
-    return ids.map(function(id){
-      return Discourse.Category.findById(id);
+    var categories = [];
+    _.each(ids, function(id){
+      var found = Discourse.Category.findById(id);
+      if(found){
+        categories.push(found);
+      }
     });
+    return categories;
   },
 
   findBySlug: function(slug, parentSlug) {

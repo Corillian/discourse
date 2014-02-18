@@ -1,6 +1,5 @@
 require "sidekiq/web"
-require "sidetiq/web"
-
+require_dependency "scheduler/web"
 require_dependency "admin_constraint"
 require_dependency "staff_constraint"
 require_dependency "homepage_constraint"
@@ -8,12 +7,15 @@ require_dependency "homepage_constraint"
 # This used to be User#username_format, but that causes a preload of the User object
 # and makes Guard not work properly.
 USERNAME_ROUTE_FORMAT = /[A-Za-z0-9\_]+/ unless defined? USERNAME_ROUTE_FORMAT
+BACKUP_ROUTE_FORMAT = /\d{4}(-\d{2}){2}-\d{6}\.tar\.gz/i unless defined? BACKUP_ROUTE_FORMAT
 
 Discourse::Application.routes.draw do
 
   match "/404", to: "exceptions#not_found", via: [:get, :post]
 
   mount Sidekiq::Web => "/sidekiq", constraints: AdminConstraint.new
+  
+  get "site" => "site#index"
 
   resources :forums
   get "srv/status" => "forums#status"
@@ -58,6 +60,7 @@ Discourse::Application.routes.draw do
       put "block"
       put "unblock"
       put "trust_level"
+      put "primary_group"
       get "leader_requirements"
     end
 
@@ -66,7 +69,9 @@ Discourse::Application.routes.draw do
     resources :email do
       collection do
         post "test"
-        get "logs"
+        get "all"
+        get "sent"
+        get "skipped"
         get "preview-digest" => "email#preview_digest"
       end
     end
@@ -87,13 +92,15 @@ Discourse::Application.routes.draw do
     resources :site_customizations, constraints: AdminConstraint.new
     resources :site_contents, constraints: AdminConstraint.new
     resources :site_content_types, constraints: AdminConstraint.new
-    resources :export, constraints: AdminConstraint.new
+
     get "version_check" => "versions#show"
+
     resources :dashboard, only: [:index] do
       collection do
         get "problems"
       end
     end
+
     resources :api, only: [:index], constraints: AdminConstraint.new do
       collection do
         post "key" => "api#create_master_key"
@@ -101,6 +108,24 @@ Discourse::Application.routes.draw do
         delete "key" => "api#revoke_key"
       end
     end
+
+    resources :backups, only: [:index, :create], constraints: AdminConstraint.new do
+      member do
+        get "" => "backups#show", constraints: { id: BACKUP_ROUTE_FORMAT }
+        delete "" => "backups#destroy", constraints: { id: BACKUP_ROUTE_FORMAT }
+        post "restore" => "backups#restore", constraints: { id: BACKUP_ROUTE_FORMAT }
+      end
+      collection do
+        get "logs" => "backups#logs"
+        get "status" => "backups#status"
+        get "cancel" => "backups#cancel"
+        get "rollback" => "backups#rollback"
+        put "readonly" => "backups#readonly"
+      end
+    end
+
+    get "memory_stats"=> "diagnostics#memory_stats", constraints: AdminConstraint.new
+
   end # admin namespace
 
   get "email_preferences" => "email#preferences_redirect", :as => "email_preferences_redirect"
@@ -113,10 +138,11 @@ Discourse::Application.routes.draw do
     end
   end
 
+  get "session/current" => "session#current"
   get "session/csrf" => "session#csrf"
   get "composer-messages" => "composer_messages#index"
 
-  resources :users, except: [:show, :update] do
+  resources :users, except: [:show, :update, :destroy] do
     collection do
       get "check_username"
       get "is_local_username"
@@ -155,12 +181,19 @@ Discourse::Application.routes.draw do
   post "users/:username/send_activation_email" => "users#send_activation_email", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/activity" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/activity/:filter" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}
+  delete "users/:username" => "users#destroy", constraints: {username: USERNAME_ROUTE_FORMAT}
 
   get "uploads/:site/:id/:sha.:extension" => "uploads#show", constraints: {site: /\w+/, id: /\d+/, sha: /[a-z0-9]{15,16}/i, extension: /\w{2,}/}
   post "uploads" => "uploads#create"
 
   get "posts/by_number/:topic_id/:post_number" => "posts#by_number"
   get "posts/:id/reply-history" => "posts#reply_history"
+
+  resources :groups do
+    get 'members'
+    get 'posts'
+    get 'posts_count'
+  end
 
   resources :posts do
     put "bookmark"
@@ -204,20 +237,20 @@ Discourse::Application.routes.draw do
   post "category/:category_id/move" => "categories#move"
   get "category/:category.rss" => "list#category_feed", format: :rss
   get "category/:parent_category/:category.rss" => "list#category_feed", format: :rss
-  get "category/:category" => "list#latest_category"
-  get "category/:category/none" => "list#latest_category_none"
-  get "category/:parent_category/:category" => "list#latest_category"
+  get "category/:category" => "list#category_latest"
+  get "category/:category/none" => "list#category_none_latest"
+  get "category/:parent_category/:category" => "list#parent_category_category_latest"
 
   get "top" => "list#top"
-  get "category/:category/l/top" => "list#top_category"
-  get "category/:category/none/l/top" => "list#top_category_none"
-  get "category/:parent_category/:category/l/top" => "list#top_category"
+  get "category/:category/l/top" => "list#category_top", as: "category_top"
+  get "category/:category/none/l/top" => "list#category_none_top", as: "category_none_top"
+  get "category/:parent_category/:category/l/top" => "list#parent_category_category_top", as: "parent_category_category_top"
 
   TopTopic.periods.each do |period|
     get "top/#{period}" => "list#top_#{period}"
-    get "category/:category/l/top/#{period}" => "list#top_#{period}_category"
-    get "category/:category/none/l/top/#{period}" => "list#top_#{period}_category_none"
-    get "category/:parent_category/:category/l/top/#{period}" => "list#top_#{period}_category"
+    get "category/:category/l/top/#{period}" => "list#category_top_#{period}", as: "category_top_#{period}"
+    get "category/:category/none/l/top/#{period}" => "list#category_none_top_#{period}", as: "category_none_top_#{period}"
+    get "category/:parent_category/:category/l/top/#{period}" => "list#parent_category_category_top_#{period}", as: "parent_category_category_top_#{period}"
   end
 
   Discourse.anonymous_filters.each do |filter|
@@ -227,12 +260,12 @@ Discourse::Application.routes.draw do
   Discourse.filters.each do |filter|
     get "#{filter}" => "list##{filter}"
     get "#{filter}/more" => "list##{filter}"
-    get "category/:category/l/#{filter}" => "list##{filter}_category"
-    get "category/:category/l/#{filter}/more" => "list##{filter}_category"
-    get "category/:category/none/l/#{filter}" => "list##{filter}_category_none"
-    get "category/:category/none/l/#{filter}/more" => "list##{filter}_category_none"
-    get "category/:parent_category/:category/l/#{filter}" => "list##{filter}_category"
-    get "category/:parent_category/:category/l/#{filter}/more" => "list##{filter}_category"
+    get "category/:category/l/#{filter}" => "list#category_#{filter}", as: "category_#{filter}"
+    get "category/:category/l/#{filter}/more" => "list#category_#{filter}"
+    get "category/:category/none/l/#{filter}" => "list#category_none_#{filter}", as: "category_none_#{filter}"
+    get "category/:category/none/l/#{filter}/more" => "list#category_none_#{filter}"
+    get "category/:parent_category/:category/l/#{filter}" => "list#parent_category_category_#{filter}", as: "parent_category_category_#{filter}"
+    get "category/:parent_category/:category/l/#{filter}/more" => "list#parent_category_category_#{filter}"
   end
 
   get "search" => "search#query"
@@ -242,6 +275,7 @@ Discourse::Application.routes.draw do
   post "t" => "topics#create"
   put "t/:id" => "topics#update"
   delete "t/:id" => "topics#destroy"
+  put "topics/bulk"
   post "topics/timings"
   get "topics/similar_to"
   get "topics/created-by/:username" => "list#topics_by", as: "topics_by", constraints: {username: USERNAME_ROUTE_FORMAT}
@@ -270,9 +304,11 @@ Discourse::Application.routes.draw do
   put "t/:topic_id/remove-allowed-user" => "topics#remove_allowed_user", constraints: {topic_id: /\d+/}
   put "t/:topic_id/recover" => "topics#recover", constraints: {topic_id: /\d+/}
   get "t/:topic_id/:post_number" => "topics#show", constraints: {topic_id: /\d+/, post_number: /\d+/}
+  get "t/:topic_id/last" => "topics#show", post_number: 99999999, constraints: {topic_id: /\d+/}
   get "t/:slug/:topic_id.rss" => "topics#feed", format: :rss, constraints: {topic_id: /\d+/}
   get "t/:slug/:topic_id" => "topics#show", constraints: {topic_id: /\d+/}
   get "t/:slug/:topic_id/:post_number" => "topics#show", constraints: {topic_id: /\d+/, post_number: /\d+/}
+  get "t/:slug/:topic_id/last" => "topics#show", post_number: 99999999, constraints: {topic_id: /\d+/}
   get "t/:topic_id/posts" => "topics#posts", constraints: {topic_id: /\d+/}
   post "t/:topic_id/timings" => "topics#timings", constraints: {topic_id: /\d+/}
   post "t/:topic_id/invite" => "topics#invite", constraints: {topic_id: /\d+/}

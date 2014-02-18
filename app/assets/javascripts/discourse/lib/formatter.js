@@ -92,11 +92,11 @@ Discourse.Formatter = (function(){
   breakUp = cappedMemoize(breakUp, 100);
 
   shortDate = function(date){
-    return moment(date).shortDate();
+    return moment(date).format(I18n.t("dates.medium.date_year"));
   };
 
   shortDateNoYear = function(date) {
-    return moment(date).shortDateNoYear();
+    return moment(date).format(I18n.t("dates.tiny.date_month"));
   };
 
   tinyDateYear = function(date) {
@@ -105,8 +105,7 @@ Discourse.Formatter = (function(){
 
   // http://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
   // TODO: locale support ?
-  toTitleCase = function toTitleCase(str)
-  {
+  toTitleCase = function toTitleCase(str) {
     return str.replace(/\w\S*/g, function(txt){
       return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
     });
@@ -114,7 +113,6 @@ Discourse.Formatter = (function(){
 
   longDate = function(dt) {
     if (!dt) return;
-
     return moment(dt).longDate();
   };
 
@@ -261,7 +259,7 @@ Discourse.Formatter = (function(){
       if ((new Date()).getFullYear() !== date.getFullYear()) {
         displayDate = shortDate(date);
       } else {
-        displayDate = moment(date).shortDateNoYear();
+        displayDate = shortDateNoYear(date);
       }
     } else {
       displayDate = relativeAgeMediumSpan(distance, leaveAgo);

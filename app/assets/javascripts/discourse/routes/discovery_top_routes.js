@@ -6,7 +6,7 @@
   @namespace Discourse
   @module Discourse
 **/
-Discourse.DiscoveryTopRoute = Discourse.Route.extend({
+Discourse.DiscoveryTopRoute = Discourse.Route.extend(Discourse.OpenComposer, {
   beforeModel: function() {
     this.controllerFor('navigationDefault').set('filterMode', 'top');
   },
@@ -20,12 +20,31 @@ Discourse.DiscoveryTopRoute = Discourse.Route.extend({
     Discourse.set('title', I18n.t('filters.with_topics', {filter: filterText}));
     this.controllerFor('discoveryTop').setProperties({ model: model, category: null });
     this.controllerFor('navigationDefault').set('canCreateTopic', model.get('can_create_topic'));
+
+    // If there's a draft, open the create topic composer
+    if (model.draft) {
+      this.controllerFor('composer').open({
+        action: Discourse.Composer.CREATE_TOPIC,
+        draft: model.draft,
+        draftKey: model.draft_key,
+        draftSequence: model.draft_sequence
+      });
+    }
   },
 
   renderTemplate: function() {
     this.render('navigation/default', { outlet: 'navigation-bar' });
     this.render('discovery/top', { outlet: 'list-container' });
+  },
+
+  actions: {
+
+    createTopic: function() {
+      this.openComposer(this.controllerFor('discoveryTop'));
+    }
+
   }
+
 });
 
 /**
@@ -36,7 +55,7 @@ Discourse.DiscoveryTopRoute = Discourse.Route.extend({
   @namespace Discourse
   @module Discourse
 **/
-Discourse.DiscoveryTopCategoryRoute = Discourse.Route.extend({
+Discourse.DiscoveryTopCategoryRoute = Discourse.Route.extend(Discourse.OpenComposer, {
   model: function(params) {
     return Discourse.Category.findBySlug(params.slug, params.parentSlug);
   },
@@ -87,7 +106,16 @@ Discourse.DiscoveryTopCategoryRoute = Discourse.Route.extend({
   deactivate: function() {
     this._super();
     this.controllerFor('search').set('searchContext', null);
+  },
+
+  actions: {
+
+    createTopic: function() {
+      this.openComposer(this.controllerFor('discoveryTop'));
+    }
+
   }
+
 });
 
 Discourse.DiscoveryTopCategoryNoneRoute = Discourse.DiscoveryTopCategoryRoute.extend({no_subcategories: true});

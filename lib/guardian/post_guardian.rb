@@ -1,4 +1,4 @@
-#mixin for all guardian methods dealing with post permisions
+#mixin for all guardian methods dealing with post permissions
 module PostGuardain
   # Can the user act on the post in a particular way.
   #  taken_actions = the list of actions the user has already taken
@@ -100,11 +100,16 @@ module PostGuardain
   end
 
   def can_see_post?(post)
-    post.present? && (is_staff? || (!post.deleted_at.present? && can_see_topic?(post.topic)))
+    post.present? &&
+      (is_admin? ||
+      ((is_moderator? || !post.deleted_at.present?) &&
+        can_see_topic?(post.topic)))
   end
 
   def can_see_post_revision?(post_revision)
-    post_revision.present? && (is_staff? || can_see_post?(post_revision.post))
+    return false if post_revision.nil?
+    return true if SiteSetting.edit_history_visible_to_public
+    authenticated? && (is_staff? || can_see_post?(post_revision.post))
   end
 
   def can_vote?(post, opts={})

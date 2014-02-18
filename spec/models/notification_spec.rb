@@ -173,14 +173,14 @@ describe Notification do
                            user_id: user.id,
                            topic_id: 2,
                            post_number: 1,
-                           data: '[]',
+                           data: '{}',
                            notification_type: Notification.types[:private_message])
 
       other = Notification.create!(read: false,
                            user_id: user.id,
                            topic_id: 2,
                            post_number: 1,
-                           data: '[]',
+                           data: '{}',
                            notification_type: Notification.types[:mentioned])
 
 
@@ -197,13 +197,14 @@ describe Notification do
       user = Fabricate(:user)
 
       (1..3).map do |i|
-        Notification.create!(read: false, user_id: user.id, topic_id: 2, post_number: i, data: '[]', notification_type: 1)
+        Notification.create!(read: false, user_id: user.id, topic_id: 2, post_number: i, data: '{}', notification_type: 1)
       end
-      Notification.create!(read: true, user_id: user.id, topic_id: 2, post_number: 4, data: '[]', notification_type: 1)
+      Notification.create!(read: true, user_id: user.id, topic_id: 2, post_number: 4, data: '{}', notification_type: 1)
 
       Notification.mark_posts_read(user,2,[1,2,3,4]).should == 3
     end
   end
+
 
   describe 'ensure consistency' do
     it 'deletes notifications if post is missing or deleted' do
@@ -228,4 +229,46 @@ describe Notification do
     end
   end
 
+end
+
+# pulling this out cause I don't want an observer
+describe Notification do
+  describe '#recent_report' do
+    let(:user){ Fabricate(:user) }
+    let(:post){ Fabricate(:post) }
+
+    def fab(type, read)
+      @i ||= 0
+      @i += 1
+      Notification.create!(read: read, user_id: user.id, topic_id: post.topic_id, post_number: post.post_number, data: '[]',
+                           notification_type: type, created_at: @i.days.from_now)
+    end
+
+    def unread_pm
+      fab(Notification.types[:private_message], false)
+    end
+
+    def pm
+      fab(Notification.types[:private_message], true)
+    end
+
+    def regular
+      fab(Notification.types[:liked], true)
+    end
+
+
+
+    it 'orders stuff correctly' do
+      a = unread_pm
+          regular
+      c = pm
+      d = regular
+
+      # bumps unread pms to front of list
+
+      notifications = Notification.recent_report(user, 3)
+      notifications.map{|n| n.id}.should == [a.id, d.id, c.id]
+
+    end
+  end
 end

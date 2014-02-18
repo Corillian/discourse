@@ -24,7 +24,6 @@ describe User do
   it { should have_one(:facebook_user_info).dependent(:destroy) }
   it { should have_one(:twitter_user_info).dependent(:destroy) }
   it { should have_one(:github_user_info).dependent(:destroy) }
-  it { should have_one(:cas_user_info).dependent(:destroy) }
   it { should have_one(:oauth2_user_info).dependent(:destroy) }
   it { should have_one(:user_stat).dependent(:destroy) }
   it { should belong_to(:approved_by) }
@@ -1028,4 +1027,57 @@ describe User do
 
   end
 
+  describe "update_posts_read!" do
+    context "with a UserVisit record" do
+      let!(:user) { Fabricate(:user) }
+      let!(:now)  { Time.zone.now }
+      before { user.update_last_seen!(now) }
+
+      it "with existing UserVisit record, increments the posts_read value" do
+        expect {
+          user_visit = user.update_posts_read!(2)
+          user_visit.posts_read.should == 2
+        }.to_not change { UserVisit.count }
+      end
+
+      it "with no existing UserVisit record, creates a new UserVisit record and increments the posts_read count" do
+        expect {
+          user_visit = user.update_posts_read!(3, 5.days.ago)
+          user_visit.posts_read.should == 3
+        }.to change { UserVisit.count }.by(1)
+      end
+    end
+  end
+
+  describe "primary_group_id" do
+    let!(:user) { Fabricate(:user) }
+
+    it "has no primary_group_id by default" do
+      user.primary_group_id.should be_nil
+    end
+
+    context "when the user has a group" do
+      let!(:group) { Fabricate(:group) }
+
+      before do
+        group.usernames = user.username
+        group.save
+        user.primary_group_id = group.id
+        user.save
+        user.reload
+      end
+
+      it "should allow us to use it as a primary group" do
+        user.primary_group_id.should == group.id
+
+        # If we remove the user from the group
+        group.usernames = ""
+        group.save
+
+        # It should unset it from the primary_group_id
+        user.reload
+        user.primary_group_id.should be_nil
+      end
+    end
+  end
 end

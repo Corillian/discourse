@@ -14,12 +14,17 @@ Discourse.PreferencesController = Discourse.ObjectController.extend({
   // By default we haven't saved anything
   saved: false,
 
+  newNameInput: null,
+
   saveDisabled: function() {
     if (this.get('saving')) return true;
-    if (Discourse.SiteSettings.enable_names && this.blank('name')) return true;
+    if (Discourse.SiteSettings.enable_names && this.blank('newNameInput')) return true;
     if (this.blank('email')) return true;
     return false;
-  }.property('saving', 'name', 'email'),
+  }.property('saving', 'newNameInput', 'email'),
+
+  cannotDeleteAccount: Em.computed.not('can_delete_account'),
+  deleteDisabled: Em.computed.or('saving', 'deleting', 'cannotDeleteAccount'),
 
   canEditName: function() {
     return Discourse.SiteSettings.enable_names;
@@ -57,6 +62,7 @@ Discourse.PreferencesController = Discourse.ObjectController.extend({
 
       // Cook the bio for preview
       var model = this.get('model');
+      model.set('name', this.get('newNameInput'));
       return model.save().then(function() {
         // model was saved
         self.set('saving', false);
@@ -90,6 +96,35 @@ Discourse.PreferencesController = Discourse.ObjectController.extend({
           });
         });
       }
+    },
+
+    delete: function() {
+      this.set('deleting', true);
+      var self = this,
+          message = I18n.t('user.delete_account_confirm'),
+          model = this.get('model'),
+          buttons = [{
+        "label": I18n.t("cancel"),
+        "class": "cancel-inline",
+        "link":  true,
+        "callback": function() {
+          self.set('deleting', false);
+        }
+      }, {
+        "label": '<i class="fa fa-exclamation-triangle"></i> ' + I18n.t("user.delete_account"),
+        "class": "btn btn-danger",
+        "callback": function() {
+          model.delete().then(function() {
+            bootbox.alert(I18n.t('user.deleted_yourself'), function() {
+              window.location.pathname = Discourse.getURL('/');
+            });
+          }, function() {
+            bootbox.alert(I18n.t('user.delete_yourself_not_allowed'));
+            self.set('deleting', false);
+          });
+        }
+      }];
+      bootbox.dialog(message, buttons, {"classes": "delete-account"});
     }
   }
 

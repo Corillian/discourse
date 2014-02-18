@@ -59,7 +59,8 @@ cs:
           one:   "1r"
           few:   "%{count}r"
           other: "%{count}let"
-        date_year: "D MMM 'YY"
+        date_month: "MMM D"
+        date_year: "MMM 'YY"
       medium:
         x_minutes:
           one: "1 minuta"
@@ -418,9 +419,6 @@ cs:
       github:
         title: "přes GitHub"
         message: "Autorizuji přes GitHub (ujistěte se, že nemáte zablokovaná popup okna)"
-      persona:
-        title: "přes Persona"
-        message: "Autorizuji přes Mozilla Persona (ujistěte se, že nemáte zablokovaná popup okna)"
 
     composer:
       posting_not_on_topic: "Rozepsali jste odpověď na téma \"{{title}}\", ale nyní máte otevřené jiné téma."
@@ -936,7 +934,6 @@ cs:
       list: "Seznam kategorií"
       no_description: "K této kategorii zatím není žádný popis."
       change_in_category_topic: "navštivte téma kategorie pro editaci jejího popisu"
-      hotness: "Popularita"
       already_used: 'Tato barva je již použita jinou kategorií'
       security: "Bezpečnost"
       auto_close_label: "Automaticky zavírat témata po:"

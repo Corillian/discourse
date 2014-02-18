@@ -49,7 +49,8 @@ en:
         almost_x_years:
           one:   "1y"
           other: "%{count}y"
-        date_year: "D MMM 'YY"
+        date_month: "MMM D"
+        date_year: "MMM 'YY"
       medium:
         x_minutes:
           one: "1 min"
@@ -60,6 +61,7 @@ en:
         x_days:
           one: "1 day"
           other: "%{count} days"
+        date_year: "D MMM YYYY"
       medium_with_ago:
         x_minutes:
           one: "1 min ago"
@@ -171,6 +173,20 @@ en:
       sent_by_user: "Sent by <a href='{{userUrl}}'>{{user}}</a>"
       sent_by_you: "Sent by <a href='{{userUrl}}'>you</a>"
 
+    groups:
+      title:
+        one: "group"
+        other: "groups"
+      members: "Members"
+      posts: "Posts"
+      alias_levels:
+        title: "Who can use this group as an alias?"
+        nobody: "Nobody"
+        only_admins: "Only admins"
+        mods_and_admins: "Only moderators and Admins"
+        members_mods_and_admins: "Only group members, moderators and admins"
+        everyone: "Everyone"
+
     user_action_groups:
       "1": "Likes Given"
       "2": "Likes Received"
@@ -195,7 +211,7 @@ en:
       latest: "Latest"
       latest_by: "latest by"
       toggle_ordering: "toggle ordering control"
-      subcategories: "Subcategories:"
+      subcategories: "Subcategories"
       topic_stats: "The number of new topics."
       topic_stat_sentence:
         one: "%{count} new topic in the past %{unit}."
@@ -220,7 +236,7 @@ en:
       invited_by: "Invited By"
       trust_level: "Trust Level"
       notifications: "Notifications"
-      dynamic_favicon: "Show incoming message notifications on favicon"
+      dynamic_favicon: "Show incoming message notifications on favicon (experimental)"
       external_links_in_new_tab: "Open all external links in a new tab"
       enable_quoting: "Enable quote reply for highlighted text"
       change: "change"
@@ -229,13 +245,21 @@ en:
       deleted: "(deleted)"
       suspended_notice: "This user is suspended until {{date}}."
       suspended_reason: "Reason: "
-      watch_new_topics: "Automatically watch all new topics posted on the forum"
+      mailing_list_mode: "Receive an email every time a post is made on the forum (unless you have muted the topic or category)"
       watched_categories: "Watched"
       watched_categories_instructions: "Same as Tracking, plus you will be notified of all new posts and topics."
       tracked_categories: "Tracked"
       tracked_categories_instructions: "You will automatically track all new and existing topics providing you a count of unread and new posts"
       muted_categories: "Muted"
       muted_categories_instructions: "You will not be notified of anything about this topic, and it will not appear on your unread tab."
+      delete_account: "Delete My Account"
+      delete_account_confirm: "Are you sure you want to permanently delete your account? This action cannot be undone!"
+      deleted_yourself: "Your account has been deleted successfully."
+      delete_yourself_not_allowed: "You cannot delete your account right now. Contact an admin to do delete your account for you."
+      unread_message_count:
+        one: "Messages (1)"
+        other: "Messages ({{count}})"
+        zero: "Messages"
 
       messages:
         all: "All"
@@ -284,12 +308,12 @@ en:
 
       name:
         title: "Name"
-        instructions: "The long version of your name. Publicly visible, and used for @name matching."
+        instructions: "The long version of your name; publicly visible."
         too_short: "Your name is too short."
         ok: "Your name looks good."
       username:
         title: "Username"
-        instructions: "Must be unique, no spaces. People can mention you as @username."
+        instructions: "Must be unique, no spaces, short. People can mention you as @username."
         short_instructions: "People can mention you as @{{username}}."
         available: "Your username is available."
         global_match: "Email matches the registered username."
@@ -391,6 +415,10 @@ en:
     loading: "Loading..."
     close: "Close"
     assets_changed_confirm: "Discourse has been updated, would you like to refresh to get the latest version?"
+    read_only_mode:
+      enabled: "An administrator has enabled read-only mode. You can continue to browse the site but interations won't work properly."
+      login_disabled: "Login is disabled while the site is in read only mode."
+
     learn_more: "learn more..."
 
     year: 'year'
@@ -462,18 +490,12 @@ en:
       facebook:
         title: "with Facebook"
         message: "Authenticating with Facebook (make sure pop up blockers are not enabled)"
-      cas:
-        title: "Log In with CAS"
-        message: "Authenticating with CAS (make sure pop up blockers are not enabled)"
       yahoo:
         title: "with Yahoo"
         message: "Authenticating with Yahoo (make sure pop up blockers are not enabled)"
       github:
         title: "with GitHub"
         message: "Authenticating with GitHub (make sure pop up blockers are not enabled)"
-      persona:
-        title: "with Persona"
-        message: "Authenticating with Mozilla Persona (make sure pop up blockers are not enabled)"
 
     composer:
       posting_not_on_topic: "Which topic do you want to reply to?"
@@ -502,6 +524,7 @@ en:
       cancel: "Cancel"
       create_topic: "Create Topic"
       create_pm: "Create Private Message"
+      title: "Or press Ctrl+Enter"
 
       users_placeholder: "Add a user"
       title_placeholder: "Type your title here. What is this discussion about in one brief sentence?"
@@ -593,12 +616,22 @@ en:
     current_user: 'go to your user page'
 
     starred:
-      title: 'Starred'
+      title: 'Star'
       help:
         star: 'add this topic to your starred list'
         unstar: 'remove this topic from your starred list'
 
     topics:
+      bulk:
+        toggle: "toggle bulk selection of topics"
+        actions: "Bulk Actions"
+        change_category: "Change Category"
+        close_topics: "Close Topics"
+        notification_level: "Change Notification Level"
+        selected:
+          one: "You have selected <b>1</b> topic."
+          other: "You have selected <b>{{count}}</b> topics."
+
       none:
         starred: "You haven't starred any topics yet. To star a topic, click or tap the star next to the title."
         unread: "You have no unread topics."
@@ -765,6 +798,11 @@ en:
       share:
         title: 'Share'
         help: 'share a link to this topic'
+
+      flag_topic:
+        title: 'Flag'
+        help: 'privately flag this topic for attention or send a private notification about it'
+        success_message: 'You successfully flagged this topic.'
 
       inviting: "Inviting..."
 
@@ -1021,14 +1059,13 @@ en:
       badge_colors: "Badge colors"
       background_color: "Background color"
       foreground_color: "Foreground color"
-      name_placeholder: "Should be short and succinct."
+      name_placeholder: "One or two words maximum"
       color_placeholder: "Any web color"
       delete_confirm: "Are you sure you want to delete this category?"
       delete_error: "There was an error deleting the category."
       list: "List Categories"
       no_description: "There is no description for this category, edit the topic definition."
       change_in_category_topic: "Edit Description"
-      hotness: "Hotness"
       already_used: 'This color has been used by another category'
       security: "Security"
       auto_close_label: "Auto-close topics after:"
@@ -1055,6 +1092,11 @@ en:
         at_least: "enter at least {{n}} characters"
         more: "{{n}} to go..."
         left: "{{n}} remaining"
+
+    flagging_topic:
+      title: "Why are you privately flagging this topic?"
+      action: "Flag Topic"
+      notify_action: "Notify"
 
     topic_map:
       title: "Topic Summary"
@@ -1144,7 +1186,7 @@ en:
         today: "Today"
         other_periods: "see more top topics"
         redirect_reasons:
-          new_user: "Welcome! As a new visitor, we thought you might like to start with the top discussion topics."
+          new_user: "Welcome! As a new visitor, this will be your homepage until you've had some time to look around at the forum. Here's some of the most popular topics from the past."
           not_seen_in_a_month: "Welcome back! We haven't seen you in a while. These are the top discussion topics since you've been away."
 
     browser_update: 'Unfortunately, <a href="http://www.discourse.org/faq/#browser">your browser is too old to work on this Discourse forum</a>. Please <a href="http://browsehappy.com">upgrade your browser</a>.'
@@ -1218,12 +1260,16 @@ en:
         disagree: "Disagree"
         disagree_title: "Disagree with flag, remove any flags from this post"
         delete_spammer_title: "Delete the user and all its posts and topics."
+        clear_topic_flags: "Done"
+        clear_topic_flags_title: "The topic has been investigated and issues have been resolved. Click Done to remove the flags."
 
         flagged_by: "Flagged by"
         system: "System"
         error: "Something went wrong"
         view_message: "Reply"
         no_results: "There are no flags."
+        topic_flagged: "This <strong>topic</strong> has been flagged."
+        visit_topic: "Visit the topic to investigate and take action."
 
         summary:
           action_type_3:
@@ -1243,6 +1289,8 @@ en:
             other: "spam x{{count}}"
 
       groups:
+        primary: "Primary Group"
+        no_primary: "(no primary group)"
         title: "Groups"
         edit: "Edit Groups"
         selector_placeholder: "add users"
@@ -1251,13 +1299,6 @@ en:
         delete: "Delete"
         delete_confirm: "Delete this group?"
         delete_failed: "Unable to delete group. If this is an automatic group, it cannot be destroyed."
-        alias_levels:
-          title: "Who can use this group as an alias?"
-          nobody: "Nobody"
-          only_admins: "Only admins"
-          mods_and_admins: "Only moderators and Admins"
-          members_mods_and_admins: "Only group members, moderators and admins"
-          everyone: "Everyone"
 
       api:
         generate_master: "Generate Master API Key"
@@ -1273,6 +1314,53 @@ en:
         info_html: "Your API key will allow you to create and update topics using JSON calls."
         all_users: "All Users"
         note_html: "Keep this key <strong>secret</strong>, all users that have it may create arbitrary posts on the forum as any user."
+
+      backups:
+        title: "Backups"
+        menu:
+          backups: "Backups"
+          logs: "Logs"
+        none: "No backup available."
+        read_only:
+          enable:
+            title: "Enable the read-only mode"
+            text: "Enable read-only mode"
+            confirm: "Are you sure you want to enable the read-only mode?"
+          disable:
+            title: "Disable the read-only mode"
+            text: "Disable read-only mode"
+        logs:
+          none: "No logs yet..."
+        columns:
+          filename: "Filename"
+          size: "Size"
+        operations:
+          is_running: "An operation is currently running..."
+          failed: "The {{operation}} failed. Please check the logs."
+          cancel:
+            text: "Cancel"
+            title: "Cancel the current operation"
+            confirm: "Are you sure you want to cancel the current operation?"
+          backup:
+            text: "Backup"
+            title: "Create a backup"
+            confirm: "Are you sure you want to start a new backup?"
+          download:
+            text: "Download"
+            title: "Download the backup"
+          destroy:
+            text: "Delete"
+            title: "Remove the backup"
+            confirm: "Are you sure you want to destroy this backup?"
+          restore:
+            is_disabled: "Restore is disabled in the site settings."
+            text: "Restore"
+            title: "Restore the backup"
+            confirm: "Are your sure you want to restore this backup?"
+          rollback:
+            text: "Rollback"
+            title: "Rollback the database to previous working state"
+            confirm: "Are your sure you want to rollback the database to the previous working state?"
 
       customize:
         title: "Customize"
@@ -1295,8 +1383,11 @@ en:
       email:
         title: "Email"
         settings: "Settings"
-        logs: "Logs"
+        all: "All"
+        sent: "Sent"
+        skipped: "Skipped"
         sent_at: "Sent At"
+        time: "Time"
         user: "User"
         email_type: "Email Type"
         to_address: "To Address"
@@ -1312,6 +1403,16 @@ en:
         text: "text"
         last_seen_user: "Last Seen User:"
         reply_key: "Reply Key"
+        skipped_reason: "Skip Reason"
+        logs:
+          none: "No logs found."
+          filters:
+            title: "Filter"
+            user_placeholder: "username"
+            address_placeholder: "em@il.com"
+            type_placeholder: "digest, signup..."
+            reply_key_placeholder: ""
+            skipped_reason_placeholder: "reason"
 
       logs:
         title: "Logs"
@@ -1530,13 +1631,14 @@ en:
           rate_limits: 'Rate Limits'
           developer: 'Developer'
           embedding: "Embedding"
+          legal: "Legal"
           uncategorized: 'Uncategorized'
 
     lightbox:
       download: "download"
 
     keyboard_shortcuts_help:
-      title: 'Keyboard Shortcuts'
+      title: 'Keyboard Shortcuts (experimental)'
       jump_to:
         title: 'Jump To'
         home: '<b>g</b> then <b>h</b> Home (Latest)'

@@ -27,8 +27,8 @@ nl:
   via: "%{username} via %{site_name}"
   is_reserved: is gereserveerd
 
-  site_under_maintenance: De site is momenteel in onderhoud.
-  operation_already_running: "Er draait al een %{operation}. Kan nu niet een nieuwe %{operation} starten."
+  backup:
+    operation_already_running: "Er draait al een %{operation}. Kan nu niet een nieuwe %{operation} starten."
 
   too_many_replies:
     one: "Sorry, nieuwe gebruikers mogen één reactie plaatsen in hetzelfde topic."
@@ -656,9 +656,7 @@ nl:
     github_client_id: "github_client_id (registreer op https://github.com/settings/applications)"
     github_client_secret: "github_client_secret (registreer op https://github.com/settings/applications)"
 
-    enable_persona_logins: "Zet inloggen met Mozilla Persona aan"
-
-    allow_import: "Sta import toe, die ALLE site-data vervangt. Zet op 'false' tenzij je imports gaat doen."
+    allow_restore: "Sta import toe, die ALLE site-data vervangt. Zet op 'false' tenzij je imports gaat doen."
 
     active_user_rate_limit_secs: "Hoe vaak we het 'last_seen_at'-veld updaten, in seconden."
     previous_visit_timeout_hours: "Hoe lang een bezoek duurt voordat we het als het 'vorige' bezoek beschouwen, in uren."
@@ -753,7 +751,6 @@ nl:
     pop3s_polling_host: "De host voor POP3S"
     pop3s_polling_username: "De username voor het POP3S e-mailaccount"
     pop3s_polling_password: "Het wachtwoord voor het POP3S e-mailaccount"
-    enable_watch_new_topics: "Sta toe dat gebruikers alle nieuwe topics in de gaten houden (optioneel) via hun gebruikersinstellingen"
 
     minimum_topics_similar: "Hoeveel topics moeten er in de database staan voordat er vergelijkbare topics getoond worden?"
 

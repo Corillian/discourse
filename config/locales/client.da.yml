@@ -49,6 +49,8 @@ da:
         almost_x_years:
           one:   "1å"
           other: "%{count}å"
+        date_month: "MMM D"
+        date_year: "MMM 'YY"
       medium:
         x_minutes:
           one: "1 min"
@@ -227,7 +229,6 @@ da:
       deleted: "(slettet)"
       suspended_notice: "Denne bruger er suspenderet indtil {{date}}."
       suspended_reason: "Begrundelse: "
-      watch_new_topics: "Overvåg automatisk alle nye emner i forummet"
       watched_categories: "Overvåget"
       watched_categories_instructions: "Du overvåger automatisk alle emner i disse kategorier"
       tracked_categories: "Fulgt"
@@ -466,9 +467,6 @@ da:
       github:
         title: "med GitHub"
         message: "Logger ind med GitHub (kontrollér at pop-op-blokering ikke er aktiv)"
-      persona:
-        title: "med Persona"
-        message: "Logger ind med Mozilla Persona (kontrollér at pop-op-blokering ikke er aktiv)"
 
     composer:
       posting_not_on_topic: "Hvilket emne vil du svare på?"
@@ -1011,7 +1009,6 @@ da:
       list: "Kategoriliste"
       no_description: "Der er ingen beskrivelse for denne kategori."
       change_in_category_topic: "besøg kategoriemnet for at redigere beskrivelsen"
-      hotness: "Popularitet"
       already_used: 'This color has been used by another category'
       security: "Sikkerhed"
       auto_close_label: "Luk automatisk emner efter:"

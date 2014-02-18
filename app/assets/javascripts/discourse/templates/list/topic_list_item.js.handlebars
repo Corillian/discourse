@@ -1,10 +1,16 @@
-{{#if controller.currentUser.id}}
+{{#if bulkSelectEnabled}}
   <td class='star'>
-    <a {{bind-attr class=":star :fa :fa-star starred:starred"}} {{action toggleStar this}} href='#' {{bind-attr title="starTooltip"}}></a>
+    {{input type="checkbox" checked=checked}}
   </td>
+{{else}}
+  {{#if canStar}}
+    <td class='star'>
+      <a {{bind-attr class=":star :fa :fa-star starred:starred"}} {{action toggleStar}} href='#' {{bind-attr title="starTooltip"}}></a>
+    </td>
+  {{/if}}
 {{/if}}
 
-<td class='main-link clearfix'>
+<td class='main-link clearfix' {{bind-attr colspan="titleColSpan"}}>
   {{topicStatus topic=this}}
   {{{topicLink this}}}
   {{#if unread}}
@@ -21,7 +27,7 @@
     <div class="topic-excerpt">
       {{{excerpt}}}
       {{#if excerptTruncated}}
-        {{#unless canClearPin}}<a href="{{lastUnreadUrl}}">{{i18n read_more}}</a>{{/unless}}
+        {{#unless canClearPin}}<a href="{{url}}">{{i18n read_more}}</a>{{/unless}}
       {{/if}}
       {{#if canClearPin}}
         <a href="#" {{action clearPin this}} title="{{i18n topic.clear_pin.help}}">{{i18n topic.clear_pin.title}}</a>
@@ -30,10 +36,8 @@
   {{/if}}
 </td>
 
-{{#unless controller.hideCategory}}
-<td class='category'>
-  {{categoryLink category}}
-</td>
+{{#unless hideCategory}}
+<td class='category'>{{boundCategoryLink category}}</td>
 {{/unless}}
 
 <td class='posters'>

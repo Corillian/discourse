@@ -39,9 +39,15 @@ module UserNotificationsHelper
 
   def first_paragraph_from(html)
     doc = Nokogiri::HTML(html)
+
+    result = ""
     doc.css('p').each do |p|
-      return p if p.text.present?
+      if p.text.present?
+        result << p.to_s
+        return result if result.size >= 100
+      end
     end
+    return result unless result.blank?
 
     # If there is no first paragaph, return the first div (onebox)
     doc.css('div').first
@@ -50,11 +56,11 @@ module UserNotificationsHelper
   def email_excerpt(html, posts_count)
     # If there's only one post, include the whole thing.
     if posts_count == 1
-      raw Sanitize.clean(html, sanitize_options)
+      raw Sanitize.clean(html, UserNotificationsHelper.sanitize_options)
     else
       # Otherwise, try just the first paragraph.
       para = first_paragraph_from(html)
-      raw Sanitize.clean(para.to_s, UserNotificationsHelper.sanitize_options)
+      raw Sanitize.clean(para, UserNotificationsHelper.sanitize_options)
     end
   end
 end

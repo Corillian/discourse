@@ -35,7 +35,6 @@ class User < ActiveRecord::Base
   has_one :facebook_user_info, dependent: :destroy
   has_one :twitter_user_info, dependent: :destroy
   has_one :github_user_info, dependent: :destroy
-  has_one :cas_user_info, dependent: :destroy
   has_one :oauth2_user_info, dependent: :destroy
   has_one :user_stat, dependent: :destroy
   belongs_to :approved_by, class_name: 'User'
@@ -83,6 +82,7 @@ class User < ActiveRecord::Base
   attr_accessor :notification_channel_position
 
   scope :blocked, -> { where(blocked: true) } # no index
+  scope :not_blocked, -> { where(blocked: false) } # no index
   scope :suspended, -> { where('suspended_till IS NOT NULL AND suspended_till > ?', Time.zone.now) } # no index
   scope :not_suspended, -> { where('suspended_till IS NULL') }
   # excluding fake users like the community user
@@ -95,6 +95,10 @@ class User < ActiveRecord::Base
 
   def self.username_length
     3..15
+  end
+
+  def custom_groups
+    groups.where(automatic: false)
   end
 
   def self.username_available?(username)
@@ -281,14 +285,21 @@ class User < ActiveRecord::Base
     last_seen_at.present?
   end
 
-  def has_visit_record?(date)
+  def visit_record_for(date)
     user_visits.where(visited_at: date).first
   end
 
   def update_visit_record!(date)
-    unless has_visit_record?(date)
-      user_stat.update_column(:days_visited, user_stat.days_visited + 1)
-      user_visits.create!(visited_at: date)
+    create_visit_record!(date) unless visit_record_for(date)
+  end
+
+  def update_posts_read!(num_posts, now=Time.zone.now)
+    if user_visit = visit_record_for(now.to_date)
+      user_visit.posts_read += num_posts
+      user_visit.save
+      user_visit
+    else
+      create_visit_record!(now.to_date, num_posts)
     end
   end
 
@@ -333,7 +344,7 @@ class User < ActiveRecord::Base
   end
 
   def avatar_template
-    uploaded_avatar_path || User.gravatar_template(email)
+    uploaded_avatar_path || User.gravatar_template(id != -1 ? email : "team@discourse.org")
   end
 
   # The following count methods are somewhat slow - definitely don't use them in a loop.
@@ -474,7 +485,7 @@ class User < ActiveRecord::Base
 
 
   def secure_category_ids
-    cats = self.staff? ? Category.where(read_restricted: true) : secure_categories.references(:categories)
+    cats = self.admin? ? Category.where(read_restricted: true) : secure_categories.references(:categories)
     cats.pluck('categories.id').sort
   end
 
@@ -554,6 +565,11 @@ class User < ActiveRecord::Base
 
   def create_email_token
     email_tokens.create(email: email)
+  end
+
+  def create_visit_record!(date, posts_read=0)
+    user_stat.update_column(:days_visited, user_stat.days_visited + 1)
+    user_visits.create!(visited_at: date, posts_read: posts_read)
   end
 
   def ensure_password_is_hashed
@@ -667,7 +683,7 @@ end
 #  flag_level                    :integer          default(0), not null
 #  ip_address                    :inet
 #  new_topic_duration_minutes    :integer
-#  external_links_in_new_tab     :boolean          default(FALSE), not null
+#  external_links_in_new_tab     :boolean          not null
 #  enable_quoting                :boolean          default(TRUE), not null
 #  moderator                     :boolean          default(FALSE)
 #  blocked                       :boolean          default(FALSE)
@@ -677,6 +693,7 @@ end
 #  uploaded_avatar_template      :string(255)
 #  uploaded_avatar_id            :integer
 #  email_always                  :boolean          default(FALSE), not null
+#  mailing_list_mode             :boolean          default(FALSE), not null
 #
 # Indexes
 #

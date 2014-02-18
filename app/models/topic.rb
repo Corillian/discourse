@@ -69,10 +69,6 @@ class Topic < ActiveRecord::Base
     self.title = TextCleaner.clean_title(TextSentinel.title_sentinel(title).text) if errors[:title].empty?
   end
 
-  unless rails4?
-    serialize :meta_data, ActiveRecord::Coders::Hstore
-  end
-
   belongs_to :category
   has_many :posts
   has_many :topic_allowed_users
@@ -759,6 +755,7 @@ end
 #  auto_close_started_at   :datetime
 #  deleted_by_id           :integer
 #  participant_count       :integer          default(1)
+#  word_count              :integer
 #
 # Indexes
 #

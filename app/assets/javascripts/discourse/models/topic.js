@@ -69,7 +69,11 @@ Discourse.Topic = Discourse.Model.extend({
   urlForPostNumber: function(postNumber) {
     var url = this.get('url');
     if (postNumber && (postNumber > 1)) {
-      url += "/" + postNumber;
+      if (postNumber >= this.get('highest_post_number')) {
+        url += "/last";
+      } else {
+        url += "/" + postNumber;
+      }
     }
     return url;
   },
@@ -256,6 +260,10 @@ Discourse.Topic = Discourse.Model.extend({
 
   },
 
+  isPinnedUncategorized: function() {
+    return this.get('pinned') && this.get('category.isUncategorizedCategory');
+  }.property('pinned', 'category.isUncategorizedCategory'),
+
   /**
     Clears the pin from a topic for the currently logged in user
 
@@ -305,7 +313,27 @@ Discourse.Topic.reopenClass({
     WATCHING: 3,
     TRACKING: 2,
     REGULAR: 1,
-    MUTE: 0
+    MUTED: 0
+  },
+
+  createActionSummary: function(result) {
+    if (result.actions_summary) {
+      var lookup = Em.Object.create();
+      result.actions_summary = result.actions_summary.map(function(a) {
+        a.post = result;
+        a.actionType = Discourse.Site.current().postActionTypeById(a.id);
+        var actionSummary = Discourse.ActionSummary.create(a);
+        lookup.set(a.actionType.get('name_key'), actionSummary);
+        return actionSummary;
+      });
+      result.set('actionByName', lookup);
+    }
+  },
+
+  create: function() {
+    var result = this._super.apply(this, arguments);
+    this.createActionSummary(result);
+    return result;
   },
 
   /**
@@ -382,6 +410,16 @@ Discourse.Topic.reopenClass({
       promise.reject(new Error("error moving posts topic"));
     });
     return promise;
+  },
+
+  bulkOperation: function(topics, operation) {
+    return Discourse.ajax("/topics/bulk", {
+      type: 'PUT',
+      data: {
+        topic_ids: topics.map(function(t) { return t.get('id'); }),
+        operation: operation
+      }
+    });
   }
 
 });

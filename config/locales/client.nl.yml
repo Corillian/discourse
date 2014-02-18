@@ -53,7 +53,8 @@ nl:
         almost_x_years:
           one:   1j
           other: "%{count}j"
-        date_year: "D MMM 'YY"
+        date_month: "MMM D"
+        date_year: "MMM 'YY"
       medium:
         x_minutes:
           one: 1 min
@@ -174,6 +175,15 @@ nl:
       sent_by_user: "Verzonden door <a href='{{userUrl}}'>{{user}}</a>"
       sent_by_you: "Verzonden door <a href='{{userUrl}}'>jou</a>"
 
+    groups:
+      alias_levels:
+        title: "Wie kan deze groep als alias gebruiken?"
+        nobody: "Niemand"
+        only_admins: "Alleen admins"
+        mods_and_admins: "Alleen moderatoren and admins"
+        members_mods_and_admins: "Alleen leden van de groep, moderatoren en admins"
+        everyone: "Iedereen"
+
     user_action_groups:
       "1": "Likes gegeven"
       "2": "Likes ontvangen"
@@ -232,7 +242,6 @@ nl:
       deleted: (verwijderd)
       suspended_notice: "Deze gebruiker is geschorst tot {{date}}."
       suspended_reason: "Reden: "
-      watch_new_topics: "Houd alle nieuwe topics in het forum automatisch in de gaten"
       watched_categories: "In de gaten gehouden"
       watched_categories_instructions: "Zelfde als volgen, daarnaast zou je een notificatie ontvangen voor alle nieuwe berichten en topics"
       tracked_categories: "Gevolgd"
@@ -472,9 +481,6 @@ nl:
       github:
         title: met Github
         message: "Authenticatie met Github (zorg ervoor dat je popup blocker uit staat)"
-      persona:
-        title: met Persona
-        message: "Authenticatie met Mozilla Persona (zorg ervoor dat je popup blocker uit staat)"
 
     composer:
       posting_not_on_topic: "In welke topic wil je je antwoord plaatsen?"
@@ -1019,7 +1025,6 @@ nl:
       list: Lijst van categorieën
       no_description: Er is geen omschrijving voor deze categorie
       change_in_category_topic: Wijzig omschrijving
-      hotness: Populariteit
       already_used: Deze kleur is al in gebruik door een andere categorie
       security: Beveiliging
       auto_close_label: "Sluit topics automatisch na:"
@@ -1242,13 +1247,6 @@ nl:
         delete: Verwijder
         delete_confirm: Verwijder deze groepen?
         delete_failed: "Unable to delete group. If this is an automatic group, it cannot be destroyed."
-        alias_levels:
-          title: "Wie kan deze groep als alias gebruiken?"
-          nobody: "Niemand"
-          only_admins: "Alleen admins"
-          mods_and_admins: "Alleen moderatoren and admins"
-          members_mods_and_admins: "Alleen leden van de groep, moderatoren en admins"
-          everyone: "Iedereen"
 
       api:
         generate_master: Genereer Master API Key

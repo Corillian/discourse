@@ -19,6 +19,9 @@
             <button class='btn btn-small' {{action cancelEditingTopic}}><i class='fa fa-times'></i></button>
           {{else}}
             <h1>
+              {{#if category.parentCategory}}
+                {{boundCategoryLink category.parentCategory}}
+              {{/if}}
               {{boundCategoryLink category}}
               {{#if details.loaded}}
                 {{topicStatus topic=model}}
@@ -64,7 +67,14 @@
           {{/if}}
 
           {{#unless postStream.loadingFilter}}
-            {{cloaked-collection cloakView="post" idProperty="post_number" defaultHeight="200" content=postStream.posts slackRatio=slackRatio loadingHTML=controller.loadingHTML}}
+            {{cloaked-collection cloakView="post"
+                                 idProperty="post_number"
+                                 defaultHeight="200"
+                                 content=postStream.posts
+                                 slackRatio=slackRatio
+                                 loadingHTML=controller.loadingHTML
+                                 preservesContext="true"
+                                 offsetFixed="header"}}
           {{/unless}}
 
           {{#if postStream.loadingBelow}}

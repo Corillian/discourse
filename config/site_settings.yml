@@ -30,6 +30,12 @@ basic:
   ga_domain_name:
     client: true
     default: ''
+  ga_universal_tracking_code:
+    client: true
+    default: ''
+  ga_universal_domain_name:
+    client: true
+    default: 'auto'
   category_featured_topics:
     client: true
     default: 3
@@ -97,19 +103,11 @@ users:
     default: true
   facebook_app_id: ''
   facebook_app_secret: ''
-  enable_cas_logins:
-    client: true
-    default: false
-  cas_hostname: ''
-  cas_domainname: ''
   enable_github_logins:
     client: true
     default: false
   github_client_id: ''
   github_client_secret: ''
-  enable_persona_logins:
-    client: true
-    default: false
   enforce_global_nicknames: false
   discourse_org_access_key: ''
   invite_expiry_days: 4
@@ -215,6 +213,7 @@ posting:
 email:
   email_time_window_mins: 10
   email_posts_context: 5
+  digest_min_excerpt_length: 100
   default_digest_email_frequency:
     default: 7
     enum: 'DigestEmailSiteSetting'
@@ -226,7 +225,7 @@ email:
   pop3s_polling_port: 995
   pop3s_polling_username: ''
   pop3s_polling_password: ''
-  enable_watch_new_topics:
+  enable_mailing_list_mode:
     default: false
     client: true
 
@@ -363,14 +362,20 @@ embedding:
   embed_category: ''
   embed_post_limit: 100
 
-uncategorized:
+legal:
   tos_url:
     client: true
     default: ''
-  faq_url:
+  privacy_policy_url:
     client: true
     default: ''
-  privacy_policy_url:
+  tos_accept_required:
+    client: true
+    default: false
+
+uncategorized:
+
+  faq_url:
     client: true
     default: ''
 
@@ -408,7 +413,9 @@ uncategorized:
   summary_likes_required: 1
   summary_percent_filter: 20
   send_welcome_message: true
-  allow_import: false
+  allow_restore:
+    client: true
+    default: false
   educate_until_posts:
     client: true
     default: 2
