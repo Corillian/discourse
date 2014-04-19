@@ -44,8 +44,13 @@ class Search
     @opts = opts || {}
     @guardian = @opts[:guardian] || Guardian.new
     @search_context = @opts[:search_context]
+    @include_blurbs = @opts[:include_blurbs] || false
     @limit = Search.per_facet * Search.facets.size
     @results = GroupedSearchResults.new(@opts[:type_filter])
+
+    if @search_context.is_a?(Topic) && @search_context.posts_count < SiteSetting.min_posts_for_search_in_topic
+      @search_context = nil
+    end
   end
 
   # Query a term
@@ -82,6 +87,9 @@ class Search
 
       add_more_topics_if_expected
       @results
+    rescue ActiveRecord::StatementInvalid
+      # In the event of a PG:Error return nothing, it is likely they used a foreign language whose
+      # locale is not supported by postgres
     end
 
     # Add more topics if we expected them
@@ -94,7 +102,7 @@ class Search
         extra_posts = posts_query(expected_topics * Search.burst_factor)
         extra_posts = extra_posts.where("posts.topic_id NOT in (?)", @results.topic_ids) if @results.topic_ids.present?
         extra_posts.each do |p|
-          @results.add_result(SearchResult.from_post(p, @search_context, @term))
+          @results.add_result(SearchResult.from_post(p, @search_context, @term, @include_blurbs))
         end
       end
     end
@@ -206,7 +214,7 @@ class Search
 
 
       posts.each do |p|
-        @results.add_result(SearchResult.from_post(p, @search_context, @term))
+        @results.add_result(SearchResult.from_post(p, @search_context, @term, @include_blurbs))
       end
 
     end

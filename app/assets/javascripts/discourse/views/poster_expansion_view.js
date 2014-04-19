@@ -10,12 +10,12 @@ var clickOutsideEventName = "mousedown.outside-poster-expansion";
 
 Discourse.PosterExpansionView = Discourse.View.extend({
   elementId: 'poster-expansion',
-  classNameBindings: ['controller.visible::hidden'],
+  classNameBindings: ['controller.visible::hidden', 'controller.showBadges'],
 
   // Position the expansion when the post changes
   _visibleChanged: function() {
     var post = this.get('controller.model'),
-        self = this;
+        div = this.$();
 
     Em.run.schedule('afterRender', function() {
       if (post) {
@@ -25,7 +25,7 @@ Discourse.PosterExpansionView = Discourse.View.extend({
 
         if (position) {
           position.left += $avatar.width() + 5;
-          self.$().css(position);
+          div.css(position);
         }
       }
     });

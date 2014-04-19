@@ -1,151 +1,165 @@
-You are now the proud owner of your very own Civilized Discourse Construction Kit. Congratulations! As a new forum admin, here's a quick start guide to get you going:
+Congratulations, you are now the proud owner of your very own [Civilized Discourse Construction Kit](http://www.discourse.org). :hatching_chick:
 
-### Login as an Admin
+Let's get started!
 
-You can login via the blue "Log in" button in the upper-right hand corner of Discourse.
+### Admin Dashboard
 
-If you added your email address to the `developer_emails` setting in your discourse.conf file, or included it in the DISCOURSE_DEVELOPER_EMAILS environment variable, then be sure to use that email address in the signup form so that you're automatically granted admin privileges. If not, then be sure to do that and restart Discourse.
+As an admin you have total control over this Discourse instance &mdash; and with great power comes great responsibility. Exercise your admin superpowers via the admin dashboard at
 
-### Access the Admin Console
+[**/admin**](/admin)
 
-To access the Discourse admin console, add `/admin` to the base URL, like so:
+You can also access it via the "hamburger" menu in the upper right. Admin functions are generally marked with the wrench :wrench:  icon, so look for that.
 
-### http://discourse.example.com/admin
+Come back and spend time exploring your admin dashboard. But first things first!
 
-From here, you'll be able to access the Admin functions, all of which are very important, so do check each one out.
+### Enter Required Settings
 
-### Required Settings
+Go to the [Required tab](/admin/site_settings/category/required) of the site settings and enter all the required basic items. **Until you set these required values, _your Discourse is broken!_**
 
-Go to the Required tab of the Settings tab in admin (`/admin/site_settings/category/required`) and change all the settings listed there.
+By default you get the same standard generic "penciled in" Discourse logo everyone gets. Look for the [**assets for the forum design**](/t/assets-for-the-forum-design/5) topic; follow the instructions there to upload your logos to that topic, and then paste the uploaded image paths into the required logo settings.
 
-To add logos and favicons to your site, create a topic and add the photos to a post in that topic. After submitting the post with the logos for your site, click the wrench on the right side of the topic and click the Make Invisible button to hide the topic. Right click on the images to get their URLs. Add the URL of the larger logo to the `logo_url` setting, and URL of the smaller logo to the `logo_small_url` setting. Also update the `favicon_url`.
+### Establish Staff
 
-The admin dashboard at `/admin` is a useful place to check often. If problems are detected with your site settings or deployment, they will be reported there.
+You are the only staff member right now. Staff members are official representatives of this community and they come in two varieties:
 
+1. **Admins**, who can do anything and configure anything on this site. 
+2. **Moderators**, who can edit all posts and users, but cannot add categories or change any site settings. 
 
-### Enable Twitter Logins
+It's lonely at the top. You may want to grant other users staff abilities &ndash; to do so click the admin button :wrench: on their user page, then look for the grant buttons.
 
-1. From the Admin console, visit User Settings, by clicking **Settings**, then **User**.
-2. Scroll down to the two text fields named:
+### Private or Public?
 
-  `twitter_consumer_key`
-  `twitter_consumer_secret`
+Discourse assumes you want a public discussion area. If you prefer a private one, check out these settings:
 
-3. Enter in your respective **key** and **secret** that is issued to you via dev.twitter.com. If you are unsure of what your key/secret is, or you have yet to obtain one, visit the Twitter Dev API FAQ on [how to obtain these keys](https://dev.twitter.com/docs/faq#7447).
-4. In the Twitter settings, the callback url must use the path `/auth/twitter/callback` at your domain. e.g., `http://discuss.example.com/auth/twitter/callback`
+- `must_approve_users`
+- `login_required`
+- `invite_only`
 
-### Enable Facebook Logins
+If you only want some parts to be private, there is a built in Staff category, and you can create more private categories that are only visible to certain groups of users.
 
-1. From the Admin console, visit User Settings, by clicking **Settings**, then **User**.
-2. Scroll down to the two text fields named:
+### Configure Login Methods
 
-  `facebook_app_id`
-  `facebook_app_secret`
+By default, users can log in with Google, Yahoo, and traditional local username and password accounts. Want more?
 
-3. Enter in your respective **id** and **secret** that is issued to you via developers.facebook.com. If you are unsure of what your id/secret is, or you have yet to obtain one, visit the [Facebook Developers :: Access Tokens and Types](https://developers.facebook.com/docs/concepts/login/access-tokens-and-types/) page for more information.
-4. In the Facebook App settings, you must enable "Website with Facebook Login" under "Select how your app integrates with Facebook" and set the Site URL to use the path `/auth/facebook/callback` at your site domain. e.g., `http://discuss.example.com/auth/facebook/callback`.
+- [Configure Twitter logins](https://meta.discourse.org/t/configuring-twitter-login-for-discourse/13395)
+- [Configure Facebook logins](https://meta.discourse.org/t/configuring-facebook-login-for-discourse/13394)
+- [Configure GitHub logins](https://meta.discourse.org/t/configuring-github-login-for-discourse/13745)
 
-### Enable GitHub Logins
+If you want to get extra-fancy you can also [set up single-sign on](https://meta.discourse.org/t/official-single-sign-on-for-discourse/13045), or even [build your own oAuth 2 login](https://meta.discourse.org/t/login-to-discourse-with-custom-oauth2-provider/14717).
 
-1. From the Admin console, visit User Settings, by clicking **Settings**, then **User**.
-2. Scroll down to the two text fields named:
+### Test Email
 
-  `github_client_id`
-  `github_client_secret`
+Discourse relies heavily on email for signups and conversation notifications. **Test your email to make sure it is working!**  Visit [the admin email settings](/admin/email), then enter an email address in the "email address to test" field and click <kbd>send test email</kbd>.
 
-3. Enter in your respective **id** and **secret** that is issued to you via https://github.com/settings/applications/new. If you are unsure of what your id/secret is, or you have yet to obtain one, visit the [GitHub Developers :: Applications](https://github.com/settings/applications/) page for more information.
-4. Be sure to set the Callback URL to use the path `/auth/github/callback` at your site domain. e.g., `http://discuss.example.com/auth/github/callback`.
+- You got the test email? Great! **Read that email closely**, it has important email deliverability tips. 
+- You didn't get the test email? This means your users probably aren't getting any signup or notification emails either.
 
-### Creating New Categories
+Email deliverability can be hard. We strongly recommend using dedicated email services like [Mandrill](http://mandrill.com), [MailGun](http://www.mailgun.com/), or [MailJet](http://www.mailjet.com/), which offer generous free plans that works fine for most communities.
 
-You will get two new categories by default: meta and lounge. [Check out the meta category. It's important!](/category/meta). [The Lounge category](/category/lounge) is a perk for users who reach trust level 3. Only staff and those trusted users can view topics in the Lounge.
+If you'd like to enable *replying* to topics via email, [see this howto](https://meta.discourse.org/t/set-up-reply-via-email-support/14003).
 
-But you may want more.
+### Categories
 
-Categories are the **colored labels** used to organize groups of topics in Discourse, and they are completely customizable:
+You have three categories out of the box:
 
-1. Log in to Discourse via an account that has Administrative access.
-2. Click the "Categories" button in the navigation along the top of the site.
-3. You should now see a "Create Category" button at the top.
-4. Select a name and set of colors for the category for it in the dialog that pops up.
-5. Write a paragraph describing what the category is about in the first post of the Category Definition Topic associated with that category. It'll be pinned to the top of the category, and used in a bunch of places.
+1. [meta](/category/meta) – general discussion about the site itself. [It's important!](https://meta.discourse.org/t/what-is-meta/5249)
+2. [lounge](/category/lounge) – a perk for users at trust level 3 and higher
+3. [staff](/category/staff) – visible only to staff (admins and moderators)
 
-### File and Image Uploads
+**Don't create too many initial categories**, as you can overwhelm your audience. You can always add more categories later, and easily bulk recategorize topics any time. It's better to figure out organization as you go rather than assuming you'll get it all right from the beginning (hint: you won't).
 
-Image uploads should work fine out of the box, stored locally, though you can configure it so that images users upload go to Amazon S3 by [following this howto.](http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229?u=codinghorror).
+To add a category, visit the [categories page](/categories), then click Create Category at the upper right. You can set security per-category so only certain groups of users can see topics in that category.
 
-Attaching other file types is supported too, read [the announcement](http://meta.discourse.org/t/new-attachments/8609) for details.
+Every category has an initial "About the {foo} category" topic created alongside it. This topic will be pinned to the top of the category, and the description you enter here for the category will used in a bunch of places. So edit that first post and give your new category a good, clear description!
 
-### Test Email Sending
+### File Uploads
 
-Discourse relies heavily on emails to notify folks about conversations happening on the forum. Visit [the admin email settings](/admin/email), then enter an email address in the "email address to test" field and click <kbd>send test email</kbd>. Did it work? Great! **Read this test email closely**, it has critical email deliverability tips. If you didn't get the test email, your users may not be getting any email notifications, either.
+Basic image uploads work fine out of the box stored locally, provided you have adequate disk space.
 
-Also, achieving proper email deliverability can be hard. We strongly recommend something like [Mandrill](http://mandrill.com), which solves all this for you with virtually no effort, and has a generous free plan that works fine for small forums.
+- If you'd like other sorts of files to be uploaded beyond just images, modify the [file settings](/admin/site_settings/category/files).
 
-### Set your Terms of Service and User Content Licensing
+- If you'd rather store your images and files on Amazon S3, [follow this howto](http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229).
 
-Make sure you set your company name and domain variables for the [Terms of Service](/tos), which is a creative commons document.
+### Edit the Pinned Welcome Topic
 
-You'll also need to make an important legal decision about the content users post on your forum:
+One of the default topics is [Welcome to Discourse](/t/welcome/6). This topic is pinned globally, so it will appear on the homepage for all new users. Your welcome topic is important because it is the first thing you visitors will see:
 
-> Your users will always retain copyright on their posts, and will always grant the forum owner enough rights to include their content on the forum.
->
-> Who is allowed to republish the content posted on this forum?
->
-> - Only the author
-> - Author and the owner of this forum
-> - Anybody
+- Where am I?
+- Who is this discussion area for? 
+- What can I [find here](https://www.youtube.com/watch?v=d0VNHe5fq30)?
+- Why should I visit here?
 
-Please see our [admin User Content Licensing](/admin/site_contents/tos_user_content_license) page for a brief form that will let you cut and paste your decision into section #3 of the [Terms of Service](/tos#3).
+[Edit this welcome topic](/t/welcome/6) and write a **brief introduction to your community**. Think of it as your "elevator pitch" &ndash; how would you describe this site to a stranger on an elevator when you had about 1 minute to talk?
 
-### Customize CSS / Header Logos
+Pinning topics works a little differently in Discourse:
 
-1. Access the Administrative console, and select "Customize".
+- Users can hide pins on topics once they have read them via the controls at the bottom of the topic, so they don't stay pinned forever for everyone.
+- When you pin a topic, you can choose to pin it globally to all topic lists, or pin it only within its category.
 
-2. You'll see a list of styles down the left-hand column, and two subcategories: "Stylesheet" and "Header".
-  - Insert your custom CSS styles into the "Stylesheet" section.
-  - Insert your custom HTML header into the "Header" section.
+### Customize CSS / Headers
+
+You can specify custom CSS and custom HTML headers/footers to give your Discourse forum a unique look.
+
+1. In the admin console, select "Customize".
+
+2. Create a new site customization.
+
+3. Enter a customization:
+  - Custom CSS styles go in the "Stylesheet" section.
+  - Custom HTML headers go in the "Header" section.
+  - Ditto for mobile, except these only show up on detected mobile devices.
 
 3. **Enable:** If you wish to have your styles and header take effect on the site, check the "Enable" checkbox, then click "Save". This is also known as "live reloading", which will cause your changes to take effect immediately.
 
 4. **Preview:** If you wish to preview your changes before saving them, click the "preview" link at the bottom of the screen. Your changes will be applied to the site as they are currently saved in the "Customize" panel. If you aren't happy with your changes and wish to revert, simply click the "Undo Preview" link.
 
-5. **Override:** If you wish to have your styles override the default styles on the site, check the "Override Default" checkbox.
-
 Here is some example HTML that would go into the "Header" section within "Customize":
 
 ```
-<div class='myheader' style='text-align:center;background-color:#CDCDCD'>
-<a href="/"><img src="http://dummyimage.com/1111x90/CDCDCD/000000.jpg&text=Placeholder+Custom+Header" width="1111px" height="90px" border="0" /></a>
+<div id="top-navbar" class="container">
+<span id="top-navbar-links" style="height:20px;">
+  <a href="http://example.com">Home</a> | 
+  <a href="http://example.com/about/">About</a> | 
+  <a href="http://example.com/news/">News</a> | 
+  <a href="http://example.com/products/">Products</a> | 
+  <a href="http://blog.example.com/blog">Blog</a> | 
+  <a href="http://forums.example.com/">Forums</a>
+</span>
 </div>
 ```
 
-### Write a welcome topic and pin it
+### User Content Licensing
 
-What is this forum for? Who should visit? Write a **brief introductory topic for your forum** that explains what the heck is going on here, so new users who find your forum will have some idea what they're getting into, and what the purpose of your forum is.
+Out of the box, Discourse defaults to [Creative Commons licensing](https://creativecommons.org/).
 
-- Don't write a novel because nobody will read it. What is the "elevator pitch" for your forum? How would you describe this forum to a stranger on an elevator when you have about 1 minute to talk?
-- do *not* give this topic a category!
-- after creating the topic, click the wrench icon in the upper right to get the staff menu for the topic
-- select Pin Topic
+> Your users will always retain copyright on their posts, and will always grant the forum owner enough rights to include their content on the forum.
+>
+> Who is allowed to republish the content posted on this forum?
+> 
+> 1. Only the author
+> 2. Author and the owner of this forum
+> 3. Anybody\*
 
-You should know that pinning topics works a little differently in Discourse than other forums.
+Number 3 is the Discourse default &ndash; that's [Creative Commons BY-NC-SA 3.0](http://creativecommons.org/licenses/by-nc-sa/3.0/deed.en_US).
 
-- Users can clear pins on topics once they have read them, so they don't stay pinned forever for everyone
-- Pinned topics with a category will only "stick" to the top of their category
-- Pinned topics with no category are pinned to the top of all topic lists
+ If that's not what you want, please see our [admin User Content Licensing](/admin/site_contents/tos_user_content_license) page for a brief form that will let you cut and paste your decision into section #3 of the [Terms of Service](/tos#3). 
 
-### Ruby and Rails Performance Tweaks<p>
+### Maintenance
 
-- Be sure you have at least 2 GB of memory for your Discourse server. You might be able to squeak by with less, but we don't recommend it, unless you are an expert.
+- 1GB of memory, with swap, is the absolute minimum required for a small Discourse community. If your community is expected to grow, you'll want more memory.
 
-- We strongly advise setting `RUBY_GC_MALLOC_LIMIT` to something much higher than the default for optimal performance. See [this meta.discourse topic for more details][1].
+- Hopefully you are running [in our Docker container install](https://github.com/discourse/discourse/blob/master/docs/INSTALL.md); it's the only one we officially support. That will guarantee easy updates, and all recommended optimizations from the Discourse team.
 
-### Need more Help?<p>
+- To upgrade your instance, visit [/admin/docker](/admin/docker). Refresh the page a few times, and you will see an <kbd>upgrade</kbd> button appear. Press it! Then wait for the updating text at the bottom of the browser to know when you're done.
 
-This guide is a work in progress and we will be continually improving it with your feedback.
+- Some other things you might eventually want to set up:
+   - [Automatic daily backups](https://meta.discourse.org/t/configure-automatic-backups-for-discourse/14855)
+   - [HTTPS support](https://meta.discourse.org/t/allowing-ssl-for-your-discourse-docker-setup/13847)
+   - [Content Delivery Network support](https://meta.discourse.org/t/enable-a-cdn-for-your-discourse/14857) 
+   -  [Multiple Discourse instances on the same server](https://meta.discourse.org/t/multisite-configuration-with-docker/14084)
 
-For more assistance on configuring and running your Discourse forum, see [the support category](http://meta.discourse.org/category/support) or [the hosting category](http://meta.discourse.org/category/hosting) on meta.discourse.org.
+### Need more Help?
 
-[1]: http://meta.discourse.org/t/tuning-ruby-and-rails-for-discourse/4126
-[2]: http://meta.discourse.org/category/support
+This guide is a [work in progress](https://github.com/discourse/discourse/blob/master/docs/ADMIN-QUICK-START-GUIDE.md) and we hope to continually improve it with your feedback.
+
+For more assistance on configuring and running your Discourse forum, see [the support category](http://meta.discourse.org/category/support) or [the hosting category](http://meta.discourse.org/category/hosting) on [meta.discourse.org](http://meta.discourse.org).

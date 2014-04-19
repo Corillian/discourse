@@ -23,6 +23,11 @@ class SiteSetting < ActiveRecord::Base
     load_settings(file)
   end
 
+  client_settings << :available_locales
+
+  def self.available_locales
+    LocaleSiteSetting.values.map{ |e| e[:value] }.join('|')
+  end
 
   def self.call_discourse_hub?
     self.enforce_global_nicknames? && self.discourse_org_access_key.present?
@@ -67,30 +72,15 @@ class SiteSetting < ActiveRecord::Base
                   .first
   end
 
-  def self.authorized_uploads
-    authorized_extensions.tr(" ", "")
-                         .split("|")
-                         .map { |extension| (extension.start_with?(".") ? extension[1..-1] : extension).gsub(".", "\.") }
-  end
-
-  def self.authorized_upload?(file)
-    authorized_uploads.count > 0 && file.original_filename =~ /\.(#{authorized_uploads.join("|")})$/i
-  end
-
-  def self.images
-    @images ||= Set.new ["jpg", "jpeg", "png", "gif", "tif", "tiff", "bmp"]
-  end
-
-  def self.authorized_images
-    authorized_uploads.select { |extension| images.include?(extension) }
-  end
-
-  def self.authorized_image?(file)
-    authorized_images.count > 0 && file.original_filename =~ /\.(#{authorized_images.join("|")})$/i
-  end
-
   def self.scheme
     use_https? ? "https" : "http"
+  end
+
+  def self.has_enough_topics_to_redirect_to_top
+    Topic.listable_topics
+         .visible
+         .where('topics.id NOT IN (SELECT COALESCE(topic_id, 0) FROM categories)')
+         .count > SiteSetting.topics_per_period_in_top_page
   end
 
 end
@@ -106,4 +96,3 @@ end
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
-

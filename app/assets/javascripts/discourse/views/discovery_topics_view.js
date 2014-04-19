@@ -26,14 +26,11 @@ Discourse.DiscoveryTopicsView = Discourse.View.extend(Discourse.LoadMore, {
   },
 
   _readjustScrollPosition: function() {
-    var scrollTo = Discourse.Session.currentProp('topicListScrollPosition'),
-        url = document.location.href;
-
-    if (url && url.indexOf('/more') === -1) { scrollTo = 0; }
+    var scrollTo = Discourse.Session.currentProp('topicListScrollPosition');
 
     if (typeof scrollTo !== "undefined") {
       Em.run.schedule('afterRender', function() {
-        $(window).scrollTop(scrollTo);
+        $(window).scrollTop(scrollTo+1);
       });
     }
   }.on('didInsertElement'),

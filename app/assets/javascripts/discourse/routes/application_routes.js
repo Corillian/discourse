@@ -8,6 +8,7 @@ Discourse.Route.buildRoutes(function() {
   var router = this;
 
   // Generate static page routes
+  // e.g., faq, tos, privacy, login
   _.each(Discourse.StaticController.PAGES, function (page) {
     router.route(page, { path: '/' + page });
   });
@@ -31,25 +32,17 @@ Discourse.Route.buildRoutes(function() {
     Discourse.Site.currentProp('periods').forEach(function(period) {
       var top = 'top' + period.capitalize();
       router.route(top, { path: '/top/' + period });
-      router.route(top, { path: '/top/' + period + '/more' });
       router.route(top + 'Category', { path: '/category/:slug/l/top/' + period });
-      router.route(top + 'Category', { path: '/category/:slug/l/top/' + period + '/more' });
       router.route(top + 'CategoryNone', { path: '/category/:slug/none/l/top/' + period });
-      router.route(top + 'CategoryNone', { path: '/category/:slug/none/l/top/' + period + '/more' });
       router.route(top + 'Category', { path: '/category/:parentSlug/:slug/l/top/' + period });
-      router.route(top + 'Category', { path: '/category/:parentSlug/:slug/l/top/' + period + '/more' });
     });
 
     // filters
     Discourse.Site.currentProp('filters').forEach(function(filter) {
       router.route(filter, { path: '/' + filter });
-      router.route(filter, { path: '/' + filter + '/more' });
       router.route(filter + 'Category', { path: '/category/:slug/l/' + filter });
-      router.route(filter + 'Category', { path: '/category/:slug/l/' + filter + '/more' });
       router.route(filter + 'CategoryNone', { path: '/category/:slug/none/l/' + filter });
-      router.route(filter + 'CategoryNone', { path: '/category/:slug/none/l/' + filter + '/more' });
       router.route(filter + 'Category', { path: '/category/:parentSlug/:slug/l/' + filter });
-      router.route(filter + 'Category', { path: '/category/:parentSlug/:slug/l/' + filter + '/more' });
     });
 
     this.route('categories');
@@ -77,6 +70,8 @@ Discourse.Route.buildRoutes(function() {
       });
     });
 
+    this.route('badges');
+
     this.resource('userPrivateMessages', { path: '/private-messages' }, function() {
       this.route('mine');
       this.route('unread');
@@ -86,8 +81,16 @@ Discourse.Route.buildRoutes(function() {
       this.route('username');
       this.route('email');
       this.route('about', { path: '/about-me' });
+      this.route('badgeTitle', { path: '/badge_title' });
     });
 
     this.route('invited');
+  });
+
+  this.route('signup', {path: '/signup'});
+  this.route('login', {path: '/login'});
+
+  this.resource('badges', function() {
+    this.route('show', {path: '/:id/:slug'});
   });
 });

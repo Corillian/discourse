@@ -80,7 +80,7 @@ gem 'rails-observers'
 
 #gem 'redis-rails'
 gem 'hiredis'
-gem 'redis', :require => ["redis", "redis/connection/hiredis"]
+gem 'redis', require:  ["redis", "redis/connection/hiredis"]
 
 gem 'active_model_serializers'
 
@@ -88,8 +88,8 @@ gem 'active_model_serializers'
 gem 'onebox'
 
 gem 'ember-rails'
-gem 'ember-source', '~> 1.2.0.1'
-gem 'handlebars-source', '~> 1.1.2'
+gem 'ember-source', '1.6.0.beta.2'
+gem 'handlebars-source', '1.3.0'
 gem 'barber'
 
 gem 'message_bus'
@@ -114,7 +114,9 @@ gem 'email_reply_parser-discourse', require: 'email_reply_parser'
 
 # note: for image_optim to correctly work you need
 # sudo apt-get install -y advancecomp gifsicle jpegoptim libjpeg-progs optipng pngcrush
-gem 'image_optim'
+#
+# Sam: held back, getting weird errors in latest
+gem 'image_optim', '0.9.1'
 # note: for image_sorcery to correctly work you need
 # sudo apt-get install -y imagemagick
 gem 'image_sorcery'
@@ -138,8 +140,11 @@ gem 'rest-client'
 gem 'rinku'
 gem 'sanitize'
 gem 'sass'
-gem 'sidekiq', '2.15.1'
-gem 'sidekiq-failures'
+gem 'sidekiq'
+
+# https://github.com/mhfs/sidekiq-failures/issues/72
+gem 'sidekiq-failures-discourse', require: 'sidekiq-failures'
+
 gem 'sinatra', require: nil
 gem 'slim'  # required for sidekiq-web
 
@@ -152,7 +157,7 @@ gem 'rack-protection' # security
 # in production environments by default.
 # allow everywhere for now cause we are allowing asset debugging in prd
 group :assets do
-  gem 'sass-rails'
+  gem 'sass-rails', '~> 4.0.2'
   gem 'uglifier'
 end
 
@@ -185,6 +190,7 @@ group :development do
   gem 'binding_of_caller'
   gem 'librarian', '>= 0.0.25', require: false
   gem 'annotate'
+  gem 'foreman', require: false
 end
 
 # Gem that enables support for plugins. It is required.
@@ -201,7 +207,7 @@ gem 'lru_redux'
 
 # IMPORTANT: mini profiler monkey patches, so it better be required last
 #  If you want to amend mini profiler to do the monkey patches in the railstie
-#  we are open to it. by deferring require to the initializer we can configure disourse installs without it
+#  we are open to it. by deferring require to the initializer we can configure discourse installs without it
 
 gem 'flamegraph', require: false
 gem 'rack-mini-profiler', require: false
@@ -213,7 +219,9 @@ gem 'puma', require: false
 gem 'rbtrace', require: false, platform: :mri
 
 # required for feed importing and embedding
+#
 gem 'ruby-readability', require: false
+
 gem 'simple-rss', require: false
 gem 'gctools', require: false, platform: :mri_21
 gem 'stackprof', require: false, platform: :mri_21

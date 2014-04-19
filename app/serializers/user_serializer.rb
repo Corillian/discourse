@@ -8,9 +8,11 @@ class UserSerializer < BasicUserSerializer
              :bio_cooked,
              :created_at,
              :website,
+             :profile_background,
              :can_edit,
              :can_edit_username,
              :can_edit_email,
+             :can_edit_name,
              :stats,
              :can_send_private_message_to_user,
              :bio_excerpt,
@@ -19,10 +21,12 @@ class UserSerializer < BasicUserSerializer
              :admin,
              :title,
              :suspend_reason,
-             :suspended_till
+             :suspended_till,
+             :badge_count
 
   has_one :invited_by, embed: :object, serializer: BasicUserSerializer
   has_many :custom_groups, embed: :object, serializer: BasicGroupSerializer
+  has_many :featured_user_badges, embed: :ids, serializer: UserBadgeSerializer, root: :user_badges
 
   def self.private_attributes(*attrs)
     attributes(*attrs)
@@ -47,6 +51,7 @@ class UserSerializer < BasicUserSerializer
   end
 
   private_attributes :email,
+                     :locale,
                      :email_digests,
                      :email_private_messages,
                      :email_direct,
@@ -91,6 +96,10 @@ class UserSerializer < BasicUserSerializer
     scope.can_edit_email?(object)
   end
 
+  def can_edit_name
+    scope.can_edit_name?(object)
+  end
+
   def stats
     UserAction.stats(object.id, scope)
   end
@@ -121,4 +130,5 @@ class UserSerializer < BasicUserSerializer
   def watched_category_ids
     CategoryUser.lookup(object, :watching).pluck(:category_id)
   end
+
 end

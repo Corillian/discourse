@@ -5,6 +5,10 @@ require_dependency 'search'
 
 describe Search do
 
+  class TextHelper
+    extend ActionView::Helpers::TextHelper
+  end
+
   before do
     ActiveRecord::Base.observers.enable :search_observer
   end
@@ -133,6 +137,9 @@ describe Search do
       end
 
       it 'displays multiple results within a topic' do
+
+        SiteSetting.stubs(:min_posts_for_search_in_topic).returns(3)
+
         topic = Fabricate(:topic)
         topic2 = Fabricate(:topic)
 
@@ -143,6 +150,9 @@ describe Search do
                          with more stuff bla bla', topic)
         post4 = new_post('this is my fourth post I am posting', topic)
         new_post('this is my fifth post I am posting', topic2)
+
+        # update posts_count
+        topic.reload
 
         results = Search.new('posting', search_context: post1.topic).execute.find do |r|
           r[:type] == "topic"
@@ -160,17 +170,23 @@ describe Search do
         # trigger expanded search
         results = Search.new('birds', search_context: post1.topic).execute
 
+        SiteSetting.stubs(:min_posts_for_search_in_topic).returns(10)
+        results = Search.new('posting', search_context: post1.topic).execute.find do |r|
+          r[:type] == "topic"
+        end[:results].length.should == 2
+
       end
     end
 
     context 'searching the OP' do
-      let!(:post) { Fabricate(:post, topic: topic, user: topic.user) }
-      let(:result) { first_of_type(Search.new('hello', type_filter: 'topic').execute, 'topic') }
+      let!(:post) { Fabricate(:post_with_long_raw_content, topic: topic, user: topic.user) }
+      let(:result) { first_of_type(Search.new('hundred', type_filter: 'topic', include_blurbs: true).execute, 'topic') }
 
       it 'returns a result correctly' do
         result.should be_present
         result[:title].should == topic.title
         result[:url].should == topic.relative_url
+        result[:blurb].should == TextHelper.excerpt(post.raw, 'hundred', radius: 100)
       end
     end
 

@@ -21,6 +21,7 @@ class User < ActiveRecord::Base
   has_many :user_open_ids, dependent: :destroy
   has_many :user_actions, dependent: :destroy
   has_many :post_actions, dependent: :destroy
+  has_many :user_badges, dependent: :destroy
   has_many :email_logs, dependent: :destroy
   has_many :post_timings
   has_many :topic_allowed_users, dependent: :destroy
@@ -37,6 +38,7 @@ class User < ActiveRecord::Base
   has_one :github_user_info, dependent: :destroy
   has_one :oauth2_user_info, dependent: :destroy
   has_one :user_stat, dependent: :destroy
+  has_one :single_sign_on_record, dependent: :destroy
   belongs_to :approved_by, class_name: 'User'
 
   has_many :group_users, dependent: :destroy
@@ -65,6 +67,7 @@ class User < ActiveRecord::Base
   after_initialize :set_default_external_links_in_new_tab
 
   after_save :update_tracked_topics
+  after_save :clear_global_notice_if_needed
 
   after_create :create_email_token
   after_create :create_user_stat
@@ -93,8 +96,14 @@ class User < ActiveRecord::Base
     LAST_VISIT = -2
   end
 
+  GLOBAL_USERNAME_LENGTH_RANGE = 3..15
+
   def self.username_length
-    3..15
+    if SiteSetting.enforce_global_nicknames
+      GLOBAL_USERNAME_LENGTH_RANGE
+    else
+      SiteSetting.min_username_length.to_i..SiteSetting.max_username_length.to_i
+    end
   end
 
   def custom_groups
@@ -159,7 +168,7 @@ class User < ActiveRecord::Base
     self.username = new_username
 
     if current_username.downcase != new_username.downcase && valid?
-      DiscourseHub.nickname_operation { DiscourseHub.change_nickname(current_username, new_username) }
+      DiscourseHub.username_operation { DiscourseHub.change_username(current_username, new_username) }
     end
 
     save
@@ -191,7 +200,7 @@ class User < ActiveRecord::Base
   def approve(approved_by, send_mail=true)
     self.approved = true
 
-    if Fixnum === approved_by
+    if approved_by.is_a?(Fixnum)
       self.approved_by_id = approved_by
     else
       self.approved_by = approved_by
@@ -357,6 +366,10 @@ class User < ActiveRecord::Base
     posts.count
   end
 
+  def first_post
+    posts.order('created_at ASC').first
+  end
+
   def flags_given_count
     PostAction.where(user_id: id, post_action_type_id: PostActionType.flag_types.values).count
   end
@@ -459,14 +472,14 @@ class User < ActiveRecord::Base
 
   def treat_as_new_topic_start_date
     duration = new_topic_duration_minutes || SiteSetting.new_topic_duration_minutes
-    case duration
+    [case duration
       when User::NewTopicDuration::ALWAYS
         created_at
       when User::NewTopicDuration::LAST_VISIT
-        previous_visit_at || created_at
+        previous_visit_at || user_stat.new_since
       else
         duration.minutes.ago
-    end
+    end, user_stat.new_since].max
   end
 
   def readable_name
@@ -477,6 +490,14 @@ class User < ActiveRecord::Base
   def bio_summary
     return nil unless bio_cooked.present?
     Summarize.new(bio_cooked).summary
+  end
+
+  def badge_count
+    user_badges.count
+  end
+
+  def featured_user_badges
+    user_badges.joins(:badge).order('badges.badge_type_id ASC, badges.grant_count ASC').includes(:user, :granted_by, badge: :badge_type).limit(3)
   end
 
   def self.count_by_signup_date(sinceDaysAgo=30)
@@ -514,10 +535,15 @@ class User < ActiveRecord::Base
     created_at > 1.day.ago
   end
 
-  def upload_avatar(avatar)
+  def upload_avatar(upload)
     self.uploaded_avatar_template = nil
-    self.uploaded_avatar = avatar
+    self.uploaded_avatar = upload
     self.use_uploaded_avatar = true
+    self.save!
+  end
+
+  def upload_profile_background(upload)
+    self.profile_background = upload.url
     self.save!
   end
 
@@ -542,6 +568,25 @@ class User < ActiveRecord::Base
     @lq ||= LeaderRequirements.new(self)
   end
 
+  def should_be_redirected_to_top
+    redirected_to_top_reason.present?
+  end
+
+  def redirected_to_top_reason
+    # redirect is enabled
+    return unless SiteSetting.redirect_users_to_top_page
+    # top must be in the top_menu
+    return unless SiteSetting.top_menu =~ /top/i
+    # there should be enough topics
+    return unless SiteSetting.has_enough_topics_to_redirect_to_top
+    # new users
+    return I18n.t('redirected_to_top_reasons.new_user') if trust_level == 0 &&
+      created_at > SiteSetting.redirect_new_users_to_top_page_duration.days.ago
+    # long-time-no-see user
+    return I18n.t('redirected_to_top_reasons.not_seen_in_a_month') if last_seen_at && last_seen_at < 1.month.ago
+    nil
+  end
+
   protected
 
   def cook
@@ -557,8 +602,15 @@ class User < ActiveRecord::Base
     TrackedTopicsUpdater.new(id, auto_track_topics_after_msecs).call
   end
 
+  def clear_global_notice_if_needed
+    if admin && SiteSetting.has_login_hint
+      SiteSetting.has_login_hint = false
+      SiteSetting.global_notice = ""
+    end
+  end
+
   def create_user_stat
-    stat = UserStat.new
+    stat = UserStat.new(new_since: Time.now)
     stat.user_id = id
     stat.save!
   end
@@ -648,7 +700,7 @@ end
 # Table name: users
 #
 #  id                            :integer          not null, primary key
-#  username                      :string(20)       not null
+#  username                      :string(60)       not null
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  name                          :string(255)
@@ -659,7 +711,7 @@ end
 #  password_hash                 :string(64)
 #  salt                          :string(32)
 #  active                        :boolean
-#  username_lower                :string(20)       not null
+#  username_lower                :string(60)       not null
 #  auth_token                    :string(32)
 #  last_seen_at                  :datetime
 #  website                       :string(255)
@@ -694,6 +746,9 @@ end
 #  uploaded_avatar_id            :integer
 #  email_always                  :boolean          default(FALSE), not null
 #  mailing_list_mode             :boolean          default(FALSE), not null
+#  primary_group_id              :integer
+#  locale                        :string(10)
+#  profile_background            :string(255)
 #
 # Indexes
 #
