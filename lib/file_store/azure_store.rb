@@ -1,54 +1,24 @@
-require 'digest/sha1'
-require 'open-uri'
+require 'file_store/base_store'
+require_dependency "file_helper"
+
 require 'azure'
 
 module FileStore
-  class AzureStore
+  class AzureStore < BaseStore
 
-    def store_upload(file, upload)
-      # <id><sha1><extension>
-      path = "#{upload.id}#{upload.sha1}#{upload.extension}"
-
-      # if this fails, it will throw an exception
-      upload(file.tempfile, path, upload.original_filename, file.content_type)
-
-      # returns the url of the uploaded file
-      "#{absolute_base_url}/#{path}"
+    def store_upload(file, upload, content_type = nil)
+      path = get_path_for_upload(file, upload)
+      store_file(file, path, upload.original_filename, content_type)
     end
 
     def store_optimized_image(file, optimized_image)
-      # <id><sha1>_<width>x<height><extension>
-      path = [
-        optimized_image.id,
-        optimized_image.sha1,
-        "_#{optimized_image.width}x#{optimized_image.height}",
-        optimized_image.extension
-      ].join
-
-      # if this fails, it will throw an exception
-      upload(file, path)
-
-      # returns the url of the uploaded file
-      "#{absolute_base_url}/#{path}"
+      path = get_path_for_optimized_image(file, optimized_image)
+      store_file(file, path)
     end
 
-    def store_avatar(file, upload, size)
-      # /avatars/<sha1>/200.jpg
-      path = File.join(
-        "avatars",
-        upload.sha1,
-        "#{size}#{upload.extension}"
-      )
-
-      # if this fails, it will throw an exception
-      upload(file, path)
-
-      # returns the url of the avatar
-      "#{absolute_base_url}/#{path}"
-    end
-
-    def absolute_avatar_template(upload)
-      (SiteSetting.use_ssl? ? "https:" : "http:") + upload.url
+    def store_avatar(file, avatar, size)
+      path = get_path_for_avatar(file, avatar, size)
+      store_file(file, path)
     end
 
     def remove_upload(upload)
@@ -59,20 +29,8 @@ module FileStore
       remove_file(optimized_image.url)
     end
 
-    def remove_avatars(upload)
-
-    end
-
-    def remove_file(url)
-      remove File.basename(url) if has_been_uploaded?(url)
-    end
-
     def has_been_uploaded?(url)
       url.start_with?(absolute_base_url)
-    end
-
-    def path_for(upload)
-      absolute_avatar_template(upload)
     end
 
     def absolute_base_url
@@ -88,17 +46,47 @@ module FileStore
     end
 
     def download(upload)
-      temp_file = Tempfile.new(["discourse-azure", File.extname(upload.original_filename)])
-      url = absolute_avatar_template(upload)
+      url = SiteSetting.scheme + ":" + upload.url
+      max_file_size = [SiteSetting.max_image_size_kb, SiteSetting.max_attachment_size_kb].max.kilobytes
 
-      File.open(temp_file.path, "wb") do |f|
-        f.write open(url, "rb", read_timeout: 20).read
-      end
-
-      temp_file
+      FileHelper.download(url, max_file_size, "discourse-azure")
+    end
+    
+    def avatar_template(avatar)
+      template = relative_avatar_template(avatar)
+      "#{absolute_base_url}/#{template}"
     end
 
     private
+
+    def get_path_for_upload(file, upload)
+      "#{upload.id}#{upload.sha1}#{upload.extension}"
+    end
+
+    def get_path_for_optimized_image(file, optimized_image)
+      "#{optimized_image.id}#{optimized_image.sha1}_#{optimized_image.width}x#{optimized_image.height}#{optimized_image.extension}"
+    end
+
+    def get_path_for_avatar(file, avatar, size)
+      relative_avatar_template(avatar).gsub("{size}", size.to_s)
+    end
+
+    def relative_avatar_template(avatar)
+      "avatars/#{avatar.sha1}/{size}#{avatar.extension}"
+    end
+
+    def store_file(file, path, filename = nil, content_type = nil)
+      # if this fails, it will throw an exception
+      upload(file, path, filename, content_type)
+      # url
+      "#{absolute_base_url}/#{path}"
+    end
+
+    def remove_file(url)
+      return unless has_been_uploaded?(url)
+      filename = File.basename(url)
+      remove(filename)
+    end
 
     def azure_container
       SiteSetting.azure_blob_container.downcase
@@ -141,27 +129,6 @@ module FileStore
       azure_blob_service
     end
 
-    def get_content_type(filename)
-      ext = File.extname(filename)
-      content_type = "application/octet-stream"
-
-      if ext != nil
-        ext = ext.downcase
-
-        if ext == ".png"
-          content_type = "image/png"
-        elsif ext == ".jpg" || ext == ".jpeg" || ext == ".jfif"
-          content_type = "image/jpeg"
-        elsif ext == ".gif"
-          content_type = "image/gif"
-        elsif ext == ".tiff"
-          content_type = "image/tiff"
-        end
-      end
-
-      content_type
-    end
-
     def upload(file, unique_filename, filename=nil, content_type=nil)
       metadata = { }
       metadata[:content_disposition] = "attachment; filename=\"#{filename}\"" if filename
@@ -181,6 +148,27 @@ module FileStore
       check_missing_site_settings()
       azure_blob_service = Azure::BlobService.new
       azure_blob_service.delete_blob(azure_container, unique_filename)
+    end
+    
+    def get_content_type(filename)
+      ext = File.extname(filename)
+      content_type = "application/octet-stream"
+
+      if ext != nil
+        ext = ext.downcase
+
+        if ext == ".png"
+          content_type = "image/png"
+        elsif ext == ".jpg" || ext == ".jpeg" || ext == ".jfif"
+          content_type = "image/jpeg"
+        elsif ext == ".gif"
+          content_type = "image/gif"
+        elsif ext == ".tiff"
+          content_type = "image/tiff"
+        end
+      end
+
+      content_type
     end
   end
 end
