@@ -127,6 +127,7 @@ class AdminDashboardData
 
   def azure_config_check
     I18n.t('dashboard.azure_config_warning') if SiteSetting.enable_azure_uploads and (SiteSetting.azure_blob_container.blank? or SiteSetting.azure_storage_account.blank? or SiteSetting.azure_storage_access_key.blank?)
+	I18n.t('dashboard.azure_backup_config_warning') if SiteSetting.enable_azure_backups and (SiteSetting.azure_backup_container.blank? or SiteSetting.azure_storage_account.blank? or SiteSetting.azure_storage_access_key.blank?)
   end
 
   def image_magick_check
