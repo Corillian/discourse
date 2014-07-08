@@ -91,11 +91,13 @@ describe PostCreator do
         end
 
 
+        # 2 for topic, one to notify of new topic another for tracking state
         messages.map{|m| m.channel}.sort.should == [ "/new",
                                                      "/users/#{admin.username}",
                                                      "/users/#{admin.username}",
                                                      "/unread/#{admin.id}",
                                                      "/unread/#{admin.id}",
+                                                     "/topic/#{created_post.topic_id}",
                                                      "/topic/#{created_post.topic_id}"
                                                    ].sort
         admin_ids = [Group[:admins].id]
@@ -119,7 +121,7 @@ describe PostCreator do
         user_action = messages.find{|m| m.channel == "/users/#{p.user.username}"}
         user_action.should_not be_nil
 
-        messages.length.should == 3
+        messages.length.should == 4
       end
 
       it 'extracts links from the post' do
@@ -167,7 +169,7 @@ describe PostCreator do
         first_post = creator.create
 
         # ensure topic user is correct
-        topic_user = first_post.user.topic_users.where(topic_id: first_post.topic_id).first
+        topic_user = first_post.user.topic_users.find_by(topic_id: first_post.topic_id)
         topic_user.should be_present
         topic_user.should be_posted
         topic_user.last_read_post_number.should == first_post.post_number
@@ -338,13 +340,13 @@ describe PostCreator do
       unrelated.notifications.count.should == 0
       post.topic.subtype.should == TopicSubtype.user_to_user
 
-      # if a mod replies they should be added to the allowed user list
-      mod = Fabricate(:moderator)
-      PostCreator.create(mod, raw: 'hi there welcome topic, I am a mod',
+      # if an admin replies they should be added to the allowed user list
+      admin = Fabricate(:admin)
+      PostCreator.create(admin, raw: 'hi there welcome topic, I am a mod',
                          topic_id: post.topic_id)
 
       post.topic.reload
-      post.topic.topic_allowed_users.where(user_id: mod.id).count.should == 1
+      post.topic.topic_allowed_users.where(user_id: admin.id).count.should == 1
     end
   end
 
@@ -429,8 +431,20 @@ describe PostCreator do
                                 embed_url: embed_url,
                                 title: 'Reviews of Science Ovens',
                                 raw: 'Did you know that you can use microwaves to cook your dinner? Science!')
-      post = creator.create
+      creator.create
       TopicEmbed.where(embed_url: embed_url).exists?.should be_true
+    end
+  end
+
+  describe "read credit for creator" do
+    it "should give credit to creator" do
+      post = create_post
+      PostTiming.find_by(topic_id: post.topic_id,
+                         post_number: post.post_number,
+                         user_id: post.user_id).msecs.should be > 0
+
+      TopicUser.find_by(topic_id: post.topic_id,
+                        user_id: post.user_id).last_read_post_number.should == 1
     end
   end
 

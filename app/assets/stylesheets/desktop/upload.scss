@@ -17,7 +17,7 @@
         line-height: 18px;
       }
       .description, .hint {
-        color: $secondary_text_color;
+        color: $primary;
       }
       .hint {
         font-style: italic;
@@ -28,4 +28,15 @@
   .radios:last-child {
     height: 20px;
   }
+}
+
+.uploaded-image-preview {
+  height: 270px;
+  background-position: center center;
+  background-size: cover;
+  background-color: $primary;
+}
+
+.image-upload-controls {
+  padding: 10px;
 }

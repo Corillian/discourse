@@ -63,7 +63,7 @@ module Import
     else
       @success = true
     ensure
-      notify_user
+      notify_user rescue nil
       clean_up
       @success ? log("[SUCCESS]") : log("[FAILED]")
     end
@@ -79,7 +79,7 @@ module Import
     end
 
     def ensure_we_have_a_user
-      user = User.where(id: @user_id).first
+      user = User.find_by(id: @user_id)
       raise Discourse::InvalidParameters.new(:user_id) unless user
       # keep some user data around to check them against the newly restored database
       @user_info = { id: user.id, username: user.username, email: user.email }
@@ -280,13 +280,12 @@ module Import
     end
 
     def notify_user
-      if user = User.where(email: @user_info[:email]).first
+      if user = User.find_by(email: @user_info[:email])
         log "Notifying '#{user.username}' of the end of the restore..."
-        # NOTE: will only notify if user != Discourse.site_contact_user
         if @success
-          SystemMessage.create(user, :import_succeeded)
+          SystemMessage.create_from_system_user(user, :import_succeeded)
         else
-          SystemMessage.create(user, :import_failed, logs: @logs.join("\n"))
+          SystemMessage.create_from_system_user(user, :import_failed, logs: @logs.join("\n"))
         end
       else
         log "Could not send notification to '#{@user_info[:username]}' (#{@user_info[:email]}), because the user does not exists..."
@@ -312,6 +311,8 @@ module Import
     def unpause_sidekiq
       log "Unpausing sidekiq..."
       Sidekiq.unpause!
+    rescue
+      log "Something went wrong while unpausing Sidekiq."
     end
 
     def disable_readonly_mode

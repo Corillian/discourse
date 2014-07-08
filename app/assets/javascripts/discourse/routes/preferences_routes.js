@@ -18,39 +18,51 @@ Discourse.PreferencesRoute = Discourse.RestrictedUserRoute.extend({
 
   actions: {
     showAvatarSelector: function() {
-      Discourse.Route.showModal(this, 'avatarSelector');
+      Discourse.Route.showModal(this, 'avatar-selector');
       // all the properties needed for displaying the avatar selector modal
-      var avatarSelector = this.modelFor('user').getProperties(
+      var controller = this.controllerFor('avatar-selector');
+      var user = this.modelFor('user');
+      var props = user.getProperties(
         'username', 'email',
-        'has_uploaded_avatar', 'use_uploaded_avatar',
-        'gravatar_template', 'uploaded_avatar_template');
-      this.controllerFor('avatarSelector').setProperties(avatarSelector);
+        'uploaded_avatar_id',
+        'system_avatar_upload_id',
+        'gravatar_avatar_upload_id',
+        'custom_avatar_upload_id'
+        );
+
+      switch(props.uploaded_avatar_id){
+      case props.system_avatar_upload_id:
+        props.selected = "system";
+        break;
+      case props.gravatar_avatar_upload_id:
+        props.selected = "gravatar";
+        break;
+      default:
+        props.selected = "uploaded";
+      }
+
+      controller.setProperties(props);
     },
 
     saveAvatarSelection: function() {
       var user = this.modelFor('user');
-      var avatarSelector = this.controllerFor('avatarSelector');
+      var avatarSelector = this.controllerFor('avatar-selector');
+
+
       // sends the information to the server if it has changed
-      if (avatarSelector.get('use_uploaded_avatar') !== user.get('use_uploaded_avatar')) {
-        user.toggleAvatarSelection(avatarSelector.get('use_uploaded_avatar'));
+      if (avatarSelector.get('selectedUploadId') !== user.get('uploaded_avatar_id')) {
+        user.pickAvatar(avatarSelector.get('selectedUploadId'));
       }
+
       // saves the data back
       user.setProperties(avatarSelector.getProperties(
-        'has_uploaded_avatar',
-        'use_uploaded_avatar',
-        'gravatar_template',
-        'uploaded_avatar_template'
+        'system_avatar_upload_id',
+        'gravatar_avatar_upload_id',
+        'custom_avatar_upload_id'
       ));
-      user.set('avatar_template', avatarSelector.get('avatarTemplate'));
       avatarSelector.send('closeModal');
     },
 
-    showProfileBackgroundFileSelector: function() {
-      $("#profile-background-input").click();
-    },
-    clearProfileBackground: function() {
-      this.modelFor('user').clearProfileBackground();
-    }
   }
 });
 
@@ -87,10 +99,10 @@ Discourse.PreferencesAboutRoute = Discourse.RestrictedUserRoute.extend({
     this.render('preferences', { into: 'user', outlet: 'userOutlet', controller: 'preferences' });
   },
 
-  events: {
+  actions: {
     changeAbout: function() {
       var route = this;
-      var controller = route.controllerFor('preferencesAbout');
+      var controller = route.controllerFor('preferences/about');
 
       controller.setProperties({ saving: true });
       return controller.get('model').save().then(function() {
@@ -194,7 +206,7 @@ Discourse.PreferencesBadgeTitleRoute = Discourse.RestrictedUserRoute.extend({
         controller.set('selectedUserBadgeId', userBadge.get('id'));
       }
     });
-    if (!controller.get('selectedUserBadgeId')) {
+    if (!controller.get('selectedUserBadgeId') && controller.get('selectableUserBadges.length') > 0) {
       controller.set('selectedUserBadgeId', controller.get('selectableUserBadges')[0].get('id'));
     }
   }

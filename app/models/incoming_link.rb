@@ -13,7 +13,7 @@ class IncomingLink < ActiveRecord::Base
     user_id, host, referer = nil
 
     if request['u']
-      u = User.select(:id).where(username_lower: request['u'].downcase).first
+      u = User.select(:id).find_by(username_lower: request["u"].downcase)
       user_id = u.id if u
     end
 
@@ -104,8 +104,8 @@ end
 #  domain          :string(100)
 #  topic_id        :integer
 #  post_number     :integer
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
+#  created_at      :datetime
+#  updated_at      :datetime
 #  user_id         :integer
 #  ip_address      :inet
 #  current_user_id :integer

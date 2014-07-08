@@ -12,8 +12,15 @@ BACKUP_ROUTE_FORMAT = /[a-zA-Z0-9\-_]*\d{4}(-\d{2}){2}-\d{6}\.tar\.gz/i unless d
 Discourse::Application.routes.draw do
 
   match "/404", to: "exceptions#not_found", via: [:get, :post]
+  get "/404-body" => "exceptions#not_found_body"
 
-  mount Sidekiq::Web => "/sidekiq", constraints: AdminConstraint.new
+  if Rails.env == "development"
+    mount Sidekiq::Web => "/sidekiq"
+    mount Logster::Web => "/logs"
+  else
+    mount Sidekiq::Web => "/sidekiq", constraints: AdminConstraint.new
+    mount Logster::Web => "/logs", constraints: AdminConstraint.new
+  end
 
   get "site" => "site#index"
 
@@ -41,6 +48,7 @@ Discourse::Application.routes.draw do
     resources :users, id: USERNAME_ROUTE_FORMAT do
       collection do
         get "list/:query" => "users#index"
+        get "ip-info" => "users#ip_info"
         put "approve-bulk" => "users#approve_bulk"
         delete "reject-bulk" => "users#reject_bulk"
       end
@@ -55,6 +63,7 @@ Discourse::Application.routes.draw do
       put "grant_moderation", constraints: AdminConstraint.new
       put "approve"
       post "refresh_browsers", constraints: AdminConstraint.new
+      post "log_out", constraints: AdminConstraint.new
       put "activate"
       put "deactivate"
       put "block"
@@ -79,7 +88,7 @@ Discourse::Application.routes.draw do
 
     scope "/logs" do
       resources :staff_action_logs,     only: [:index]
-      resources :screened_emails,       only: [:index]
+      resources :screened_emails,       only: [:index, :destroy]
       resources :screened_ip_addresses, only: [:index, :create, :update, :destroy]
       resources :screened_urls,         only: [:index]
     end
@@ -125,8 +134,8 @@ Discourse::Application.routes.draw do
         get "cancel" => "backups#cancel"
         get "rollback" => "backups#rollback"
         put "readonly" => "backups#readonly"
-        get "upload" => "backups#check_chunk"
-        post "upload" => "backups#upload_chunk"
+        get "upload" => "backups#check_backup_chunk"
+        post "upload" => "backups#upload_backup_chunk"
       end
     end
 
@@ -167,6 +176,7 @@ Discourse::Application.routes.draw do
   post "login" => "static#enter"
   get "login" => "static#show", id: "login"
   get "faq" => "static#show", id: "faq"
+  get "guidelines" => "static#show", id: "faq"
   get "tos" => "static#show", id: "tos"
   get "privacy" => "static#show", id: "privacy"
   get "signup" => "list#latest"
@@ -177,12 +187,12 @@ Discourse::Application.routes.draw do
   get "users/activate-account/:token" => "users#activate_account"
   get "users/authorize-email/:token" => "users#authorize_email"
   get "users/hp" => "users#get_honeypot_value"
-  get "my/:path", to: 'users#my_redirect'
+  get "my/*path", to: 'users#my_redirect'
 
   get "user_preferences" => "users#user_preferences_redirect"
   get "users/:username/private-messages" => "user_actions#private_messages", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/private-messages/:filter" => "user_actions#private_messages", constraints: {username: USERNAME_ROUTE_FORMAT}
-  get "users/:username" => "users#show", as: 'userpage', constraints: {username: USERNAME_ROUTE_FORMAT}
+  get "users/:username" => "users#show", as: 'user', constraints: {username: USERNAME_ROUTE_FORMAT}
   put "users/:username" => "users#update", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/preferences" => "users#preferences", constraints: {username: USERNAME_ROUTE_FORMAT}, as: :email_preferences
   get "users/:username/preferences/email" => "users#preferences", constraints: {username: USERNAME_ROUTE_FORMAT}
@@ -195,14 +205,22 @@ Discourse::Application.routes.draw do
   get "users/:username/avatar(/:size)" => "users#avatar", constraints: {username: USERNAME_ROUTE_FORMAT} # LEGACY ROUTE
   post "users/:username/preferences/avatar" => "users#upload_avatar", constraints: {username: USERNAME_ROUTE_FORMAT} # LEGACY ROUTE
   post "users/:username/preferences/user_image" => "users#upload_user_image", constraints: {username: USERNAME_ROUTE_FORMAT}
-  put "users/:username/preferences/avatar/toggle" => "users#toggle_avatar", constraints: {username: USERNAME_ROUTE_FORMAT}
-  put "users/:username/preferences/profile_background/clear" => "users#clear_profile_background", constraints: {username: USERNAME_ROUTE_FORMAT}
+  delete "users/:username/preferences/user_image" => "users#destroy_user_image", constraints: {username: USERNAME_ROUTE_FORMAT}
+  put "users/:username/preferences/avatar/pick" => "users#pick_avatar", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/invited" => "users#invited", constraints: {username: USERNAME_ROUTE_FORMAT}
   post "users/:username/send_activation_email" => "users#send_activation_email", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/activity" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/activity/:filter" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/badges" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}
   delete "users/:username" => "users#destroy", constraints: {username: USERNAME_ROUTE_FORMAT}
+  get "users/by-external/:external_id" => "users#show"
+
+  post "user_avatar/:username/refresh_gravatar" => "user_avatars#refresh_gravatar"
+  get "letter_avatar/:username/:size/:version.png" => "user_avatars#show_letter",
+      format: false, constraints: {hostname: /[\w\.-]+/}
+  get "user_avatar/:hostname/:username/:size/:version.png" => "user_avatars#show",
+      format: false, constraints: {hostname: /[\w\.-]+/}
+
 
   get "uploads/:site/:id/:sha.:extension" => "uploads#show", constraints: {site: /\w+/, id: /\d+/, sha: /[a-z0-9]{15,16}/i, extension: /\w{2,}/}
   post "uploads" => "uploads#create"
@@ -218,6 +236,7 @@ Discourse::Application.routes.draw do
 
   resources :posts do
     put "bookmark"
+    put "wiki"
     get "replies"
     get "revisions/:revision" => "posts#revisions"
     put "recover"
@@ -258,12 +277,14 @@ Discourse::Application.routes.draw do
 
   resources :categories, :except => :show
   get "category/:id/show" => "categories#show"
+  post "category/uploads" => "categories#upload"
   post "category/:category_id/move" => "categories#move"
   get "category/:category.rss" => "list#category_feed", format: :rss
   get "category/:parent_category/:category.rss" => "list#category_feed", format: :rss
   get "category/:category" => "list#category_latest"
   get "category/:category/none" => "list#category_none_latest"
   get "category/:parent_category/:category" => "list#parent_category_category_latest"
+  post "category/:category_id/notifications" => "categories#set_notifications"
 
   get "top" => "list#top"
   get "category/:category/l/top" => "list#category_top", as: "category_top"
@@ -323,6 +344,8 @@ Discourse::Application.routes.draw do
   put "t/:topic_id/mute" => "topics#mute", constraints: {topic_id: /\d+/}
   put "t/:topic_id/unmute" => "topics#unmute", constraints: {topic_id: /\d+/}
   put "t/:topic_id/autoclose" => "topics#autoclose", constraints: {topic_id: /\d+/}
+  put "t/:topic_id/make-banner" => "topics#make_banner", constraints: {topic_id: /\d+/}
+  put "t/:topic_id/remove-banner" => "topics#remove_banner", constraints: {topic_id: /\d+/}
   put "t/:topic_id/remove-allowed-user" => "topics#remove_allowed_user", constraints: {topic_id: /\d+/}
   put "t/:topic_id/recover" => "topics#recover", constraints: {topic_id: /\d+/}
   get "t/:topic_id/:post_number" => "topics#show", constraints: {topic_id: /\d+/, post_number: /\d+/}
@@ -341,21 +364,30 @@ Discourse::Application.routes.draw do
 
   post "t/:topic_id/notifications" => "topics#set_notifications" , constraints: {topic_id: /\d+/}
 
+  get "/posts/:id/cooked" => "posts#cooked"
   get "/posts/:id/expand-embed" => "posts#expand_embed"
   get "raw/:topic_id(/:post_number)" => "posts#markdown"
 
-  resources :invites
+  resources :invites do
+    collection do
+      get "upload" => "invites#check_csv_chunk"
+      post "upload" => "invites#upload_csv_chunk"
+    end
+  end
   delete "invites" => "invites#destroy"
 
   get "onebox" => "onebox#show"
 
   get "error" => "forums#error"
+  get "exception" => "list#latest"
 
   get "message-bus/poll" => "message_bus#poll"
 
   get "draft" => "draft#show"
   post "draft" => "draft#update"
   delete "draft" => "draft#destroy"
+
+  get "cdn_asset/:site/*path" => "static#cdn_asset", format: false
 
   get "robots.txt" => "robots_txt#index"
 

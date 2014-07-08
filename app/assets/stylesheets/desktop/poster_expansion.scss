@@ -5,31 +5,38 @@
   width: 460px;
   left: 20px;
   z-index: 990;
-  box-shadow: 0 2px 6px $primary_border_color;
+  box-shadow: 0 2px 6px scale-color-diff();
   margin-top: -2px;
-  background-color: $primary_background_color;
+  background-color: $secondary;
   padding: 12px 12px 5px 12px;
 
   h1 {
     display: inline-block;
     min-width: 120px;
-    font-size: 30px;
-    line-height: 33px;
-    margin-bottom: 8px;
-
+    font-size: 25px;
+    line-height: 1.25;
+    display: block;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     a {
-      color: $primary_text_color;
+      color: $primary;
     }
   }
 
   h2 {
-    font-size: 20px;
-    line-height: 22px;
+    font-size: 15px;
+    line-height: 1.25;
     font-weight: normal;
-    margin-bottom: 5px;
+    display: block;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     a {
-      color: $primary_text_color;
+      color: $primary;
     }
   }
 
@@ -37,22 +44,39 @@
     font-size: 13px;
     font-weight: normal;
     margin-top: 0;
-    color: $secondary_text_color;
+    color: scale-color($primary, $lightness: 50%);
   }
   .groups {
     font-size: 13px;
     font-weight: normal;
     margin-top: 0;
-    color: $secondary_text_color;
+    color: $primary;
 
     .group-link {
-      color: $primary_text_color;
+      color: $primary;
     }
+  }
+
+  .metadata {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    max-width: 180px;
+    text-align: right;
   }
 
   .bottom {
     clear: both;
     padding-top: 10px;
+  }
+
+  .bio {
+    max-height: 100px;
+    overflow: auto;
+    margin-bottom: 10px;
+    img {
+      max-width: 100%;
+    }
   }
 
   img.avatar {
@@ -66,7 +90,7 @@
 
   p.loading {
     margin-top: 45px;
-    color: $secondary_text_color;
+    color: $primary;
   }
 
   .btn {
@@ -74,7 +98,7 @@
   }
 
   .new-user a {
-    color: $secondary_text_color;
+    color: scale-color($primary, $lightness: 70%);
   }
 
   &.show-badges {
@@ -85,20 +109,13 @@
       float: left;
     }
 
-    .metadata {
-      float: right;
-      max-width: 180px;
-    }
-
-    h2 {
-      line-height: 12px;
-    }
-
     .badge-section {
-      margin-top: 20px;
+      margin-top: 10px;
+      float: left;
+      width: 300px;
+
       h3 {
-        line-height: 43px;
-        color: $primary_text_color;
+        color: $primary;
         font-size: 14px;
         margin-bottom: -8px;
       }
@@ -106,8 +123,8 @@
 
     .more-user-badges {
       @extend .user-badge;
-      padding: 4px 8px;
+      padding: 3px 8px;
+      font-size: 13px;
     }
   }
 }
-

@@ -5,18 +5,23 @@ require_dependency 'distributed_memoizer'
 class PostsController < ApplicationController
 
   # Need to be logged in for all actions here
-  before_filter :ensure_logged_in, except: [:show, :replies, :by_number, :short_link, :reply_history, :revisions, :expand_embed]
+  before_filter :ensure_logged_in, except: [:show, :replies, :by_number, :short_link, :reply_history, :revisions, :expand_embed, :markdown, :raw, :cooked]
 
   skip_before_filter :store_incoming_links, only: [:short_link]
   skip_before_filter :check_xhr, only: [:markdown,:short_link]
 
   def markdown
-    post = Post.where(topic_id: params[:topic_id].to_i, post_number: (params[:post_number] || 1).to_i).first
+    post = Post.find_by(topic_id: params[:topic_id].to_i, post_number: (params[:post_number] || 1).to_i)
     if post && guardian.can_see?(post)
       render text: post.raw, content_type: 'text/plain'
     else
       raise Discourse::NotFound
     end
+  end
+
+  def cooked
+    post = find_post_from_params
+    render json: {cooked: post.cooked}
   end
 
   def short_link
@@ -184,7 +189,6 @@ class PostsController < ApplicationController
 
   def revisions
     post_revision = find_post_revision_from_params
-    guardian.ensure_can_see!(post_revision)
     post_revision_serializer = PostRevisionSerializer.new(post_revision, scope: guardian, root: false)
     render_json_dump(post_revision_serializer)
   end
@@ -201,6 +205,17 @@ class PostsController < ApplicationController
     render nothing: true
   end
 
+  def wiki
+    guardian.ensure_can_wiki!
+
+    post = find_post_from_params
+    post.wiki = params[:wiki]
+    post.version += 1
+    post.save
+
+    render nothing: true
+  end
+
   protected
 
   def find_post_revision_from_params
@@ -208,7 +223,7 @@ class PostsController < ApplicationController
     revision = params[:revision].to_i
     raise Discourse::InvalidParameters.new(:revision) if revision < 2
 
-    post_revision = PostRevision.where(post_id: post_id, number: revision).first
+    post_revision = PostRevision.find_by(post_id: post_id, number: revision)
     post_revision.post = find_post_from_params
 
     guardian.ensure_can_see!(post_revision)
@@ -294,6 +309,8 @@ class PostsController < ApplicationController
     # Include deleted posts if the user is staff
     finder = finder.with_deleted if current_user.try(:staff?)
     post = finder.first
+    # load deleted topic
+    post.topic = Topic.with_deleted.find(post.topic_id) if current_user.try(:staff?)
     guardian.ensure_can_see!(post)
     post
   end

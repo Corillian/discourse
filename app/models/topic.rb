@@ -4,12 +4,12 @@ require_dependency 'topic_view'
 require_dependency 'rate_limiter'
 require_dependency 'text_sentinel'
 require_dependency 'text_cleaner'
-require_dependency 'trashable'
 require_dependency 'archetype'
 
 class Topic < ActiveRecord::Base
   include ActionView::Helpers::SanitizeHelper
   include RateLimiter::OnCreateRecord
+  include HasCustomFields
   include Trashable
   extend Forwardable
 
@@ -21,6 +21,8 @@ class Topic < ActiveRecord::Base
   def_delegator :notifier, :regular!, :notify_regular!
   def_delegator :notifier, :muted!, :notify_muted!
   def_delegator :notifier, :toggle_mute, :toggle_mute
+
+  attr_accessor :allowed_user_ids
 
   def self.max_sort_order
     2**31 - 1
@@ -103,18 +105,19 @@ class Topic < ActiveRecord::Base
   # When we want to temporarily attach some data to a forum topic (usually before serialization)
   attr_accessor :user_data
   attr_accessor :posters  # TODO: can replace with posters_summary once we remove old list code
+  attr_accessor :participants
   attr_accessor :topic_list
+  attr_accessor :meta_data
   attr_accessor :include_last_poster
+  attr_accessor :import_mode # set to true to optimize creation and save for imports
 
   # The regular order
-  scope :topic_list_order, lambda { order('topics.bumped_at desc') }
+  scope :topic_list_order, -> { order('topics.bumped_at desc') }
 
   # Return private message topics
-  scope :private_messages, lambda {
-    where(archetype: Archetype.private_message)
-  }
+  scope :private_messages, -> { where(archetype: Archetype.private_message) }
 
-  scope :listable_topics, lambda { where('topics.archetype <> ?', [Archetype.private_message]) }
+  scope :listable_topics, -> { where('topics.archetype <> ?', [Archetype.private_message]) }
 
   scope :by_newest, -> { order('topics.created_at desc, topics.id desc') }
 
@@ -122,16 +125,15 @@ class Topic < ActiveRecord::Base
 
   scope :created_since, lambda { |time_ago| where('created_at > ?', time_ago) }
 
-  scope :secured, lambda {|guardian=nil|
+  scope :secured, lambda { |guardian=nil|
     ids = guardian.secure_category_ids if guardian
 
     # Query conditions
-    condition =
-      if ids.present?
-        ["NOT c.read_restricted or c.id in (:cats)", cats: ids]
-      else
-        ["NOT c.read_restricted"]
-      end
+    condition = if ids.present?
+      ["NOT c.read_restricted or c.id in (:cats)", cats: ids]
+    else
+      ["NOT c.read_restricted"]
+    end
 
     where("category_id IS NULL OR category_id IN (
            SELECT c.id FROM categories c
@@ -319,8 +321,16 @@ class Topic < ActiveRecord::Base
     topics.where("topics.id NOT IN (?)", featured_topic_ids)
   end
 
+  def meta_data=(data)
+    custom_fields.replace(data)
+  end
+
+  def meta_data
+    custom_fields
+  end
+
   def update_meta_data(data)
-    self.meta_data = (self.meta_data || {}).merge(data.stringify_keys)
+    custom_fields.update(data)
     save
   end
 
@@ -342,8 +352,7 @@ class Topic < ActiveRecord::Base
   end
 
   def meta_data_string(key)
-    return unless meta_data.present?
-    meta_data[key.to_s]
+    custom_fields[key.to_s]
   end
 
   def self.listable_count_per_day(sinceDaysAgo=30)
@@ -439,7 +448,7 @@ class Topic < ActiveRecord::Base
   end
 
   def changed_to_category(cat)
-    return true if cat.blank? || Category.where(topic_id: id).first.present?
+    return true if cat.blank? || Category.find_by(topic_id: id).present?
 
     Topic.transaction do
       old_category = category
@@ -455,9 +464,9 @@ class Topic < ActiveRecord::Base
       end
 
       if success
-        CategoryFeaturedTopic.feature_topics_for(old_category)
+        CategoryFeaturedTopic.feature_topics_for(old_category) unless @import_mode
         Category.where(id: cat.id).update_all 'topic_count = topic_count + 1'
-        CategoryFeaturedTopic.feature_topics_for(cat) unless old_category.try(:id) == cat.try(:id)
+        CategoryFeaturedTopic.feature_topics_for(cat) unless @import_mode || old_category.try(:id) == cat.try(:id)
       else
         return false
       end
@@ -494,9 +503,9 @@ class Topic < ActiveRecord::Base
   def change_category(name)
     # If the category name is blank, reset the attribute
     if name.blank?
-      cat = Category.where(id: SiteSetting.uncategorized_category_id).first
+      cat = Category.find_by(id: SiteSetting.uncategorized_category_id)
     else
-      cat = Category.where(name: name).first
+      cat = Category.find_by(name: name)
     end
 
     return true if cat == category
@@ -506,9 +515,9 @@ class Topic < ActiveRecord::Base
 
 
   def remove_allowed_user(username)
-    user = User.where(username: username).first
+    user = User.find_by(username: username)
     if user
-      topic_user = topic_allowed_users.where(user_id: user.id).first
+      topic_user = topic_allowed_users.find_by(user_id: user.id)
       if topic_user
         topic_user.destroy
       else
@@ -518,7 +527,7 @@ class Topic < ActiveRecord::Base
   end
 
   # Invite a user to the topic by username or email. Returns success/failure
-  def invite(invited_by, username_or_email)
+  def invite(invited_by, username_or_email, group_ids=nil)
     if private_message?
       # If the user exists, add them to the topic.
       user = User.find_by_username_or_email(username_or_email)
@@ -536,14 +545,14 @@ class Topic < ActiveRecord::Base
 
     if username_or_email =~ /^.+@.+$/
       # NOTE callers expect an invite object if an invite was sent via email
-      invite_by_email(invited_by, username_or_email)
+      invite_by_email(invited_by, username_or_email, group_ids)
     else
       false
     end
   end
 
-  def invite_by_email(invited_by, email)
-    Invite.invite_by_email(email, invited_by, self)
+  def invite_by_email(invited_by, email, group_ids=nil)
+    Invite.invite_by_email(email, invited_by, self, group_ids)
   end
 
   def email_already_exists_for?(invite)
@@ -551,7 +560,7 @@ class Topic < ActiveRecord::Base
   end
 
   def grant_permission_to_user(lower_email)
-    user = User.where(email: lower_email).first
+    user = User.find_by(email: lower_email)
     topic_allowed_users.create!(user_id: user.id)
   end
 
@@ -589,9 +598,12 @@ class Topic < ActiveRecord::Base
     end
   end
 
-
   def posters_summary(options = {})
     @posters_summary ||= TopicPostersSummary.new(self, options).summary
+  end
+
+  def participants_summary(options = {})
+    @participants_summary ||= TopicParticipantsSummary.new(self, options).summary
   end
 
   # Enable/disable the star on the topic
@@ -613,6 +625,35 @@ class Topic < ActiveRecord::Base
         StarLimiter.new(user).rollback!
       end
     end
+  end
+
+  def make_banner!(user)
+    # only one banner at the same time
+    previous_banner = Topic.where(archetype: Archetype.banner).first
+    previous_banner.remove_banner!(user) if previous_banner.present?
+
+    self.archetype = Archetype.banner
+    self.add_moderator_post(user, I18n.t("archetypes.banner.message.make"))
+    self.save
+
+    MessageBus.publish('/site/banner', banner)
+  end
+
+  def remove_banner!(user)
+    self.archetype = Archetype.default
+    self.add_moderator_post(user, I18n.t("archetypes.banner.message.remove"))
+    self.save
+
+    MessageBus.publish('/site/banner', nil)
+  end
+
+  def banner
+    post = self.posts.order(:post_number).limit(1).first
+
+    {
+      html: post.cooked,
+      key: self.id
+    }
   end
 
   def self.starred_counts_per_day(sinceDaysAgo=30)
@@ -795,8 +836,8 @@ end
 #  id                      :integer          not null, primary key
 #  title                   :string(255)      not null
 #  last_posted_at          :datetime
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
+#  created_at              :datetime
+#  updated_at              :datetime
 #  views                   :integer          default(0), not null
 #  posts_count             :integer          default(0), not null
 #  user_id                 :integer
@@ -821,7 +862,6 @@ end
 #  archived                :boolean          default(FALSE), not null
 #  bumped_at               :datetime         not null
 #  has_summary             :boolean          default(FALSE), not null
-#  meta_data               :hstore
 #  vote_count              :integer          default(0), not null
 #  archetype               :string(255)      default("regular"), not null
 #  featured_user4_id       :integer
@@ -848,6 +888,6 @@ end
 #
 #  idx_topics_front_page              (deleted_at,visible,archetype,category_id,id)
 #  idx_topics_user_id_deleted_at      (user_id)
-#  index_forum_threads_on_bumped_at   (bumped_at)
+#  index_topics_on_bumped_at          (bumped_at)
 #  index_topics_on_id_and_deleted_at  (id,deleted_at)
 #

@@ -1,3 +1,4 @@
+/*global LockOn:true*/
 /**
   URL related functions.
 
@@ -9,6 +10,29 @@ Discourse.URL = Em.Object.createWithMixins({
 
   // Used for matching a topic
   TOPIC_REGEXP: /\/t\/([^\/]+)\/(\d+)\/?(\d+)?/,
+
+  /**
+    Jumps to a particular post in the stream
+  **/
+  jumpToPost: function(postNumber) {
+    var holderId = '#post-cloak-' + postNumber;
+
+    Em.run.schedule('afterRender', function() {
+      if (postNumber === 1) {
+        $(window).scrollTop(0);
+        return;
+      }
+
+      new LockOn(holderId, {offsetCalculator: function() {
+        var $header = $('header'),
+            $title = $('#topic-title'),
+            windowHeight = $(window).height() - $title.height(),
+            expectedOffset = $title.height() - $header.find('.contents').height() + (windowHeight / 5);
+
+        return $header.outerHeight(true) + ((expectedOffset < 0) ? 0 : expectedOffset);
+      }}).lock();
+    });
+  },
 
   /**
     Browser aware replaceState. Will only be invoked if the browser supports it.
@@ -52,8 +76,27 @@ Discourse.URL = Em.Object.createWithMixins({
   **/
   routeTo: function(path) {
 
+    if (Em.isEmpty(path)) { return; }
+
     if(Discourse.get("requiresRefresh")){
       document.location.href = path;
+      return;
+    }
+
+    // Protocol relative URLs
+    if (path.indexOf('//') === 0) {
+      document.location = path;
+      return;
+    }
+
+    // Scroll to the same page, differnt anchor
+    if (path.indexOf('#') === 0) {
+      var $elem = $(path);
+      if ($elem.length > 0) {
+        Em.run.schedule('afterRender', function() {
+          $('html,body').scrollTop($elem.offset().top - $('header').height() - 15);
+        });
+      }
       return;
     }
 
@@ -67,8 +110,6 @@ Discourse.URL = Em.Object.createWithMixins({
       path = path.replace(rootURL, '');
     }
 
-    // Schedule a DOM cleanup event
-    Em.run.scheduleOnce('afterRender', Discourse.Route, 'cleanDOM');
 
     // Rewrite /my/* urls
     if (path.indexOf('/my/') === 0) {
@@ -81,9 +122,12 @@ Discourse.URL = Em.Object.createWithMixins({
       }
     }
 
+    if (this.navigatedToPost(oldPath, path)) { return; }
+    // Schedule a DOM cleanup event
+    Em.run.scheduleOnce('afterRender', Discourse.Route, 'cleanDOM');
+
     // TODO: Extract into rules we can inject into the URL handler
     if (this.navigatedToHome(oldPath, path)) { return; }
-    if (this.navigatedToPost(oldPath, path)) { return; }
 
     if (path.match(/^\/?users\/[^\/]+$/)) {
       path += "/activity";
@@ -110,6 +154,7 @@ Discourse.URL = Em.Object.createWithMixins({
   **/
   isInternal: function(url) {
     if (url && url.length) {
+      if (url.indexOf('#') === 0) { return true; }
       if (url.indexOf('/') === 0) { return true; }
       if (url.indexOf(this.origin()) === 0) { return true; }
       if (url.replace(/^http/, 'https').indexOf(this.origin()) === 0) { return true; }
@@ -141,7 +186,9 @@ Discourse.URL = Em.Object.createWithMixins({
       if (oldTopicId === newTopicId) {
         Discourse.URL.replaceState(path);
 
-        var topicController = Discourse.__container__.lookup('controller:topic'),
+        var container = Discourse.__container__,
+            topicController = container.lookup('controller:topic'),
+            topicProgressController = container.lookup('controller:topic-progress'),
             opts = {},
             postStream = topicController.get('postStream');
 
@@ -152,12 +199,13 @@ Discourse.URL = Em.Object.createWithMixins({
         postStream.refresh(opts).then(function() {
           topicController.setProperties({
             currentPost: closest,
-            progressPosition: closest,
             highlightOnInsert: closest,
             enteredAt: new Date().getTime().toString()
           });
+          topicProgressController.set('progressPosition', closest);
+          Discourse.PostView.considerHighlighting(topicController, closest);
         }).then(function() {
-          Discourse.TopicView.jumpToPost(closest);
+          Discourse.URL.jumpToPost(closest);
         });
 
         // Abort routing, we have replaced our state.
@@ -179,12 +227,12 @@ Discourse.URL = Em.Object.createWithMixins({
   navigatedToHome: function(oldPath, path) {
     var homepage = Discourse.Utilities.defaultHomepage();
 
-    if (path === "/" && (oldPath === "/" || oldPath === "/" + homepage)) {
+    if (window.history && window.history.pushState && path === "/" && (oldPath === "/" || oldPath === "/" + homepage)) {
       // refresh the list
       switch (homepage) {
-        case "top" :       { this.controllerFor('discoveryTop').send('refresh'); break; }
-        case "categories": { this.controllerFor('discoveryCategories').send('refresh'); break; }
-        default:           { this.controllerFor('discoveryTopics').send('refresh'); break; }
+        case "top" :       { this.controllerFor('discovery/top').send('refresh'); break; }
+        case "categories": { this.controllerFor('discovery/categories').send('refresh'); break; }
+        default:           { this.controllerFor('discovery/topics').send('refresh'); break; }
       }
       return true;
     }
@@ -241,7 +289,26 @@ Discourse.URL = Em.Object.createWithMixins({
   handleURL: function(path) {
     var router = this.get('router');
     router.router.updateURL(path);
-    return router.handleURL(path);
+
+    var split = path.split('#'),
+        elementId;
+
+    if (split.length === 2) {
+      path = split[0];
+      elementId = split[1];
+    }
+
+    var transition = router.handleURL(path);
+    transition.promise.then(function() {
+      if (elementId) {
+        Em.run.next('afterRender', function() {
+          var offset = $('#' + elementId).offset();
+          if (offset && offset.top) {
+            $('html, body').scrollTop(offset.top - $('header').height() - 10);
+          }
+        });
+      }
+    });
   }
 
 });

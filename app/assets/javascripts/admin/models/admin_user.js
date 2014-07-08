@@ -174,6 +174,17 @@ Discourse.AdminUser = Discourse.User.extend({
     });
   },
 
+  log_out: function(){
+    Discourse.ajax("/admin/users/" + this.id + "/log_out", {
+      type: 'POST',
+      data: { username_or_email: this.get('username') }
+    }).then(
+      function(){
+        bootbox.alert(I18n.t("admin.user.logged_out"));
+      }
+      );
+  },
+
   impersonate: function() {
     Discourse.ajax("/admin/impersonate", {
       type: 'POST',
@@ -306,7 +317,7 @@ Discourse.AdminUser = Discourse.User.extend({
       }
     }, {
       "label": '<i class="fa fa-exclamation-triangle"></i> ' + I18n.t('admin.user.delete_and_block'),
-      "class": "btn",
+      "class": "btn btn-danger",
       "callback": function(){
         performDestroy(true);
       }
@@ -420,7 +431,7 @@ Discourse.AdminUser.reopenClass({
 
   findAll: function(query, filter) {
     return Discourse.ajax("/admin/users/list/" + query + ".json", {
-      data: { filter: filter }
+      data: filter
     }).then(function(users) {
       return users.map(function(u) {
         return Discourse.AdminUser.create(u);

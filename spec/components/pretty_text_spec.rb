@@ -10,19 +10,19 @@ describe PrettyText do
       before(:each) do
         eviltrout = User.new
         eviltrout.stubs(:avatar_template).returns("http://test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/{size}.png")
-        User.expects(:where).with(username_lower: "eviltrout").returns([eviltrout])
+        User.expects(:find_by).with(username_lower: "eviltrout").returns(eviltrout)
       end
 
       it "produces a quote even with new lines in it" do
-        PrettyText.cook("[quote=\"EvilTrout, post:123, topic:456, full:true\"]ddd\n[/quote]").should match_html "<p><aside class=\"quote\" data-post=\"123\" data-topic=\"456\" data-full=\"true\"><div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img width=\"20\" height=\"20\" src=\"http://test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/40.png\" class=\"avatar\">EvilTrout said:</div>\n<blockquote><p>ddd</p></blockquote></aside></p>"
+        PrettyText.cook("[quote=\"EvilTrout, post:123, topic:456, full:true\"]ddd\n[/quote]").should match_html "<aside class=\"quote\" data-post=\"123\" data-topic=\"456\" data-full=\"true\"><div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img width=\"20\" height=\"20\" src=\"http://test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/40.png\" class=\"avatar\">EvilTrout said:</div>\n<blockquote><p>ddd</p></blockquote></aside>"
       end
 
       it "should produce a quote" do
-        PrettyText.cook("[quote=\"EvilTrout, post:123, topic:456, full:true\"]ddd[/quote]").should match_html "<p><aside class=\"quote\" data-post=\"123\" data-topic=\"456\" data-full=\"true\"><div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img width=\"20\" height=\"20\" src=\"http://test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/40.png\" class=\"avatar\">EvilTrout said:</div>\n<blockquote><p>ddd</p></blockquote></aside></p>"
+        PrettyText.cook("[quote=\"EvilTrout, post:123, topic:456, full:true\"]ddd[/quote]").should match_html "<aside class=\"quote\" data-post=\"123\" data-topic=\"456\" data-full=\"true\"><div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img width=\"20\" height=\"20\" src=\"http://test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/40.png\" class=\"avatar\">EvilTrout said:</div>\n<blockquote><p>ddd</p></blockquote></aside>"
       end
 
       it "trims spaces on quote params" do
-        PrettyText.cook("[quote=\"EvilTrout, post:555, topic: 666\"]ddd[/quote]").should match_html "<p><aside class=\"quote\" data-post=\"555\" data-topic=\"666\"><div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img width=\"20\" height=\"20\" src=\"http://test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/40.png\" class=\"avatar\">EvilTrout said:</div>\n<blockquote><p>ddd</p></blockquote></aside></p>"
+        PrettyText.cook("[quote=\"EvilTrout, post:555, topic: 666\"]ddd[/quote]").should match_html "<aside class=\"quote\" data-post=\"555\" data-topic=\"666\"><div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img width=\"20\" height=\"20\" src=\"http://test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/40.png\" class=\"avatar\">EvilTrout said:</div>\n<blockquote><p>ddd</p></blockquote></aside>"
       end
 
     end
@@ -135,6 +135,10 @@ describe PrettyText do
       PrettyText.excerpt("<a href='http://cnn.com'>cnn</a>",2).should == "<a href='http://cnn.com'>cn&hellip;</a>"
     end
 
+    it "doesn't extract empty quotes as links" do
+      PrettyText.extract_links("<aside class='quote'>not a linked quote</aside>\n").to_a.should be_empty
+    end
+
     it "should be able to extract links" do
       PrettyText.extract_links("<a href='http://cnn.com'>http://bla.com</a>").to_a.should == ["http://cnn.com"]
     end
@@ -233,6 +237,38 @@ describe PrettyText do
 
     it "strips the metadata" do
       strip_image_wrapping(wrapped_image).should == "<div class=\"lightbox-wrapper\"><a href=\"//localhost:3000/uploads/default/4399/33691397e78b4d75.png\" class=\"lightbox\" title=\"Screen Shot 2014-04-14 at 9.47.10 PM.png\"><img src=\"//localhost:3000/uploads/default/_optimized/bd9/b20/bbbcd6a0c0_655x500.png\" width=\"655\" height=\"500\"></a></div>"
+    end
+  end
+
+
+  describe "markdown quirks" do
+    it "bolds stuff in parens" do
+      PrettyText.cook("a \"**hello**\"").should match_html "<p>a &quot;<strong>hello</strong>&quot;</p>"
+      PrettyText.cook("(**hello**)").should match_html "<p>(<strong>hello</strong>)</p>"
+      #           is it me your looking for?
+    end
+    it "allows for newline after bold" do
+      PrettyText.cook("**hello**\nworld").should match_html "<p><strong>hello</strong><br />world</p>"
+    end
+    it "allows for newline for 2 bolds" do
+      PrettyText.cook("**hello**\n**world**").should match_html "<p><strong>hello</strong><br /><strong>world</strong></p>"
+    end
+
+    it "allows for * and _  in bold" do
+      PrettyText.cook("**a*_b**").should match_html "<p><strong>a*_b</strong></p>"
+    end
+
+    it "does not apply italics when there is a space inside" do
+      PrettyText.cook("** hello**").should match_html "<p>** hello**</p>"
+      PrettyText.cook("**hello **").should match_html "<p>**hello **</p>"
+    end
+
+    it "allows does not bold chinese intra word" do
+      PrettyText.cook("你**hello**").should match_html "<p>你**hello**</p>"
+    end
+
+    it "allows bold chinese" do
+      PrettyText.cook("**你hello**").should match_html "<p><strong>你hello</strong></p>"
     end
   end
 

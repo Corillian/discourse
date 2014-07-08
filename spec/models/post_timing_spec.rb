@@ -48,15 +48,15 @@ describe PostTiming do
       PostTiming.where(topic_id: topic_id, user_id: 2, post_number: 3).count.should == 1
       PostTiming.where(topic_id: topic_id, user_id: 3, post_number: 3).count.should == 1
 
-      tu = TopicUser.where(topic_id: topic_id, user_id: 1).first
+      tu = TopicUser.find_by(topic_id: topic_id, user_id: 1)
       tu.last_read_post_number.should == 1
       tu.seen_post_count.should == 1
 
-      tu = TopicUser.where(topic_id: topic_id, user_id: 2).first
+      tu = TopicUser.find_by(topic_id: topic_id, user_id: 2)
       tu.last_read_post_number.should == 3
       tu.seen_post_count.should == 3
 
-      tu = TopicUser.where(topic_id: topic_id, user_id: 3).first
+      tu = TopicUser.find_by(topic_id: topic_id, user_id: 3)
       tu.last_read_post_number.should == 3
       tu.seen_post_count.should == 3
 
@@ -76,14 +76,14 @@ describe PostTiming do
 
       PostAction.act(user2, post, PostActionType.types[:like])
 
-      post.user.unread_notifications.should == 1
-      post.user.unread_notifications_by_type.should == { Notification.types[:liked] => 1 }
+      post.user.unread_notifications.should == 2
+      post.user.unread_notifications_by_type.should == {Notification.types[:granted_badge] => 1, Notification.types[:liked] => 1 }
 
       PostTiming.process_timings(post.user, post.topic_id, 1, [[post.post_number, 100]])
 
       post.user.reload
-      post.user.unread_notifications_by_type.should == {}
-      post.user.unread_notifications.should == 0
+      post.user.unread_notifications_by_type.should == {Notification.types[:granted_badge] => 1}
+      post.user.unread_notifications.should == 1
 
     end
   end
@@ -113,7 +113,7 @@ describe PostTiming do
       before do
         PostTiming.record_timing(@timing_attrs)
         PostTiming.record_timing(@timing_attrs)
-        @timing = PostTiming.where(topic_id: @post.topic_id, user_id: @coding_horror.id, post_number: @post.post_number).first
+        @timing = PostTiming.find_by(topic_id: @post.topic_id, user_id: @coding_horror.id, post_number: @post.post_number)
       end
 
       it 'creates a timing record' do

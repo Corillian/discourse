@@ -43,7 +43,7 @@ class TopicsController < ApplicationController
     begin
       @topic_view = TopicView.new(params[:id] || params[:topic_id], current_user, opts)
     rescue Discourse::NotFound
-      topic = Topic.where(slug: params[:id]).first if params[:id]
+      topic = Topic.find_by(slug: params[:id].downcase) if params[:id]
       raise Discourse::NotFound unless topic
       return redirect_to(topic.relative_url)
     end
@@ -61,12 +61,21 @@ class TopicsController < ApplicationController
     perform_show_response
 
     canonical_url absolute_without_cdn(@topic_view.canonical_path)
+  rescue Discourse::InvalidAccess => ex
+
+    if current_user
+      # If the user can't see the topic, clean up notifications for it.
+      Notification.remove_for(current_user.id, params[:topic_id])
+    end
+
+    raise ex
   end
 
   def wordpress
     params.require(:best)
     params.require(:topic_id)
     params.permit(:min_trust_level, :min_score, :min_replies, :bypass_trust_level_score, :only_moderator_liked)
+
     opts = { best: params[:best].to_i,
       min_trust_level: params[:min_trust_level] ? 1 : params[:min_trust_level].to_i,
       min_score: params[:min_score].to_i,
@@ -96,14 +105,10 @@ class TopicsController < ApplicationController
   end
 
   def update
-    topic = Topic.where(id: params[:topic_id]).first
-    title, archetype = params[:title], params[:archetype]
+    topic = Topic.find_by(id: params[:topic_id])
     guardian.ensure_can_edit!(topic)
 
-    topic.title = params[:title] if title.present?
-    # TODO: we may need smarter rules about converting archetypes
-    topic.archetype = "regular" if current_user.admin? && archetype == 'regular'
-
+    topic.title = params[:title] if params[:title].present?
     topic.acting_user = current_user
 
     success = false
@@ -134,14 +139,14 @@ class TopicsController < ApplicationController
     enabled = (params[:enabled] == 'true')
 
     check_for_status_presence(:status, status)
-    @topic = Topic.where(id: topic_id).first
+    @topic = Topic.find_by(id: topic_id)
     guardian.ensure_can_moderate!(@topic)
     @topic.update_status(status, enabled, current_user)
     render nothing: true
   end
 
   def star
-    @topic = Topic.where(id: params[:topic_id].to_i).first
+    @topic = Topic.find_by(id: params[:topic_id].to_i)
     guardian.ensure_can_see!(@topic)
 
     @topic.toggle_star(current_user, params[:starred] == 'true')
@@ -158,7 +163,7 @@ class TopicsController < ApplicationController
 
   def autoclose
     raise Discourse::InvalidParameters.new(:auto_close_time) unless params.has_key?(:auto_close_time)
-    topic = Topic.where(id: params[:topic_id].to_i).first
+    topic = Topic.find_by(id: params[:topic_id].to_i)
     guardian.ensure_can_moderate!(topic)
     topic.set_auto_close(params[:auto_close_time], current_user)
     if topic.save
@@ -168,8 +173,26 @@ class TopicsController < ApplicationController
     end
   end
 
+  def make_banner
+    topic = Topic.find_by(id: params[:topic_id].to_i)
+    guardian.ensure_can_moderate!(topic)
+
+    topic.make_banner!(current_user)
+
+    render nothing: true
+  end
+
+  def remove_banner
+    topic = Topic.find_by(id: params[:topic_id].to_i)
+    guardian.ensure_can_moderate!(topic)
+
+    topic.remove_banner!(current_user)
+
+    render nothing: true
+  end
+
   def destroy
-    topic = Topic.where(id: params[:id]).first
+    topic = Topic.find_by(id: params[:id])
     guardian.ensure_can_delete!(topic)
     topic.trash!(current_user)
     render nothing: true
@@ -188,7 +211,7 @@ class TopicsController < ApplicationController
 
   def remove_allowed_user
     params.require(:username)
-    topic = Topic.where(id: params[:topic_id]).first
+    topic = Topic.find_by(id: params[:topic_id])
     guardian.ensure_can_remove_allowed_users!(topic)
 
     if topic.remove_allowed_user(params[:username])
@@ -201,10 +224,12 @@ class TopicsController < ApplicationController
   def invite
     username_or_email = params[:user] ? fetch_username : fetch_email
 
-    topic = Topic.where(id: params[:topic_id]).first
-    guardian.ensure_can_invite_to!(topic)
+    topic = Topic.find_by(id: params[:topic_id])
 
-    if topic.invite(current_user, username_or_email)
+    group_ids = Group.lookup_group_ids(params)
+    guardian.ensure_can_invite_to!(topic,group_ids)
+
+    if topic.invite(current_user, username_or_email, group_ids)
       user = User.find_by_username_or_email(username_or_email)
       if user
         render_json_dump BasicUserSerializer.new(user, scope: guardian, root: 'user')
@@ -225,7 +250,7 @@ class TopicsController < ApplicationController
   def merge_topic
     params.require(:destination_topic_id)
 
-    topic = Topic.where(id: params[:topic_id]).first
+    topic = Topic.find_by(id: params[:topic_id])
     guardian.ensure_can_move_posts!(topic)
 
     dest_topic = topic.move_posts(current_user, topic.posts.pluck(:id), destination_topic_id: params[:destination_topic_id].to_i)
@@ -237,7 +262,7 @@ class TopicsController < ApplicationController
     params.require(:topic_id)
     params.permit(:category_id)
 
-    topic = Topic.where(id: params[:topic_id]).first
+    topic = Topic.find_by(id: params[:topic_id])
     guardian.ensure_can_move_posts!(topic)
 
     dest_topic = move_posts_to_destination(topic)
@@ -276,14 +301,14 @@ class TopicsController < ApplicationController
   end
 
   def clear_pin
-    topic = Topic.where(id: params[:topic_id].to_i).first
+    topic = Topic.find_by(id: params[:topic_id].to_i)
     guardian.ensure_can_see!(topic)
     topic.clear_pin_for(current_user)
     render nothing: true
   end
 
   def re_pin
-    topic = Topic.where(id: params[:topic_id].to_i).first
+    topic = Topic.find_by(id: params[:topic_id].to_i)
     guardian.ensure_can_see!(topic)
     topic.re_pin_for(current_user)
     render nothing: true
@@ -330,7 +355,7 @@ class TopicsController < ApplicationController
   private
 
   def toggle_mute
-    @topic = Topic.where(id: params[:topic_id].to_i).first
+    @topic = Topic.find_by(id: params[:topic_id].to_i)
     guardian.ensure_can_see!(@topic)
 
     @topic.toggle_mute(current_user)
@@ -355,12 +380,17 @@ class TopicsController < ApplicationController
   end
 
   def track_visit_to_topic
-    Jobs.enqueue(:view_tracker,
-                    topic_id: @topic_view.topic.id,
-                    ip: request.remote_ip,
-                    user_id: (current_user.id if current_user),
-                    track_visit: should_track_visit_to_topic?
-                )
+    topic_id =  @topic_view.topic.id
+    ip = request.remote_ip
+    user_id = (current_user.id if current_user)
+    track_visit = should_track_visit_to_topic?
+
+    Scheduler::Defer.later do
+      View.create_for_parent(Topic, topic_id, ip, user_id)
+      if track_visit
+        TopicUser.track_visit! topic_id, user_id
+      end
+    end
 
   end
 
@@ -373,6 +403,7 @@ class TopicsController < ApplicationController
 
     respond_to do |format|
       format.html do
+        @description_meta = @topic_view.topic.excerpt
         store_preloaded("topic_#{@topic_view.topic.id}", MultiJson.dump(topic_view_serializer))
       end
 

@@ -171,7 +171,7 @@ describe SessionController do
 
     context 'when email is confirmed' do
       before do
-        token = user.email_tokens.where(email: user.email).first
+        token = user.email_tokens.find_by(email: user.email)
         EmailToken.confirm(token.token)
       end
 
@@ -192,6 +192,14 @@ describe SessionController do
           User.any_instance.stubs(:suspended_till).returns(2.days.from_now)
           xhr :post, :create, login: user.username, password: 'myawesomepassword'
           ::JSON.parse(response.body)['error'].should be_present
+        end
+      end
+
+      describe 'deactivated user' do
+        it 'should return an error' do
+          User.any_instance.stubs(:active).returns(false)
+          xhr :post, :create, login: user.username, password: 'myawesomepassword'
+          expect(JSON.parse(response.body)['error']).to eq(I18n.t('login.not_activated'))
         end
       end
 

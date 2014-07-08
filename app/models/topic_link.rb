@@ -2,6 +2,9 @@ require 'uri'
 require_dependency 'slug'
 
 class TopicLink < ActiveRecord::Base
+  MAX_DOMAIN_LENGTH = 100 unless defined? MAX_DOMAIN_LENGTH
+  MAX_URL_LENGTH = 500 unless defined? MAX_URL_LENGTH
+
   belongs_to :topic
   belongs_to :user
   belongs_to :post
@@ -45,6 +48,7 @@ class TopicLink < ActiveRecord::Base
 
     builder.where('ftl.topic_id = :topic_id', topic_id: topic_id)
     builder.where('ft.deleted_at IS NULL')
+    builder.where("COALESCE(ft.archetype, 'regular') <> :archetype", archetype: Archetype.private_message)
 
     builder.secure_category(guardian.secure_category_ids)
 
@@ -72,6 +76,7 @@ class TopicLink < ActiveRecord::Base
               ORDER BY reflection ASC, clicks DESC")
 
     builder.where('t.deleted_at IS NULL')
+    builder.where("COALESCE(t.archetype, 'regular') <> :archetype", archetype: Archetype.private_message)
 
     # not certain if pluck is right, cause it may interfere with caching
     builder.where('l.post_id IN (:post_ids)', post_ids: posts.map(&:id))
@@ -123,7 +128,8 @@ class TopicLink < ActiveRecord::Base
             post_number = route[:post_number] || 1
 
             # Store the canonical URL
-            topic = Topic.where(id: topic_id).first
+            topic = Topic.find_by(id: topic_id)
+            topic_id = nil unless topic
 
             if topic.present?
               url = "#{Discourse.base_url}#{topic.relative_url}"
@@ -137,8 +143,11 @@ class TopicLink < ActiveRecord::Base
 
           reflected_post = nil
           if post_number && topic_id
-            reflected_post = Post.where(topic_id: topic_id, post_number: post_number.to_i).first
+            reflected_post = Post.find_by(topic_id: topic_id, post_number: post_number.to_i)
           end
+
+          next if url && url.length > MAX_URL_LENGTH
+          next if parsed && parsed.host && parsed.host.length > MAX_DOMAIN_LENGTH
 
           added_urls << url
           TopicLink.create(post_id: post.id,
@@ -152,7 +161,7 @@ class TopicLink < ActiveRecord::Base
 
           # Create the reflection if we can
           if topic_id.present?
-            topic = Topic.where(id: topic_id).first
+            topic = Topic.find_by(id: topic_id)
 
             if topic && post.topic && post.topic.archetype != 'private_message' && topic.archetype != 'private_message'
 
@@ -208,8 +217,8 @@ end
 #  domain        :string(100)      not null
 #  internal      :boolean          default(FALSE), not null
 #  link_topic_id :integer
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
+#  created_at    :datetime
+#  updated_at    :datetime
 #  reflection    :boolean          default(FALSE)
 #  clicks        :integer          default(0), not null
 #  link_post_id  :integer
@@ -218,6 +227,7 @@ end
 #
 # Indexes
 #
-#  index_forum_thread_links_on_forum_thread_id                      (topic_id)
-#  index_forum_thread_links_on_forum_thread_id_and_post_id_and_url  (topic_id,post_id,url) UNIQUE
+#  index_topic_links_on_post_id   (post_id)
+#  index_topic_links_on_topic_id  (topic_id)
+#  unique_post_links              (topic_id,post_id,url) UNIQUE
 #

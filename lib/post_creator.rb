@@ -18,6 +18,7 @@ class PostCreator
   #                             topic.
   #   created_at              - Post creation time (optional)
   #   auto_track              - Automatically track this topic if needed (default true)
+  #   custom_fields           - Custom fields to be added to the post, Hash (default nil)
   #
   #   When replying to a topic:
   #     topic_id              - topic we're replying to
@@ -73,9 +74,9 @@ class PostCreator
     end
 
     if @post
-      PostAlerter.post_created(@post)
+      PostAlerter.post_created(@post) unless @opts[:import_mode]
 
-      handle_spam
+      handle_spam unless @opts[:import_mode]
       track_latest_on_category
       enqueue_jobs
     end
@@ -105,7 +106,7 @@ class PostCreator
   def self.set_reply_user_id(post)
     return unless post.reply_to_post_number.present?
 
-    post.reply_to_user_id ||= Post.select(:user_id).where(topic_id: post.topic_id, post_number: post.reply_to_post_number).first.try(:user_id)
+    post.reply_to_user_id ||= Post.select(:user_id).find_by(topic_id: post.topic_id, post_number: post.reply_to_post_number).try(:user_id)
   end
 
   protected
@@ -148,15 +149,11 @@ class PostCreator
   def clear_possible_flags(topic)
     # at this point we know the topic is a PM and has been replied to ... check if we need to clear any flags
     #
-    first_post = Post.select(:id).where(topic_id: topic.id).where('post_number = 1').first
+    first_post = Post.select(:id).where(topic_id: topic.id).find_by("post_number = 1")
     post_action = nil
 
     if first_post
-      post_action = PostAction.where(
-        related_post_id: first_post.id,
-        deleted_at: nil,
-        post_action_type_id: PostActionType.types[:notify_moderators]
-      ).first
+      post_action = PostAction.find_by(related_post_id: first_post.id, deleted_at: nil, post_action_type_id: PostActionType.types[:notify_moderators])
     end
 
     if post_action
@@ -179,7 +176,7 @@ class PostCreator
         raise ex
       end
     else
-      topic = Topic.where(id: @opts[:topic_id]).first
+      topic = Topic.find_by(id: @opts[:topic_id])
       guardian.ensure_can_create!(Post, topic)
     end
     @topic = topic
@@ -207,6 +204,10 @@ class PostCreator
     post.extract_quoted_post_numbers
     post.created_at = Time.zone.parse(@opts[:created_at].to_s) if @opts[:created_at].present?
 
+    if fields = @opts[:custom_fields]
+      post.custom_fields = fields
+    end
+
     @post = post
   end
 
@@ -232,6 +233,7 @@ class PostCreator
   end
 
   def consider_clearing_flags
+    return if @opts[:import_mode]
     return unless @topic.private_message? && @post.post_number > 1 && @topic.user_id != @post.user_id
 
     clear_possible_flags(@topic)
@@ -239,7 +241,7 @@ class PostCreator
 
   def update_user_counts
     # We don't count replies to your own topics
-    if @user.id != @topic.user_id
+    if !@opts[:import_mode] && @user.id != @topic.user_id
       @user.user_stat.update_topic_reply_count
       @user.user_stat.save!
     end
@@ -249,6 +251,7 @@ class PostCreator
   end
 
   def publish
+    return if @opts[:import_mode]
     return unless @post.post_number > 1
 
     MessageBus.publish("/topic/#{@post.topic_id}",{
@@ -268,18 +271,26 @@ class PostCreator
   def track_topic
     return if @opts[:auto_track] == false
 
-    TopicUser.auto_track(@user.id, @topic.id, TopicUser.notification_reasons[:created_post])
-    # Update topic user data
     TopicUser.change(@post.user.id,
                      @post.topic.id,
                      posted: true,
                      last_read_post_number: @post.post_number,
                      seen_post_count: @post.post_number)
+
+
+    # assume it took us 5 seconds of reading time to make a post
+    PostTiming.record_timing(topic_id: @post.topic_id,
+                             user_id: @post.user_id,
+                             post_number: @post.post_number,
+                             msecs: 5000)
+
+
+    TopicUser.auto_track(@user.id, @topic.id, TopicUser.notification_reasons[:created_post])
   end
 
   def enqueue_jobs
     return unless @post && !@post.errors.present?
-    PostJobsEnqueuer.new(@post, @topic, new_topic?).enqueue_jobs
+    PostJobsEnqueuer.new(@post, @topic, new_topic?, {import_mode: @opts[:import_mode]}).enqueue_jobs
   end
 
   def new_topic?

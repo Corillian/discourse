@@ -1,5 +1,3 @@
-require_dependency 'trashable'
-
 class Invite < ActiveRecord::Base
   include Trashable
 
@@ -7,6 +5,8 @@ class Invite < ActiveRecord::Base
   belongs_to :topic
   belongs_to :invited_by, class_name: 'User'
 
+  has_many :invited_groups
+  has_many :groups, through: :invited_groups
   has_many :topic_invites
   has_many :topics, through: :topic_invites, source: :topic
   validates_presence_of :email
@@ -26,7 +26,7 @@ class Invite < ActiveRecord::Base
   def user_doesnt_already_exist
     @email_already_exists = false
     return if email.blank?
-    u = User.where("email = ?", Email.downcase(email)).first
+    u = User.find_by("email = ?", Email.downcase(email))
     if u && u.id != self.user_id
       @email_already_exists = true
       errors.add(:email)
@@ -54,31 +54,45 @@ class Invite < ActiveRecord::Base
   # Create an invite for a user, supplying an optional topic
   #
   # Return the previously existing invite if already exists. Returns nil if the invite can't be created.
-  def self.invite_by_email(email, invited_by, topic=nil)
+  def self.invite_by_email(email, invited_by, topic=nil, group_ids=nil)
     lower_email = Email.downcase(email)
+    user = User.find_by(email: lower_email)
+
+    if user
+      topic.grant_permission_to_user(lower_email) if topic && topic.private_message?
+      return nil
+    end
+
     invite = Invite.with_deleted
-                   .where('invited_by_id = ? and email = ?', invited_by.id, lower_email)
+                   .where(email: lower_email, invited_by_id: invited_by.id)
                    .order('created_at DESC')
                    .first
 
-    if invite && invite.expired?
+    if invite && (invite.expired? || invite.deleted_at)
       invite.destroy
       invite = nil
     end
 
-    if invite.blank?
-      invite = Invite.create(invited_by: invited_by, email: lower_email)
-      unless invite.valid?
-        topic.grant_permission_to_user(lower_email) if topic.present? && topic.email_already_exists_for?(invite)
-        return
+    if !invite
+      invite = Invite.create!(invited_by: invited_by, email: lower_email)
+    end
+
+    if topic && !invite.topic_invites.pluck(:topic_id).include?(topic.id)
+      invite.topic_invites.create!(invite_id: invite.id, topic_id: topic.id)
+      # to correct association
+      topic.reload
+    end
+
+    if group_ids.present?
+      group_ids = group_ids - invite.invited_groups.pluck(:group_id)
+      group_ids.each do |group_id|
+        invite.invited_groups.create!(group_id: group_id)
       end
     end
 
-    # Recover deleted invites if we invite them again
-    invite.recover! if invite.deleted_at.present?
-
-    topic.topic_invites.create(invite_id: invite.id) if topic.present?
     Jobs.enqueue(:invite_email, invite_id: invite.id)
+
+    invite.reload
     invite
   end
 
@@ -108,12 +122,28 @@ class Invite < ActiveRecord::Base
   end
 
   def self.invalidate_for_email(email)
-    i = Invite.where(email: Email.downcase(email)).first
+    i = Invite.find_by(email: Email.downcase(email))
     if i
       i.invalidated_at = Time.zone.now
       i.save
     end
     i
+  end
+
+  def self.redeem_from_email(email)
+    invite = Invite.find_by(email: Email.downcase(email))
+    if invite
+      InviteRedeemer.new(invite).redeem
+    end
+    invite
+  end
+
+  def self.base_directory
+    File.join(Rails.root, "public", "csv", RailsMultisite::ConnectionManagement.current_db)
+  end
+
+  def self.chunk_path(identifier, filename, chunk_number)
+    File.join(Invite.base_directory, "tmp", identifier, "#{filename}.part#{chunk_number}")
   end
 end
 
@@ -127,8 +157,8 @@ end
 #  invited_by_id  :integer          not null
 #  user_id        :integer
 #  redeemed_at    :datetime
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
+#  created_at     :datetime
+#  updated_at     :datetime
 #  deleted_at     :datetime
 #  deleted_by_id  :integer
 #  invalidated_at :datetime

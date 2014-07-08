@@ -3,7 +3,7 @@
 # Never edit this file. It will be overwritten when translations are pulled from Transifex.
 #
 # To work with us on translations, join this project:
-# https://www.transifex.com/projects/p/discourse-pt-br/
+# https://www.transifex.com/projects/p/discourse-org/
 
 cs:
   dates:
@@ -20,7 +20,6 @@ cs:
   posts: "příspěvky"
   loading: "Nahrávám"
   powered_by_html: 'Systém běží na <a href="http://www.discourse.org">Discourse</a>, nejlepší zážitek je se zapnutým JavaScriptem'
-  log_in: "Přihlásit se"
   via: "%{username} přes %{site_name}"
   is_reserved: "je rezervováno"
   backup:
@@ -34,8 +33,6 @@ cs:
     few: "Je nám líto, ale noví uživatelé jsou dočasně omezeni na %{count} odpovědi v tématu."
     other: "Je nám líto, ale noví uživatelé jsou dočasně omezeni na %{count} odpovědí v tématu."
   embed:
-    start_discussion: "Zahájit diskuzi"
-    continue: "Pokračovat v diskuzi"
     more_replies:
       one: "1 další odpověď"
       few: "%{count} další odpověďi"
@@ -43,7 +40,6 @@ cs:
     loading: "Načítám diskuzi..."
     permalink: "Permalink"
     imported_from: "Diskuze k původnímu příspěvku na blogu: %{link}"
-    in_reply_to: "v reakci na %{username}"
     replies:
       one: "1 reakce"
       few: "%{count} reakce"
@@ -171,18 +167,13 @@ cs:
               cant_send_pm: "Bohužel, tomuto uživateli nemůžete poslat soukromou zprávu."
         user:
           attributes:
-            password:
-              common: "je jedno z nejčastějších 5000 hesel. Zkuste vymyslet bezpečnější heslo."
             ip_address:
               signup_not_allowed: "Registrace z této adresy není povolena."
   user_profile:
     no_info_me: "<div class='missing-profile'>Pole 'o mně' je v tuto chvíli prázdné, <a href='/users/%{username_lower}/preferences/about-me'>nechcete si ho vyplnit?</a></div>"
     no_info_other: "<div class='missing-profile'>%{name} o sobě zatím žádné informace nevyplnil</div>"
-  vip_category_name: "Salónek"
   vip_category_description: "Kategorie je přístupná výhradně členům s důvěryhodností 3 a vyšší."
-  meta_category_name: "Meta"
   meta_category_description: "Diskuze o fóru, organizaci, jak funguje a jak ho můžeme zlepšit."
-  staff_category_name: "Štáb"
   staff_category_description: "Privátní kategorie pro diskuze štábu. Témata jsou viditelná pouze pro moderátory a správce."
   category:
     topic_prefix: "Definice kategorie pro %{category}"
@@ -332,11 +323,9 @@ cs:
   post_action_types:
     off_topic:
       title: 'Off-Topic'
-      description: 'Tento příspěvek je off-topic (mimo téma) v aktuální konverzaci a měl by být přesunut do jiného tématu.'
       long_form: 'označil příspěvek jako off-topic'
     spam:
       title: 'Spam'
-      description: 'Tento příspěvek je pouze reklama bez informační hodnoty. Není užitečný ani relevantní k současné konverzaci.'
       long_form: 'označeno jako spam'
     inappropriate:
       title: 'Nevhodné'
@@ -382,7 +371,6 @@ cs:
       email_title: 'The topic "%{title}" requires moderator attention'
       email_body: "%{link}\\\n\\\n%{message}\n"
   flagging:
-    you_must_edit: '<p>Váš příspěvek byl již několikrát nahlášen jako závadný. Další informace najdete v soukromých zprávách.</p>'
     user_must_edit: '<p>Nahlášený obsah je skrytý.</p>'
   archetypes:
     regular:
@@ -609,7 +597,6 @@ cs:
     flag_sockpuppets: "If a new user (i.e., registered in the last 24 hours) who started a topic and a new user who replies in that topic are at the same IP address, both their posts will automatically be flagged as spam."
     traditional_markdown_linebreaks: "Používat tradiční zalamování řádků v Markdownu, jinak vyžaduje dvě mezery pro zalomení"
     post_undo_action_window_mins: "Počet sekund, během kterých smí uživatelé vrátit akce na příspěvcích (líbí se, nahlášení, atd.)"
-    must_approve_users: "Administrátoři musí schválit všechny uživatele, než získají přístup"
     ga_tracking_code: "Kód pro sledování přes 'Google analytics', např. UA-12345678-9; viz http://google.com/analytics"
     ga_domain_name: "Doménové jméno pro Google analytics, např. mysite.com; viz http://google.com/analytics"
     ga_universal_tracking_code: "Kód Google Universal Analytics (analytics.js); například UA–12345678-9; více na http://google.com/analytics"
@@ -618,7 +605,6 @@ cs:
     enable_noscript_support: "Povolit podporu &lt;noscript&gt; tagu"
     top_menu: "Určuje, které položky se zobrazí v navigaci na hlavní stránce a v jakém pořadí. Příklad: latest|new|unread|starred|categories|top|read|posted"
     post_menu: "Určuje, které položky se zobrazí v menu u příspěvku a v jakém pořadí. Příklad: like|edit|flag|delete|share|bookmark|reply"
-    share_links: "Určuje, které položky se zobrazí ve sdílecím dialogu a v jakém pořadí. Příklad: twitter|facebook|google+"
     track_external_right_clicks: "Počítat kliknutí na externí odkazy pravým tlačítkem (např. otevření do nové záložky); defaultně zakázáno kvůli přepisu URL"
     topics_per_page: "Kolik témat je načteno do seznamu témat"
     posts_per_page: "Kolik příspěvků je zobrazeno ve stránce tématu"
@@ -628,7 +614,6 @@ cs:
     suppress_reply_directly_above: "Nezobrazovat informaci 'je odpověď na' u příspěvku, jehož odpověď je přímo nad ním"
     topics_per_period_in_top_summary: "Počet témat zobrazených v přehledu populárních témat"
     topics_per_period_in_top_page: "Počet témat zobrazených na stránce populárních témat"
-    redirect_new_users_to_top_page_duration: "Počet dní po které mají noví uživatelé být automaticky přesměrováni na stránku s populárními tématy"
     allow_index_in_robots_txt: "Povolit robotům indexaci tohoto webu (aktualizuje robots.txt)"
     email_domains_blacklist: "Seznam domén, jejichž emailové adresy nebudou přijímány, oddělený znakem '|'. Příklad: mailinator.com|trashmail.net"
     email_domains_whitelist: "Seznam domén, ze kterých bude povolena registrace, oddělený znamek '|'. POZOR: Emailové adresy z jiných než z těchto domén nebudou přijímány."
@@ -641,7 +626,6 @@ cs:
     login_required: "Požadovat autentizaci pro prohlížení příspěvků"
     min_username_length: "Minimální délka uživatelského jména. (Nepoužije se pokud je vynucena unikátnost globálního uživatelského jména)"
     min_password_length: "Minimální povolená délka hesla."
-    block_common_passwords: "Nepovolit heslo pokud je mezi 5000 nejběžnějšími."
     enable_sso: "Povolit jednotné přihlášení přes externí web (single sign on, SSO)"
     sso_url: "URL pro single sign on"
     sso_secret: "Tajný kód pro šifrování a dešifrování informací pro SSO. Chcete zadat minimálně 10 znaků a víc"
@@ -649,7 +633,6 @@ cs:
     sso_overrides_username: "Přepisuje místní uživatelské jméno tím z dat SSO (VAROVÁNÍ: kvůli rozdílnostem v požadavcích na uživatelské jméno může dojít k nesrovnalostem)"
     sso_overrides_name: "Přepisuje místní jméno tím z dat SSO (VAROVÁNÍ: kvůli normalizování místního jména může dojít k nesrovnalostem)"
     enable_local_logins: "Povolit lokální autentizaci"
-    enable_google_logins: "Povolit přihlašování přes Google"
     enable_yahoo_logins: "Povolit přihlašování přes Yahoo"
     enable_twitter_logins: "Povolit přihlašování přes Twitter, vyžaduje správně nastavené 'twitter_consumer_key' a 'twitter_consumer_secret'"
     twitter_consumer_key: "'Consumer key' pro přihlašování přes Twitter, registrace na http://dev.twitter.com"
@@ -660,7 +643,6 @@ cs:
     enable_github_logins: "Povolit přihlašování přes Github, vyžaduje správně nastavené 'github_client_id' a 'github_client_secret'"
     github_client_id: "'Client id' pro přihlašování přes Github, registrace na https://github.com/settings/applications"
     github_client_secret: "'Client secret' pro přihlašování přes Github, registrace na https://github.com/settings/applications"
-    allow_restore: "Povolit import, kterým lze přepsat VŠECHNA data na tomto webu; nechte nastaveno na 'false', pokud neplánujete dělat importy dat"
     active_user_rate_limit_secs: "Jak často aktualizujeme informaci o poslední návštěvě uživatelů, v sekundách"
     previous_visit_timeout_hours: "Kolik času musí uplynout v hodinách, než je návštěva uživatele považována za uplynulou"
     rate_limit_create_topic: "Počet sekund, které je nutné počkat od vytvoření tématu, než smí uživatel vytvořit další"
@@ -677,7 +659,6 @@ cs:
     clean_orphan_uploads_grace_period_hours: "Grace period (in hours) before an orphan upload is removed."
     purge_deleted_uploads_grace_period_days: "Grace period (in days) before a deleted upload is erased."
     enable_s3_uploads: "Ukládat nahrané soubory na Amazon S3"
-    s3_upload_bucket: "Název 'Amazon S3 bucketu', do kterého se mají soubory nahrávat"
     s3_access_key_id: "Hodnota 'access key id' služby Amazon S3, která se použije pro nahrávání obrázku"
     s3_secret_access_key: "Hodnota 'server access key' služby Amazon S3, která se použije pro nahrávání obrázku"
     s3_region: "Hodnota 'region' služby Amazon S3, která se použije pro nahrávání obrázku"
@@ -699,7 +680,6 @@ cs:
     newuser_max_images: "Kolik obrázků může nový uživatel vložit do příspěvku"
     newuser_max_attachments: "Kolik příloh může nový uživatel vložit do příspěvku"
     newuser_max_mentions_per_post: "Kolik zmínek přes @name může nový uživatel vložit do příspěvku"
-    newuser_max_replies_per_topic: "Maximum number of replies a new user can make in a single topic"
     max_mentions_per_post: "Maximální počet zmínek přes @name, které mohou být použity v jednom příspěvku"
     create_thumbnails: "Vytvářet náhledy pro obrázky v lightboxu"
     email_time_window_mins: "Kolik minut se čeká než se uživateli zašle email, aby měl možnost obsah vidět sám od sebe"
@@ -714,7 +694,6 @@ cs:
     category_colors: "Seznam hexadecimálních barev oddělený svislítkem (|) pro barvy kategorií"
     max_image_size_kb: "Maximální povolená velikost nahrávaných souborů v kB - nezapomeňte tento limit změnit v nginx (client_max_body_size) / apache a na proxy serverech."
     max_attachment_size_kb: "Maximální povolená velikost příloh souborů v kB - nezapomeňte tento limit změnit v nginx (client_max_body_size) / apache a na proxy serverech."
-    authorized_extensions: "Seznam povolených přípon souborů pro nahrávání, oddělený svislítkem (|)"
     max_similar_results: "Kolik podobných témat se má zobrazovat uživateli, když vytváří nové téma"
     title_prettify: "Zabrání běžným překlepům a chybám v názvu tématu, včetně psaní velkými písmeny, malé písmeno na začátku, vícenásobné vykřičníky a otazníky, atd."
     topic_views_heat_low: "Počet zobrazení, po nichž bude popularita tématu nízká."
@@ -755,17 +734,12 @@ cs:
     enable_mobile_theme: "Používat na mobilních zařízeních verzi přizpůsobenou pro mobily s možností přejít na plnou verzi. Zruště pokud chcete používat vlastní plně responzivní kaskádový styl."
     dominating_topic_minimum_percent: "What percentage of posts a user has to make in a topic before we consider it dominating."
     suppress_uncategorized_badge: "Don't show the badge for uncategorized topics in topic lists"
-    min_posts_for_search_in_topic: "Disable search within topic if topics have less than minimum number posts"
     enable_names: "Povolit uživatelům zobrazovat celé jméno"
     display_name_on_posts: "Also show a user's full name on their posts"
     invites_shown: "Maximální počet pozvánek zobrazený na uživatelově stránce"
     short_progress_text_threshold: "After the number of posts in a topic goes above this number, the progress bar will only show the current post number. If you change the progress bar's width, you may need to change this value."
     default_code_lang: "Default programming language syntax highlighting applied to GitHub code blocks (lang-auto, ruby, python etc.)"
     embeddable_host: "Host that can embed the comments from this Discourse forum"
-    feed_polling_enabled: "Whether to import a RSS/ATOM feed as posts"
-    feed_polling_url: "URL of RSS/ATOM feed to import"
-    embed_by_username: "Discourse username of the user who creates the topics"
-    embed_category: "Category of created topics"
     embed_post_limit: "Maximum number of posts to embed"
     tos_accept_required: "Uživatelé budou muset při registraci zaškrtnout, že souhlasí s Podmínkami používání. Zprávu můžete upravit v záložce Obsah webu změnou „Registrace: Zpráva s podmínkami používání“."
   notification_types:
@@ -783,14 +757,12 @@ cs:
     within_post: "#%{post_number} by %{username}: %{excerpt}"
     types:
       category: 'Kategorie'
-      topic: 'Témata'
       user: 'Uživatelé'
   original_poster: "Původní zasilatel"
   most_posts: "Více příspěvků"
   most_recent_poster: "Poslední zasilatel"
   frequent_poster: "Častý zasilatel"
   redirected_to_top_reasons:
-    new_user: "Welcome! As a new visitor, this will be your homepage until you've had time to look around at the forum. Here's some of the most popular topics from the past."
     not_seen_in_a_month: "Welcome back! We haven't seen you in a while. These are the top discussion topics since you've been away."
   move_posts:
     new_topic_moderator_post:
@@ -819,7 +791,6 @@ cs:
       one: "Toto téma bylo po 1 minutě automaticky uzavřeno. Nové odpovědi se už nepřijímají."
       other: "Toto téma bylo po %{count} minutách automaticky uzavřeno. Nové odpovědi se už nepřijímají."
     autoclosed_disabled: "Toto téma je otevřeno. Nové odpovědi jsou povoleny."
-    pinned_enabled: "Toto téma je připevněno. Bude se zobrazovat na vrcholu seznamu témat v kategorii."
     pinned_disabled: "Toto téma již není připevněno. Nebude se zobrazovat na vrcholu seznamu témat v kategorii."
     visible_enabled: "Toto téma je viditelné. Bude se zobrazovat v seznamu témat."
     visible_disabled: "Toto téma je neviditelné. Nebude se zobrazovat v seznamu témat. Je možné ho navštívit pouze přes přímý odkaz."
@@ -839,8 +810,6 @@ cs:
     omniauth_error_unknown: "Nastala chyba při zpracování vašeho přihlášení, prosím zkuste to znovu."
   user:
     username:
-      short: "musí být delší než %{min} znaků"
-      long: "mustí být kratší než %{max} znaků"
       characters: "musí obsahovat pouze písmena a číslice"
       unique: "musí být unikátní"
       blank: "nesmí být prázdný"
@@ -850,106 +819,13 @@ cs:
       blocked: "není povolen."
     ip_address:
       blocked: "is blocked."
-  invite_mailer:
-    subject_template: "[%{site_name}] %{invitee_name} vás pozval do diskuze na %{site_name}"
-    text_body_template: |
-      %{invitee_name} vás pozval, abyste se připojili k diskuznímu tématu "%{topic_title}" na %{site_name}.
-
-      Pokud vás to zajímá, klikněte na odkaz níže a tím navštívíte tuto diskuzi:
-
-      [Navštívit %{site_name}][1]
-
-      Byl jste pozván věrohodným uživatelem, takže budete moci přímo odpovědět, bez nutnosti se přihlašovat.
-
-      [1]: %{invite_link}
-  invite_forum_mailer:
-    subject_template: "[%{site_name}] %{invitee_name} invited you to join %{site_name}"
-    text_body_template: |
-      %{invitee_name} invited you to %{site_name}.
-
-      If you're interested, click the link below to join:
-
-      [Visit %{site_name}][1]
-
-      You were invited by a trusted user, so you'll be able to join immediately, without needing to log in.
-
-      [1]: %{invite_link}
   test_mailer:
     subject_template: "[%{site_name}] Zkušební email"
-    text_body_template: |
-      Tohle je testovací email z fóra na %{site_name}. Toto fórum můžete navštívit ve vašem prohlížeči na
-
-      [**%{base_url}**][0]
-
-      Doručování emailu je komplexní operace, zde je pár věcí, které byste měli zkontrolovat:
-
-      - Ujistěte, že si prohlížíte *čistý zdrojový kód emailu* ve vašem emailovém klientovi, abyste si mohli prohlédnout hlavičky emailu.
-
-      - **DŮLEŽITÉ:** Má váš poskytovatel připojení reverzní DNS záznam, aby byla přiřazena doména, ze které odesíláte emaily, s IP adresou, kterou k odesílání používáte? Můžete si [otestovat reverzní PTR záznam][2]. Pokud váš poskytovatel nemá správně nastavený reverzní DNS záznam, je pravděpodobné, že vám nebudou správně doručovány emaily.
-
-      - Máte správně nastavený SPF záznam u domény? Můžete si [otestovat SPF záznam][1].
-
-      - Nastavili jste si [podepisování emailů DKIM klíčem][3] ve vašem emailovém softwaru a vložili DKIM klíč do DNS záznamů?
-
-      - Zkontrolovali jste, že IP adresa server, odkud odesíláte emaily, není na [žádném blacklistu][4]?
-
-      - Ověřili jste, že váš emailový server *opravdu* zasílá plně kvalifikovaný název serveru, který se správně překládá v systému DNS při HELO zprávě? Pokud ne, budou vaše emaily odmítány řadou emailových služeb.
-
-      Doufáme, že vám tento testovací email v pořádku dorazil!
-
-      Hodně štěstí,
-
-      Vaši přátelé na %{site_name}.
-
-      [0]: %{base_url}
-      [1]: http://www.kitterman.com/spf/validate.html
-      [2]: http://mxtoolbox.com/SuperTool.aspx
-      [3]: http://www.dkim.org/
-      [4]: http://whatismyipaddress.com/blacklist-check
-      [5]: %{base_url}/unsubscribe
-
-      ----
-
-      <small>V každém emailu, který zasíláte, by měl být odkaz na odhlášení příjmu emailů, tak tady je taky takový. Tento email vám zaslala Velká Společnost s.r.o., Hlavní ul. 1337, Kotěhůlky, Česká republika. Pokud již od nás nechcete dostávat další emaily, [klikněte sem pro odhlášení][5].</small>
-  new_version_mailer:
-    subject_template: "[%{site_name}] Updates Are Available"
-    text_body_template: |
-      A new version of Discourse is available.
-
-      Your version: %{installed_version}
-
-      **New version: %{new_version}**
-
-      Please upgrade as soon as possible to get the latest fixes and new features. Visit http://meta.discourse.org for discussion and news about Discourse.
   new_version_mailer_with_notes:
     subject_template: "[%{site_name}] Updates Are Available"
-    text_body_template: |
-      A new version of Discourse is available. Please upgrade as soon as possible to get the latest fixes and new features.
-
-      Your version: %{installed_version}
-
-      **New version: %{new_version}**
-
-      %{notes}
-
-      Visit http://meta.discourse.org for discussion and news about Discourse.
   system_messages:
     post_hidden:
       subject_template: "%{site_name} Oznámení: Příspěvek skryt kvůli hlášením od komunity"
-      text_body_template: |
-        Dobrý den,
-
-        Toto je automatický email z %{site_name}, kterým vás informujeme, že následující příspěvek byl skryt jako důsledek hlášení od komunity.
-
-        %{base_url}%{url}
-
-        Váš příspěvek byl komunitou nahlášen jako závadný.
-
-        Mějte na paměti, že již několik členů komunity označilo tento příspěvek jako závadný (než byl skryt) a zvažte, jak byste mohli svůj příspěvek zrevidovat. Můžete příspěvek upravit za %{edit_delay} minut, a tím bude zase zviditelněn. Zároveň tím zvýšíte svoji věrohodnost na fóru.
-
-        Pokud však bude příspěvek znovu označen komunitou jako závadný, budou informováni moderátoři fóra, kteří mohou vyvodit další důsledky, včetně možného zablokování vašeho účtu.
-
-        Pro další informace si prosím přečtěte naši sekci [FAQ](%{base_url}/faq).
     usage_tips:
       text_body_template: |
         Tato soukromá zpráva vám přináší několik rychlých tipů, jak začít:
@@ -1001,48 +877,12 @@ cs:
         Užijte si naše fórum!
     welcome_invite:
       subject_template: "Vítejte na %{site_name}!"
-      text_body_template: |
-        Děkujeme, že jste přijali pozvánku na %{site_name} a vítáme vám na našem diskuzním fóru!
-
-        Automaticky jsme vám vygenerovali uživatelské jméno: **%{username}**, ale je možné si ho kdykoliv změnit návštěvou [vašeho uživatelského profilu][prefs].
-
-        Abyste se znovu přihlásili, můžete:
-
-        1. Použít Facebook, Google, Twitter a řadu dalších přihlašovacích služeb -- ale vaše registraci musí být na **stejnou emailovou adresu**, na kterou jste obdrželi původní pozvánku. Jinak nebudeme moci poznat, že jste to vy!
-
-        2. Vytvořit si nové heslo pro %{site_name} na [vašem uživatelském profilu][prefs] a pak se jím přihlásit.
-
-        %{site_password}
-
-        %{new_user_tips}
-
-        Věříme v [civilizované komunitní chování](%{base_url}/faq) za všech okolností.
-
-        Užijte si naše fórum!
-
-        [prefs]: %{user_preferences_url}
     export_succeeded:
       subject_template: "Export úspěšně dokončen"
       text_body_template: "Export proběhl úspěšně."
     import_succeeded:
       subject_template: "Import úspěšně dokončen"
       text_body_template: "Import proběhl úspěšně."
-    email_error_notification:
-      subject_template: "Chyba čtení emailu"
-      text_body_template: |
-        Toto je automatická zpráva informující vás, že čtení následujícího emailu selhalo.
-
-        Opravte prosím následující problém:
-
-        Chyba - %{error}
-
-        %{source}
-    email_reject_trust_level:
-      subject_template: "Zpráva odmítnuta"
-      text_body_template: |
-        Zpráva kterou jste poslali na %{to} byla systémem odmítnuta.
-
-        Nemáte dostatečnou důvěryhodnost k posílání příspěvků na tuhle emailovou adresu.
     too_many_spam_flags:
       subject_template: "Účet zablokován"
       text_body_template: |
@@ -1061,18 +901,6 @@ cs:
         Toto je automatizovaná zpráva z %{site_name}, která vás má informovat o tom, že váš účet byl zablokován moderátorem.
 
         Pro další informace se prosím obraťte na naše [FAQ](%{base_url}/faq).
-    user_automatically_blocked:
-      subject_template: "Uživatel %{username} byl automaticky zablokován"
-      text_body_template: |
-        Toto je automatická zpráva, která vás má informovat o tom, že uživatel [%{username}](%{user_url}) byl automaticky zablokován protože příliš mnoho lidí označilo příspěvky uživatele %{username} jako spam.
-
-        Prosím, [projděte si nahlášení](/admin/flags). Pokud by %{username} neměl být zablokován, klikněte na tlačítko 'odblokovat' na [administrátorské stránce uživatele](%{user_url}).
-    spam_post_blocked:
-      subject_template: "V příspěvku uživatele %{username} byl detekován spam"
-      text_body_template: |
-        Toto je automatizovaná zpráva, která vás má informovat o tom, že uživatel [%{username}](%{user_url}) se pokusil zasílat odkazy, které ale byly označeny jako spam kvůli nastavení 'newuser_spam_host_threshold'.
-
-        Prosím [zkontrolujte tohoto uživatele](%{user_url}).
     unblocked:
       subject_template: "Účet odblokován"
       text_body_template: |
@@ -1157,10 +985,7 @@ cs:
         Prosím navšivte tento odkaz, chcete-li odpovědět: %{base_url}%{url}
     digest:
       why: "Zde je krátký souhrn toho, co se událo na %{site_link} od vaší poslední návštěvy %{last_seen_at}."
-      subject_template: "[%{site_name}] Aktivita na fóru %{date}"
       new_activity: "Nová aktivita ve vašich tématech a příspěvcích:"
-      top_topics: "Poslední příspěvky, které si komunita oblíbila:"
-      other_new_topics: "Other New Topics:"
       unsubscribe: "Tento souhrnný email je zaslán jako oznámení od %{site_link}, pokud jste se nepřihlásili v poslední době.\\\nPokud nechcete tento souhrn dostávat, navštivte %{unsubscribe_link}.\n"
       click_here: "klikněte zde"
       from: "souhrn z %{site_name}"
@@ -1223,10 +1048,6 @@ cs:
     access_token_problem: "Kontaktujte administrátora: Prosím aktualizuje nastavení webu, aby mělo správný klíč 'discourse_org_access_key'."
   page_not_found:
     title: "Stránka, kterou žádáte, na tomto diskuzním fóru neexistuje. Možná vám můžeme pomoci ji najít, nebo poradit jiné téma, které se vám může líbit:"
-    popular_topics: "Populární témata"
-    recent_topics: "Témata z poslední doby"
-    see_more: "Více"
-    search_title: "Hledat toto téma"
     search_google: "Hledat Googlem"
   login_required:
     welcome_message: |
@@ -1239,7 +1060,6 @@ cs:
     signup_form_message: 'I have read and accept the <a href="/tos" target="_blank">Terms of Service</a>.'
   deleted: 'smazáno'
   upload:
-    edit_reason: "We downloaded local copies of images in this post"
     unauthorized: "Bohužel, soubor, který se snažíte nahrát, není povolený (povolené přípony: %{authorized_extensions})."
     pasted_image_filename: "Vložený obrázek"
     attachments:
@@ -1251,7 +1071,6 @@ cs:
       size_not_found: "Bohužel se nepodařilo zjistit velikost obrázku. Není soubor s obrázkem poškozený?"
   flag_reason:
     sockpuppet: "A new user created a topic, and another new user at the same IP address replied. See the flag_sockpuppets site setting."
-    spam_hosts: "This user tried to create multiple posts with links to the same domain. See the newuser_spam_host_threshold site setting."
   email_log:
     no_user: "Can't find user with id %{user_id}"
     suspended_not_pm: "User is supsended and email is not a private message"

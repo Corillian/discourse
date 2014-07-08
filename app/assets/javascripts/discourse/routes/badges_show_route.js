@@ -12,7 +12,13 @@ Discourse.BadgesShowRoute = Ember.Route.extend({
   },
 
   model: function(params) {
-    return Discourse.Badge.findById(params.id);
+    if (PreloadStore.get('badge')) {
+      return PreloadStore.getAndRemove('badge').then(function(json) {
+        return Discourse.Badge.createFromJson(json);
+      });
+    } else {
+      return Discourse.Badge.findById(params.id);
+    }
   },
 
   setupController: function(controller, model) {
@@ -21,6 +27,7 @@ Discourse.BadgesShowRoute = Ember.Route.extend({
       controller.set('userBadgesLoaded', true);
     });
     controller.set('model', model);
+    Discourse.set('title', model.get('displayName'));
   },
 
   actions: {

@@ -3,17 +3,7 @@
 // throughout the Discourse application
 
 body {
-  background-color: $primary_background_color;
-}
-
-.container {
-  @extend .clearfix;
-  margin-right: auto;
-  margin-left: auto;
-}
-
-.full-width {
-  margin-left: 12px;
+  background-color: $secondary;
 }
 
 body {
@@ -25,25 +15,24 @@ body {
       padding: 10px 10px 10px 10px;
     }
     &.white {
-      background-color: $primary_background_color;
+      background-color: $secondary;
     }
   }
   #main {
     .fa-star.starred {
-      color: $highlight_text_color;
+      color: $danger;
     }
     a.star {
       display: inline-block;
-      font-size: 15px;
-      line-height: 1;
-      color: $secondary_text_color;
+      font-size: 20px;
+      color: scale-color($primary, $lightness: 75%);
+      margin-right: 8px;
       &:before {
         font-family: "FontAwesome";
         content: "\f005";
       }
       &.starred {
-        color: #fe1;
-        text-shadow: 0 0 3px rgba($primary_shadow_color, 0.5);
+        color: $danger;
         @include hover {
           opacity: 1;
           &:before {
@@ -83,18 +72,16 @@ body {
       }
     }
   }
-
-
 }
-
 
 blockquote {
   /* 13px left is intentional here to properly align with post quotes */
   padding: 10px 8px 10px 13px;
-  background-color: $quote-background;
-  border-left: 5px solid darken($quote-background, 20%);
   p {
     margin: 0 0 10px 0;
+  }
+  p:last-of-type {
+    margin-bottom:0;
   }
 }
 
@@ -102,13 +89,20 @@ blockquote {
   display: inline-block;
   margin: 0;
   padding: 0;
+  vertical-align: middle;
   .topic-status {
-    padding: 5px 2px 0 0;
     margin: 0;
     display: inline-block;
     i {
-      font-size: 15px;
-      color: darken($tertiary_text_color, 60%);
+      font-size: 20px;
+      color: darken($secondary, 60%);
     }
   }
+}
+
+// Styles used before the user is logged into discourse. For example, activating their
+// account or changing their email.
+
+#simple-container {
+  width: 90%;
 }

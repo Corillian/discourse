@@ -19,22 +19,6 @@ Discourse.Topic = Discourse.Model.extend({
   invisible: Em.computed.not('visible'),
   deleted: Em.computed.notEmpty('deleted_at'),
 
-  canConvertToRegular: function() {
-    var a = this.get('archetype');
-    return a !== 'regular' && a !== 'private_message';
-  }.property('archetype'),
-
-  convertArchetype: function() {
-    var a = this.get('archetype');
-    if (a !== 'regular' && a !== 'private_message') {
-      this.set('archetype', 'regular');
-      return Discourse.ajax(this.get('url'), {
-        type: 'PUT',
-        data: {archetype: 'regular'}
-      });
-    }
-  },
-
   searchContext: function() {
     return ({ type: 'topic', id: this.get('id') });
   }.property('id'),
@@ -51,6 +35,10 @@ Discourse.Topic = Discourse.Model.extend({
     }
     return null;
   }.property('category_id', 'categoryName'),
+
+  categoryClass: function() {
+    return 'category-' + Discourse.Category.slugFor(this.get('category'));
+  }.property('category'),
 
   shareUrl: function(){
     var user = Discourse.User.current();
@@ -69,11 +57,7 @@ Discourse.Topic = Discourse.Model.extend({
   urlForPostNumber: function(postNumber) {
     var url = this.get('url');
     if (postNumber && (postNumber > 0)) {
-      if (postNumber >= this.get('highest_post_number')) {
-        url += "/last";
-      } else {
-        url += "/" + postNumber;
-      }
+      url += "/" + postNumber;
     }
     return url;
   },
@@ -131,6 +115,7 @@ Discourse.Topic = Discourse.Model.extend({
   }.property('archetype'),
 
   isPrivateMessage: Em.computed.equal('archetype', 'private_message'),
+  isBanner: Em.computed.equal('archetype', 'banner'),
 
   toggleStatus: function(property) {
     this.toggleProperty(property);
@@ -153,6 +138,18 @@ Discourse.Topic = Discourse.Model.extend({
       type: 'PUT',
       data: {status: property, enabled: value ? 'true' : 'false' }
     });
+  },
+
+  makeBanner: function() {
+    var self = this;
+    return Discourse.ajax('/t/' + this.get('id') + '/make-banner', { type: 'PUT' })
+           .then(function () { self.set('archetype', 'banner'); });
+  },
+
+  removeBanner: function() {
+    var self = this;
+    return Discourse.ajax('/t/' + this.get('id') + '/remove-banner', { type: 'PUT' })
+           .then(function () { self.set('archetype', 'regular'); });
   },
 
   starTooltipKey: function() {
@@ -213,10 +210,10 @@ Discourse.Topic = Discourse.Model.extend({
     @method createInvite
     @param {String} emailOrUsername The email or username of the user to be invited
   **/
-  createInvite: function(emailOrUsername) {
+  createInvite: function(emailOrUsername, groupNames) {
     return Discourse.ajax("/t/" + this.get('id') + "/invite", {
       type: 'POST',
-      data: { user: emailOrUsername }
+      data: { user: emailOrUsername, group_names: groupNames }
     });
   },
 

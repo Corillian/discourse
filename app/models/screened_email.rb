@@ -17,7 +17,7 @@ class ScreenedEmail < ActiveRecord::Base
   end
 
   def self.should_block?(email)
-    screened_email = ScreenedEmail.where(email: email).first
+    screened_email = ScreenedEmail.find_by(email: email)
     screened_email.record_match! if screened_email
     screened_email && screened_email.action_type == actions[:block]
   end
@@ -33,12 +33,12 @@ end
 #  action_type   :integer          not null
 #  match_count   :integer          default(0), not null
 #  last_match_at :datetime
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
+#  created_at    :datetime
+#  updated_at    :datetime
 #  ip_address    :inet
 #
 # Indexes
 #
-#  index_blocked_emails_on_email          (email) UNIQUE
-#  index_blocked_emails_on_last_match_at  (last_match_at)
+#  index_screened_emails_on_email          (email) UNIQUE
+#  index_screened_emails_on_last_match_at  (last_match_at)
 #

@@ -7,10 +7,54 @@
   @namespace Discourse
   @module Discourse
 **/
+var _validClasses = {},
+    _validIframes = [],
+    _validTags = {};
+
+function validateAttribute(tagName, attribName, value) {
+  var tag = _validTags[tagName];
+
+  // Handle classes
+  if (attribName === "class") {
+    if (_validClasses[value]) { return value; }
+
+    if (tag) {
+      var classes = tag['class'];
+      if (classes && (classes.indexOf(value) !== -1 || classes.indexOf('*') !== -1)) {
+        return value;
+      }
+    }
+  } else if (attribName.indexOf('data-') === 0) {
+    // data-* attributes
+    if (tag) {
+      var allowed = tag[attribName] || tag['data-*'];
+      if (allowed === value || allowed.indexOf('*') !== -1) { return value; }
+    }
+  }
+
+  if (tag) {
+    var attrs = tag[attribName];
+    if (attrs && (attrs.indexOf(value) !== -1 ||
+                  attrs.indexOf('*') !== -1) ||
+                  _.any(attrs,function(r){return (r instanceof RegExp) && value.search(r) >= 0;})
+        ) { return value; }
+  }
+}
+
 Discourse.Markdown = {
 
-  validClasses: {},
-  validIframes: [],
+  /**
+    Whitelist class for only a certain tag
+
+    @param {String} tagName to whitelist
+    @param {String} attribName to whitelist
+    @param {String} value to whitelist
+  **/
+  whiteListTag: function(tagName, attribName, value) {
+    _validTags[tagName] = _validTags[tagName] || {};
+    _validTags[tagName][attribName] = _validTags[tagName][attribName] || [];
+    _validTags[tagName][attribName].push(value || '*');
+  },
 
   /**
     Whitelists more classes for sanitization.
@@ -19,10 +63,8 @@ Discourse.Markdown = {
     @method whiteListClass
   **/
   whiteListClass: function() {
-    var args = Array.prototype.slice.call(arguments),
-        validClasses = Discourse.Markdown.validClasses;
-
-    args.forEach(function (a) { validClasses[a] = true; });
+    var args = Array.prototype.slice.call(arguments);
+    args.forEach(function (a) { _validClasses[a] = true; });
   },
 
   /**
@@ -32,7 +74,7 @@ Discourse.Markdown = {
     @param {Regexp} regexp The regexp to whitelist.
   **/
   whiteListIframe: function(regexp) {
-    Discourse.Markdown.validIframes.push(regexp);
+    _validIframes.push(regexp);
   },
 
   /**
@@ -124,8 +166,8 @@ Discourse.Markdown = {
 
     // whitelist some iframe only
     if (hints && hints.XML_TAG === "iframe" && hints.XML_ATTR === "src") {
-      for (var i = 0, length = Discourse.Markdown.validIframes.length; i < length; i++) {
-        if(Discourse.Markdown.validIframes[i].test(url)) { return url; }
+      for (var i = 0, length = _validIframes.length; i < length; i++) {
+        if(_validIframes[i].test(url)) { return url; }
       }
       return;
     }
@@ -144,12 +186,10 @@ Discourse.Markdown = {
     Checks to see if a name, class or id is allowed in the cooked content
 
     @method nameIdClassAllowed
-    @param {String} val The name, class or id to check
-    @return {String} val the transformed name class or id
+    @param {String} tagName to check
+    @param {String} attribName to check
+    @param {String} value to check
   **/
-  nameIdClassAllowed: function(val) {
-    if (Discourse.Markdown.validClasses[val]) { return val; }
-  },
 
 
   /**
@@ -160,9 +200,12 @@ Discourse.Markdown = {
     @return {String} text The sanitized text
   **/
   sanitize: function(text) {
-    if (!window.html_sanitize) return "";
-    text = text.replace(/<([^A-Za-z\/]|$)/g, "&lt;$1");
-    return window.html_sanitize(text, Discourse.Markdown.urlAllowed, Discourse.Markdown.nameIdClassAllowed);
+    if (!window.html_sanitize || !text) return "";
+
+    // Allow things like <3 and <_<
+    text = text.replace(/<([^A-Za-z\/\!]|$)/g, "&lt;$1");
+
+    return window.html_sanitize(text, Discourse.Markdown.urlAllowed, validateAttribute);
   },
 
   /**
@@ -185,5 +228,27 @@ Discourse.Markdown = {
 };
 RSVP.EventTarget.mixin(Discourse.Markdown);
 
-Discourse.Markdown.whiteListClass("attachment");
+Discourse.Markdown.whiteListTag('a', 'class', 'attachment');
+Discourse.Markdown.whiteListTag('a', 'target', '_blank');
+Discourse.Markdown.whiteListTag('a', 'class', 'onebox');
+Discourse.Markdown.whiteListTag('a', 'class', 'mention');
+
+Discourse.Markdown.whiteListTag('a', 'data-bbcode');
+
+Discourse.Markdown.whiteListTag('div', 'class', 'title');
+Discourse.Markdown.whiteListTag('div', 'class', 'quote-controls');
+Discourse.Markdown.whiteListTag('code', 'class', '*');
+Discourse.Markdown.whiteListTag('span', 'class', 'mention');
+Discourse.Markdown.whiteListTag('span', 'class', 'spoiler');
+Discourse.Markdown.whiteListTag('div', 'class', 'spoiler');
+Discourse.Markdown.whiteListTag('aside', 'class', 'quote');
+Discourse.Markdown.whiteListTag('aside', 'data-*');
+
+Discourse.Markdown.whiteListTag('span', 'bbcode-b');
+Discourse.Markdown.whiteListTag('span', 'bbcode-i');
+Discourse.Markdown.whiteListTag('span', 'bbcode-u');
+Discourse.Markdown.whiteListTag('span', 'bbcode-s');
+
+Discourse.Markdown.whiteListTag('span', 'class', /bbcode-size-\d+/);
+
 Discourse.Markdown.whiteListIframe(/^(https?:)?\/\/www\.google\.com\/maps\/embed\?.+/i);

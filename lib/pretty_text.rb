@@ -23,7 +23,7 @@ module PrettyText
     def avatar_template(username)
       return "" unless username
 
-      user = User.where(username_lower: username.downcase).first
+      user = User.find_by(username_lower: username.downcase)
       user.avatar_template if user.present?
     end
 
@@ -210,7 +210,7 @@ module PrettyText
     # extract all links from the post
     doc.css("a").each { |l| links << l["href"] unless l["href"].blank? }
     # extract links to quotes
-    doc.css("aside.quote").each do |a|
+    doc.css("aside.quote[data-topic]").each do |a|
       topic_id = a['data-topic']
 
       url = "/t/topic/#{topic_id}"

@@ -8,14 +8,10 @@
   .fa {
     width: 15px;
     display: inline-block;
-    color: $secondary_text_color;
-  }
-  .avatar-wrapper {
-    border: none;
+    color: $primary;
   }
   .avatar-link {
     margin-right: 3px;
-
   }
 }
 
@@ -40,7 +36,7 @@
   h2 {
     a {
       font-size: 14px;
-      color: $link_color;
+      color: scale-color($tertiary, $lightness: -10%);;
       cursor: pointer;
     }
   }

@@ -8,7 +8,7 @@ require_dependency 'email/message_builder'
 
 module Jobs
   class PollMailbox < Jobs::Scheduled
-    every 5.minutes
+    every SiteSetting.pop3s_polling_period_mins.minutes
     sidekiq_options retry: false
     include Email::BuildEmailHelper
 
@@ -22,24 +22,42 @@ module Jobs
       begin
         mail_string = mail.pop
         Email::Receiver.new(mail_string).process
-      rescue Email::Receiver::UserNotSufficientTrustLevelError
-        # inform the user about the rejection
-        message = Mail::Message.new(mail_string)
-        client_message = RejectionMailer.send_trust_level(message.from, message.body)
-        Email::Sender.new(client_message, :email_reject_trust_level).send
-      rescue Email::Receiver::ProcessingError
-        # all other ProcessingErrors are ok to be dropped
-      rescue StandardError => e
-        # inform admins about the error
-        data = { limit_once_per: false, message_params: { source: mail, error: e }}
-        GroupMessage.create(Group[:admins].name, :email_error_notification, data)
+      rescue => e
+        message_template = nil
+        case e
+          when Email::Receiver::UserNotSufficientTrustLevelError
+            message_template = :email_reject_trust_level
+          when Email::Receiver::UserNotFoundError
+            message_template = :email_reject_no_account
+          when Email::Receiver::EmptyEmailError
+            message_template = :email_reject_empty
+          when Email::Receiver::EmailUnparsableError
+            message_template = :email_reject_parsing
+          when Email::Receiver::EmailLogNotFound
+            message_template = :email_reject_reply_key
+          when ActiveRecord::Rollback
+            message_template = :email_reject_post_error
+          else
+            message_template = nil
+        end
+
+        if message_template
+          # inform the user about the rejection
+          message = Mail::Message.new(mail_string)
+          client_message = RejectionMailer.send_rejection(message.from, message.body, message.to, message_template)
+          Email::Sender.new(client_message, message_template).send
+        else
+          Discourse.handle_exception(e, { code: "unknown error for incoming email", mail: mail_string} )
+        end
       ensure
         mail.delete
       end
     end
 
     def poll_pop3s
-      Net::POP3.enable_ssl(OpenSSL::SSL::VERIFY_NONE)
+      if !SiteSetting.pop3s_polling_insecure
+        Net::POP3.enable_ssl(OpenSSL::SSL::VERIFY_NONE)
+      end
       Net::POP3.start(SiteSetting.pop3s_polling_host,
                       SiteSetting.pop3s_polling_port,
                       SiteSetting.pop3s_polling_username,
@@ -52,9 +70,7 @@ module Jobs
         pop.finish
       end
     rescue Net::POPAuthenticationError => e
-      # inform admins about the error (1 message per hour to prevent too much SPAM)
-      data = { limit_once_per: 1.hour, message_params: { error: e }}
-      GroupMessage.create(Group[:admins].name, :email_error_notification, data)
+      Discourse.handle_exception(e, { code: "signing in for incoming email" } )
     end
 
   end

@@ -36,6 +36,13 @@ Discourse.UserBadge.reopenClass({
       users[userJson.id] = Discourse.User.create(userJson);
     });
 
+    // Create Topic objects.
+    if (json.topics === undefined) { json.topics = []; }
+    var topics = {};
+    json.topics.forEach(function(topicJson) {
+      topics[topicJson.id] = Discourse.Topic.create(topicJson);
+    });
+
     // Create the badges.
     if (json.badges === undefined) { json.badges = []; }
     var badges = {};
@@ -64,6 +71,9 @@ Discourse.UserBadge.reopenClass({
       if (userBadge.get('granted_by_id')) {
         userBadge.set('granted_by', users[userBadge.get('granted_by_id')]);
       }
+      if (userBadge.get('topic_id')) {
+        userBadge.set('topic', topics[userBadge.get('topic_id')]);
+      }
       return userBadge;
     });
 
@@ -79,10 +89,15 @@ Discourse.UserBadge.reopenClass({
 
     @method findByUsername
     @param {String} username
+    @param {Object} options
     @returns {Promise} a promise that resolves to an array of `Discourse.UserBadge`.
   **/
-  findByUsername: function(username) {
-    return Discourse.ajax("/user_badges.json?username=" + username).then(function(json) {
+  findByUsername: function(username, options) {
+    var url = "/user_badges.json?username=" + username;
+    if (options && options.grouped) {
+      url += "&grouped=true";
+    }
+    return Discourse.ajax(url).then(function(json) {
       return Discourse.UserBadge.createFromJson(json);
     });
   },

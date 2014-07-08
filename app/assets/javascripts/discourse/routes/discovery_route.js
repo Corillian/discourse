@@ -46,18 +46,18 @@ Discourse.DiscoveryRoute = Discourse.Route.extend(Discourse.ScrollTop, Discourse
     },
 
     createTopic: function() {
-      this.openComposer(this.controllerFor('discoveryTopics'));
+      this.openComposer(this.controllerFor('discovery/topics'));
     },
 
     changeBulkTemplate: function(w) {
       var controllerName = w.replace('modal/', ''),
           factory = this.container.lookupFactory('controller:' + controllerName);
 
-      this.render(w, {into: 'topicBulkActions', outlet: 'bulkOutlet', controller: factory ? controllerName : 'topicBulkActions'});
+      this.render(w, {into: 'topicBulkActions', outlet: 'bulkOutlet', controller: factory ? controllerName : 'topic-bulk-actions'});
     },
 
     showBulkActions: function() {
-      var selected = this.controllerFor('discoveryTopics').get('selected');
+      var selected = this.controllerFor('discovery/topics').get('selected');
       Discourse.Route.showModal(this, 'topicBulkActions', selected);
       this.send('changeBulkTemplate', 'modal/bulk_actions_buttons');
     }

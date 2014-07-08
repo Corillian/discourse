@@ -4,8 +4,8 @@
   position: absolute;
   left: 20px;
   z-index: 990;
-  box-shadow: 0 1px 5px rgba($primary_shadow_color, .4);
-  background-color: lighten($secondary_background_color, 60%);
+  box-shadow: 0 1px 5px rgba($primary, .4);
+  background-color: scale-color-diff();
   padding: 6px 10px 10px 10px;
   width: 300px;
   display: none;
@@ -29,7 +29,23 @@
     float: right;
     font-size: 20px;
     a {
-      color: $primary_text_color;
+      color: $primary;
     }
+  }
+
+  h3 {
+    margin: 5px 0;
+    float: left;
+  }
+
+  .date {
+    float: right;
+    margin: 5px;
+    color: scale-color($primary, $lightness: 50%);
+  }
+
+  input[type=text] {
+    font-size: 16px;
+    margin-bottom: 10px;
   }
 }

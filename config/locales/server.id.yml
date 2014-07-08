@@ -3,7 +3,7 @@
 # Never edit this file. It will be overwritten when translations are pulled from Transifex.
 #
 # To work with us on translations, join this project:
-# https://www.transifex.com/projects/p/discourse-pt-br/
+# https://www.transifex.com/projects/p/discourse-org/
 
 id:
   dates:
@@ -170,18 +170,12 @@ id:
     email:
       blocked: "tidak diperbolehkan."
   system_messages:
-    email_error_notification:
-      subject_template: "Gagal membaca email"
-    email_reject_trust_level:
-      subject_template: "Pesan ditolak"
     pending_users_reminder:
       subject_template:
         other: "%{count} pengguna sedang menunggu persetujuan"
   user_notifications:
     previous_discussion: "Balasan Sebelumnya"
     posted_by: "Dipost oleh %{username} pada %{post_date}"
-    digest:
-      other_new_topics: "Topik Baru Lain:"
   upload:
     attachments:
       too_large: "Maaf, berkas yang Anda unggah terlalu besar (ukuran maksimum adalah %{max_size_kb}%kb)."

@@ -5,6 +5,11 @@ var format = function(input, expected, text) {
   equal(cooked, "<p>" + expected + "</p>", text);
 };
 
+var formatQ = function(input, expected, text) {
+  var cooked = Discourse.Markdown.cook(input, {lookupAvatar: false});
+  equal(cooked, expected, text);
+};
+
 test('basic bbcode', function() {
   format("[b]strong[/b]", "<span class=\"bbcode-b\">strong</span>", "bolds text");
   format("[i]emphasis[/i]", "<span class=\"bbcode-i\">emphasis</span>", "italics text");
@@ -25,9 +30,9 @@ test('invalid bbcode', function() {
 });
 
 test('code', function() {
-  format("[code]\nx++\n[/code]", "<pre>\nx++</pre>", "makes code into pre");
-  format("[code]\nx++\ny++\nz++\n[/code]", "<pre>\nx++\ny++\nz++</pre>", "makes code into pre");
-  format("[code]abc\n#def\n[/code]", '<pre>abc\n#def</pre>', 'it handles headings in a [code] block');
+  format("[code]\nx++\n[/code]", "<pre><code class=\"lang-auto\">x++</code></pre>", "makes code into pre");
+  format("[code]\nx++\ny++\nz++\n[/code]", "<pre><code class=\"lang-auto\">x++\ny++\nz++</code></pre>", "makes code into pre");
+  format("[code]abc\n#def\n[/code]", '<pre><code class=\"lang-auto\">abc\n#def</code></pre>', 'it handles headings in a [code] block');
 });
 
 test('spoiler', function() {
@@ -99,26 +104,26 @@ test("quotes", function() {
          "<aside class=\"quote\"><blockquote><p><em>test</em></p></blockquote></aside>",
          "it doesn't insert a new line for italics");
 
-  format("[quote,script='a'><script>alert('test');//':a][/quote]",
+  format("[quote=,script='a'><script>alert('test');//':a][/quote]",
          "<aside class=\"quote\" data-script=&#x27;a&#x27;&gt;&lt;script&gt;alert(&#x27;test&#x27;);//&#x27;=\"a\"><blockquote></blockquote></aside>",
          "It will not create a script tag within an attribute");
 });
 
 test("quote formatting", function() {
 
-  format("[quote=\"EvilTrout, post:123, topic:456, full:true\"][sam][/quote]",
+  formatQ("[quote=\"EvilTrout, post:123, topic:456, full:true\"][sam][/quote]",
           "<aside class=\"quote\" data-post=\"123\" data-topic=\"456\" data-full=\"true\"><div class=\"title\">" +
           "<div class=\"quote-controls\"></div>EvilTrout said:</div><blockquote><p>[sam]</p></blockquote></aside>",
           "it allows quotes with [] inside");
 
-  format("[quote=\"eviltrout, post:1, topic:1\"]abc[/quote]",
+  formatQ("[quote=\"eviltrout, post:1, topic:1\"]abc[/quote]",
          "<aside class=\"quote\" data-post=\"1\" data-topic=\"1\"><div class=\"title\"><div class=\"quote-controls\"></div>eviltrout said:" +
          "</div><blockquote><p>abc</p></blockquote></aside>",
          "renders quotes properly");
 
-  format("[quote=\"eviltrout, post:1, topic:1\"]abc[/quote]\nhello",
+  formatQ("[quote=\"eviltrout, post:1, topic:1\"]abc[/quote]\nhello",
          "<aside class=\"quote\" data-post=\"1\" data-topic=\"1\"><div class=\"title\"><div class=\"quote-controls\"></div>eviltrout said:" +
-         "</div><blockquote><p>abc</p></blockquote></aside></p>\n\n<p>hello",
+         "</div><blockquote><p>abc</p></blockquote></aside>\n\n<p>hello</p>",
          "handles new lines properly");
 
 });
@@ -126,8 +131,8 @@ test("quote formatting", function() {
 test("quotes with trailing formatting", function() {
   var cooked = Discourse.Markdown.cook("[quote=\"EvilTrout, post:123, topic:456, full:true\"]\nhello\n[/quote]\n*Test*", {lookupAvatar: false});
   equal(cooked,
-        "<p><aside class=\"quote\" data-post=\"123\" data-topic=\"456\" data-full=\"true\"><div class=\"title\">" +
-        "<div class=\"quote-controls\"></div>EvilTrout said:</div><blockquote><p>hello</p></blockquote></aside></p>\n\n<p><em>Test</em></p>",
+        "<aside class=\"quote\" data-post=\"123\" data-topic=\"456\" data-full=\"true\"><div class=\"title\">" +
+        "<div class=\"quote-controls\"></div>EvilTrout said:</div><blockquote><p>hello</p></blockquote></aside>\n\n<p><em>Test</em></p>",
         "it allows trailing formatting");
 });
 

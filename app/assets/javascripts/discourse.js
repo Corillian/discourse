@@ -33,7 +33,12 @@ window.Discourse = Ember.Application.createWithMixins(Discourse.Ajax, {
       title += "" + (this.get('title')) + " - ";
     }
     title += Discourse.SiteSettings.title;
-    $('title').text(title);
+
+    // if we change this we can trigger changes on document.title
+    // only set if changed.
+    if($('title').text() !== title) {
+      $('title').text(title);
+    }
 
     var notifyCount = this.get('notifyCount');
     if (notifyCount > 0 && !Discourse.User.currentProp('dynamic_favicon')) {
@@ -96,37 +101,23 @@ window.Discourse = Ember.Application.createWithMixins(Discourse.Ajax, {
   },
 
   /**
-    Add an initializer hook for after the Discourse Application starts up.
-
-    @method addInitializer
-    @param {Function} init the initializer to add.
-    @param {Boolean} immediate whether to execute the function right away.
-                      Default is false, for next run loop. If unsure, use false.
-  **/
-  addInitializer: function(init, immediate) {
-    Discourse.initializers = Discourse.initializers || [];
-    Discourse.initializers.push({fn: init, immediate: !!immediate});
-  },
-
-  /**
     Start up the Discourse application by running all the initializers we've defined.
 
     @method start
   **/
   start: function() {
-    var initializers = this.initializers;
-    if (initializers) {
-      var self = this;
-      initializers.forEach(function (init) {
-        if (init.immediate) {
-          init.fn.call(self);
-        } else {
-          Em.run.next(function() {
-            init.fn.call(self);
-          });
-        }
-      });
-    }
+
+    $('noscript').remove();
+
+    // Load any ES6 initializers
+    Ember.keys(requirejs._eak_seen).forEach(function(key) {
+      if (/\/initializers\//.test(key)) {
+        var module = require(key, null, null, true);
+        if (!module) { throw new Error(key + ' must export an initializer.'); }
+        Discourse.initializer(module.default);
+      }
+    });
+
   },
 
   requiresRefresh: function(){
@@ -152,6 +143,20 @@ window.Discourse = Ember.Application.createWithMixins(Discourse.Ajax, {
       notices.push(I18n.t("read_only_mode.enabled"));
     }
 
+    if(Discourse.User.currentProp('admin') && Discourse.SiteSettings.show_create_topics_notice) {
+      var topic_count = 0,
+          post_count = 0;
+      _.each(Discourse.Site.currentProp('categories'), function(c) {
+        if (!c.get('read_restricted')) {
+          topic_count += c.get('topic_count');
+          post_count  += c.get('post_count');
+        }
+      });
+      if (topic_count < 5 || post_count < 50) {
+        notices.push(I18n.t("too_few_topics_notice"));
+      }
+    }
+
     if(!_.isEmpty(Discourse.SiteSettings.global_notice)){
       notices.push(Discourse.SiteSettings.global_notice);
     }
@@ -163,11 +168,4 @@ window.Discourse = Ember.Application.createWithMixins(Discourse.Ajax, {
     }
   }.property("isReadOnly")
 
-});
-
-Discourse.initializer({
-  name: "register-discourse-location",
-  initialize: function(container, application) {
-    application.register('location:discourse-location', Ember.DiscourseLocation);
-  }
 });

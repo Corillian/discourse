@@ -7,7 +7,7 @@ class UsersController < ApplicationController
   skip_before_filter :authorize_mini_profiler, only: [:avatar]
   skip_before_filter :check_xhr, only: [:show, :password_reset, :update, :activate_account, :authorize_email, :user_preferences_redirect, :avatar, :my_redirect]
 
-  before_filter :ensure_logged_in, only: [:username, :update, :change_email, :user_preferences_redirect, :upload_user_image, :toggle_avatar, :clear_profile_background, :destroy]
+  before_filter :ensure_logged_in, only: [:username, :update, :change_email, :user_preferences_redirect, :upload_user_image, :pick_avatar, :destroy_user_image, :destroy]
   before_filter :respond_to_suspicious_request, only: [:create]
 
   # we need to allow account creation with bad CSRF tokens, if people are caching, the CSRF token on the
@@ -68,7 +68,7 @@ class UsersController < ApplicationController
     guardian.ensure_can_edit!(user)
 
     user_badge = UserBadge.find(params[:user_badge_id])
-    if user_badge.user == user && ["Gold", "Silver"].include?(user_badge.badge.badge_type.name)
+    if user_badge.user == user && user_badge.badge.allow_title?
       user.title = user_badge.badge.name
       user.save!
     end
@@ -81,7 +81,7 @@ class UsersController < ApplicationController
   end
 
   def my_redirect
-    if current_user.present? && params[:path] =~ /^[a-z\-]+$/
+    if current_user.present? && params[:path] =~ /^[a-z\-\/]+$/
       redirect_to "/users/#{current_user.username}/#{params[:path]}"
       return
     end
@@ -200,7 +200,15 @@ class UsersController < ApplicationController
     expires_now()
 
     @user = EmailToken.confirm(params[:token])
-    if @user.blank?
+
+    if @user
+      session[params[:token]] = @user.id
+    else
+      user_id = session[params[:token]]
+      @user = User.find(user_id) if user_id
+    end
+
+    if !@user
       flash[:error] = I18n.t('password_reset.no_token')
     elsif request.put?
       raise Discourse::InvalidParameters.new(:password) unless params[:password].present?
@@ -225,7 +233,7 @@ class UsersController < ApplicationController
               end
 
     flash[:success] = I18n.t(message)
-   end
+  end
 
   def change_email
     params.require(:email)
@@ -295,9 +303,9 @@ class UsersController < ApplicationController
     topic_id = params[:topic_id]
     topic_id = topic_id.to_i if topic_id
 
-    results = UserSearch.new(term, topic_id).search
+    results = UserSearch.new(term, topic_id: topic_id, searching_user: current_user).search
 
-    user_fields = [:username, :use_uploaded_avatar, :upload_avatar_template, :uploaded_avatar_id]
+    user_fields = [:username, :upload_avatar_template, :uploaded_avatar_id]
     user_fields << :name if SiteSetting.enable_names?
 
     to_render = { users: results.as_json(only: user_fields, methods: :avatar_template) }
@@ -312,7 +320,7 @@ class UsersController < ApplicationController
   # [LEGACY] avatars in quotes/oneboxes might still be pointing to this route
   # fixing it requires a rebake of all the posts
   def avatar
-    user = User.where(username_lower: params[:username].downcase).first
+    user = User.find_by(username_lower: params[:username].downcase)
     if user.present?
       size = determine_avatar_size(params[:size])
       url = user.avatar_template.gsub("{size}", size.to_s)
@@ -333,12 +341,12 @@ class UsersController < ApplicationController
 
   # LEGACY: used by the API
   def upload_avatar
-    params[:user_image_type] = "avatar"
+    params[:image_type] = "avatar"
     upload_user_image
   end
 
   def upload_user_image
-    params.require(:user_image_type)
+    params.require(:image_type)
     user = fetch_user_from_params
     guardian.ensure_can_edit!(user)
 
@@ -353,34 +361,43 @@ class UsersController < ApplicationController
     upload = Upload.create_for(user.id, image.file, image.filename, image.filesize)
 
     if upload.errors.empty?
-      case params[:user_image_type]
+      case params[:image_type]
       when "avatar"
         upload_avatar_for(user, upload)
       when "profile_background"
-        upload_profile_background_for(user, upload)
+        upload_profile_background_for(user.user_profile, upload)
       end
     else
       render status: 422, text: upload.errors.full_messages
     end
   end
 
-  def toggle_avatar
-    params.require(:use_uploaded_avatar)
+  def pick_avatar
     user = fetch_user_from_params
     guardian.ensure_can_edit!(user)
+    upload_id = params[:upload_id]
 
-    user.use_uploaded_avatar = params[:use_uploaded_avatar]
+    user.uploaded_avatar_id = upload_id
+
+    # ensure we associate the custom avatar properly
+    if upload_id && !user.user_avatar.contains_upload?(upload_id)
+      user.user_avatar.custom_upload_id = upload_id
+    end
     user.save!
 
     render nothing: true
   end
 
-  def clear_profile_background
+  def destroy_user_image
     user = fetch_user_from_params
     guardian.ensure_can_edit!(user)
 
-    user.profile_background = ""
-    user.save!
+    image_type = params.require(:image_type)
+    if image_type == 'profile_background'
+      user.user_profile.clear_profile_background
+    else
+      raise Discourse::InvalidParameters.new(:image_type)
+    end
 
     render nothing: true
   end
@@ -421,14 +438,11 @@ class UsersController < ApplicationController
     end
 
     def upload_avatar_for(user, upload)
-      user.upload_avatar(upload)
-      Jobs.enqueue(:generate_avatars, user_id: user.id, upload_id: upload.id)
-
-      render json: { url: upload.url, width: upload.width, height: upload.height }
+      render json: { upload_id: upload.id, url: upload.url, width: upload.width, height: upload.height }
     end
 
-    def upload_profile_background_for(user, upload)
-      user.upload_profile_background(upload)
+    def upload_profile_background_for(user_profile, upload)
+      user_profile.upload_profile_background(upload)
       # TODO: add a resize job here
 
       render json: { url: upload.url, width: upload.width, height: upload.height }
@@ -462,6 +476,6 @@ class UsersController < ApplicationController
         :password,
         :username,
         :active
-      ).merge(ip_address: request.ip)
+      ).merge(ip_address: request.ip, registration_ip_address: request.ip)
     end
 end

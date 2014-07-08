@@ -1,12 +1,12 @@
 require_dependency 'user_destroyer'
 require_dependency 'admin_user_index_query'
-require_dependency 'boost_trust_level'
 
 class Admin::UsersController < Admin::AdminController
 
   before_filter :fetch_user, only: [:suspend,
                                     :unsuspend,
                                     :refresh_browsers,
+                                    :log_out,
                                     :revoke_admin,
                                     :grant_admin,
                                     :revoke_moderation,
@@ -27,13 +27,13 @@ class Admin::UsersController < Admin::AdminController
   end
 
   def show
-    @user = User.where(username_lower: params[:id]).first
+    @user = User.find_by(username_lower: params[:id])
     raise Discourse::NotFound.new unless @user
     render_serialized(@user, AdminDetailedUserSerializer, root: false)
   end
 
   def delete_all_posts
-    @user = User.where(id: params[:user_id]).first
+    @user = User.find_by(id: params[:user_id])
     @user.delete_all_posts!(guardian)
     render nothing: true
   end
@@ -56,8 +56,14 @@ class Admin::UsersController < Admin::AdminController
     render nothing: true
   end
 
+  def log_out
+    @user.auth_token = nil
+    @user.save!
+    render nothing: true
+  end
+
   def refresh_browsers
-    MessageBus.publish "/file-change", ["refresh"], user_ids: [@user.id]
+    refresh_browser @user
     render nothing: true
   end
 
@@ -104,8 +110,9 @@ class Admin::UsersController < Admin::AdminController
 
   def trust_level
     guardian.ensure_can_change_trust_level!(@user)
-    logger = StaffActionLogger.new(current_user)
-    BoostTrustLevel.new(user: @user, level: params[:level], logger: logger).save!
+    level = TrustLevel.levels[params[:level].to_i]
+    @user.change_trust_level!(level, log_action_for: current_user)
+
     render_serialized(@user, AdminUserSerializer)
   end
 
@@ -131,6 +138,7 @@ class Admin::UsersController < Admin::AdminController
   def deactivate
     guardian.ensure_can_deactivate!(@user)
     @user.deactivate
+    refresh_browser @user
     render nothing: true
   end
 
@@ -156,7 +164,7 @@ class Admin::UsersController < Admin::AdminController
   end
 
   def destroy
-    user = User.where(id: params[:id]).first
+    user = User.find_by(id: params[:id])
     guardian.ensure_can_delete_user!(user)
     begin
       if UserDestroyer.new(current_user).destroy(user, params.slice(:delete_posts, :block_email, :block_urls, :block_ip, :context))
@@ -175,11 +183,24 @@ class Admin::UsersController < Admin::AdminController
   def leader_requirements
   end
 
+  def ip_info
+    params.require(:ip)
+    ip = params[:ip]
+
+    # should we cache results in redis?
+    location = Excon.get("http://ipinfo.io/#{ip}/json", read_timeout: 30, connect_timeout: 30).body rescue nil
+
+    render json: location
+  end
 
   private
 
     def fetch_user
-      @user = User.where(id: params[:user_id]).first
+      @user = User.find_by(id: params[:user_id])
+    end
+
+    def refresh_browser(user)
+      MessageBus.publish "/file-change", ["refresh"], user_ids: [user.id]
     end
 
 end

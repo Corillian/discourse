@@ -75,8 +75,8 @@ class SiteSetting < ActiveRecord::Base
   def self.should_download_images?(src)
     setting = disabled_image_download_domains
     return true unless setting.present?
-    host = URI.parse(src).host
 
+    host = URI.parse(src).host
     return !(setting.split('|').include?(host))
   rescue URI::InvalidURIError
     return true
@@ -87,10 +87,14 @@ class SiteSetting < ActiveRecord::Base
   end
 
   def self.has_enough_topics_to_redirect_to_top
-    Topic.listable_topics
-         .visible
-         .where('topics.id NOT IN (SELECT COALESCE(topic_id, 0) FROM categories)')
-         .count > SiteSetting.topics_per_period_in_top_page
+    TopTopic.periods.each do |period|
+      topics_per_period = TopTopic.where("#{period}_score > 0")
+                                  .limit(SiteSetting.topics_per_period_in_top_page)
+                                  .count
+      return true if topics_per_period >= SiteSetting.topics_per_period_in_top_page
+    end
+    # nothing
+    false
   end
 
 end
@@ -103,6 +107,6 @@ end
 #  name       :string(255)      not null
 #  data_type  :integer          not null
 #  value      :text
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  created_at :datetime
+#  updated_at :datetime
 #
