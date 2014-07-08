@@ -364,6 +364,7 @@ GEM
       activesupport (>= 3.0)
       sprockets (~> 2.8)
     stackprof (0.2.5)
+    systemu (2.5.2)
     therubyracer (0.12.1)
       libv8 (~> 3.16.14.0)
       ref
