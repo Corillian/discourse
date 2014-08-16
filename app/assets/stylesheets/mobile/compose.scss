@@ -24,12 +24,10 @@ display: none;
   .mobile-file-upload {
     text-decoration: underline;
   }
+  #mobile-uploader { display: none; }
   #draft-status, #file-uploading, .mobile-file-upload {
     float: right;
     margin-right: 8px;
-  }
-  .mobile-file-upload {
-    text-decoration: underline;
   }
   #file-uploading {
     left: 51%;
@@ -245,6 +243,9 @@ display: none;
   }
   .category-input {
     display: inline;
+  }
+  .popup-tip .close {
+    padding: 0 2px 2px 8px; // so my fingers can touch the little x
   }
   .title-input .popup-tip {
     width: 240px;

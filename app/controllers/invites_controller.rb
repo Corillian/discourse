@@ -4,6 +4,7 @@ class InvitesController < ApplicationController
   skip_before_filter :redirect_to_login_if_required
 
   before_filter :ensure_logged_in, only: [:destroy, :create, :check_csv_chunk, :upload_csv_chunk]
+  before_filter :ensure_new_registrations_allowed, only: [:show, :redeem_disposable_invite]
 
   def show
     invite = Invite.find_by(invite_key: params[:id])
@@ -34,11 +35,55 @@ class InvitesController < ApplicationController
 
     guardian.ensure_can_invite_to_forum!(group_ids)
 
+    invite_exists = Invite.where(email: params[:email], invited_by_id: current_user.id).first
+    if invite_exists
+      guardian.ensure_can_send_multiple_invites!(current_user)
+    end
+
     if Invite.invite_by_email(params[:email], current_user, topic=nil,  group_ids)
       render json: success_json
     else
       render json: failed_json, status: 422
     end
+  end
+
+  def create_disposable_invite
+    guardian.ensure_can_create_disposable_invite!(current_user)
+    params.permit(:username, :email, :quantity, :group_names)
+
+    username_or_email = params[:username] ? fetch_username : fetch_email
+    user = User.find_by_username_or_email(username_or_email)
+
+    # generate invite tokens
+    invite_tokens = Invite.generate_disposable_tokens(user, params[:quantity], params[:group_names])
+
+    render_json_dump(invite_tokens)
+  end
+
+  def redeem_disposable_invite
+    params.require(:email)
+    params.permit(:username, :name, :topic)
+    params[:email] = params[:email].split(' ').join('+')
+
+    invite = Invite.find_by(invite_key: params[:token])
+
+    if invite.present?
+      user = Invite.redeem_from_token(params[:token], params[:email], params[:username], params[:name], params[:topic].to_i)
+      if user.present?
+        log_on_user(user)
+
+        # Send a welcome message if required
+        user.enqueue_welcome_message('welcome_invite') if user.send_welcome_message
+
+        topic = invite.topics.first
+        if topic.present?
+          redirect_to "#{Discourse.base_uri}#{topic.relative_url}"
+          return
+        end
+      end
+    end
+
+    redirect_to "/"
   end
 
   def destroy
@@ -95,4 +140,21 @@ class InvitesController < ApplicationController
     render nothing: true
   end
 
+  def fetch_username
+    params.require(:username)
+    params[:username]
+  end
+
+  def fetch_email
+    params.require(:email)
+    params[:email]
+  end
+
+  def ensure_new_registrations_allowed
+    unless SiteSetting.allow_new_registrations
+      flash[:error] = I18n.t('login.new_registrations_disabled')
+      render layout: 'no_js'
+      false
+    end
+  end
 end

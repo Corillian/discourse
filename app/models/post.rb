@@ -23,6 +23,7 @@ class Post < ActiveRecord::Base
 
   belongs_to :user
   belongs_to :topic, counter_cache: :posts_count
+
   belongs_to :reply_to_user, class_name: "User"
 
   has_many :post_replies
@@ -39,6 +40,8 @@ class Post < ActiveRecord::Base
 
   has_many :post_revisions
   has_many :revisions, foreign_key: :post_id, class_name: 'PostRevision'
+
+  has_many :user_actions, foreign_key: :target_post_id
 
   validates_with ::Validators::PostValidator
 
@@ -80,7 +83,7 @@ class Post < ActiveRecord::Base
 
   def limit_posts_per_day
     if user.created_at > 1.day.ago && post_number > 1
-      RateLimiter.new(user, "first-day-replies-per-day:#{Date.today.to_s}", SiteSetting.max_replies_in_first_day, 1.day.to_i)
+      RateLimiter.new(user, "first-day-replies-per-day:#{Date.today}", SiteSetting.max_replies_in_first_day, 1.day.to_i)
     end
   end
 
@@ -93,6 +96,7 @@ class Post < ActiveRecord::Base
     super
     update_flagged_posts_count
     TopicLink.extract_from(self)
+    QuotedPost.extract_from(self)
     if topic && topic.category_id && topic.category
       topic.category.update_latest
     end
@@ -140,7 +144,7 @@ class Post < ActiveRecord::Base
     return raw if cook_method == Post.cook_methods[:raw_html]
 
     # Default is to cook posts
-    cooked = if !self.user || !self.user.has_trust_level?(:leader)
+    cooked = if !self.user || SiteSetting.leader_links_no_follow || !self.user.has_trust_level?(:leader)
       post_analyzer.cook(*args)
     else
       # At trust level 3, we don't apply nofollow to links
@@ -248,10 +252,6 @@ class Post < ActiveRecord::Base
     "#{topic_id}/#{post_number}"
   end
 
-  def quoteless?
-    (quote_count == 0) && (reply_to_post_number.present?)
-  end
-
   def reply_to_post
     return if reply_to_post_number.blank?
     @reply_to_post ||= Post.find_by("topic_id = :topic_id AND post_number = :post_number", topic_id: topic_id, post_number: reply_to_post_number)
@@ -281,10 +281,9 @@ class Post < ActiveRecord::Base
   end
 
   def unhide!
-    self.hidden = false
-    self.hidden_reason_id = nil
+    self.update_attributes(hidden: false, hidden_at: nil, hidden_reason_id: nil)
     self.topic.update_attributes(visible: true)
-    save
+    save(validate: false)
   end
 
   def url
@@ -315,14 +314,16 @@ class Post < ActiveRecord::Base
   end
 
   def self.rebake_old(limit)
+    problems = []
     Post.where('baked_version IS NULL OR baked_version < ?', BAKED_VERSION)
         .limit(limit).each do |p|
       begin
         p.rebake!
       rescue => e
-        Discourse.handle_exception(e)
+        problems << {post: p, ex: e}
       end
     end
+    problems
   end
 
   def rebake!(opts={})
@@ -336,7 +337,9 @@ class Post < ActiveRecord::Base
     update_columns(cooked: new_cooked, baked_at: Time.new, baked_version: BAKED_VERSION)
 
     # Extracts urls from the body
-    TopicLink.extract_from self
+    TopicLink.extract_from(self)
+    QuotedPost.extract_from(self)
+
     # make sure we trigger the post process
     trigger_post_process(true)
 
@@ -589,11 +592,13 @@ end
 #  baked_at                :datetime
 #  baked_version           :integer
 #  hidden_at               :datetime
+#  self_edits              :integer          default(0), not null
+#  reply_quoted            :boolean          default(FALSE), not null
 #
 # Indexes
 #
 #  idx_posts_created_at_topic_id            (created_at,topic_id)
 #  idx_posts_user_id_deleted_at             (user_id)
 #  index_posts_on_reply_to_post_number      (reply_to_post_number)
-#  index_posts_on_topic_id_and_post_number  (topic_id,post_number)
+#  index_posts_on_topic_id_and_post_number  (topic_id,post_number) UNIQUE
 #

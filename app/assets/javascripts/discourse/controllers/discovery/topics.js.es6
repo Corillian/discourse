@@ -1,19 +1,13 @@
-/**
-  The controller for displaying a list of topics.
+import DiscoveryController from 'discourse/controllers/discovery';
+import { queryParams } from 'discourse/controllers/discovery-sortable';
 
-  @class DiscoveryTopicsController
-  @extends Discourse.Controller
-  @namespace Discourse
-  @module Discourse
-**/
-export default Discourse.DiscoveryController.extend({
+var controllerOpts = {
   needs: ['discovery'],
   bulkSelectEnabled: false,
   selected: [],
 
   order: 'default',
   ascending: false,
-  status: null,
 
   actions: {
 
@@ -70,11 +64,17 @@ export default Discourse.DiscoveryController.extend({
       });
     },
 
-    dismissRead: function() {
+    dismissRead: function(operationType) {
       var self = this,
           selected = this.get('selected'),
-          operation = { type: 'change_notification_level',
+          operation;
+
+      if(operationType === "posts"){
+        operation = { type: 'dismiss_posts' };
+      } else {
+        operation = { type: 'change_notification_level',
                         notification_level_id: Discourse.Topic.NotificationLevel.REGULAR };
+      }
 
       var promise;
       if (selected.length > 0) {
@@ -106,6 +106,12 @@ export default Discourse.DiscoveryController.extend({
 
   showResetNew: function() {
     return this.get('filter') === 'new' && this.get('topics.length') > 0;
+  }.property('filter', 'topics.length'),
+
+  showDismissAtTop: function() {
+    return (this.get('filter') === 'new' ||
+           this.get('filter') === 'unread') &&
+           this.get('topics.length') >= 30;
   }.property('filter', 'topics.length'),
 
   canBulkSelect: Em.computed.alias('currentUser.staff'),
@@ -142,4 +148,13 @@ export default Discourse.DiscoveryController.extend({
   loadMoreTopics: function() {
     return this.get('model').loadMore();
   }
+};
+
+Ember.keys(queryParams).forEach(function(p) {
+  // If we don't have a default value, initialize it to null
+  if (typeof controllerOpts[p] === 'undefined') {
+    controllerOpts[p] = null;
+  }
 });
+
+export default DiscoveryController.extend(controllerOpts);

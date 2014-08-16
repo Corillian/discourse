@@ -2,6 +2,8 @@ require File.expand_path('../boot', __FILE__)
 require 'rails/all'
 
 # Plugin related stuff
+require_relative '../lib/discourse_event'
+require_relative '../lib/discourse_plugin'
 require_relative '../lib/discourse_plugin_registry'
 
 # Global config
@@ -49,7 +51,7 @@ module Discourse
     # :all can be used as a placeholder for all plugins not explicitly named.
     # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
 
-    config.assets.paths += %W(#{config.root}/config/locales)
+    config.assets.paths += %W(#{config.root}/config/locales #{config.root}/public/javascripts)
 
     # explicitly precompile any images in plugins ( /assets/images ) path
     config.assets.precompile += [lambda do |filename, path|
@@ -93,8 +95,7 @@ module Discourse
         :s3_secret_access_key,
         :twitter_consumer_secret,
         :facebook_app_secret,
-        :github_client_secret,
-        :discourse_org_access_key,
+        :github_client_secret
     ]
 
     # Enable the asset pipeline
@@ -116,6 +117,11 @@ module Discourse
     # rack lock is nothing but trouble, get rid of it
     # for some reason still seeing it in Rails 4
     config.middleware.delete Rack::Lock
+
+    # ETags are pointless, we are dynamically compressing
+    # so nginx strips etags, may revisit when mainline nginx
+    # supports etags (post 1.7)
+    config.middleware.delete Rack::ETag
 
     # route all exceptions via our router
     config.exceptions_app = self.routes

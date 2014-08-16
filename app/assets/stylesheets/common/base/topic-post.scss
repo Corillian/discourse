@@ -44,7 +44,7 @@ aside.quote {
 }
 
 .cooked .highlight {
-  background-color: scale-color($highlight, $lightness: 40%);
+  background-color: dark-light-diff($tertiary, $secondary, 90%, -40%);
   padding: 2px;
   margin: -2px;
 }
@@ -53,4 +53,8 @@ aside.quote {
   .undo-action, .act-action{
     margin-left: 5px;
   }
+}
+
+.post-hidden {
+  opacity: 0.5;
 }

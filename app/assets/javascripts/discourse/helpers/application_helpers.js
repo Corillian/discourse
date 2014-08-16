@@ -1,30 +1,4 @@
-// helper function for dates
-function daysSinceEpoch(dt) {
-  // 1000 * 60 * 60 * 24 = days since epoch
-  return dt.getTime() / 86400000;
-}
-
-/**
-  Converts a date to a coldmap class
-
-  @method cold-age-class
-  @for Handlebars
-**/
-Handlebars.registerHelper('cold-age-class', function(property, options) {
-  var dt = Em.Handlebars.get(this, property, options);
-
-  if (!dt) { return 'age'; }
-
-  // Show heat on age
-  var nowDays = daysSinceEpoch(new Date()),
-      epochDays = daysSinceEpoch(new Date(dt));
-  if (nowDays - epochDays > 60) return 'age coldmap-high';
-  if (nowDays - epochDays > 30) return 'age coldmap-med';
-  if (nowDays - epochDays > 14) return 'age coldmap-low';
-
-  return 'age';
-});
-
+var safe = Handlebars.SafeString;
 
 /**
   Truncates long strings
@@ -68,7 +42,7 @@ function categoryLinkHTML(category, options) {
       categoryOptions.categories = Em.Handlebars.get(this, options.hash.categories, options);
     }
   }
-  return new Handlebars.SafeString(Discourse.HTML.categoryBadge(category, categoryOptions));
+  return new safe(Discourse.HTML.categoryBadge(category, categoryOptions));
 }
 
 /**
@@ -171,7 +145,7 @@ Handlebars.registerHelper('avatar', function(user, options) {
     var uploadedAvatarId = Em.get(user, 'uploaded_avatar_id') || Em.get(user, 'user.uploaded_avatar_id');
     var avatarTemplate = Discourse.User.avatarTemplate(username,uploadedAvatarId);
 
-    return new Handlebars.SafeString(Discourse.Utilities.avatarImg({
+    return new safe(Discourse.Utilities.avatarImg({
       size: options.hash.imageSize,
       extraClasses: Em.get(user, 'extras') || options.hash.extraClasses,
       title: title || username,
@@ -189,7 +163,9 @@ Handlebars.registerHelper('avatar', function(user, options) {
   @for Handlebars
 **/
 Em.Handlebars.helper('bound-avatar', function(user, size, uploadId) {
-
+  if (Em.isEmpty(user)) {
+    return new safe("<div class='avatar-placeholder'></div>");
+  }
   var username = Em.get(user, 'username');
 
   if(arguments.length < 4){
@@ -198,7 +174,7 @@ Em.Handlebars.helper('bound-avatar', function(user, size, uploadId) {
 
   var avatarTemplate = Discourse.User.avatarTemplate(username, uploadId);
 
-  return new Handlebars.SafeString(Discourse.Utilities.avatarImg({
+  return new safe(Discourse.Utilities.avatarImg({
     size: size,
     avatarTemplate: avatarTemplate
   }));
@@ -208,7 +184,7 @@ Em.Handlebars.helper('bound-avatar', function(user, size, uploadId) {
  * Used when we only have a template
  */
 Em.Handlebars.helper('bound-avatar-template', function(avatarTemplate, size) {
-  return new Handlebars.SafeString(Discourse.Utilities.avatarImg({
+  return new safe(Discourse.Utilities.avatarImg({
     size: size,
     avatarTemplate: avatarTemplate
   }));
@@ -243,7 +219,7 @@ Em.Handlebars.helper('bound-raw-date', function (date) {
 **/
 Handlebars.registerHelper('age', function(property, options) {
   var dt = new Date(Ember.Handlebars.get(this, property, options));
-  return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(dt));
+  return new safe(Discourse.Formatter.autoUpdatingRelativeAge(dt));
 });
 
 /**
@@ -254,7 +230,7 @@ Handlebars.registerHelper('age', function(property, options) {
 **/
 Handlebars.registerHelper('age-with-tooltip', function(property, options) {
   var dt = new Date(Ember.Handlebars.get(this, property, options));
-  return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(dt, {title: true}));
+  return new safe(Discourse.Formatter.autoUpdatingRelativeAge(dt, {title: true}));
 });
 
 /**
@@ -286,7 +262,7 @@ Handlebars.registerHelper('number', function(property, options) {
   }
   result += ">" + n + "</span>";
 
-  return new Handlebars.SafeString(result);
+  return new safe(result);
 });
 
 /**
@@ -310,12 +286,12 @@ Handlebars.registerHelper('date', function(property, options) {
   var val = Ember.Handlebars.get(this, property, options);
   if (val) {
     var date = new Date(val);
-    return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(date, {format: 'medium', title: true, leaveAgo: leaveAgo}));
+    return new safe(Discourse.Formatter.autoUpdatingRelativeAge(date, {format: 'medium', title: true, leaveAgo: leaveAgo}));
   }
 });
 
 Em.Handlebars.helper('bound-date', function(dt) {
-  return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(new Date(dt), {format: 'medium', title: true }));
+  return new safe(Discourse.Formatter.autoUpdatingRelativeAge(new Date(dt), {format: 'medium', title: true }));
 });
 
 /**
@@ -337,7 +313,7 @@ Handlebars.registerHelper('custom-html', function(name, contextString, options) 
 });
 
 Em.Handlebars.helper('human-size', function(size) {
-  return new Handlebars.SafeString(I18n.toHumanSize(size));
+  return new safe(I18n.toHumanSize(size));
 });
 
 /**
@@ -356,7 +332,7 @@ Handlebars.registerHelper('link-domain', function(property, options) {
       if (!Em.isEmpty(domain)) {
         var s = domain.split('.');
         domain = s[s.length-2] + "." + s[s.length-1];
-        return new Handlebars.SafeString("<span class='domain'>" + domain + "</span>");
+        return new safe("<span class='domain'>" + domain + "</span>");
       }
     }
   }
@@ -378,5 +354,5 @@ Handlebars.registerHelper('icon', function(icon, options) {
   if (labelKey) {
     html += "<span class='sr-only'>" + I18n.t(labelKey) + "</span>";
   }
-  return new Handlebars.SafeString(html);
+  return new safe(html);
 });

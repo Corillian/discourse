@@ -26,6 +26,10 @@ Discourse.ActionSummary = Discourse.Model.extend({
   usersCollapsed: Em.computed.not('usersExpanded'),
   usersExpanded: Em.computed.gt('users.length', 0),
 
+  canToggle: function() {
+    return this.get('can_undo') || this.get('can_act');
+  }.property('can_undo', 'can_act'),
+
   // Remove it
   removeAction: function() {
     this.setProperties({
@@ -37,6 +41,14 @@ Discourse.ActionSummary = Discourse.Model.extend({
 
     if (this.get('usersExpanded')) {
       this.get('users').removeObject(Discourse.User.current());
+    }
+  },
+
+  toggle: function() {
+    if (!this.get('acted')) {
+      this.act();
+    } else {
+      this.undo();
     }
   },
 
@@ -56,7 +68,7 @@ Discourse.ActionSummary = Discourse.Model.extend({
 
     if(action === 'notify_moderators' || action === 'notify_user') {
       this.set('can_undo',false);
-      this.set('can_clear_flags',false);
+      this.set('can_defer_flags',false);
     }
 
     // Add ourselves to the users who liked it if present
@@ -96,17 +108,16 @@ Discourse.ActionSummary = Discourse.Model.extend({
     });
   },
 
-  clearFlags: function() {
-    var actionSummary = this;
-    return Discourse.ajax("/post_actions/clear_flags", {
+  deferFlags: function() {
+    var self = this;
+    return Discourse.ajax("/post_actions/defer_flags", {
       type: "POST",
       data: {
-        post_action_type_id: this.get('id'),
-        id: this.get('post.id')
+        post_action_type_id: this.get("id"),
+        id: this.get("post.id")
       }
-    }).then(function(result) {
-      actionSummary.set('post.hidden', result.hidden);
-      actionSummary.set('count', 0);
+    }).then(function () {
+      self.set("count", 0);
     });
   },
 

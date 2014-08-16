@@ -15,7 +15,7 @@ module ApplicationHelper
     if SiteSetting.enable_cdn_js_debugging && GlobalSetting.cdn_url
       tags = javascript_include_tag(*args, "crossorigin" => "anonymous")
       tags.gsub!("/assets/", "/cdn_asset/#{Discourse.current_hostname.gsub(".","_")}/")
-      tags.gsub!(".js\"", ".js?origin=#{CGI.escape request.base_url}\"")
+      tags.gsub!(".js\"", ".js?v=1&origin=#{CGI.escape request.base_url}\"")
       tags.html_safe
     else
       javascript_include_tag(*args)
@@ -32,7 +32,7 @@ module ApplicationHelper
   end
 
   def html_classes
-    "#{mobile_view? ? 'mobile-view' : 'desktop-view'} #{mobile_device? ? 'mobile-device' : 'not-mobile-device'}"
+    "#{mobile_view? ? 'mobile-view' : 'desktop-view'} #{mobile_device? ? 'mobile-device' : 'not-mobile-device'} #{rtl_view? ? 'rtl' : ''}"
   end
 
   def escape_unicode(javascript)
@@ -85,10 +85,17 @@ module ApplicationHelper
     opts[:image] ||= "#{Discourse.base_url}#{SiteSetting.logo_small_url}"
     opts[:url] ||= "#{Discourse.base_url}#{request.fullpath}"
 
+    # Use the correct scheme for open graph
+    if opts[:image].present? && opts[:image].start_with?("//")
+      uri = URI(Discourse.base_url)
+      opts[:image] = "#{uri.scheme}:#{opts[:image]}"
+    end
+
     # Add opengraph tags
     result =  tag(:meta, property: 'og:site_name', content: SiteSetting.title) << "\n"
 
     result << tag(:meta, name: 'twitter:card', content: "summary")
+
     [:image, :url, :title, :description, 'image:width', 'image:height'].each do |property|
       if opts[property].present?
         escape = (property != :image)
@@ -122,6 +129,22 @@ module ApplicationHelper
 
   def mobile_device?
     MobileDetection.mobile_device?(request.user_agent)
+  end
+
+  def rtl_view?
+     site_default_rtl? || current_user_rtl?
+  end
+
+  def current_user_rtl?
+    SiteSetting.allow_user_locale && current_user.try(:locale).in?(rtl_locales)
+  end
+
+  def site_default_rtl?
+    !SiteSetting.allow_user_locale && SiteSetting.default_locale.in?(rtl_locales)
+  end
+
+  def rtl_locales
+    %w(he ar)
   end
 
   def customization_disabled?

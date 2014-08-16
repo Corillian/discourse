@@ -75,6 +75,8 @@ class Upload < ActiveRecord::Base
       # deal with width & height for images
       if FileHelper.is_image?(filename)
         begin
+          # fix orientation first
+          Upload.fix_image_orientation(file.path)
           # retrieve image info
           image_info = FastImage.new(file, raise_on_failure: true)
             # compute image aspect ratio
@@ -110,9 +112,14 @@ class Upload < ActiveRecord::Base
   end
 
   def self.get_from_url(url)
+    return if url.blank?
     # we store relative urls, so we need to remove any host/cdn
     url = url.gsub(/^#{Discourse.asset_host}/i, "") if Discourse.asset_host.present?
     Upload.find_by(url: url) if Discourse.store.has_been_uploaded?(url)
+  end
+
+  def self.fix_image_orientation(path)
+    `convert #{path} -auto-orient #{path}`
   end
 
 end

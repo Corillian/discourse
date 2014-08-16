@@ -636,10 +636,6 @@ describe Post do
         reply.quote_count.should == 1
       end
 
-      it "isn't quoteless" do
-        reply.should_not be_quoteless
-      end
-
       it 'has a reply to the user of the original user' do
         reply.reply_to_user.should == post.user
       end
@@ -763,10 +759,18 @@ describe Post do
       post.cooked.should =~ /nofollow/
     end
 
-    it "should not add nofollow for trust level 3 and higher" do
+    it "when leader_links_no_follow is false, should not add nofollow for trust level 3 and higher" do
+      SiteSetting.stubs(:leader_links_no_follow).returns(false)
       post.user.trust_level = 3
       post.save
       (post.cooked =~ /nofollow/).should be_false
+    end
+
+    it "when leader_links_no_follow is true, should add nofollow for trust level 3 and higher" do
+      SiteSetting.stubs(:leader_links_no_follow).returns(true)
+      post.user.trust_level = 3
+      post.save
+      (post.cooked =~ /nofollow/).should be_true
     end
   end
 
@@ -840,6 +844,23 @@ describe Post do
       Post.rebake_old(100)
       post.reload
       post.baked_at.should == baked
+    end
+  end
+
+  describe ".unhide!" do
+    before { SiteSetting.stubs(:unique_posts_mins).returns(5) }
+
+    it "will unhide the post" do
+      post = create_post(user: Fabricate(:newuser))
+      post.update_columns(hidden: true, hidden_at: Time.now, hidden_reason_id: 1)
+      post.reload
+
+      post.hidden.should == true
+
+      post.unhide!
+      post.reload
+
+      post.hidden.should == false
     end
   end
 

@@ -5,7 +5,7 @@ require_dependency 'avatar_upload_service'
 class UsersController < ApplicationController
 
   skip_before_filter :authorize_mini_profiler, only: [:avatar]
-  skip_before_filter :check_xhr, only: [:show, :password_reset, :update, :activate_account, :authorize_email, :user_preferences_redirect, :avatar, :my_redirect]
+  skip_before_filter :check_xhr, only: [:show, :password_reset, :update, :activate_account, :perform_account_activation, :authorize_email, :user_preferences_redirect, :avatar, :my_redirect]
 
   before_filter :ensure_logged_in, only: [:username, :update, :change_email, :user_preferences_redirect, :upload_user_image, :pick_avatar, :destroy_user_image, :destroy]
   before_filter :respond_to_suspicious_request, only: [:create]
@@ -18,6 +18,7 @@ class UsersController < ApplicationController
                                                             :create,
                                                             :get_honeypot_value,
                                                             :activate_account,
+                                                            :perform_account_activation,
                                                             :send_activation_email,
                                                             :authorize_email,
                                                             :password_reset]
@@ -67,9 +68,12 @@ class UsersController < ApplicationController
     user = fetch_user_from_params
     guardian.ensure_can_edit!(user)
 
-    user_badge = UserBadge.find(params[:user_badge_id])
-    if user_badge.user == user && user_badge.badge.allow_title?
+    user_badge = UserBadge.find_by(id: params[:user_badge_id])
+    if user_badge && user_badge.user == user && user_badge.badge.allow_title?
       user.title = user_badge.badge.name
+      user.save!
+    else
+      user.title = ''
       user.save!
     end
 
@@ -90,11 +94,12 @@ class UsersController < ApplicationController
 
   def invited
     inviter = fetch_user_from_params
+    offset = params[:offset].to_i || 0
 
     invites = if guardian.can_see_invite_details?(inviter)
-      Invite.find_all_invites_from(inviter)
+      Invite.find_all_invites_from(inviter, offset)
     else
-      Invite.find_redeemed_invites_from(inviter)
+      Invite.find_redeemed_invites_from(inviter, offset)
     end
 
     invites = invites.filter_by(params[:filter])
@@ -122,7 +127,7 @@ class UsersController < ApplicationController
   def check_username
     if !params[:username].present?
       params.require(:username) if !params[:email].present?
-      return render(json: success_json) unless SiteSetting.call_discourse_hub?
+      return render(json: success_json)
     end
     username = params[:username]
 
@@ -134,8 +139,6 @@ class UsersController < ApplicationController
     checker = UsernameCheckerService.new
     email = params[:email] || target_user.try(:email)
     render json: checker.check_username(username, email)
-  rescue RestClient::Forbidden
-    render json: {errors: [I18n.t("discourse_hub.access_token_problem")]}
   end
 
   def user_from_params_or_current_user
@@ -143,6 +146,11 @@ class UsersController < ApplicationController
   end
 
   def create
+    unless SiteSetting.allow_new_registrations
+      render json: { success: false, message: I18n.t("login.new_registrations_disabled") }
+      return
+    end
+
     user = User.new(user_params)
 
     authentication = UserAuthenticator.new(user, session)
@@ -186,8 +194,6 @@ class UsersController < ApplicationController
       success: false,
       message: I18n.t("login.something_already_taken")
     }
-  rescue DiscourseHub::UsernameUnavailable => e
-    render json: e.response_message
   rescue RestClient::Forbidden
     render json: { errors: [I18n.t("discourse_hub.access_token_problem")] }
   end
@@ -242,7 +248,7 @@ class UsersController < ApplicationController
     lower_email = Email.downcase(params[:email]).strip
 
     # Raise an error if the email is already in use
-    if User.where("email = ?", lower_email).exists?
+    if User.find_by_email(lower_email)
       raise Discourse::InvalidParameters.new(:email)
     end
 
@@ -269,7 +275,12 @@ class UsersController < ApplicationController
   end
 
   def activate_account
-    expires_now()
+    expires_now
+    render layout: 'no_js'
+  end
+
+  def perform_account_activation
+    raise Discourse::InvalidAccess.new if honeypot_or_challenge_fails?(params)
     if @user = EmailToken.confirm(params[:token])
 
       # Log in the user unless they need to be approved
@@ -407,6 +418,15 @@ class UsersController < ApplicationController
     guardian.ensure_can_delete_user!(@user)
 
     UserDestroyer.new(current_user).destroy(@user, {delete_posts: true, context: params[:context]})
+
+    render json: success_json
+  end
+
+  def read_faq
+    if(user = current_user)
+      user.user_stat.read_faq = 1.second.ago
+      user.user_stat.save
+    end
 
     render json: success_json
   end

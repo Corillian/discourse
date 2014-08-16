@@ -36,6 +36,12 @@ shared_examples 'finding and showing post' do
       xhr :get, action, params
       response.should be_success
     end
+
+    it "can find posts as a admin" do
+      log_in(:admin)
+      xhr :get, action, params
+      response.should be_success
+    end
   end
 end
 
@@ -46,16 +52,6 @@ shared_examples 'action requires login' do |method, action, params|
 end
 
 describe PostsController do
-
-  describe 'short_link' do
-    let(:post) { Fabricate(:post) }
-
-    it 'logs the incoming link once' do
-      IncomingLink.expects(:add).once.returns(true)
-      get :short_link, post_id: post.id, user_id: 999
-      response.should be_redirect
-    end
-  end
 
   describe 'cooked' do
     before do
@@ -366,6 +362,25 @@ describe PostsController do
 
     include_examples 'action requires login', :post, :create
 
+    context 'api' do
+      it 'allows dupes through' do
+        raw = "this is a test post 123 #{SecureRandom.hash}"
+        title = "this is a title #{SecureRandom.hash}"
+
+        user = Fabricate(:user)
+        master_key = ApiKey.create_master_key.key
+
+        xhr :post, :create, {api_username: user.username, api_key: master_key, raw: raw, title: title, wpid: 1}
+        response.should be_success
+        original = response.body
+
+        xhr :post, :create, {api_username: user.username_lower, api_key: master_key, raw: raw, title: title, wpid: 2}
+        response.should be_success
+
+        response.body.should == original
+      end
+    end
+
     describe 'when logged in' do
 
       let!(:user) { log_in }
@@ -388,15 +403,14 @@ describe PostsController do
       end
 
       it 'protects against dupes' do
-        # TODO we really should be using a mock redis here
-        xhr :post, :create, {raw: 'this is a test post 123', title: 'this is a test title 123', wpid: 1}
-        response.should be_success
-        original = response.body
+        raw = "this is a test post 123 #{SecureRandom.hash}"
+        title = "this is a title #{SecureRandom.hash}"
 
-        xhr :post, :create, {raw: 'this is a test post 123', title: 'this is a test title 123', wpid: 2}
+        xhr :post, :create, {raw: raw, title: title, wpid: 1}
         response.should be_success
 
-        response.body.should == original
+        xhr :post, :create, {raw: raw, title: title, wpid: 2}
+        response.should_not be_success
       end
 
       context "errors" do
@@ -587,4 +601,51 @@ describe PostsController do
       ::JSON.parse(response.body)['cooked'].should == "full content"
     end
   end
+
+  describe "flagged posts" do
+
+    include_examples "action requires login", :get, :flagged_posts, username: "system"
+
+    describe "when logged in" do
+      before { log_in }
+
+      it "raises an error if the user doesn't have permission to see the flagged posts" do
+        Guardian.any_instance.expects(:can_see_flagged_posts?).returns(false)
+        xhr :get, :flagged_posts, username: "system"
+        response.should be_forbidden
+      end
+
+      it "can see the flagged posts when authorized" do
+        Guardian.any_instance.expects(:can_see_flagged_posts?).returns(true)
+        xhr :get, :flagged_posts, username: "system"
+        response.should be_success
+      end
+
+    end
+
+  end
+
+  describe "deleted posts" do
+
+    include_examples "action requires login", :get, :deleted_posts, username: "system"
+
+    describe "when logged in" do
+      before { log_in }
+
+      it "raises an error if the user doesn't have permission to see the deleted posts" do
+        Guardian.any_instance.expects(:can_see_deleted_posts?).returns(false)
+        xhr :get, :deleted_posts, username: "system"
+        response.should be_forbidden
+      end
+
+      it "can see the deleted posts when authorized" do
+        Guardian.any_instance.expects(:can_see_deleted_posts?).returns(true)
+        xhr :get, :deleted_posts, username: "system"
+        response.should be_success
+      end
+
+    end
+
+  end
+
 end

@@ -1,5 +1,5 @@
 module UserNotificationsHelper
-  
+
   def self.sanitize_options
     return @sanitize_options if @sanitize_options
     @sanitize_options = Sanitize::Config::RELAXED.deep_dup
@@ -28,6 +28,8 @@ module UserNotificationsHelper
   def logo_url
     logo_url = SiteSetting.digest_logo_url
     logo_url = SiteSetting.logo_url if logo_url.blank?
+
+    return nil if logo_url.blank?
     if logo_url !~ /http(s)?\:\/\//
       logo_url = "#{Discourse.base_url}#{logo_url}"
     end

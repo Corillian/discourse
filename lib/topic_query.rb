@@ -23,6 +23,7 @@ class TopicQuery
                      no_subcategories
                      no_definitions
                      status
+                     state
                      search
                      ).map(&:to_sym)
 
@@ -265,6 +266,19 @@ class TopicQuery
         result = result.where("topics.id in (select pp.topic_id from post_search_data pd join posts pp on pp.id = pd.post_id where pd.search_data @@ #{Search.ts_query(search.to_s)})")
       end
 
+      # NOTE protect against SYM attack can be removed with Ruby 2.2
+      #
+      state = options[:state]
+      if @user && state &&
+          TopicUser.notification_levels.keys.map(&:to_s).include?(state)
+        level = TopicUser.notification_levels[state.to_sym]
+        result = result.where('topics.id IN (
+                                  SELECT topic_id
+                                  FROM topic_users
+                                  WHERE user_id = ? AND
+                                        notification_level = ?)', @user.id, level)
+      end
+
       if status = options[:status]
         case status
         when 'open'
@@ -299,7 +313,7 @@ class TopicQuery
       result
     end
 
-    def remove_muted_categories(list, user, opts)
+    def remove_muted_categories(list, user, opts=nil)
       category_id = get_category_id(opts[:exclude]) if opts
       if user
         list = list.where("NOT EXISTS(
@@ -337,6 +351,8 @@ class TopicQuery
       result = default_results(unordered: true, per_page: count).where(closed: false, archived: false)
       excluded_topic_ids += Category.pluck(:topic_id).compact
       result = result.where("topics.id NOT IN (?)", excluded_topic_ids) unless excluded_topic_ids.empty?
+
+      result = remove_muted_categories(result, @user)
 
       # If we are in a category, prefer it for the random results
       if topic.category_id

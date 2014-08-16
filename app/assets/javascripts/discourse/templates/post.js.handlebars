@@ -19,9 +19,8 @@
     {{/if}}
     <div class='topic-avatar'>
       {{#unless userDeleted}}
-        <div {{bind-attr class=":contents byTopicCreator:topic-creator :trigger-expansion"}}>
-          <a class="main-avatar" href='{{unbound usernameUrl}}' {{action showPosterExpansion this}}>{{avatar this imageSize="large"}}</a>
-
+        <div {{bind-attr class=":contents byTopicCreator:topic-creator"}}>
+          {{poster-avatar action="expandPostUser" post=this classNames="main-avatar"}}
         </div>
       {{else}}
         <div class="contents">
@@ -29,25 +28,25 @@
         </div>
       {{/unless}}
       {{#if wiki}}
-        <div class="wiki"><i class="fa fa-pencil-square-o fa-3x"></i></div>
+      <div {{action editPost this}} class="wiki" title="{{i18n post.wiki.about}}"><i class="fa fa-pencil-square-o fa-3x"></i></div>
       {{/if}}
     </div>
 
     <div class='topic-body'>
       <div class='topic-meta-data'>
-        {{poster-name post=this expandAction="showPosterExpansion"}}
+        {{poster-name post=this expandAction="expandPostUser"}}
         <div class='post-info'>
           <a class='post-date' {{bind-attr href="shareUrl" data-share-url="shareUrl" data-post-number="post_number"}}>{{age-with-tooltip created_at}}</a>
         </div>
         {{#if hasHistory}}
           <div class='post-info edits'>
             {{#if can_view_edit_history}}
-              <a href='#' class="{{unbound historyHeat}}" {{action showHistory this}} title="{{i18n post.last_edited_on}} {{raw-date updated_at}}">
+              <a href='#' class="{{unbound view.historyHeat}}" {{action showHistory this}} title="{{i18n post.last_edited_on}} {{raw-date updated_at}}">
                 {{editCount}}
                 <i class='fa fa-pencil'></i>
               </a>
             {{else}}
-              <span class="{{unbound historyHeat}}" title="{{i18n post.last_edited_on}} {{raw-date updated_at}}">
+              <span class="{{unbound view.historyHeat}}" title="{{i18n post.last_edited_on}} {{raw-date updated_at}}">
                 {{editCount}}
                 <i class='fa fa-pencil'></i>
               </span>
@@ -73,7 +72,7 @@
           {{#if controller.loadingExpanded}}
             <button class="btn expand-post" disabled>{{i18n loading}}</button>
           {{else}}
-            <button {{action expandFirstPost this}} class='btn expand-post'>{{i18n post.show_full}}</button>
+            <button {{action expandFirstPost this}} class='btn expand-post'>{{i18n post.show_full}}&hellip;</button>
           {{/if}}
         {{/if}}
         {{view 'post-menu' post=this adminMenu=view.adminMenu}}

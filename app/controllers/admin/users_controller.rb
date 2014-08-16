@@ -17,6 +17,8 @@ class Admin::UsersController < Admin::AdminController
                                     :block,
                                     :unblock,
                                     :trust_level,
+                                    :add_group,
+                                    :remove_group,
                                     :primary_group,
                                     :generate_api_key,
                                     :revoke_api_key]
@@ -101,6 +103,21 @@ class Admin::UsersController < Admin::AdminController
     render_serialized(@user, AdminUserSerializer)
   end
 
+  def add_group
+    group = Group.find(params[:group_id].to_i)
+    return render_json_error group unless group && !group.automatic
+    group.users << @user
+    render nothing: true
+  end
+
+  def remove_group
+    group = Group.find(params[:group_id].to_i)
+    return render_json_error group unless group && !group.automatic
+    group.users.delete(@user)
+    render nothing: true
+  end
+
+
   def primary_group
     guardian.ensure_can_change_primary_group!(@user)
     @user.primary_group_id = params[:primary_group_id]
@@ -114,6 +131,8 @@ class Admin::UsersController < Admin::AdminController
     @user.change_trust_level!(level, log_action_for: current_user)
 
     render_serialized(@user, AdminUserSerializer)
+  rescue Discourse::InvalidAccess => e
+    render_json_error(e.message)
   end
 
   def approve
@@ -164,7 +183,7 @@ class Admin::UsersController < Admin::AdminController
   end
 
   def destroy
-    user = User.find_by(id: params[:id])
+    user = User.find_by(id: params[:id].to_i)
     guardian.ensure_can_delete_user!(user)
     begin
       if UserDestroyer.new(current_user).destroy(user, params.slice(:delete_posts, :block_email, :block_urls, :block_ip, :context))

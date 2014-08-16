@@ -103,7 +103,7 @@ gem 'fast_xs'
 gem 'fast_xor'
 gem 'fastimage'
 gem 'azure', require: false
-gem 'fog', '1.18.0', require: false
+gem 'fog', '1.22.1', require: false
 gem 'unf', require: false
 
 # see: https://twitter.com/samsaffron/status/412360162297393152
@@ -188,10 +188,6 @@ group :development do
   gem 'foreman', require: false
 end
 
-# Gem that enables support for plugins. It is required.
-# TODO: does this really need to be a gem ?
-gem 'discourse_plugin', path: 'vendor/gems/discourse_plugin'
-
 # this is an optional gem, it provides a high performance replacement
 # to String#blank? a method that is called quite frequently in current
 # ActiveRecord, this may change in the future
@@ -209,8 +205,6 @@ gem 'htmlentities', require: false
 gem 'flamegraph', require: false
 gem 'rack-mini-profiler', require: false
 
-# used for caching, optional
-gem 'rack-cors', require: false
 gem 'unicorn', require: false
 gem 'puma', require: false
 gem 'rbtrace', require: false, platform: :mri

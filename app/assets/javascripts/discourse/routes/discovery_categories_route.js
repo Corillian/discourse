@@ -38,13 +38,17 @@ Discourse.DiscoveryCategoriesRoute = Discourse.Route.extend(Discourse.OpenCompos
     // Only show either the Create Category or Create Topic button
     this.controllerFor('navigation/categories').set('canCreateCategory', model.get('can_create_category'));
     this.controllerFor('navigation/categories').set('canCreateTopic', model.get('can_create_topic') && !model.get('can_create_category'));
+
+    this.openTopicDraft(model);
+
   },
 
   actions: {
     createCategory: function() {
       Discourse.Route.showModal(this, 'editCategory', Discourse.Category.create({
         color: 'AB9364', text_color: 'FFFFFF', group_permissions: [{group_name: 'everyone', permission_type: 1}],
-        available_groups: Discourse.Site.current().group_names
+        available_groups: Discourse.Site.current().group_names,
+        allow_badges: true
       }));
       this.controllerFor('editCategory').set('selectedTab', 'general');
     },

@@ -27,25 +27,21 @@
 // Base list
 // --------------------------------------------------
 
-#topic-list {
+.topic-list {
+
+  > tbody > tr {
+    &:nth-child(odd) {
+      background-color: darken($secondary, 3%);
+      }
+    &:nth-child(even) {
+      background-color: $secondary;
+      }
+    }
+
   th,
   td {
     padding: 7px 5px;
     color: scale-color($primary, $lightness: 50%);
-    &:first-of-type {
-      padding-left: 5px;
-    }
-    &:last-of-type {
-      padding-right: 5px;
-    }
-  }
-  th {
-    &:first-of-type {
-      @include border-radius-all(4px 0 0 0);
-    }
-    &:last-of-type {
-      @include border-radius-all(0 4px 0 0);
-    }
   }
 
   a.title {color: $primary;}
@@ -70,15 +66,6 @@
     .num .fa {
       color: scale-color($primary, $lightness: 50%);
     }
-    .fa-heart{
-      position: relative;
-      left: -1px;
-    }
-    .fa-comment{
-      position: relative;
-      top: -1px;
-      left: 1px;
-    }
   }
 
   .num.posts {
@@ -87,13 +74,18 @@
 
   .age {
     white-space: nowrap;
+    margin-left: 5px;
   }
 }
 
 // Category list
 // --------------------------------------------------
 
-#topic-list.categories {
+tr.category-topic-link:nth-of-type(odd) {
+    background-color: darken($secondary, 3%) !important;
+    }
+
+.topic-list.categories {
   td.latest {
     vertical-align: top;
     padding: 5px;
@@ -134,12 +126,51 @@
 }
 
 .category-list-item {
+
+  .topic-list > tbody > tr {
+    &:nth-child(odd) {
+      background-color: $secondary;
+      }
+      &:nth-child(even) {
+        background-color: $secondary;
+      }
+    }
+
+  margin-bottom: 10px;
+
+  th .badge-category {
+    float: left;
+    margin: 1px 4px 0 0;
+    font-size: 110%;
+  }
+
+
   .posters {
-    display: none;
+    float: left;
+  }
+  > footer {
+    border-top: 0;
+    padding: 7px 10px;
+    figure {
+      float: left;
+      margin: 3px 7px 0 0;
+      color: scale-color($primary, $lightness: 10%);
+      font-weight: bold;
+      font-size: 12px;
+    }
+    figcaption {
+      display: inline;
+      font-weight: normal;
+    }
+    .btn {
+      float: right;
+      margin-left: 7px;
+    }
   }
 }
 
-#topic-list-bottom {
+
+.topic-list-bottom {
   margin: 20px 12px 0 12px;
 }
 
@@ -245,17 +276,23 @@ ol.category-breadcrumb {
   }
 }
 
-.top-lists {margin-left: 15px;
-  #topic-list-bottom {
-    margin: 20px 0 0 0;
-  }
+.top-lists {
+  h2 { margin-left: 10px; }
+  .topic-list { padding-bottom: 10px; }
+  .btn-default.pull-right { margin-right: 10px; }
 }
 
 .category-notification-menu {
   display: none;
 }
 
-#topic-list-bottom h3 {
+.topic-list-bottom h3 {
   clear:both;
   padding-top:10px;
+}
+
+.category-logo {
+  display: block;
+  max-width: 100%;
+  padding: 8px 0;
 }

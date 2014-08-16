@@ -23,6 +23,16 @@ Discourse.User = Discourse.Model.extend({
   }.property(),
 
   /**
+    The user's posts stream
+
+    @property postsStream
+    @type {Discourse.UserPostsStream}
+  **/
+  postsStream: function() {
+    return Discourse.UserPostsStream.create({ user: this });
+  }.property(),
+
+  /**
     Is this user a member of staff?
 
     @property staff
@@ -51,19 +61,6 @@ Discourse.User = Discourse.Model.extend({
     }
     return this.get('username');
   }.property('username', 'name'),
-
-  /**
-    This user's website.
-
-    @property websiteName
-    @type {String}
-  **/
-  websiteName: function() {
-    var website = this.get('website');
-    if (Em.isEmpty(website)) { return; }
-
-    return this.get('website').split("/")[2];
-  }.property('website'),
 
   /**
     This user's profile background(in CSS).
@@ -129,6 +126,7 @@ Discourse.User = Discourse.Model.extend({
     return Discourse.Site.currentProp('trustLevels').findProperty('id', parseInt(this.get('trust_level'), 10));
   }.property('trust_level'),
 
+  isBasic: Em.computed.equal('trust_level', 0),
   isLeader: Em.computed.equal('trust_level', 3),
   isElder: Em.computed.equal('trust_level', 4),
   canManageTopic: Em.computed.or('staff', 'isElder'),
@@ -215,6 +213,10 @@ Discourse.User = Discourse.Model.extend({
       data[s + '_category_ids'] = cats;
     });
 
+    if (!Discourse.SiteSettings.edit_history_available_to_public) {
+      data['edit_history_public'] = this.get('edit_history_public');
+    }
+
     return Discourse.ajax("/users/" + this.get('username_lower'), {
       data: data,
       type: 'PUT'
@@ -251,11 +253,11 @@ Discourse.User = Discourse.Model.extend({
     @returns A stream of the user's actions containing the action of id
   **/
   loadUserAction: function(id) {
-    var user = this;
-    var stream = this.get('stream');
+    var self = this,
+        stream = this.get('stream');
     return Discourse.ajax("/user_actions/" + id + ".json", { cache: 'false' }).then(function(result) {
       if (result) {
-        if ((user.get('streamFilter') || result.action_type) !== result.action_type) return;
+        if ((self.get('stream.filter') || result.action_type) !== result.action_type) return;
         var action = Discourse.UserAction.collapseStream([Discourse.UserAction.create(result)]);
         stream.set('itemsLoaded', stream.get('itemsLoaded') + 1);
         stream.get('content').insertAt(0, action[0]);

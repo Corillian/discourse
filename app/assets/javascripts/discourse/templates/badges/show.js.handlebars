@@ -2,7 +2,7 @@
   <h1>
     {{#link-to 'badges.index'}}{{i18n badges.title}}{{/link-to}}
     <i class='fa fa-angle-right'></i>
-    {{name}}
+    {{displayName}}
   </h1>
 
   <table class='badges-listing'>
@@ -11,6 +11,8 @@
         <td class='badge'>{{user-badge badge=this}}</td>
         <td class='description'>{{displayDescription}}</td>
         <td class='grant-count'>{{i18n badges.granted count=grant_count}}</td>
+        <td class='info'>{{i18n badges.allow_title}} {{{view.allowTitle}}}<br>{{i18n badges.multiple_grant}} {{{view.multipleGrant}}}
+        </td>
       </tr>
     </tbody>
   </table>
@@ -28,7 +30,7 @@
           {{/link-to}}
 
           {{#if post_number}}
-            <a class="post-link" href="{{unbound topic.url}}/{{unbound post_number}}"><span class="post-number">#{{post_number}}</span> {{topic.title}}</a>
+            <a class="post-link" href="{{unbound topic.url}}/{{unbound post_number}}">{{topic.title}}</a>
           {{/if}}
         </div>
       {{/each}}

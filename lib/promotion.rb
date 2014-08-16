@@ -19,7 +19,7 @@ class Promotion
 
     trust_key = TrustLevel.levels[@user.trust_level]
 
-    review_method = :"review_#{trust_key.to_s}"
+    review_method = :"review_#{trust_key}"
     return send(review_method) if respond_to?(review_method)
 
     false
@@ -62,12 +62,17 @@ class Promotion
     @user.transaction do
       if admin
         StaffActionLogger.new(admin).log_trust_level_change(@user, old_level, new_level)
+      else
+        UserHistory.create!( action: UserHistory.actions[:auto_trust_level_change],
+                             target_user_id: @user.id,
+                             previous_value: old_level,
+                             new_value: new_level)
       end
       @user.save!
       @user.user_profile.recook_bio
       @user.user_profile.save!
       Group.user_trust_level_change!(@user.id, @user.trust_level)
-      BadgeGranter.update_badges(action: :trust_level_change, user_id: @user.id)
+      BadgeGranter.queue_badge_grant(Badge::Trigger::TrustLevelChange, user: @user)
     end
 
     true
@@ -97,6 +102,10 @@ class Promotion
 
   def self.leader_met?(user)
     LeaderRequirements.new(user).requirements_met?
+  end
+
+  def self.leader_lost?(user)
+    LeaderRequirements.new(user).requirements_lost?
   end
 
 end

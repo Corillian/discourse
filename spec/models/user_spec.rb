@@ -143,7 +143,7 @@ describe User do
 
     describe 'allow custom minimum username length from site settings' do
       before do
-        @custom_min = User::GLOBAL_USERNAME_LENGTH_RANGE.begin - 1
+        @custom_min = 2
         SiteSetting.min_username_length = @custom_min
       end
 
@@ -160,11 +160,6 @@ describe User do
       it 'should not allow a longer username than limit' do
         result = user.change_username('a' * (User.username_length.end + 1))
         result.should be_false
-      end
-
-      it 'should use default length for validation if enforce_global_nicknames is true' do
-        SiteSetting.enforce_global_nicknames = true
-        User::username_length.should == User::GLOBAL_USERNAME_LENGTH_RANGE
       end
     end
   end
@@ -210,7 +205,6 @@ describe User do
 
     it { should be_valid }
     it { should_not be_admin }
-    it { should_not be_active }
     it { should_not be_approved }
     its(:approved_at) { should be_blank }
     its(:approved_by_id) { should be_blank }
@@ -241,6 +235,12 @@ describe User do
       end
 
       its(:email_tokens) { should be_present }
+    end
+
+    it "downcases email addresses" do
+      user = Fabricate.build(:user, email: 'Fancy.Caps.4.U@gmail.com')
+      user.save
+      user.reload.email.should == 'fancy.caps.4.u@gmail.com'
     end
   end
 
@@ -755,12 +755,15 @@ describe User do
       expect(found_user).to eq bob
 
       found_user = User.find_by_username_or_email('Bob@Example.com')
-      expect(found_user).to be_nil
+      expect(found_user).to eq bob
 
       found_user = User.find_by_username_or_email('bob1')
       expect(found_user).to be_nil
 
       found_user = User.find_by_email('bob@Example.com')
+      expect(found_user).to eq bob
+
+      found_user = User.find_by_email('BOB@Example.com')
       expect(found_user).to eq bob
 
       found_user = User.find_by_email('bob')
@@ -1130,6 +1133,20 @@ describe User do
 
       user.reload
       user.uploaded_avatar_id.should == nil
+    end
+  end
+
+  describe "#purge_inactive" do
+    let!(:user) { Fabricate(:user) }
+    let!(:inactive) { Fabricate(:user, active: false) }
+    let!(:inactive_old) { Fabricate(:user, active: false, created_at: 1.month.ago) }
+
+    it 'should only remove old, inactive users' do
+      User.purge_inactive
+      all_users = User.all
+      all_users.include?(user).should be_true
+      all_users.include?(inactive).should be_true
+      all_users.include?(inactive_old).should be_false
     end
   end
 

@@ -1,13 +1,8 @@
 /*global assetPath:true */
 
-/**
-  This view handles rendering of the composer
+import userSearch from 'discourse/lib/user-search';
+import afterTransition from 'discourse/lib/after-transition';
 
-  @class ComposerView
-  @extends Discourse.View
-  @namespace Discourse
-  @module Discourse
-**/
 var ComposerView = Discourse.View.extend(Ember.Evented, {
   templateName: 'composer',
   elementId: 'reply-control',
@@ -112,7 +107,7 @@ var ComposerView = Discourse.View.extend(Ember.Evented, {
       resize: this.resize,
       onDrag: function (sizePx) { self.movePanels.apply(self, [sizePx]); }
     });
-    Discourse.TransitionHelper.after($replyControl, this.resize);
+    afterTransition($replyControl, this.resize);
     this.ensureMaximumDimensionForImagesInPreview();
     this.set('controller.view', this);
   }.on('didInsertElement'),
@@ -183,7 +178,7 @@ var ComposerView = Discourse.View.extend(Ember.Evented, {
     $wmdInput.autocomplete({
       template: template,
       dataSource: function(term) {
-        return Discourse.UserSearch.search({
+        return userSearch({
           term: term,
           topicId: self.get('controller.controllers.topic.model.id'),
           include_groups: true
@@ -268,7 +263,7 @@ var ComposerView = Discourse.View.extend(Ember.Evented, {
 
     $uploadTarget.fileupload({
       url: Discourse.getURL('/uploads'),
-      dataType: 'json'
+      dataType: 'json',
     });
 
     // submit - this event is triggered for each upload
@@ -290,7 +285,8 @@ var ComposerView = Discourse.View.extend(Ember.Evented, {
         // bind on the click event on the cancel link
         $('#cancel-file-upload').on('click', function() {
           // cancel the upload
-          // NOTE: this will trigger a 'fileuploadfail' event with status = 0
+          self.set('isUploading', false);
+          // NOTE: this might trigger a 'fileuploadfail' event with status = 0
           if (jqXHR) jqXHR.abort();
           // unbind
           $(this).off('click');
@@ -411,6 +407,13 @@ var ComposerView = Discourse.View.extend(Ember.Evented, {
       });
     }
 
+    if (Discourse.Mobile.mobileView) {
+      $(".mobile-file-upload").on("click", function () {
+        // redirect the click on the hidden file input
+        $("#mobile-uploader").click();
+      });
+    }
+
     // need to wait a bit for the "slide up" transition of the composer
     // we could use .on("transitionend") but it's not firing when the transition isn't completed :(
     Em.run.later(function() {
@@ -508,7 +511,8 @@ var ComposerView = Discourse.View.extend(Ember.Evented, {
 
   _unbindUploadTarget: function() {
     var $uploadTarget = $('#reply-control');
-    $uploadTarget.fileupload('destroy');
+    try { $uploadTarget.fileupload('destroy'); }
+    catch (e) { /* wasn't initialized yet */ }
     $uploadTarget.off();
   }
 });

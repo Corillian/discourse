@@ -120,40 +120,16 @@ describe Topic do
     let(:topic_image) { build_topic_with_title("Topic with <img src='something'> image in its title" ) }
     let(:topic_script) { build_topic_with_title("Topic with <script>alert('title')</script> script in its title" ) }
 
-    context "title_sanitize disabled" do
-
-      before { SiteSetting.stubs(:title_sanitize).returns(false) }
-
-      it "escapes script contents" do
-        topic_script.fancy_title.should == "Topic with &lt;script&gt;alert(&lsquo;title&rsquo;)&lt;/script&gt; script in its title"
-      end
-
-      it "escapes bold contents" do
-        topic_bold.fancy_title.should == "Topic with &lt;b&gt;bold&lt;/b&gt; text in its title"
-      end
-
-      it "escapes image contents" do
-        topic_image.fancy_title.should == "Topic with &lt;img src=&lsquo;something&rsquo;&gt; image in its title"
-      end
-
+    it "escapes script contents" do
+      topic_script.fancy_title.should == "Topic with &lt;script&gt;alert(&lsquo;title&rsquo;)&lt;/script&gt; script in its title"
     end
 
-    context "title_sanitize enabled" do
+    it "escapes bold contents" do
+      topic_bold.fancy_title.should == "Topic with &lt;b&gt;bold&lt;/b&gt; text in its title"
+    end
 
-      before { SiteSetting.stubs(:title_sanitize).returns(true) }
-
-      it "removes script contents" do
-        topic_script.fancy_title.should == "Topic with script in its title"
-      end
-
-      it "removes bold contents" do
-        topic_bold.fancy_title.should == "Topic with bold text in its title"
-      end
-
-      it "removes image contents" do
-        topic_image.fancy_title.should == "Topic with image in its title"
-      end
-
+    it "escapes image contents" do
+      topic_image.fancy_title.should == "Topic with &lt;img src=&lsquo;something&rsquo;&gt; image in its title"
     end
 
   end
@@ -235,7 +211,11 @@ describe Topic do
     end
 
     context 'with a similar topic' do
-      let!(:topic) { Fabricate(:topic, title: "Evil trout is the dude who posted this topic") }
+      let!(:topic) {
+        ActiveRecord::Base.observers.enable :search_observer
+        post = create_post(title: "Evil trout is the dude who posted this topic")
+        post.topic
+      }
 
       it 'returns the similar topic if the title is similar' do
         Topic.similar_to("has evil trout made any topics?", "i am wondering has evil trout made any topics?").should == [topic]
@@ -788,10 +768,6 @@ describe Topic do
       topic.moderator_posts_count.should == 0
     end
 
-    it "its user has a topics_count of 1" do
-      topic.user.created_topic_count.should == 1
-    end
-
     context 'post' do
       let(:post) { Fabricate(:post, topic: topic, user: topic.user) }
 
@@ -826,7 +802,7 @@ describe Topic do
       let(:category) { Fabricate(:category) }
 
       before do
-        topic.change_category(category.name)
+        topic.change_category_to_id(category.id)
       end
 
       it "creates a new revision" do
@@ -835,7 +811,7 @@ describe Topic do
 
       context "removing a category" do
         before do
-          topic.change_category(nil)
+          topic.change_category_to_id(nil)
         end
 
         it "creates a new revision" do
@@ -874,12 +850,12 @@ describe Topic do
     describe 'without a previous category' do
 
       it 'should not change the topic_count when not changed' do
-       lambda { @topic.change_category(@topic.category.name); @category.reload }.should_not change(@category, :topic_count)
+       lambda { @topic.change_category_to_id(@topic.category.id); @category.reload }.should_not change(@category, :topic_count)
       end
 
       describe 'changed category' do
         before do
-          @topic.change_category(@category.name)
+          @topic.change_category_to_id(@category.id)
           @category.reload
         end
 
@@ -891,14 +867,14 @@ describe Topic do
       end
 
       it "doesn't change the category when it can't be found" do
-        @topic.change_category('made up')
+        @topic.change_category_to_id(12312312)
         @topic.category_id.should == SiteSetting.uncategorized_category_id
       end
     end
 
     describe 'with a previous category' do
       before do
-        @topic.change_category(@category.name)
+        @topic.change_category_to_id(@category.id)
         @topic.reload
         @category.reload
       end
@@ -908,18 +884,18 @@ describe Topic do
       end
 
       it "doesn't change the topic_count when the value doesn't change" do
-        lambda { @topic.change_category(@category.name); @category.reload }.should_not change(@category, :topic_count)
+        lambda { @topic.change_category_to_id(@category.id); @category.reload }.should_not change(@category, :topic_count)
       end
 
       it "doesn't reset the category when given a name that doesn't exist" do
-        @topic.change_category('made up')
+        @topic.change_category_to_id(55556)
         @topic.category_id.should be_present
       end
 
       describe 'to a different category' do
         before do
           @new_category = Fabricate(:category, user: @user, name: '2nd category')
-          @topic.change_category(@new_category.name)
+          @topic.change_category_to_id(@new_category.id)
           @topic.reload
           @new_category.reload
           @category.reload
@@ -942,13 +918,13 @@ describe Topic do
         let!(:topic) { Fabricate(:topic, category: Fabricate(:category)) }
 
         it 'returns false' do
-          topic.change_category('').should eq(false) # don't use "be_false" here because it would also match nil
+          topic.change_category_to_id(nil).should eq(false) # don't use "be_false" here because it would also match nil
         end
       end
 
       describe 'when the category exists' do
         before do
-          @topic.change_category(nil)
+          @topic.change_category_to_id(nil)
           @category.reload
         end
 
@@ -1438,5 +1414,15 @@ describe Topic do
 
     topic = Topic.find(topic.id)
     topic.custom_fields.should == {"bob" => "marley", "jack" => "black"}
+  end
+
+  it "doesn't validate the title again if it isn't changing" do
+    SiteSetting.stubs(:min_topic_title_length).returns(5)
+    topic = Fabricate(:topic, title: "Short")
+    topic.should be_valid
+
+    SiteSetting.stubs(:min_topic_title_length).returns(15)
+    topic.last_posted_at = 1.minute.ago
+    topic.save.should == true
   end
 end

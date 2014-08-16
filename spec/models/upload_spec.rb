@@ -15,10 +15,9 @@ describe Upload do
   let(:user_id) { 1 }
   let(:url) { "http://domain.com" }
 
-  let(:image_path) { "#{Rails.root}/spec/fixtures/images/logo.png" }
-  let(:image) { File.new(image_path) }
-  let(:image_filename) { File.basename(image_path) }
-  let(:image_filesize) { File.size(image_path) }
+  let(:image) { file_from_fixtures("logo.png") }
+  let(:image_filename) { "logo.png" }
+  let(:image_filesize) { File.size(image) }
   let(:image_sha1) { Digest::SHA1.file(image).hexdigest }
 
   let(:attachment_path) { __FILE__ }
@@ -48,10 +47,17 @@ describe Upload do
 
   context "#create_for" do
 
+    before { Upload.stubs(:fix_image_orientation) }
+
     it "does not create another upload if it already exists" do
       Upload.expects(:find_by).with(sha1: image_sha1).returns(upload)
       Upload.expects(:save).never
       Upload.create_for(user_id, image, image_filename, image_filesize).should == upload
+    end
+
+    it "fix image orientation" do
+      Upload.expects(:fix_image_orientation).with(image.path)
+      Upload.create_for(user_id, image, image_filename, image_filesize)
     end
 
     it "computes width & height for images" do

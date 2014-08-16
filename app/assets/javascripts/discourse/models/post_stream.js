@@ -17,9 +17,7 @@ Discourse.PostStream = Em.Object.extend({
 
   notLoading: Em.computed.not('loading'),
 
-  filteredPostsCount: function(){
-    return this.get("stream").length;
-  }.property("stream.@each"),
+  filteredPostsCount: Em.computed.alias("stream.length"),
 
   /**
     Have we loaded any posts?
@@ -120,6 +118,7 @@ Discourse.PostStream = Em.Object.extend({
   streamFilters: function() {
     var result = {};
     if (this.get('summary')) { result.filter = "summary"; }
+    if (this.get('show_deleted')) { result.show_deleted = true; }
 
     var userFilters = this.get('userFilters');
     if (!Em.isEmpty(userFilters)) {
@@ -128,7 +127,7 @@ Discourse.PostStream = Em.Object.extend({
     }
 
     return result;
-  }.property('userFilters.[]', 'summary'),
+  }.property('userFilters.[]', 'summary', 'show_deleted'),
 
   hasNoFilters: function() {
     var streamFilters = this.get('streamFilters');
@@ -186,6 +185,7 @@ Discourse.PostStream = Em.Object.extend({
   **/
   cancelFilter: function() {
     this.set('summary', false);
+    this.set('show_deleted', false);
     this.get('userFilters').clear();
   },
 
@@ -200,6 +200,11 @@ Discourse.PostStream = Em.Object.extend({
     return this.refresh();
   },
 
+  toggleDeleted: function() {
+    this.toggleProperty('show_deleted');
+    return this.refresh();
+  },
+
   /**
     Filter the stream to a particular user.
 
@@ -208,6 +213,7 @@ Discourse.PostStream = Em.Object.extend({
   toggleParticipant: function(username) {
     var userFilters = this.get('userFilters');
     this.set('summary', false);
+    this.set('show_deleted', true);
     if (userFilters.contains(username)) {
       userFilters.remove(username);
     } else {
@@ -273,7 +279,6 @@ Discourse.PostStream = Em.Object.extend({
     if (idx !== -1) {
       // Insert the gap at the appropriate place
       stream.splice.apply(stream, [idx, 0].concat(gap));
-      stream.enumerableContentDidChange();
 
       var postIdx = currentPosts.indexOf(post);
       if (postIdx !== -1) {
@@ -286,6 +291,7 @@ Discourse.PostStream = Em.Object.extend({
           });
 
           delete self.get('gaps.before')[postId];
+          self.get('stream').enumerableContentDidChange();
         });
       }
     }
@@ -303,11 +309,14 @@ Discourse.PostStream = Em.Object.extend({
   fillGapAfter: function(post, gap) {
     var postId = post.get('id'),
         stream = this.get('stream'),
-        idx = stream.indexOf(postId);
+        idx = stream.indexOf(postId),
+        self = this;
 
     if (idx !== -1) {
       stream.pushObjects(gap);
-      return this.appendMore();
+      return this.appendMore().then(function() {
+        self.get('stream').enumerableContentDidChange();
+      });
     }
     return Ember.RSVP.resolve();
   },
@@ -818,13 +827,14 @@ Discourse.PostStream = Em.Object.extend({
     // If the result was 404 the post is not found
     if (status === 404) {
       topic.set('errorTitle', I18n.t('topic.not_found.title'));
-      topic.set('errorBodyHtml', result.responseText);
+      topic.set('notFoundHtml', result.responseText);
       return;
     }
 
     // If the result is 403 it means invalid access
     if (status === 403) {
       topic.set('errorTitle', I18n.t('topic.invalid_access.title'));
+      topic.set('noRetry', true);
       if (Discourse.User.current()) {
         topic.set('message', I18n.t('topic.invalid_access.description'));
       } else {

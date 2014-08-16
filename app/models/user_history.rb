@@ -25,7 +25,8 @@ class UserHistory < ActiveRecord::Base
                            :unsuspend_user,
                            :facebook_no_email,
                            :grant_badge,
-                           :revoke_badge)
+                           :revoke_badge,
+                           :auto_trust_level_change)
   end
 
   # Staff actions is a subset of all actions, used to audit actions taken by staff users.
@@ -56,7 +57,7 @@ class UserHistory < ActiveRecord::Base
     end
     [:acting_user, :target_user].each do |key|
       if filters[key] and obj_id = User.where(username_lower: filters[key].downcase).pluck(:id)
-        query = query.where("#{key.to_s}_id = ?", obj_id)
+        query = query.where("#{key}_id = ?", obj_id)
       end
     end
     query = query.where("subject = ?", filters[:subject]) if filters[:subject]

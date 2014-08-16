@@ -1,13 +1,8 @@
-/**
-  The modal for when the user has forgotten their password
+import ModalFunctionality from 'discourse/mixins/modal-functionality';
 
-  @class ForgotPasswordController
-  @extends Discourse.Controller
-  @namespace Discourse
-  @uses Discourse.ModalFunctionality
-  @module Discourse
-**/
-export default Discourse.Controller.extend(Discourse.ModalFunctionality, {
+import DiscourseController from 'discourse/controllers/controller';
+
+export default DiscourseController.extend(ModalFunctionality, {
 
   // You need a value in the field to submit it.
   submitDisabled: function() {
@@ -24,10 +19,11 @@ export default Discourse.Controller.extend(Discourse.ModalFunctionality, {
       });
 
       // don't tell people what happened, this keeps it more secure (ensure same on server)
+      var escaped = Handlebars.Utils.escapeExpression(this.get('accountEmailOrUsername'));
       if (this.get('accountEmailOrUsername').match(/@/)) {
-        this.flash(I18n.t('forgot_password.complete_email', {email: this.get('accountEmailOrUsername')}));
+        this.flash(I18n.t('forgot_password.complete_email', {email: escaped}));
       } else {
-        this.flash(I18n.t('forgot_password.complete_username', {username: this.get('accountEmailOrUsername')}));
+        this.flash(I18n.t('forgot_password.complete_username', {username: escaped}));
       }
       return false;
     }

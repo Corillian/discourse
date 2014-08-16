@@ -22,6 +22,22 @@ Discourse.SiteSettingView = Discourse.View.extend(Discourse.ScrollTop, {
     // Default to string editor
     return 'admin/templates/site_settings/setting_string';
 
-  }.property('content.type')
+  }.property('content.type'),
+
+  _watchEnterKey: function() {
+    var self = this;
+    this.$().on("keydown.site-setting-enter", ".input-setting-string", function (e) {
+      if (e.keyCode === 13) { // enter key
+        var setting = self.get('content');
+        if (setting.get('dirty')) {
+          setting.save();
+        }
+      }
+    });
+  }.on('didInsertElement'),
+
+  _removeBindings: function() {
+    this.$().off("keydown.site-setting-enter");
+  }.on("willDestroyElement")
 
 });

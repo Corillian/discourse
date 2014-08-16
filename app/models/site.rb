@@ -30,7 +30,7 @@ class Site
   end
 
   def group_names
-    @group_name ||= Group.pluck(:name)
+    @group_name ||= Group.order(:name).pluck(:name)
   end
 
   def categories
@@ -75,7 +75,7 @@ class Site
     end
 
     site = Site.new(guardian)
-    MultiJson.dump(SiteSerializer.new(site, root: false))
+    MultiJson.dump(SiteSerializer.new(site, root: false, scope: guardian))
   end
 
 end

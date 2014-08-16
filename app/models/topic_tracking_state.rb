@@ -14,7 +14,7 @@ class TopicTrackingState
                 :highest_post_number,
                 :last_read_post_number,
                 :created_at,
-                :category_name,
+                :category_id,
                 :notification_level
 
   def self.publish_new(topic)
@@ -35,6 +35,23 @@ class TopicTrackingState
 
     MessageBus.publish("/new", message.as_json, group_ids: group_ids)
     publish_read(topic.id, 1, topic.user_id)
+  end
+
+  def self.publish_latest(topic)
+    return unless topic.archetype == "regular"
+
+    message = {
+      topic_id: topic.id,
+      message_type: "latest",
+      payload: {
+        bumped_at: topic.bumped_at,
+        topic_id: topic.id,
+        category_id: topic.category_id
+      }
+    }
+
+    group_ids = topic.category && topic.category.secure_group_ids
+    MessageBus.publish("/latest", message.as_json, group_ids: group_ids)
   end
 
   def self.publish_unread(post)
@@ -118,7 +135,7 @@ class TopicTrackingState
            topics.created_at,
            highest_post_number,
            last_read_post_number,
-           c.name AS category_name,
+           c.id AS category_id,
            tu.notification_level
     FROM users u
     INNER JOIN user_stats AS us ON us.user_id = u.id
