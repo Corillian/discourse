@@ -1,4 +1,5 @@
 import ObjectController from 'discourse/controllers/object';
+import { spinnerHTML } from 'discourse/helpers/loading-spinner';
 
 export default ObjectController.extend(Discourse.SelectedPostsCount, {
   multiSelect: false,
@@ -8,14 +9,25 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
   selectedPosts: null,
   selectedReplies: null,
   queryParams: ['filter', 'username_filters', 'show_deleted'],
+  searchHighlight: null,
 
   maxTitleLength: Discourse.computed.setting('max_topic_title_length'),
 
-  contextChanged: function(){
+  contextChanged: function() {
     this.set('controllers.search.searchContext', this.get('model.searchContext'));
   }.observes('topic'),
 
-  termChanged: function(){
+  _titleChanged: function() {
+    var title = this.get('title');
+    if (!Em.empty(title)) {
+
+      // Note normally you don't have to trigger this, but topic titles can be updated
+      // and are sometimes lazily loaded.
+      this.send('refreshTitle');
+    }
+  }.observes('title', 'category'),
+
+  termChanged: function() {
     var dropdown = this.get('controllers.header.visibleDropdown');
     var term = this.get('controllers.search.term');
 
@@ -29,19 +41,40 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
 
   }.observes('controllers.search.term', 'controllers.header.visibleDropdown'),
 
-  filter: function(key, value) {
+  show_deleted: function(key, value) {
+    var postStream = this.get('postStream');
+    if (!postStream) { return; }
+
     if (arguments.length > 1) {
-      this.set('postStream.summary', value === "summary");
+      postStream.set('show_deleted', value);
     }
-    return this.get('postStream.summary') ? "summary" : null;
+    return postStream.get('show_deleted') ? true : undefined;
   }.property('postStream.summary'),
 
-  username_filters: Discourse.computed.queryAlias('postStream.streamFilters.username_filters'),
+  filter: function(key, value) {
+    var postStream = this.get('postStream');
+    if (!postStream) { return; }
+
+    if (arguments.length > 1) {
+      postStream.set('summary', value === "summary");
+    }
+    return postStream.get('summary') ? "summary" : undefined;
+  }.property('postStream.summary'),
+
+  username_filters: function(key, value) {
+    var postStream = this.get('postStream');
+    if (!postStream) { return; }
+
+    if (arguments.length > 1) {
+      postStream.set('streamFilters.username_filters', value);
+    }
+    return postStream.get('streamFilters.username_filters');
+  }.property('postStream.streamFilters.username_filters'),
 
   init: function() {
     this._super();
-    this.set('selectedPosts', new Em.Set());
-    this.set('selectedReplies', new Em.Set());
+    this.set('selectedPosts', []);
+    this.set('selectedReplies', []);
   },
 
   actions: {
@@ -144,6 +177,10 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     },
 
     editPost: function(post) {
+      if (!Discourse.User.current()) {
+        return bootbox.alert(I18n.t('post.controls.edit_anonymous'));
+      }
+
       this.get('controllers.composer').open({
         post: post,
         action: Discourse.Composer.EDIT,
@@ -271,8 +308,7 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
           var selectedPosts = self.get('selectedPosts'),
               selectedReplies = self.get('selectedReplies'),
               postStream = self.get('postStream'),
-              toRemove = new Ember.Set();
-
+              toRemove = [];
 
           Discourse.Post.deleteMany(selectedPosts, selectedReplies);
           postStream.get('posts').forEach(function (p) {
@@ -333,15 +369,9 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
       this.get('content').clearPin();
     },
 
-    resetRead: function() {
-      Discourse.ScreenTrack.current().reset();
-      this.unsubscribe();
-
-      var topicController = this;
-      this.get('model').resetRead().then(function() {
-        topicController.set('message', I18n.t("topic.read_position_reset"));
-        topicController.set('postStream.loaded', false);
-      });
+    togglePinnedForUser: function() {
+      if (this.get('pinned_at'))
+        this.get('pinned') ? this.get('content').clearPin() : this.get('content').rePin();
     },
 
     replyAsNewTopic: function(post) {
@@ -387,8 +417,33 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     },
 
     toggleWiki: function(post) {
+      // the request to the server is made in an observer in the post class
       post.toggleProperty('wiki');
+    },
+
+    togglePostType: function (post) {
+      // the request to the server is made in an observer in the post class
+      var regular = Discourse.Site.currentProp('post_types.regular'),
+          moderator = Discourse.Site.currentProp('post_types.moderator_action');
+
+      if (post.get("post_type") === moderator) {
+        post.set("post_type", regular);
+      } else {
+        post.set("post_type", moderator);
+      }
+    },
+
+    rebakePost: function (post) {
+      post.rebake();
+    },
+
+    unhidePost: function (post) {
+      post.unhide();
     }
+  },
+
+  togglePinnedState: function() {
+    this.send('togglePinnedForUser');
   },
 
   showExpandButton: function() {
@@ -440,6 +495,7 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
   }.property('selectedPostsCount'),
 
   hasError: Ember.computed.or('notFoundHtml', 'message'),
+  noErrorYet: Ember.computed.not('hasError'),
 
   multiSelectChanged: function() {
     // Deselect all posts when multi select is turned off
@@ -473,7 +529,7 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
   }.property('isPrivateMessage'),
 
   loadingHTML: function() {
-    return "<div class='spinner'>" + I18n.t('loading') + "</div>";
+    return spinnerHTML;
   }.property(),
 
   recoverTopic: function() {
@@ -503,25 +559,30 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
       }
 
       var postStream = topicController.get('postStream');
-      if (data.type === "revised" || data.type === "acted"){
-        // TODO we could update less data for "acted"
-        // (only post actions)
-        postStream.triggerChangedPost(data.id, data.updated_at);
-        return;
+      switch (data.type) {
+        case "revised":
+        case "acted":
+        case "rebaked": {
+          // TODO we could update less data for "acted" (only post actions)
+          postStream.triggerChangedPost(data.id, data.updated_at);
+          return;
+        }
+        case "deleted": {
+          postStream.triggerDeletedPost(data.id, data.post_number);
+          return;
+        }
+        case "recovered": {
+          postStream.triggerRecoveredPost(data.id, data.post_number);
+          return;
+        }
+        case "created": {
+          postStream.triggerNewPostInStream(data.id);
+          return;
+        }
+        default: {
+          Em.Logger.warn("unknown topic bus message type", data);
+        }
       }
-
-      if (data.type === "deleted"){
-        postStream.triggerDeletedPost(data.id, data.post_number);
-        return;
-      }
-
-      if (data.type === "recovered"){
-        postStream.triggerRecoveredPost(data.id, data.post_number);
-        return;
-      }
-
-      // Add the new post into the stream
-      postStream.triggerNewPostInStream(data.id);
     });
   },
 
@@ -629,10 +690,9 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     if (!post) { return; }
 
     var postStream = this.get('postStream'),
-        lastLoadedPost = postStream.get('lastLoadedPost'),
-        index = postStream.get('stream').indexOf(post.get('id'))+1;
+        lastLoadedPost = postStream.get('lastLoadedPost');
 
-    this.set('controllers.topic-progress.progressPosition', index);
+    this.set('controllers.topic-progress.progressPosition', postStream.progressIndexOfPost(post));
 
     if (lastLoadedPost && lastLoadedPost === post) {
       postStream.appendMore();

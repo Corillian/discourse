@@ -1,7 +1,7 @@
 class Group < ActiveRecord::Base
   include HasCustomFields
 
-  has_many :category_groups
+  has_many :category_groups, dependent: :destroy
   has_many :group_users, dependent: :destroy
 
   has_many :categories, through: :category_groups
@@ -34,7 +34,7 @@ class Group < ActiveRecord::Base
     :everyone => 99
   }
 
-  validate :alias_level, inclusion: { in: ALIAS_LEVELS.values}
+  validates :alias_level, inclusion: { in: ALIAS_LEVELS.values}
 
   def posts_for(guardian, before_post_id=nil)
     user_ids = group_users.map {|gu| gu.user_id}
@@ -70,16 +70,19 @@ class Group < ActiveRecord::Base
       group.save!
     end
 
-    # the everyone group is special, it can include non-users so there is no
-    # way to have the membership in a table
-    return group if name == :everyone
-
     group.name = I18n.t("groups.default_names.#{name}")
 
     # don't allow shoddy localization to break this
     validator = UsernameValidator.new(group.name)
     unless validator.valid_format?
       group.name = name
+    end
+
+    # the everyone group is special, it can include non-users so there is no
+    # way to have the membership in a table
+    if name == :everyone
+      group.save!
+      return group
     end
 
     # Remove people from groups they don't belong in.
@@ -269,22 +272,23 @@ class Group < ActiveRecord::Base
   def add(user)
     self.users.push(user)
   end
+
   protected
 
-  def name_format_validator
-    UsernameValidator.perform_validation(self, 'name')
-  end
-
-  # hack around AR
-  def destroy_deletions
-    if @deletions
-      @deletions.each do |gu|
-        gu.destroy
-        User.where('id = ? AND primary_group_id = ?', gu.user_id, gu.group_id).update_all 'primary_group_id = NULL'
-      end
+    def name_format_validator
+      UsernameValidator.perform_validation(self, 'name')
     end
-    @deletions = nil
-  end
+
+    # hack around AR
+    def destroy_deletions
+      if @deletions
+        @deletions.each do |gu|
+          gu.destroy
+          User.where('id = ? AND primary_group_id = ?', gu.user_id, gu.group_id).update_all 'primary_group_id = NULL'
+        end
+      end
+      @deletions = nil
+    end
 
 end
 
@@ -294,8 +298,8 @@ end
 #
 #  id          :integer          not null, primary key
 #  name        :string(255)      not null
-#  created_at  :datetime
-#  updated_at  :datetime
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #  automatic   :boolean          default(FALSE), not null
 #  user_count  :integer          default(0), not null
 #  alias_level :integer          default(0)

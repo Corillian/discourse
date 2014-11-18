@@ -7,6 +7,7 @@
   @module Discourse
 **/
 export default Ember.Component.extend({
+  loading: Ember.computed.not('loaded'),
 
   loaded: function() {
     var topicList = this.get('topicList');
@@ -40,8 +41,8 @@ export default Ember.Component.extend({
   },
 
   actions: {
-    clickedActivity: function(data) {
-      this.sendAction('activityAction', data);
+    clickedPosts: function(data) {
+      this.sendAction('postsAction', data);
     }
   }
 

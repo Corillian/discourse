@@ -5,14 +5,11 @@ if Rails.env.production?
 
     /^PG::Error: ERROR:\s+duplicate key/,
 
+    /^ActionController::UnknownFormat/,
+
     # suppress trackback spam bots
     Logster::IgnorePattern.new("Can't verify CSRF token authenticity", { REQUEST_URI: /\/trackback\/$/ })
   ]
-
-  Logster.config.authorize_callback = lambda{|env|
-    user = CurrentUser.lookup_from_env(env)
-    user && user.admin
-  }
 end
 
 # middleware that logs errors sits before multisite

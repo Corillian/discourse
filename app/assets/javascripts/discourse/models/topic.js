@@ -1,5 +1,24 @@
 Discourse.Topic = Discourse.Model.extend({
 
+  // returns createdAt if there's no bumped date
+  bumpedAt: function() {
+    var bumpedAt = this.get('bumped_at');
+    if (bumpedAt) {
+      return new Date(bumpedAt);
+    } else {
+      return this.get('createdAt');
+    }
+  }.property('bumped_at', 'createdAt'),
+
+  bumpedAtTitle: function() {
+    return I18n.t('first_post') + ": " + Discourse.Formatter.longDate(this.get('createdAt')) + "\n" +
+           I18n.t('last_post') + ": " + Discourse.Formatter.longDate(this.get('bumpedAt'));
+  }.property('bumpedAt'),
+
+  createdAt: function() {
+    return new Date(this.get('created_at'));
+  }.property('created_at'),
+
   postStream: function() {
     return Discourse.PostStream.create({topic: this});
   }.property(),
@@ -194,13 +213,6 @@ Discourse.Topic = Discourse.Model.extend({
     });
   },
 
-  // Reset our read data for this topic
-  resetRead: function() {
-    return Discourse.ajax("/t/" + this.get('id') + "/timings", {
-      type: 'DELETE'
-    });
-  },
-
   /**
     Invite a user to this topic
 
@@ -222,7 +234,10 @@ Discourse.Topic = Discourse.Model.extend({
       'details.can_delete': false,
       'details.can_recover': true
     });
-    return Discourse.ajax("/t/" + this.get('id'), { type: 'DELETE' });
+    return Discourse.ajax("/t/" + this.get('id'), {
+      data: { context: window.location.pathname },
+      type: 'DELETE'
+    });
   },
 
   // Recover this topic if deleted
@@ -300,13 +315,21 @@ Discourse.Topic = Discourse.Model.extend({
   // Is the reply to a post directly below it?
   isReplyDirectlyBelow: function(post) {
     var posts = this.get('postStream.posts');
+    var postNumber = post.get('post_number');
     if (!posts) return;
 
     var postBelow = posts[posts.indexOf(post) + 1];
 
-    // If the post directly below's reply_to_post_number is our post number, it's
-    // considered directly below.
-    return postBelow && postBelow.get('reply_to_post_number') === post.get('post_number');
+    // If the post directly below's reply_to_post_number is our post number or we are quoted,
+    // it's considered directly below.
+    //
+    // TODO: we don't carry information about quoting, this leaves this code fairly fragile
+    //  instead we should start shipping quote meta data with posts, but this will add at least
+    //  1 query to the topics page
+    //
+    return postBelow && (postBelow.get('reply_to_post_number') === postNumber ||
+        postBelow.get('cooked').indexOf('data-post="'+ postNumber + '"') >= 0
+    );
   },
 
   excerptNotEmpty: Em.computed.notEmpty('excerpt'),
@@ -448,18 +471,21 @@ Discourse.Topic.reopenClass({
     });
   },
 
-  bulkOperationByFilter: function(filter, operation) {
+  bulkOperationByFilter: function(filter, operation, categoryId) {
+    var data = { filter: filter, operation: operation };
+    if (categoryId) data['category_id'] = categoryId;
     return Discourse.ajax("/topics/bulk", {
       type: 'PUT',
-      data: { filter: filter, operation: operation }
+      data: data
     });
   },
 
   resetNew: function() {
     return Discourse.ajax("/topics/reset-new", {type: 'PUT'});
+  },
+
+  idForSlug: function(slug) {
+    return Discourse.ajax("/t/id_for/" + slug);
   }
 
-
 });
-
-

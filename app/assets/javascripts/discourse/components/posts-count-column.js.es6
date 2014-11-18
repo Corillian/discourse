@@ -31,11 +31,22 @@ export default Ember.Component.extend({
   likesHeat: Discourse.computed.fmt('ratioText', 'heatmap-%@'),
 
   render: function(buffer) {
-    var postsCount = this.get('topic.posts_count'),
-        url = this.get('topic.lastUnreadUrl');
+    var postsCount = this.get('topic.posts_count');
 
-    buffer.push("<a href='" + url + "' class='badge-posts " + this.get('likesHeat') + "'>");
+    buffer.push("<a href class='badge-posts " + this.get('likesHeat') + "'>");
     buffer.push(Discourse.Formatter.number(postsCount));
     buffer.push("</a>");
+  },
+
+  click: function() {
+    var topic = this.get('topic');
+
+    this.sendAction('action', {
+      topic: topic,
+      position: this.$('a').offset()
+    });
+
+    return false;
   }
+
 });

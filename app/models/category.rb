@@ -1,3 +1,6 @@
+require_dependency 'distributed_cache'
+require_dependency 'sass/discourse_stylesheets'
+
 class Category < ActiveRecord::Base
 
   include Positionable
@@ -19,7 +22,7 @@ class Category < ActiveRecord::Base
   has_many :category_featured_users
   has_many :featured_users, through: :category_featured_users, source: :user
 
-  has_many :category_groups
+  has_many :category_groups, dependent: :destroy
   has_many :groups, through: :category_groups
 
   validates :user_id, presence: true
@@ -32,10 +35,13 @@ class Category < ActiveRecord::Base
   before_validation :ensure_slug
   before_save :apply_permissions
   before_save :downcase_email
+  before_save :downcase_name
   after_create :create_category_definition
   after_create :publish_categories_list
   after_destroy :publish_categories_list
   after_update :rename_category_definition, if: :name_changed?
+
+  after_save :publish_discourse_stylesheet
 
   has_one :category_search_data
   belongs_to :parent_category, class_name: 'Category'
@@ -132,7 +138,8 @@ SQL
     # If you refactor this, test performance on a large database.
 
     Category.all.each do |c|
-      topics = c.topics.where(['topics.id <> ?', c.topic_id]).visible
+      topics = c.topics.visible
+      topics = topics.where(['topics.id <> ?', c.topic_id]) if c.topic_id
       c.topics_year  = topics.created_since(1.year.ago).count
       c.topics_month = topics.created_since(1.month.ago).count
       c.topics_week  = topics.created_since(1.week.ago).count
@@ -168,7 +175,8 @@ SQL
   def create_category_definition
     t = Topic.new(title: I18n.t("category.topic_prefix", category: name), user: user, pinned_at: Time.now, category_id: id)
     t.skip_callbacks = true
-    t.auto_close_hours = nil
+    t.ignore_category_auto_close = true
+    t.set_auto_close(nil)
     t.save!(validate: false)
     update_column(:topic_id, t.id)
     t.posts.create(raw: post_template, user: user)
@@ -176,6 +184,16 @@ SQL
 
   def topic_url
     topic_only_relative_url.try(:relative_url)
+  end
+
+  def description_text
+    return nil unless description
+
+    @@cache ||= LruRedux::ThreadSafeCache.new(100)
+    @@cache.getset(self.description) do
+      Nokogiri::HTML(self.description).text
+    end
+
   end
 
   def ensure_slug
@@ -254,6 +272,10 @@ SQL
     self.email_in = email_in.downcase if self.email_in
   end
 
+  def downcase_name
+    self.name_lower = name.downcase if self.name
+  end
+
   def secure_group_ids
     if self.read_restricted?
       groups.pluck("groups.id")
@@ -330,10 +352,26 @@ SQL
     id == SiteSetting.uncategorized_category_id
   end
 
+  @@url_cache = DistributedCache.new('category_url')
+
+  after_save do
+    # parent takes part in url calculation
+    # any change could invalidate multiples
+    @@url_cache.clear
+  end
+
   def url
-    url = "/category"
-    url << "/#{parent_category.slug}" if parent_category_id
-    url << "/#{slug}"
+    url = @@url_cache[self.id]
+    unless url
+      url = "/category"
+      url << "/#{parent_category.slug}" if parent_category_id
+      url << "/#{slug}"
+      url.freeze
+
+      @@url_cache[self.id] = url
+    end
+
+    url
   end
 
   # If the name changes, try and update the category definition topic too if it's
@@ -344,6 +382,10 @@ SQL
     if topic.title == I18n.t("category.topic_prefix", category: old_name)
       topic.update_column(:title, I18n.t("category.topic_prefix", category: name))
     end
+  end
+
+  def publish_discourse_stylesheet
+    DiscourseStylesheets.cache.clear
   end
 end
 
@@ -356,8 +398,8 @@ end
 #  color                    :string(6)        default("AB9364"), not null
 #  topic_id                 :integer
 #  topic_count              :integer          default(0), not null
-#  created_at               :datetime
-#  updated_at               :datetime
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
 #  user_id                  :integer          not null
 #  topics_year              :integer          default(0)
 #  topics_month             :integer          default(0)
@@ -382,6 +424,7 @@ end
 #  logo_url                 :string(255)
 #  background_url           :string(255)
 #  allow_badges             :boolean          default(TRUE), not null
+#  name_lower               :string(50)       not null
 #
 # Indexes
 #

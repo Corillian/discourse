@@ -8,6 +8,8 @@ class ImportScripts::Vanilla < ImportScripts::Base
 
     @vanilla_file = ARGV[0]
     raise ArgumentError.new('Vanilla file argument missing. Provide full path to vanilla csv file.') if @vanilla_file.blank?
+
+    @use_lastest_activity_as_user_bio = true if ARGV.include?('use-latest-activity-as-user-bio')
   end
 
   def execute
@@ -53,7 +55,9 @@ class ImportScripts::Vanilla < ImportScripts::Base
             data << line.strip
           end
           # PERF: don't parse useless tables
-          next if ["activities", "user_meta"].include? table
+          useless_tables = ["user_meta"]
+          useless_tables << "activities" unless @use_lastest_activity_as_user_bio
+          next if useless_tables.include?(table)
           # parse the data
           puts "parsing #{table}..."
           parsed_data = CSV.parse(data.join("\n"), headers: true, header_converters: :symbol).map { |row| row.to_hash }
@@ -73,32 +77,41 @@ class ImportScripts::Vanilla < ImportScripts::Base
     end
 
     def import_users
+      puts "", "importing users..."
+
       admin_role_id = @roles.select { |r| r[:name] == "Administrator" }.first[:role_id]
       moderator_role_id = @roles.select { |r| r[:name] == "Moderator" }.first[:role_id]
+
+      activities = (@activities || []).reject { |a| a[:activity_user_id] != a[:regarding_user_id] }
 
       create_users(@users) do |user|
         next if user[:name] == "[Deleted User]"
 
+        if @use_lastest_activity_as_user_bio
+          last_activity = activities.select { |a| user[:user_id] == a[:activity_user_id] }.last
+          bio_raw = last_activity.try(:[], :story) || ""
+        else
+          bio_raw = user[:discovery_text]
+        end
+
         u = {
           id: user[:user_id],
           email: user[:email],
-          name: user[:name],
+          username: user[:name],
           created_at: parse_date(user[:date_inserted]),
-          bio_raw: clean_up(user[:discovery_text]),
+          bio_raw: clean_up(bio_raw),
           avatar_url: user[:photo],
           moderator: @user_roles.select { |ur| ur[:user_id] == user[:user_id] }.map { |ur| ur[:role_id] }.include?(moderator_role_id),
           admin: @user_roles.select { |ur| ur[:user_id] == user[:user_id] }.map { |ur| ur[:role_id] }.include?(admin_role_id),
         }
-
-        # if @comments.select { |c| c[:insert_user_id] == user[:user_id] }.map { |c| c[:discussion_id] }.uniq.count > 3
-        #   u[:trust_level] = TrustLevel.levels[:regular]
-        # end
 
         u
       end
     end
 
     def import_categories
+      puts "", "importing categories..."
+
       # save some information about the root category
       @root_category = @categories.select { |c| c[:category_id] == "-1" }.first
       @root_category_created_at = parse_date(@root_category[:date_inserted])
@@ -176,6 +189,8 @@ class ImportScripts::Vanilla < ImportScripts::Base
       puts "", "importing private topics..."
 
       create_posts(@conversations) do |conversation|
+        next if conversation[:first_message_id].blank?
+
         # list all other user ids in the conversation
         user_ids_in_conversation = @user_conversations.select { |uc| uc[:conversation_id] == conversation[:conversation_id] && uc[:user_id] != conversation[:insert_user_id] }
                                                       .map { |uc| uc[:user_id] }
@@ -227,12 +242,12 @@ class ImportScripts::Vanilla < ImportScripts::Base
     end
 
     def clean_up(raw)
-      (raw || "").gsub("\\n", "\n")
-                 .gsub(/<\/?pre\s*>/i, "\n```\n")
-                 .gsub(/<\/?code\s*>/i, "`")
-                 .gsub("&lt;", "<")
-                 .gsub("&gt;", ">")
-                 # .gsub("*", "\\*")
+      return "" if raw.blank?
+      raw.gsub("\\n", "\n")
+         .gsub(/<\/?pre\s*>/i, "\n```\n")
+         .gsub(/<\/?code\s*>/i, "`")
+         .gsub("&lt;", "<")
+         .gsub("&gt;", ">")
     end
 
 end

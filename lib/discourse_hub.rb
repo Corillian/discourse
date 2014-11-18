@@ -6,9 +6,8 @@ module DiscourseHub
   def self.version_check_payload
     {
       installed_version: Discourse::VERSION::STRING
-    }
+    }.merge!( Discourse.git_branch == "unknown" ? {} : {branch: Discourse.git_branch})
   end
-
 
   def self.discourse_version_check
     get('/version_check', version_check_payload)
@@ -42,7 +41,7 @@ module DiscourseHub
   end
 
   def self.hub_base_url
-    if Rails.env == 'production'
+    if Rails.env.production?
       'http://api.discourse.org/api'
     else
       ENV['HUB_BASE_URL'] || 'http://local.hub:3000/api'

@@ -73,6 +73,12 @@ export default Ember.ArrayController.extend(ModalFunctionality, {
       });
     },
 
+    archiveTopics: function() {
+      this.forEachPerformed({type: 'archive'}, function(t) {
+        t.set('archived', true);
+      });
+    },
+
     changeCategory: function() {
       var categoryId = parseInt(this.get('newCategoryId'), 10) || 0,
           category = Discourse.Category.findById(categoryId),
@@ -81,6 +87,7 @@ export default Ember.ArrayController.extend(ModalFunctionality, {
         topics.forEach(function(t) {
           t.set('category', category);
         });
+        self.get('controllers.discovery/topics').send('refresh');
         self.send('closeModal');
       });
     },

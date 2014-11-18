@@ -1,4 +1,4 @@
-require 'azure'
+require "s3_helper"
 
 class Backup
   include UrlHelper
@@ -34,22 +34,33 @@ class Backup
 
   def after_create_hook
     upload_to_s3 if SiteSetting.enable_s3_backups?
-    upload_to_azure if SiteSetting.enable_azure_backups?
   end
 
   def after_remove_hook
     remove_from_s3 if SiteSetting.enable_s3_backups?
-    remove_from_azure if SiteSetting.enable_azure_backups?
+  end
+
+  def s3_bucket
+    return @s3_bucket if @s3_bucket
+    raise Discourse::SiteSettingMissing.new("s3_backup_bucket") if SiteSetting.s3_backup_bucket.blank?
+    @s3_bucket = SiteSetting.s3_backup_bucket.downcase
+  end
+
+  def s3
+    return @s3_helper if @s3_helper
+    @s3_helper = S3Helper.new(s3_bucket)
   end
 
   def upload_to_s3
-    return unless fog_directory
-    fog_directory.files.create(key: @filename, public: false, body: File.read(@path))
+    return unless s3
+    File.open(@path) do |file|
+      s3.upload(file, @filename)
+    end
   end
 
   def remove_from_s3
-    return unless fog
-    fog.delete_object(SiteSetting.s3_backup_bucket, @filename)
+    return unless s3
+    s3.remove(@filename)
   end
 
   def self.base_directory
@@ -69,85 +80,10 @@ class Backup
   end
 
   def self.remove_old
+    return if Rails.env.development?
     all_backups = Backup.all
-    return unless all_backups.size > SiteSetting.maximum_backups
+    return if all_backups.size <= SiteSetting.maximum_backups
     all_backups[SiteSetting.maximum_backups..-1].each(&:remove)
   end
-
-  def upload_to_azure
-    get_or_create_directory(azure_container).create_block_blob(azure_container, @filename, File.read(@path), {})
-  end
-
-  def remove_from_azure
-    check_missing_site_settings()
-    azure_blob_service = Azure::BlobService.new
-    azure_blob_service.delete_blob(azure_container, @filename)
-  end
-
-  def azure_container
-      SiteSetting.azure_backup_container.downcase
-  end
-
-  def azure_storage_account
-    SiteSetting.azure_storage_account.downcase
-  end
-
-  def load_azure_settings
-    Azure.configure do |config|
-      config.storage_account_name = azure_storage_account
-      config.storage_access_key   = SiteSetting.azure_storage_access_key
-    end
-  end
-
-  def check_missing_site_settings
-    raise Discourse::SiteSettingMissing.new("azure_backup_container")     if SiteSetting.azure_backup_container.blank?
-    raise Discourse::SiteSettingMissing.new("azure_storage_account")     if SiteSetting.azure_storage_account.blank?
-    raise Discourse::SiteSettingMissing.new("azure_storage_access_key") if SiteSetting.azure_storage_access_key.blank?
-
-    load_azure_settings()
-  end
-
-  def get_or_create_azure_directory(container)
-    check_missing_site_settings()
-
-    azure_blob_service = Azure::BlobService.new
-
-    begin
-      # NOTE: No options which specifies it's a private blob
-      azure_blob_service.create_container(container, {})
-    rescue Exception => e
-      # NOTE: If the container already exists an exception will be thrown
-      # so eat it
-      Rails.logger.warn(e.message)
-    end
-
-    azure_blob_service
-  end
-
-  private
-
-    def s3_options
-      {
-        provider: 'AWS',
-        aws_access_key_id: SiteSetting.s3_access_key_id,
-        aws_secret_access_key: SiteSetting.s3_secret_access_key,
-        region: SiteSetting.s3_region.blank? ? "us-east-1" : SiteSetting.s3_region,
-      }
-    end
-
-    def fog
-      return @fog if @fog
-      return unless SiteSetting.s3_access_key_id.present? &&
-                    SiteSetting.s3_secret_access_key.present? &&
-                    SiteSetting.s3_backup_bucket.present?
-      require 'fog'
-      @fog = Fog::Storage.new(s3_options)
-    end
-
-    def fog_directory
-      return @fog_directory if @fog_directory
-      return unless fog
-      @fog_directory ||= fog.directories.get(SiteSetting.s3_backup_bucket)
-    end
 
 end

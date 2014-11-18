@@ -7,6 +7,7 @@ require_dependency 'rate_limiter'
 require_dependency 'crawler_detection'
 require_dependency 'json_error'
 require_dependency 'letter_avatar'
+require_dependency 'distributed_cache'
 
 class ApplicationController < ActionController::Base
   include CurrentUser
@@ -46,8 +47,12 @@ class ApplicationController < ActionController::Base
     SiteSetting.enable_escaped_fragments? && params.key?("_escaped_fragment_")
   end
 
+  def use_crawler_layout?
+    @use_crawler_layout ||= (has_escaped_fragment? || CrawlerDetection.crawler?(request.user_agent))
+  end
+
   def set_layout
-    has_escaped_fragment? || CrawlerDetection.crawler?(request.user_agent) ? 'crawler' : 'application'
+    use_crawler_layout? ? 'crawler' : 'application'
   end
 
   rescue_from Exception do |exception|
@@ -212,11 +217,14 @@ class ApplicationController < ActionController::Base
     Middleware::AnonymousCache.anon_cache(request.env, time_length)
   end
 
-  def fetch_user_from_params
+  def fetch_user_from_params(opts=nil)
+    opts ||= {}
     user = if params[:username]
       username_lower = params[:username].downcase
       username_lower.gsub!(/\.json$/, '')
-      User.find_by(username_lower: username_lower, active: true)
+      find_opts = {username_lower: username_lower}
+      find_opts[:active] = true unless opts[:include_inactive]
+      User.find_by(find_opts)
     elsif params[:external_id]
       SingleSignOnRecord.find_by(external_id: params[:external_id]).try(:user)
     end
@@ -253,13 +261,9 @@ class ApplicationController < ActionController::Base
 
     def custom_html_json
       data = {
-        top: SiteContent.content_for(:top),
-        bottom: SiteContent.content_for(:bottom)
+        top: SiteText.text_for(:top),
+        footer: SiteCustomization.custom_footer(session[:preview_style])
       }
-
-      if SiteSetting.tos_accept_required && !current_user
-        data[:tos_signup_form_message] = SiteContent.content_for(:tos_signup_form_message)
-      end
 
       if DiscoursePluginRegistry.custom_html
         data.merge! DiscoursePluginRegistry.custom_html
@@ -268,11 +272,21 @@ class ApplicationController < ActionController::Base
       MultiJson.dump(data)
     end
 
-    def banner_json
-      topic = Topic.where(archetype: Archetype.banner).limit(1).first
-      banner = topic.present? ? topic.banner : {}
+    def self.banner_json_cache
+      @banner_json_cache ||= DistributedCache.new("banner_json")
+    end
 
-      MultiJson.dump(banner)
+    def banner_json
+
+      json = ApplicationController.banner_json_cache["json"]
+
+      unless json
+        topic = Topic.where(archetype: Archetype.banner).limit(1).first
+        banner = topic.present? ? topic.banner : {}
+        ApplicationController.banner_json_cache["json"] = json = MultiJson.dump(banner)
+      end
+
+      json
     end
 
     def render_json_error(obj)
@@ -289,7 +303,6 @@ class ApplicationController < ActionController::Base
 
     def json_result(obj, opts={})
       if yield(obj)
-
         json = success_json
 
         # If we were given a serializer, add the class to the json that comes back
@@ -299,7 +312,15 @@ class ApplicationController < ActionController::Base
 
         render json: MultiJson.dump(json)
       else
-        render_json_error(obj)
+        error_obj = nil
+        if opts[:additional_errors]
+          error_target = opts[:additional_errors].find do |o|
+            target = obj.send(o)
+            target && target.errors.present?
+          end
+          error_obj = obj.send(error_target) if error_target
+        end
+        render_json_error(error_obj || obj)
       end
     end
 
@@ -344,6 +365,17 @@ class ApplicationController < ActionController::Base
     end
 
   protected
+
+    def render_post_json(post, add_raw=true)
+      post_serializer = PostSerializer.new(post, scope: guardian, root: false)
+      post_serializer.add_raw = add_raw
+
+      counts = PostAction.counts_for([post], current_user)
+      if counts && counts = counts[post.id]
+        post_serializer.post_actions = counts
+      end
+      render_json_dump(post_serializer)
+    end
 
     def api_key_valid?
       request["api_key"] && ApiKey.where(key: request["api_key"]).exists?
