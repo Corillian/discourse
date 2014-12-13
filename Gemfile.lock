@@ -38,14 +38,14 @@ GEM
       tzinfo (~> 1.1)
     addressable (2.3.6)
     annotate (2.6.5)
+    arel (5.0.1.20140414130214)
     azure (0.6.0)
+      activerecord (>= 2.3.0)
       json
       mime-types (~> 1.0)
       nokogiri (~> 1.5)
-      uuid
-      activerecord (>= 2.3.0)
       rake (>= 0.8.7)
-    arel (5.0.1.20140414130214)
+      uuid
     barber (0.4.2)
       ember-source
       execjs
@@ -379,6 +379,7 @@ GEM
       sprockets (~> 2.8)
     stackprof (0.2.7)
     stringex (2.5.2)
+    systemu (2.5.2)
     therubyracer (0.12.1)
       libv8 (~> 3.16.14.0)
       ref
@@ -417,6 +418,7 @@ DEPENDENCIES
   actionpack-action_caching
   active_model_serializers (~> 0.8.0)
   annotate
+  azure
   barber
   better_errors
   binding_of_caller
