@@ -489,6 +489,10 @@ files:
     client: true
     default: false
   allow_animated_thumbnails: false
+  enable_azure_uploads: false
+  azure_storage_account: ''
+  azure_blob_container: ''
+  azure_storage_access_key: ''
 
 trust:
   default_trust_level:
@@ -698,6 +702,12 @@ backups:
     client: false
     default: ''
     regex: "^[^\\.]*$"
+  enable_azure_backups:
+    client: false
+    default: false
+  azure_backup_container:
+    client: false
+    default: ''
 
 uncategorized:
   version_checks:
