@@ -1,5 +1,6 @@
-export default Discourse.Route.extend({
+import ShowFooter from "discourse/mixins/show-footer";
 
+export default Discourse.Route.extend(ShowFooter, {
   model: function() {
     if (PreloadStore.get('badges')) {
       return PreloadStore.getAndRemove('badges').then(function(json) {
@@ -10,8 +11,7 @@ export default Discourse.Route.extend({
     }
   },
 
-  setupController: function(controller, model) {
-    controller.set('model', model);
-    Discourse.set('title', I18n.t('badges.title'));
+  titleToken: function() {
+    return I18n.t('badges.title');
   }
 });

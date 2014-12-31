@@ -1,8 +1,22 @@
-var ApplicationRoute = Em.Route.extend({
+var ApplicationRoute = Discourse.Route.extend({
+
+  siteTitle: Discourse.computed.setting('title'),
 
   actions: {
+    _collectTitleTokens: function(tokens) {
+      tokens.push(this.get('siteTitle'));
+      Discourse.set('_docTitle', tokens.join(' - '));
+    },
+
     showTopicEntrance: function(data) {
       this.controllerFor('topic-entrance').send('show', data);
+    },
+
+    composePrivateMessage: function(user) {
+      var self = this;
+      this.transitionTo('userActivity', user).then(function () {
+        self.controllerFor('user-activity').send('composePrivateMessage', user);
+      });
     },
 
     error: function(err, transition) {
@@ -13,10 +27,16 @@ var ApplicationRoute = Em.Route.extend({
       }
 
       var exceptionController = this.controllerFor('exception'),
-          errorString = err.toString();
-      if (err.statusText) {
-        errorString = err.statusText;
-      }
+          errorString = err.toString(),
+          stack = err.stack;
+
+      // If we have a stack call `toString` on it. It gives us a better
+      // stack trace since `console.error` uses the stack track of this
+      // error callback rather than the original error.
+      if (stack) { errorString = stack.toString(); }
+
+      if (err.statusText) { errorString = err.statusText; }
+
       var c = window.console;
       if (c && c.error) {
         c.error(errorString);
@@ -27,29 +47,19 @@ var ApplicationRoute = Em.Route.extend({
     },
 
     showLogin: function() {
-      var self = this;
-
-      if (Discourse.get("isReadOnly")) {
+      if (this.site.get("isReadOnly")) {
         bootbox.alert(I18n.t("read_only_mode.login_disabled"));
       } else {
-        if(Discourse.SiteSettings.enable_sso) {
-          var returnPath = encodeURIComponent(window.location.pathname);
-          window.location = Discourse.getURL('/session/sso?return_path=' + returnPath);
-        } else {
-          this.send('autoLogin', 'login', function(){
-            Discourse.Route.showModal(self, 'login');
-            self.controllerFor('login').resetForm();
-          });
-        }
+        this.handleShowLogin();
       }
     },
 
     showCreateAccount: function() {
-      var self = this;
-
-      self.send('autoLogin', 'createAccount', function(){
-        Discourse.Route.showModal(self, 'createAccount');
-      });
+      if (this.site.get("isReadOnly")) {
+        bootbox.alert(I18n.t("read_only_mode.login_disabled"));
+      } else {
+        this.handleShowCreateAccount();
+      }
     },
 
     autoLogin: function(modal, onFail){
@@ -79,6 +89,16 @@ var ApplicationRoute = Em.Route.extend({
 
     showKeyboardShortcutsHelp: function() {
       Discourse.Route.showModal(this, 'keyboardShortcutsHelp');
+    },
+
+    showSearchHelp: function() {
+      var self = this;
+
+      // TODO: @EvitTrout how do we get a loading indicator here?
+      Discourse.ajax("/static/search_help.html", { dataType: 'html' }).then(function(html){
+        Discourse.Route.showModal(self, 'searchHelp', html);
+      });
+
     },
 
 
@@ -124,7 +144,20 @@ var ApplicationRoute = Em.Route.extend({
           router.controllerFor('editCategory').set('selectedTab', 'general');
         });
       }
+    },
 
+    /**
+      Deletes a user and all posts and topics created by that user.
+
+      @method deleteSpammer
+    **/
+    deleteSpammer: function (user) {
+      this.send('closeModal');
+      user.deleteAsSpammer(function() { window.location.reload(); });
+    },
+
+    checkEmail: function (user) {
+      user.checkEmail();
     }
   },
 
@@ -134,8 +167,29 @@ var ApplicationRoute = Em.Route.extend({
       // Support for callbacks once the application has activated
       ApplicationRoute.trigger('activate');
     });
-  }
+  },
 
+  handleShowLogin: function() {
+    var self = this;
+
+    if(Discourse.SiteSettings.enable_sso) {
+      var returnPath = encodeURIComponent(window.location.pathname);
+      window.location = Discourse.getURL('/session/sso?return_path=' + returnPath);
+    } else {
+      this.send('autoLogin', 'login', function(){
+        Discourse.Route.showModal(self, 'login');
+        self.controllerFor('login').resetForm();
+      });
+    }
+  },
+
+  handleShowCreateAccount: function() {
+    var self = this;
+
+    self.send('autoLogin', 'createAccount', function(){
+      Discourse.Route.showModal(self, 'createAccount');
+    });
+  }
 });
 
 RSVP.EventTarget.mixin(ApplicationRoute);

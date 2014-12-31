@@ -47,14 +47,14 @@ en:
   via: "%{username} via %{site_name}"
   is_reserved: "is reserved"
 
-  purge_reason: "Automatically deleted due to being old and unverified"
+  purge_reason: "Automatically deleted as abandoned, unactivated account"
   disable_remote_images_download_reason: "Remote images download was disabled because there wasn't enough disk space available."
 
   errors:
     messages:
       too_long_validation: "is limited to %{max} characters; you entered %{length}."
       invalid_boolean: "Invalid boolean."
-      taken: "has already been taken"
+      taken: "has already been taken. (group names are case insensitive)"
     embed:
       load_from_remote: "There was an error loading that post."
 
@@ -231,8 +231,8 @@ en:
             base:
               warning_requires_pm: "You can only attach warnings to private messages."
               too_many_users: "You can only send warnings to one user at a time."
-            archetype:
               cant_send_pm: "Sorry, you cannot send a private message to that user."
+              no_user_selected: "You must select a valid user."
         user:
           attributes:
             password:
@@ -660,9 +660,6 @@ en:
     title: "Brief title of this site, used in the title tag."
     site_description: "Describe this site in one sentence, used in the meta description tag."
     contact_email: "Email address of key contact for site. Important notices from discourse.org regarding critical updates may be sent to this address."
-    company_full_name: "DEPRECATED. Not used anymore and will be removed. The full name of the company that runs this site, used in legal documents like /tos and /privacy"
-    company_short_name: "DEPRECATED. Not used anymore and will be removed. The short name of the company that runs this site, used in legal documents like /tos and /privacy"
-    company_domain: "DEPRECATED. Not used anymore and will be removed. The domain name owned by the company that runs this site, used in legal documents like /tos and /privacy"
     queue_jobs: "DEVELOPER ONLY! WARNING! By default, queue jobs in sidekiq. If disabled, your site will be broken."
     crawl_images: "Retrieve images from remote URLs to insert the correct width and height dimensions."
     download_remote_images_to_local: "Convert remote images to local images by downloading them; this prevents broken images."
@@ -740,8 +737,6 @@ en:
     post_menu_hidden_items: "The menu items to hide by default in the post menu unless an expansion ellipsis is clicked on."
     share_links: "Determine which items appear on the share dialog, and in what order."
     track_external_right_clicks: "Track external links that are right clicked (eg: open in new tab) disabled by default because it rewrites URLs"
-    topics_per_page: "How many topics are loaded by default on the topic list, and when scrolling down to load more topics"
-    posts_chunksize: "How many posts are loaded by default on a topic, and when scrolling down to load more posts"
     site_contact_username: "All automated private messages will be from this user; if left blank the default System account will be used."
     send_welcome_message: "Send all new users a welcome private message with a quick start guide."
     suppress_reply_directly_below: "Don't show the expandable reply count on a post when there is only a single reply directly below this post."
@@ -787,6 +782,7 @@ en:
     block_common_passwords: "Don't allow passwords that are in the 10,000 most common passwords."
 
     enable_sso: "Enable single sign on via an external site (Note: disables invites)"
+    enable_sso_provider: "Implement Discourse SSO protocol at the /session/sso_provider endpoint, requires sso_secret to be set"
     sso_url: "URL of single sign on endpoint"
     sso_secret: "Secret string used to encrypt/decrypt SSO information, be sure it is 10 chars or longer"
     sso_overrides_email: "Overrides local email with external site email from SSO payload (WARNING: discrepancies can occur due to normalization of local emails)"
@@ -844,7 +840,7 @@ en:
     clean_up_uploads: "Remove orphan unreferenced uploads to prevent illegal hosting. WARNING: you may want to back up of your /uploads directory before enabling this setting."
     clean_orphan_uploads_grace_period_hours: "Grace period (in hours) before an orphan upload is removed."
     purge_deleted_uploads_grace_period_days: "Grace period (in days) before a deleted upload is erased."
-    purge_inactive_users_grace_period_days: "Grace period (in days) before a user who has not activated their account is deleted."
+    purge_unactivated_users_grace_period_days: "Grace period (in days) before a user who has not activated their account is deleted."
     enable_s3_uploads: "Place uploads on Amazon S3 storage. IMPORTANT: requires valid S3 credentials (both access key id & secret access key)."
     s3_use_iam_profile: 'Use AWS EC2 IAM role to retrieve keys. NOTE: enabling will override "s3 access key id" and "s3 secret access key" settings.'
     s3_upload_bucket: "The Amazon S3 bucket name that files will be uploaded into. WARNING: must be lowercase, no periods, no underscores."
@@ -941,6 +937,14 @@ en:
     staff_like_weight: "How much extra weighting factor to give staff likes."
 
     levenshtein_distance_spammer_emails: "When matching spammer emails, number of characters difference that will still allow a fuzzy match."
+    max_new_accounts_per_registration_ip: "If there are already (n) trust level 0 accounts from this IP (and none is a staff member or at TL2 or higher), stop accepting new signups from that IP."
+    min_ban_entries_for_roll_up: "When clicking the Roll up button, will create a new subnet ban entry if there are at least (N) entries."
+
+    max_age_unmatched_emails: "Delete unmatched screened email entries after (N) days."
+    max_age_unmatched_ips: "Delete unmatched screened IP entries after (N) days."
+
+    num_flaggers_to_close_topic: "Minimum number of unique flaggers that is required to automatically pause a topic for intervention"
+    num_flags_to_close_topic: "Minimum number of active flags that is required to automatically pause a topic for intervention"
 
     reply_by_email_enabled: "Enable replying to topics via email."
     reply_by_email_address: "Template for reply by email incoming email address, for example: %{reply_key}@reply.example.com or replies+%{reply_key}@example.com"
@@ -1025,6 +1029,9 @@ en:
 
     prevent_anons_from_downloading_files: "Prevent anonymous users from downloading attachments. WARNING: this will prevent any non-image site assets posted as attachments from working."
 
+    enable_emoji: "Enable emoji"
+    emoji_set: "How would you like your emoji?"
+
     errors:
       invalid_email: "Invalid email address."
       invalid_username: "There's no user with that username."
@@ -1059,6 +1066,12 @@ en:
       topic: 'Results'
       user: 'Users'
 
+  sso:
+    not_found: "Unable to lookup or create account, contact site admin"
+    account_not_approved: "Account is pending approval, you will receive an email notification once approved"
+    unknown_error: "Error updating information, contact site admin"
+    timeout_expired: "Account login timed out, please try logging in again"
+
   original_poster: "Original Poster"
   most_posts: "Most Posts"
   most_recent_poster: "Most Recent Poster"
@@ -1079,6 +1092,11 @@ en:
   change_owner:
     post_revision_text: "Ownership transferred from %{old_user} to %{new_user}"
 
+  emoji:
+    errors:
+      name_already_exists: "Sorry, the name '%{name}' is already used by another emoji."
+      error_while_storing_emoji: "Sorry, there has been an error while storing the emoji."
+
   topic_statuses:
     archived_enabled: "This topic is now archived. It is frozen and cannot be changed in any way."
     archived_disabled: "This topic is now unarchived. It is no longer frozen, and can be changed."
@@ -1098,7 +1116,7 @@ en:
       other: "This topic was automatically closed %{count} days after the last reply. New replies are no longer allowed."
     autoclosed_enabled_lastpost_hours:
       one: "This topic was automatically closed 1 hour after the last reply. New replies are no longer allowed."
-      other: "This topic was automatically closed count} hours after the last reply. New replies are no longer allowed."
+      other: "This topic was automatically closed %{count} hours after the last reply. New replies are no longer allowed."
     autoclosed_enabled_lastpost_minutes:
       one: "This topic was automatically closed 1 minute after the last reply. New replies are no longer allowed."
       other: "This topic was automatically closed %{count} minutes after the last reply. New replies are no longer allowed."
@@ -1293,6 +1311,8 @@ en:
     deferred: "Thanks for letting us know. We're looking into it."
     deferred_and_deleted: "Thanks for letting us know. We've removed the post."
 
+  temporarily_closed_due_to_flags: "This topic is temporarily closed due to a large number of community flags"
+
   system_messages:
     post_hidden:
       subject_template: "Post hidden due to community flagging"
@@ -1461,17 +1481,17 @@ en:
         ```
 
     csv_export_succeeded:
-      subject_template: "Data Export completed successfully"
+      subject_template: "Data export complete"
       text_body_template: |
-        The data export was successful.
+        Your data export was successful! :dvd:
 
-        Download CSV file: <a class="attachment" href="%{download_link}">%{file_name}</a>
+        <a class="attachment" href="%{download_link}">%{file_name}</a>
 
-        <small>CSV file download link will expire after 48 hours.</small>
+        The above download link will be valid for 48 hours.
 
     csv_export_failed:
-      subject_template: "Export failed"
-      text_body_template: "The export has failed. Please check the logs."
+      subject_template: "Data export failed"
+      text_body_template: "We're sorry, but your data export failed. Please check the logs or contact a staff member."
 
     email_reject_trust_level:
       subject_template: "Email issue -- Insufficient Trust Level"
@@ -1832,6 +1852,10 @@ en:
 
   edit_this_page: "Edit this page"
 
+  csv_export:
+    boolean_yes: "Yes"
+    boolean_no: "No"
+
   static_topic_first_reply: |
     Edit the first post in this topic to change the contents of the %{page_name} page.
 
@@ -2169,7 +2193,7 @@ en:
         <tr><td><code>order:views</code></td><td><code>order:latest</code></td><td colspan=3></td></tr>
         <tr><td><code>status:open</code></td><td><code>status:closed</code></td><td><code>status:archived</code></td><td><code>status:noreplies</code></td><td><code>status:singleuser</code></td></tr>
         <tr><td><code>category:foo</code></td><td><code>user:foo</code></td><td colspan=3></td></tr>
-        <tr><td><code>in:likes</code></td><td><code>in:posted</code></td><td><code>in:watching</code></td><td><code>in:tracking</code></td><td></td></tr>
+        <tr><td><code>in:likes</code></td><td><code>in:posted</code></td><td><code>in:watching</code></td><td><code>in:tracking</code></td><td><code>in:private</code></td></tr>
         </table>
       </p>
       <p>

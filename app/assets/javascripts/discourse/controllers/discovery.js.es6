@@ -1,21 +1,37 @@
 import ObjectController from 'discourse/controllers/object';
+import TopPeriod from 'discourse/models/top-period';
 
 export default ObjectController.extend({
+  needs: ['navigation/category', 'discovery/topics', 'application'],
   loading: false,
-  loadingSpinner: false,
-  scheduledSpinner: null,
+
+  category: Em.computed.alias('controllers.navigation/category.category'),
+  noSubcategories: Em.computed.alias('controllers.navigation/category.noSubcategories'),
+
+  loadedAllItems: Em.computed.not("controllers.discovery/topics.canLoadMore"),
+
+  _showFooter: function() {
+    this.set("controllers.application.showFooter", this.get("loadedAllItems"));
+  }.observes("loadedAllItems"),
 
   showMoreUrl: function(period) {
     var url = '', category = this.get('category');
     if (category) {
-      url = '/category/' + Discourse.Category.slugFor(category) + (this.get('noSubcategories') ? '/none' : '') + '/l';
+      url = '/c/' + Discourse.Category.slugFor(category) + (this.get('noSubcategories') ? '/none' : '') + '/l';
     }
     url += '/top/' + period;
     return url;
   },
 
-  showMoreDailyUrl: function() { return this.showMoreUrl('daily'); }.property('category', 'noSubcategories'),
-  showMoreWeeklyUrl: function() { return this.showMoreUrl('weekly'); }.property('category', 'noSubcategories'),
-  showMoreMonthlyUrl: function() { return this.showMoreUrl('monthly'); }.property('category', 'noSubcategories'),
-  showMoreYearlyUrl: function() { return this.showMoreUrl('yearly'); }.property('category', 'noSubcategories')
+  periods: function() {
+    var self = this,
+        periods = [];
+    Discourse.Site.currentProp('periods').forEach(function(p) {
+      periods.pushObject(TopPeriod.create({ id: p,
+                                            showMoreUrl: self.showMoreUrl(p),
+                                            periods: periods }));
+    });
+    return periods;
+  }.property('category', 'noSubcategories'),
+
 });

@@ -18,7 +18,12 @@ class GroupsController < ApplicationController
 
   def members
     group = find_group(:group_id)
-    render_serialized(group.users.order('username_lower asc').limit(200).to_a, GroupUserSerializer)
+
+    limit = (params[:limit] || 200).to_i
+    offset = (params[:offset] || 0).to_i
+    members = group.users.order('username_lower asc').limit(limit).offset(offset)
+
+    render_serialized(members.to_a, GroupUserSerializer)
   end
 
   private

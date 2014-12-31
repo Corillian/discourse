@@ -1,8 +1,9 @@
 import ObjectController from 'discourse/controllers/object';
 import CanCheckEmails from 'discourse/mixins/can-check-emails';
+import { outputExportResult } from 'discourse/lib/export-result';
 
 export default ObjectController.extend(CanCheckEmails, {
-  indexStream: true,
+  indexStream: false,
   needs: ['user-notifications', 'user_topics_list'],
 
   viewingSelf: function() {
@@ -42,27 +43,6 @@ export default ObjectController.extend(CanCheckEmails, {
     return this.get('can_be_deleted') && this.get('can_delete_all_posts');
   }.property('can_be_deleted', 'can_delete_all_posts'),
 
-  loadedAllItems: function() {
-    switch (this.get("datasource")) {
-      case "badges": { return true; }
-      case "notifications": { return !this.get("controllers.user-notifications.canLoadMore"); }
-      case "topic_list": { return !this.get("controllers.user_topics_list.canLoadMore"); }
-      case "stream": {
-        if (this.get("userActionType")) {
-          var stat = _.find(this.get("stats"), { action_type: this.get("userActionType") });
-          return stat && stat.count <= this.get("stream.itemsLoaded");
-        } else {
-          return this.get("statsCountNonPM") <= this.get("stream.itemsLoaded");
-        }
-      }
-    }
-
-    return false;
-  }.property("datasource",
-    "userActionType", "stats", "stream.itemsLoaded",
-    "controllers.user_topics_list.canLoadMore",
-    "controllers.user-notifications.canLoadMore"),
-
   privateMessagesActive: Em.computed.equal('pmView', 'index'),
   privateMessagesMineActive: Em.computed.equal('pmView', 'mine'),
   privateMessagesUnreadActive: Em.computed.equal('pmView', 'unread'),
@@ -72,6 +52,10 @@ export default ObjectController.extend(CanCheckEmails, {
       Discourse.AdminUser.find(this.get('username').toLowerCase()).then(function(user){
         user.destroy({deletePosts: true});
       });
+    },
+
+    exportUserArchive: function() {
+      Discourse.ExportCsv.exportUserArchive().then(outputExportResult);
     }
   }
 });

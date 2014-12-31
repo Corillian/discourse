@@ -3,7 +3,7 @@ import { spinnerHTML } from 'discourse/helpers/loading-spinner';
 
 export default ObjectController.extend(Discourse.SelectedPostsCount, {
   multiSelect: false,
-  needs: ['header', 'modal', 'composer', 'quote-button', 'search', 'topic-progress'],
+  needs: ['header', 'modal', 'composer', 'quote-button', 'search', 'topic-progress', 'application'],
   allPostsSelected: false,
   editingTopic: false,
   selectedPosts: null,
@@ -19,7 +19,7 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
 
   _titleChanged: function() {
     var title = this.get('title');
-    if (!Em.empty(title)) {
+    if (!Ember.isEmpty(title)) {
 
       // Note normally you don't have to trigger this, but topic titles can be updated
       // and are sometimes lazily loaded.
@@ -40,6 +40,20 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     }
 
   }.observes('controllers.search.term', 'controllers.header.visibleDropdown'),
+
+  postStreamLoadedAllPostsChanged: function(){
+    // hold back rendering 1 run loop for every transition.
+    var self = this;
+    var loaded = this.get('postStream.loadedAllPosts');
+    this.set('loadedAllPosts', false);
+
+    if(loaded){
+      Em.run.next(function(){
+        self.set('loadedAllPosts',true);
+      });
+    }
+
+  }.observes('postStream', 'postStream.loadedAllPosts'),
 
   show_deleted: function(key, value) {
     var postStream = this.get('postStream');
@@ -78,6 +92,10 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
   },
 
   actions: {
+    deleteTopic: function() {
+      this.deleteTopic();
+    },
+
     // Post related methods
     replyToPost: function(post) {
       var composerController = this.get('controllers.composer'),
@@ -370,8 +388,13 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     },
 
     togglePinnedForUser: function() {
-      if (this.get('pinned_at'))
-        this.get('pinned') ? this.get('content').clearPin() : this.get('content').rePin();
+      if (this.get('pinned_at')) {
+        if (this.get('pinned')) {
+          this.get('content').clearPin();
+        } else {
+          this.get('content').rePin();
+        }
+      }
     },
 
     replyAsNewTopic: function(post) {
@@ -697,6 +720,10 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     if (lastLoadedPost && lastLoadedPost === post) {
       postStream.appendMore();
     }
-  }
+  },
+
+  _showFooter: function() {
+    this.set("controllers.application.showFooter", this.get("postStream.loadedAllPosts"));
+  }.observes("postStream.loadedAllPosts")
 
 });
