@@ -7,8 +7,6 @@ module BackupRestore
 
     attr_reader :success
 
-    attr_reader :success
-
     def initialize(user_id, filename, publish_to_message_bus = false)
       @user_id, @filename, @publish_to_message_bus = user_id, filename, publish_to_message_bus
 

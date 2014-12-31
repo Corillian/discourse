@@ -21,10 +21,6 @@ export default DiscourseController.extend(ModalFunctionality, {
   maxUsernameLength: Discourse.computed.setting('max_username_length'),
   minUsernameLength: Discourse.computed.setting('min_username_length'),
 
-  hasAuthOptions: Em.computed.notEmpty('authOptions'),
-  canCreateLocal: Discourse.computed.setting('enable_local_logins'),
-  showCreateForm: Em.computed.or('hasAuthOptions', 'canCreateLocal'),
-
   resetForm: function() {
 
     // We wrap the fields in a structure so we can assign a value
