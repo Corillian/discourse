@@ -1,4 +1,5 @@
 require "s3_helper"
+require "azure"
 
 class Backup
   include UrlHelper
@@ -34,10 +35,12 @@ class Backup
 
   def after_create_hook
     upload_to_s3 if SiteSetting.enable_s3_backups?
+    upload_to_azure if SiteSEttings.enable_azure_backups?
   end
 
   def after_remove_hook
     remove_from_s3 if SiteSetting.enable_s3_backups?
+    remove_from_azure if SiteSEttings.enable_azure_backups?
   end
 
   def s3_bucket
@@ -61,6 +64,57 @@ class Backup
   def remove_from_s3
     return unless s3
     s3.remove(@filename)
+  end
+
+  def load_azure_settings
+    Azure.configure do |config|
+      config.storage_account_name = azure_storage_account
+      config.storage_access_key   = SiteSetting.azure_storage_access_key
+    end
+  end
+
+  def check_missing_azure_site_settings
+    raise Discourse::SiteSettingMissing.new("azure_backup_container")   if SiteSetting.azure_backup_container.blank?
+    raise Discourse::SiteSettingMissing.new("azure_storage_account")    if SiteSetting.azure_storage_account.blank?
+    raise Discourse::SiteSettingMissing.new("azure_storage_access_key") if SiteSetting.azure_storage_access_key.blank?
+
+    load_azure_settings()
+  end
+
+  def azure_storage_account
+    SiteSetting.azure_storage_account.downcase
+  end
+
+  def azure_container
+    SiteSetting.azure_backup_container.downcase
+  end
+
+  def get_or_create_azure_directory(container)
+    check_missing_azure_site_settings()
+
+    azure_blob_service = Azure::BlobService.new
+
+    begin
+      azure_blob_service.create_container(container)
+    rescue Exception => e
+      # NOTE: If the container already exists an exception will be thrown
+      # so eat it
+      Rails.logger.warn(e.message)
+    end
+
+    azure_blob_service
+  end
+
+  def upload_to_azure
+    content = File.open(@path, "rb") { |file| file.read }
+
+    get_or_create_directory(azure_container).create_block_blob(azure_container, @filename.downcase, content)
+  end
+
+  def remove_from_azure
+    check_missing_azure_site_settings()
+    azure_blob_service = Azure::BlobService.new
+    azure_blob_service.delete_blob(azure_container, @filename.downcase)
   end
 
   def self.base_directory
