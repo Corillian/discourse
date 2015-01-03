@@ -34,6 +34,7 @@ class Backup
   end
 
   def after_create_hook
+    logger.warn "Backup.after_create_hook()"
     upload_to_s3 if SiteSetting.enable_s3_backups?
     upload_to_azure if SiteSEttings.enable_azure_backups?
   end
@@ -106,9 +107,10 @@ class Backup
   end
 
   def upload_to_azure
+    logger.warn "Backup.upload_to_azure()"
     content = File.open(@path, "rb") { |file| file.read }
 
-    get_or_create_directory(azure_container).create_block_blob(azure_container, @filename.downcase, content)
+    get_or_create_azure_directory(azure_container).create_block_blob(azure_container, @filename.downcase, content)
   end
 
   def remove_from_azure
