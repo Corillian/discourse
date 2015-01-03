@@ -21,36 +21,20 @@ module BackupRestore
 
       mark_backup_as_running
 
-      log "mark_backup_as_running"
-
       listen_for_shutdown_signal
-
-      log "listen_for_shutdown_signal"
 
       ensure_directory_exists(@tmp_directory)
       ensure_directory_exists(@archive_directory)
 
-      log "ensure_directory_exists"
-
       write_metadata
-
-      log "write_metadata"
 
       ### READ-ONLY / START ###
       enable_readonly_mode
 
-      log "enable_readonly_mode"
-
       pause_sidekiq
-
-      log "pause_sidekiq"
       wait_for_sidekiq
 
-      log "wait_for_sidekiq"
-
       dump_public_schema
-
-      log "dump_public_schema"
 
       disable_readonly_mode
       ### READ-ONLY / END ###
@@ -59,15 +43,9 @@ module BackupRestore
 
       update_dump
 
-      log "update_dump"
-
       create_archive
 
-      log "create_archive"
-
       after_create_hook
-
-      log "after_create_hook"
 
       remove_old
     rescue SystemExit
