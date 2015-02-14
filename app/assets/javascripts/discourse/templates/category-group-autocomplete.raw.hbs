@@ -1,7 +1,7 @@
 <div class='autocomplete'>
   <ul>
-    {{#each options}}
-      <li>{{category-link this allowUncategorized="true"}}</li>
+    {{#each option in options}}
+      <li><a>{{category-link option allowUncategorized="true" link="false"}}</a></li>
     {{/each}}
   </ul>
 </div>

@@ -26,6 +26,7 @@ class TopicQuery
                      state
                      search
                      slow_platform
+                     filter
                      ).map(&:to_sym)
 
   # Maps `order` to a columns in `topics`
@@ -69,11 +70,6 @@ class TopicQuery
     create_list(:latest, {}, latest_results)
   end
 
-  # The starred topics
-  def list_starred
-    create_list(:starred) {|topics| topics.where('tu.starred') }
-  end
-
   def list_read
     create_list(:read, unordered: true) do |topics|
       topics.order('COALESCE(tu.last_visited_at, topics.bumped_at) DESC')
@@ -90,6 +86,10 @@ class TopicQuery
 
   def list_posted
     create_list(:posted) {|l| l.where('tu.posted') }
+  end
+
+  def list_bookmarks
+    create_list(:bookmarks) {|l| l.where('tu.bookmarked') }
   end
 
   def list_top_for(period)
@@ -154,19 +154,39 @@ class TopicQuery
         .where("COALESCE(tu.notification_level, :regular) >= :tracking", regular: TopicUser.notification_levels[:regular], tracking: TopicUser.notification_levels[:tracking])
   end
 
+  def create_list(filter, options={}, topics = nil)
+    topics ||= default_results(options)
+    topics = yield(topics) if block_given?
+    list = TopicList.new(filter, @user, topics, options.merge(@options))
+    list.per_page = per_page_setting
+    list
+  end
+
+  def latest_results(options={})
+    result = default_results(options)
+    result = remove_muted_categories(result, @user, exclude: options[:category])
+    result
+  end
+
+  def unread_results(options={})
+    result = TopicQuery.unread_filter(default_results(options.reverse_merge(:unordered => true)))
+    .order('CASE WHEN topics.user_id = tu.user_id THEN 1 ELSE 2 END')
+
+    suggested_ordering(result, options)
+  end
+
+  def new_results(options={})
+    result = TopicQuery.new_filter(default_results(options.reverse_merge(:unordered => true)), @user.treat_as_new_topic_start_date)
+    result = remove_muted_categories(result, @user, exclude: options[:category])
+    suggested_ordering(result, options)
+  end
+
   protected
 
     def per_page_setting
       @options[:slow_platform] ? 15 : 30
     end
 
-    def create_list(filter, options={}, topics = nil)
-      topics ||= default_results(options)
-      topics = yield(topics) if block_given?
-      list = TopicList.new(filter, @user, topics, options.merge(@options))
-      list.per_page = per_page_setting
-      list
-    end
 
     def private_messages_for(user)
       options = @options
@@ -220,7 +240,7 @@ class TopicQuery
       end
 
       if sort_column == 'op_likes'
-        return result.order("(SELECT like_count FROM posts p3 WHERE p3.topic_id = topics.id AND p3.post_number = 1) #{sort_dir}")
+        return result.includes(:first_post).order("(SELECT like_count FROM posts p3 WHERE p3.topic_id = topics.id AND p3.post_number = 1) #{sort_dir}")
       end
 
       result.order("topics.#{sort_column} #{sort_dir}")
@@ -302,9 +322,9 @@ class TopicQuery
           result = result.where('topics.closed')
         when 'archived'
           result = result.where('topics.archived')
-        when 'visible'
+        when 'listed'
           result = result.where('topics.visible')
-        when 'invisible'
+        when 'unlisted'
           result = result.where('NOT topics.visible')
         when 'deleted'
           guardian = Guardian.new(@user)
@@ -315,28 +335,31 @@ class TopicQuery
         end
       end
 
+      if (filter=options[:filter]) && @user
+        action =
+          if filter == "bookmarked"
+            PostActionType.types[:bookmark]
+          elsif filter == "liked"
+            PostActionType.types[:like]
+          end
+        if action
+          result = result.where('topics.id IN (SELECT pp.topic_id
+                                FROM post_actions pa
+                                JOIN posts pp ON pp.id = pa.post_id
+                                WHERE pa.user_id = :user_id AND
+                                      pa.post_action_type_id = :action AND
+                                      pa.deleted_at IS NULL
+                             )', user_id: @user.id,
+                                 action: action
+                             )
+        end
+      end
+
       result = result.where('topics.deleted_at IS NULL') if require_deleted_clause
       result = result.where('topics.posts_count <= ?', options[:max_posts]) if options[:max_posts].present?
       result = result.where('topics.posts_count >= ?', options[:min_posts]) if options[:min_posts].present?
 
-      guardian = Guardian.new(@user)
-      if !guardian.is_admin?
-        allowed_ids = guardian.allowed_category_ids
-        if allowed_ids.length > 0
-          result = result.where('topics.category_id IS NULL or topics.category_id IN (?)', allowed_ids)
-        else
-          result = result.where('topics.category_id IS NULL')
-        end
-        result = result.references(:categories)
-      end
-
-      result
-    end
-
-    def latest_results(options={})
-      result = default_results(options)
-      result = remove_muted_categories(result, @user, exclude: options[:category])
-      result
+      Guardian.new(@user).filter_allowed_categories(result)
     end
 
     def remove_muted_categories(list, user, opts=nil)
@@ -359,19 +382,6 @@ class TopicQuery
       list
     end
 
-
-    def unread_results(options={})
-      result = TopicQuery.unread_filter(default_results(options.reverse_merge(:unordered => true)))
-                         .order('CASE WHEN topics.user_id = tu.user_id THEN 1 ELSE 2 END')
-
-      suggested_ordering(result, options)
-    end
-
-    def new_results(options={})
-      result = TopicQuery.new_filter(default_results(options.reverse_merge(:unordered => true)), @user.treat_as_new_topic_start_date)
-      result = remove_muted_categories(result, @user, exclude: options[:category])
-      suggested_ordering(result, options)
-    end
 
     def random_suggested(topic, count, excluded_topic_ids=[])
       result = default_results(unordered: true, per_page: count).where(closed: false, archived: false)

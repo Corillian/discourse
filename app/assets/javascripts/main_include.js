@@ -10,7 +10,9 @@
 //
 
 // Stuff we need to load first
+//= require ./discourse/lib/app-events
 //= require ./discourse/helpers/i18n
+//= require ./discourse/helpers/fa-icon
 //= require ./discourse/lib/ember_compat_handlebars
 //= require ./discourse/lib/computed
 //= require ./discourse/helpers/register-unbound
@@ -22,9 +24,12 @@
 //= require ./discourse/lib/autocomplete
 //= require ./discourse/lib/after-transition
 //= require ./discourse/lib/debounce
+//= require_tree ./discourse/adapters
 //= require ./discourse/models/model
 //= require ./discourse/models/user_action
 //= require ./discourse/models/composer
+//= require ./discourse/models/post-stream
+//= require ./discourse/models/topic-details
 //= require ./discourse/models/topic
 //= require ./discourse/models/top-period
 //= require ./discourse/controllers/controller
@@ -59,6 +64,7 @@
 //= require ./discourse/lib/export-result
 //= require ./discourse/dialects/dialect
 //= require ./discourse/lib/emoji/emoji
+//= require ./discourse/lib/sharing
 
 //= require_tree ./discourse/dialects
 //= require_tree ./discourse/controllers

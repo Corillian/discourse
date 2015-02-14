@@ -2,6 +2,7 @@ require_dependency 'topic_view'
 require_dependency 'promotion'
 require_dependency 'url_helper'
 require_dependency 'topics_bulk_action'
+require_dependency 'discourse_event'
 
 class TopicsController < ApplicationController
   include UrlHelper
@@ -24,7 +25,8 @@ class TopicsController < ApplicationController
                                           :autoclose,
                                           :bulk,
                                           :reset_new,
-                                          :change_post_owners]
+                                          :change_post_owners,
+                                          :bookmark]
 
   before_filter :consider_user_for_promotion, only: :show
 
@@ -53,9 +55,11 @@ class TopicsController < ApplicationController
     begin
       @topic_view = TopicView.new(params[:id] || params[:topic_id], current_user, opts)
     rescue Discourse::NotFound
-      topic = Topic.find_by(slug: params[:id].downcase) if params[:id]
-      raise Discourse::NotFound unless topic
-      redirect_to_correct_topic(topic, opts[:post_number]) && return
+      if params[:id]
+        topic = Topic.find_by(slug: params[:id].downcase)
+        return redirect_to_correct_topic(topic, opts[:post_number]) if topic
+      end
+      raise Discourse::NotFound
     end
 
     page = params[:page].to_i
@@ -124,11 +128,14 @@ class TopicsController < ApplicationController
     guardian.ensure_can_edit!(topic)
 
     changes = {}
-    changes[:title]       = params[:title]       if params[:title] && topic.title != params[:title]
-    changes[:category_id] = params[:category_id] if params[:category_id] && topic.category_id != params[:category_id].to_i
+    PostRevisor.tracked_topic_fields.keys.each do |f|
+      changes[f] = params[f] if params.has_key?(f)
+    end
+
+    changes.delete(:title) if topic.title == changes[:title]
+    changes.delete(:category_id) if (changes[:category_id].blank? or topic.category_id == changes[:category_id].to_i)
 
     success = true
-
     if changes.length > 0
       first_post = topic.ordered_posts.first
       success = PostRevisor.new(first_post, topic).revise!(current_user, changes, validate_post: false)
@@ -145,8 +152,9 @@ class TopicsController < ApplicationController
     [:title, :raw].each { |key| check_length_of(key, params[key]) }
 
     # Only suggest similar topics if the site has a minimum amount of topics present.
-    topics = Topic.similar_to(title, raw, current_user).to_a if Topic.count_exceeds_minimum?
+    return render json: [] unless Topic.count_exceeds_minimum?
 
+    topics = Topic.similar_to(title, raw, current_user).to_a
     render_serialized(topics, BasicTopicSerializer)
   end
 
@@ -160,14 +168,6 @@ class TopicsController < ApplicationController
     @topic = Topic.find_by(id: topic_id)
     guardian.ensure_can_moderate!(@topic)
     @topic.update_status(status, enabled, current_user)
-    render nothing: true
-  end
-
-  def star
-    @topic = Topic.find_by(id: params[:topic_id].to_i)
-    guardian.ensure_can_see!(@topic)
-
-    @topic.toggle_star(current_user, params[:starred] == 'true')
     render nothing: true
   end
 
@@ -213,6 +213,19 @@ class TopicsController < ApplicationController
     guardian.ensure_can_moderate!(topic)
 
     topic.remove_banner!(current_user)
+
+    render nothing: true
+  end
+
+  def bookmark
+    topic = Topic.find_by(id: params[:topic_id])
+    first_post = topic.ordered_posts.first
+
+    if params[:bookmarked] == "true"
+      PostAction.act(current_user, first_post, PostActionType.types[:bookmark])
+    else
+      PostAction.remove_act(current_user, first_post, PostActionType.types[:bookmark])
+    end
 
     render nothing: true
   end

@@ -52,6 +52,9 @@ class User < ActiveRecord::Base
   has_many :groups, through: :group_users
   has_many :secure_categories, through: :groups, source: :categories
 
+  has_many :group_managers, dependent: :destroy
+  has_many :managed_groups, through: :group_managers, source: :group
+
   has_one :user_search_data, dependent: :destroy
   has_one :api_key, dependent: :destroy
 
@@ -59,7 +62,7 @@ class User < ActiveRecord::Base
 
   delegate :last_sent_email_address, :to => :email_logs
 
-  before_validation :downcase_email
+  before_validation :strip_downcase_email
 
   validates_presence_of :username
   validate :username_validator
@@ -76,6 +79,7 @@ class User < ActiveRecord::Base
   after_create :create_user_stat
   after_create :create_user_profile
   after_create :ensure_in_trust_level_group
+  after_create :automatic_group_membership
 
   before_save :update_username_lower
   before_save :ensure_password_is_hashed
@@ -134,6 +138,14 @@ class User < ActiveRecord::Base
     User.where(username_lower: lower).blank?
   end
 
+  def effective_locale
+    if SiteSetting.allow_user_locale && self.locale.present?
+      self.locale
+    else
+      SiteSetting.default_locale
+    end
+  end
+
   EMAIL = %r{([^@]+)@([^\.]+)}
 
   def self.new_from_params(params)
@@ -150,14 +162,6 @@ class User < ActiveRecord::Base
     name = email.split(/[@\+]/)[0]
     name = name.gsub(".", " ")
     name.titleize
-  end
-
-  # Find a user by temporary key, nil if not found or key is invalid
-  def self.find_by_temporary_key(key)
-    user_id = $redis.get("temporary_key:#{key}")
-    if user_id.present?
-      find_by(id: user_id.to_i)
-    end
   end
 
   def self.find_by_username_or_email(username_or_email)
@@ -182,16 +186,13 @@ class User < ActiveRecord::Base
     Jobs.enqueue(:send_system_message, user_id: id, message_type: message_type)
   end
 
-  def change_username(new_username)
+  def change_username(new_username, actor=nil)
+    if actor && actor != self
+      StaffActionLogger.new(actor).log_username_change(self, self.username, new_username)
+    end
+
     self.username = new_username
     save
-  end
-
-  # Use a temporary key to find this user, store it in redis with an expiry
-  def temporary_key
-    key = SecureRandom.hex(32)
-    $redis.setex "temporary_key:#{key}", 2.months, id.to_s
-    key
   end
 
   def created_topic_count
@@ -708,6 +709,17 @@ class User < ActiveRecord::Base
     Group.user_trust_level_change!(id, trust_level)
   end
 
+  def automatic_group_membership
+    Group.where(automatic: false)
+         .where("LENGTH(COALESCE(automatic_membership_email_domains, '')) > 0")
+         .each do |group|
+      domains = group.automatic_membership_email_domains.gsub('.', '\.')
+      if self.email =~ Regexp.new("@(#{domains})$", true)
+        group.add(self) rescue ActiveRecord::RecordNotUnique
+      end
+    end
+  end
+
   def create_user_stat
     stat = UserStat.new(new_since: Time.now)
     stat.user_id = id
@@ -745,8 +757,11 @@ class User < ActiveRecord::Base
     self.username_lower = username.downcase
   end
 
-  def downcase_email
-    self.email = self.email.downcase if self.email
+  def strip_downcase_email
+    if self.email
+      self.email = self.email.strip
+      self.email = self.email.downcase
+    end
   end
 
   def username_validator
@@ -801,6 +816,38 @@ class User < ActiveRecord::Base
         # if for some reason the user can't be deleted, continue on to the next one
       end
     end
+  end
+
+  def number_of_deleted_posts
+    Post.with_deleted
+        .where(user_id: self.id)
+        .where(user_deleted: false)
+        .where.not(deleted_by_id: self.id)
+        .where.not(deleted_at: nil)
+        .count
+  end
+
+  def number_of_flagged_posts
+    Post.with_deleted
+        .where(user_id: self.id)
+        .where(id: PostAction.where(post_action_type_id: PostActionType.notify_flag_type_ids)
+                             .where(disagreed_at: nil)
+                             .select(:post_id))
+        .count
+  end
+
+  def number_of_flags_given
+    PostAction.where(user_id: self.id)
+              .where(post_action_type_id: PostActionType.notify_flag_type_ids)
+              .count
+  end
+
+  def number_of_warnings
+    self.warnings.count
+  end
+
+  def number_of_suspensions
+    UserHistory.for(self, :suspend_user).count
   end
 
   private

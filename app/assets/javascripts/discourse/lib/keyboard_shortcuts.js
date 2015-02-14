@@ -3,13 +3,11 @@ var PATH_BINDINGS = {
       'g l': '/latest',
       'g n': '/new',
       'g u': '/unread',
-      'g f': '/starred',
       'g c': '/categories',
       'g t': '/top'
     },
 
     SELECTED_POST_BINDINGS = {
-      'b': 'toggleBookmark',
       'd': 'deletePost',
       'e': 'editPost',
       'l': 'toggleLike',
@@ -19,15 +17,13 @@ var PATH_BINDINGS = {
     },
 
     CLICK_BINDINGS = {
-      // star topic
-      'f': '#topic-footer-buttons button.star, .topic-list tr.topic-list-item.selected a.star',
-
+      'f': '#topic-footer-buttons button.bookmark',                             // bookmark topic
       'm m': 'div.notification-options li[data-id="0"] a',                      // mark topic as muted
       'm r': 'div.notification-options li[data-id="1"] a',                      // mark topic as regular
       'm t': 'div.notification-options li[data-id="2"] a',                      // mark topic as tracking
       'm w': 'div.notification-options li[data-id="3"] a',                      // mark topic as watching
       'x r': '#dismiss-new,#dismiss-new-top,#dismiss-posts,#dismiss-posts-top', // dismiss new/posts
-      'x t': '#dismiss-topics,#dismiss-topics-top',                             //dismiss topics
+      'x t': '#dismiss-topics,#dismiss-topics-top',                             // dismiss topics
       '.': '.alert.alert-info.clickable',                                       // show incoming/updated topics
       'n': '#user-notifications',                                               // open notifications menu
       'o,enter': '.topic-list tr.selected a.title',                             // open selected topic
@@ -37,7 +33,7 @@ var PATH_BINDINGS = {
     },
 
     FUNCTION_BINDINGS = {
-      'c': 'createTopic',                                         // create new topic
+      'c': 'createTopic',                                                       // create new topic
       'home': 'goToFirstPost',
       '#': 'toggleProgress',
       'end': 'goToLastPost',
@@ -48,12 +44,13 @@ var PATH_BINDINGS = {
       'k': 'selectUp',
       'u': 'goBack',
       '/': 'showSearch',
-      '=': 'showSiteMap',                                             // open site map menu
-      'p': 'showCurrentUser',                                         // open current user menu
+      '=': 'showSiteMap',                                                       // open site map menu
+      'p': 'showCurrentUser',                                                   // open current user menu
       'ctrl+f': 'showBuiltinSearch',
       'command+f': 'showBuiltinSearch',
-      '?': 'showHelpModal',                                          // open keyboard shortcut help
-      'q': 'quoteReply'
+      '?': 'showHelpModal',                                                     // open keyboard shortcut help
+      'q': 'quoteReply',
+      'b': 'toggleBookmark'
     };
 
 
@@ -66,6 +63,11 @@ Discourse.KeyboardShortcuts = Ember.Object.createWithMixins({
     _.each(CLICK_BINDINGS, this._bindToClick, this);
     _.each(SELECTED_POST_BINDINGS, this._bindToSelectedPost, this);
     _.each(FUNCTION_BINDINGS, this._bindToFunction, this);
+  },
+
+  toggleBookmark: function(){
+    this.sendToSelectedPost('toggleBookmark');
+    this.sendToTopicListItemView('toggleBookmark');
   },
 
   quoteReply: function(){
@@ -160,19 +162,32 @@ Discourse.KeyboardShortcuts = Ember.Object.createWithMixins({
     Discourse.__container__.lookup('controller:application').send('showKeyboardShortcutsHelp');
   },
 
-  _bindToSelectedPost: function(action, binding) {
+  sendToTopicListItemView: function(action){
+    var elem = $('tr.selected.topic-list-item.ember-view')[0];
+    if(elem){
+      var view = Ember.View.views[elem.id];
+      view.send(action);
+    }
+  },
+
+  sendToSelectedPost: function(action){
     var container = this.container;
+    // TODO: We should keep track of the post without a CSS class
+    var selectedPostId = parseInt($('.topic-post.selected article.boxed').data('post-id'), 10);
+    if (selectedPostId) {
+      var topicController = container.lookup('controller:topic'),
+          post = topicController.get('postStream.posts').findBy('id', selectedPostId);
+      if (post) {
+        topicController.send(action, post);
+      }
+    }
+  },
+
+  _bindToSelectedPost: function(action, binding) {
+    var self = this;
 
     this.keyTrapper.bind(binding, function() {
-      // TODO: We should keep track of the post without a CSS class
-      var selectedPostId = parseInt($('.topic-post.selected article.boxed').data('post-id'), 10);
-      if (selectedPostId) {
-        var topicController = container.lookup('controller:topic'),
-            post = topicController.get('postStream.posts').findBy('id', selectedPostId);
-        if (post) {
-          topicController.send(action, post);
-        }
-      }
+      self.sendToSelectedPost(action);
     });
   },
 
@@ -247,8 +262,13 @@ Discourse.KeyboardShortcuts = Ember.Object.createWithMixins({
     var $article = $articles.eq(index + direction);
 
     if ($article.size() > 0) {
+
       $articles.removeClass('selected');
       $article.addClass('selected');
+
+      if($article.is('.topic-list-item')){
+        this.sendToTopicListItemView('select');
+      }
 
       if ($article.is('.topic-post')) {
         var tabLoc = $article.find('a.tabLoc');

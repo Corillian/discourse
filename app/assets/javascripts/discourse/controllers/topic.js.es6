@@ -1,7 +1,9 @@
 import ObjectController from 'discourse/controllers/object';
+import BufferedContent from 'discourse/mixins/buffered-content';
 import { spinnerHTML } from 'discourse/helpers/loading-spinner';
+import Topic from 'discourse/models/topic';
 
-export default ObjectController.extend(Discourse.SelectedPostsCount, {
+export default ObjectController.extend(Discourse.SelectedPostsCount, BufferedContent, {
   multiSelect: false,
   needs: ['header', 'modal', 'composer', 'quote-button', 'search', 'topic-progress', 'application'],
   allPostsSelected: false,
@@ -212,8 +214,17 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
         alert(I18n.t("bookmarks.not_bookmarked"));
         return;
       }
-      post.toggleProperty('bookmarked');
-      return false;
+      if (post) {
+        return post.toggleBookmark().catch(function(error) {
+          if (error && error.responseText) {
+            bootbox.alert($.parseJSON(error.responseText).errors[0]);
+          } else {
+            bootbox.alert(I18n.t('generic_error'));
+          }
+        });
+      } else {
+        return this.get("model").toggleBookmark();
+      }
     },
 
     jumpTop: function() {
@@ -235,11 +246,6 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
       this.set('allPostsSelected', false);
     },
 
-    /**
-      Toggle a participant for filtering
-
-      @method toggleParticipant
-    **/
     toggleParticipant: function(user) {
       this.get('postStream').toggleParticipant(Em.get(user, 'username'));
     },
@@ -247,17 +253,13 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     editTopic: function() {
       if (!this.get('details.can_edit')) return false;
 
-      this.setProperties({
-        editingTopic: true,
-        newTitle: this.get('title'),
-        newCategoryId: this.get('category_id')
-      });
+      this.set('editingTopic', true);
       return false;
     },
 
-    // close editing mode
     cancelEditingTopic: function() {
       this.set('editingTopic', false);
+      this.rollbackBuffer();
     },
 
     toggleMultiSelect: function() {
@@ -265,39 +267,24 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     },
 
     finishedEditingTopic: function() {
-      if (this.get('editingTopic')) {
+      if (!this.get('editingTopic')) { return; }
 
-        var topic = this.get('model');
+      // save the modifications
+      var self = this,
+          props = this.get('buffered.buffer');
 
-        // Topic title hasn't been sanitized yet, so the template shouldn't trust it.
-        this.set('topicSaving', true);
-
-        // manually update the titles & category
-        var backup = topic.setPropertiesBackup({
-          title: this.get('newTitle'),
-          category_id: parseInt(this.get('newCategoryId'), 10),
-          fancy_title: this.get('newTitle')
-        });
-
-        // save the modifications
-        var self = this;
-        topic.save().then(function(result){
-          // update the title if it has been changed (cleaned up) server-side
-          topic.setProperties(Em.getProperties(result.basic_topic, 'title', 'fancy_title'));
-          self.set('topicSaving', false);
-        }, function(error) {
-          self.setProperties({ editingTopic: true, topicSaving: false });
-          topic.setProperties(backup);
-          if (error && error.responseText) {
-            bootbox.alert($.parseJSON(error.responseText).errors[0]);
-          } else {
-            bootbox.alert(I18n.t('generic_error'));
-          }
-        });
-
-        // close editing mode
+      Topic.update(this.get('model'), props).then(function() {
+        // Note we roll back on success here because `update` saves
+        // the properties to the topic.
+        self.rollbackBuffer();
         self.set('editingTopic', false);
-      }
+      }).catch(function(error) {
+        if (error && error.responseText) {
+          bootbox.alert($.parseJSON(error.responseText).errors[0]);
+        } else {
+          bootbox.alert(I18n.t('generic_error'));
+        }
+      });
     },
 
     toggledSelectedPost: function(post) {
@@ -349,6 +336,10 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
 
     toggleClosed: function() {
       this.get('content').toggleStatus('closed');
+    },
+
+    recoverTopic: function() {
+      this.get('content').recover();
     },
 
     makeBanner: function() {
@@ -565,23 +556,21 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
   },
 
   // Receive notifications for this topic
-  subscribe: function() {
-
+  subscribe() {
     // Unsubscribe before subscribing again
     this.unsubscribe();
 
-    var bus = Discourse.MessageBus;
+    const self = this;
+    Discourse.MessageBus.subscribe("/topic/" + this.get('id'), function(data) {
+      const topic = self.get('model');
 
-    var topicController = this;
-    bus.subscribe("/topic/" + (this.get('id')), function(data) {
-      var topic = topicController.get('model');
       if (data.notification_level_change) {
         topic.set('details.notification_level', data.notification_level_change);
         topic.set('details.notifications_reason_id', data.notifications_reason_id);
         return;
       }
 
-      var postStream = topicController.get('postStream');
+      const postStream = self.get('postStream');
       switch (data.type) {
         case "revised":
         case "acted":
@@ -665,12 +654,7 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, {
     }
   },
 
-  /**
-    Called the the topmost visible post on the page changes.
-
-    @method topVisibleChanged
-    @params {Discourse.Post} post that is at the top
-  **/
+  // Called the the topmost visible post on the page changes.
   topVisibleChanged: function(post) {
     if (!post) { return; }
 

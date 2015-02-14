@@ -21,7 +21,7 @@
       </a>
     </li>
     <li>
-      {{posts-count-column topic=topic tagName="span"}}
+      {{number topic.posts_count}}
       <h4>{{i18n 'posts_lowercase'}}</h4>
     </li>
     <li class='secondary'>
@@ -82,7 +82,7 @@
 
         {{#if showAllLinksControls}}
           <div class='link-summary'>
-            <a href='#' {{action "showAllLinks"}}>{{i18n 'topic_map.links_shown' totalLinks=details.links.length}}</a>
+            <a href {{action "showAllLinks"}}>{{i18n 'topic_map.links_shown' totalLinks=details.links.length}}</a>
           </div>
         {{/if}}
 

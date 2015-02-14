@@ -81,6 +81,9 @@
   margin-left: 10px;
 }
 
+// hide cancel upload link on IE9 (not supported)
+.ie9 #cancel-file-upload { display: none; }
+
 #reply-control {
   .toggle-preview, #draft-status, #file-uploading {
     position: absolute;
@@ -89,7 +92,6 @@
   }
   .toggle-preview {
     right: 5px;
-    text-decoration: underline;
   }
   #file-uploading {
     left: 51%;
@@ -124,7 +126,6 @@
     }
   }
   a.cancel {
-    text-decoration: underline;
     padding-left: 7px;
   }
   .control-row {
@@ -217,7 +218,7 @@
       display: inline-block;
       .select2-container {
         width: 400px;
-        margin-top: 6px;
+        margin-top: 5px;
         a {
           padding-top: 4px;
           height: 28px;
@@ -330,13 +331,6 @@
   margin-bottom: 10px;
 }
 
-#reply-control.edit-title.private-message {
-  .wmd-controls {
-    transition: top 0.3s ease;
-    top: 140px;
-  }
-}
-
 #reply-control {
   &.hide-preview {
     .wmd-controls {
@@ -358,11 +352,6 @@
     bottom: 48px;
     top: 50px;
 
-    // this removes the topmost margin;
-    // if we don't have this, all posts would have extra space at the top
-    #wmd-preview > *:first-child {
-      margin-top: 0 !important;
-    }
 
     #wmd-input, #wmd-preview-scroller, #wmd-preview {
       box-sizing: border-box;

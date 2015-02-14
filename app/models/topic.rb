@@ -101,6 +101,8 @@ class Topic < ActiveRecord::Base
 
   has_one :warning
 
+  has_one :first_post, -> {where post_number: 1}, class_name: Post
+
   # When we want to temporarily attach some data to a forum topic (usually before serialization)
   attr_accessor :user_data
   attr_accessor :posters  # TODO: can replace with posters_summary once we remove old list code
@@ -122,7 +124,7 @@ class Topic < ActiveRecord::Base
 
   scope :visible, -> { where(visible: true) }
 
-  scope :created_since, lambda { |time_ago| where('created_at > ?', time_ago) }
+  scope :created_since, lambda { |time_ago| where('topics.created_at > ?', time_ago) }
 
   scope :secured, lambda { |guardian=nil|
     ids = guardian.secure_category_ids if guardian
@@ -138,13 +140,6 @@ class Topic < ActiveRecord::Base
            SELECT c.id FROM categories c
            WHERE #{condition[0]})", condition[1])
   }
-
-  # Helps us limit how many topics can be starred in a day
-  class StarLimiter < RateLimiter
-    def initialize(user)
-      super(user, "starred:#{Date.today}", SiteSetting.max_stars_per_day, 1.day.to_i)
-    end
-  end
 
   attr_accessor :ignore_category_auto_close
   attr_accessor :skip_callbacks
@@ -254,13 +249,7 @@ class Topic < ActiveRecord::Base
   end
 
   def fancy_title
-    sanitized_title = title.gsub(/['&\"<>]/, {
-        "'" => '&#39;',
-        '&' => '&amp;',
-        '"' => '&quot;',
-        '<' => '&lt;',
-        '>' => '&gt;',
-      })
+    sanitized_title = ERB::Util.html_escape(title)
 
     return unless sanitized_title
     return sanitized_title unless SiteSetting.title_fancy_entities?
@@ -281,8 +270,10 @@ class Topic < ActiveRecord::Base
               .visible
               .secured(Guardian.new(user))
               .joins("LEFT OUTER JOIN topic_users ON topic_users.topic_id = topics.id AND topic_users.user_id = #{user.id.to_i}")
+              .joins("LEFT OUTER JOIN users ON users.id = topics.user_id")
               .where(closed: false, archived: false)
               .where("COALESCE(topic_users.notification_level, 1) <> ?", TopicUser.notification_levels[:muted])
+              .where("COALESCE(users.trust_level, 0) > 0")
               .created_since(since)
               .listable_topics
               .includes(:category)
@@ -610,27 +601,6 @@ class Topic < ActiveRecord::Base
     @participants_summary ||= TopicParticipantsSummary.new(self, options).summary
   end
 
-  # Enable/disable the star on the topic
-  def toggle_star(user, starred)
-    Topic.transaction do
-      TopicUser.change(user, id, {starred: starred}.merge( starred ? {starred_at: DateTime.now, unstarred_at: nil} : {unstarred_at: DateTime.now}))
-
-      # Update the star count
-      exec_sql "UPDATE topics
-                SET star_count = (SELECT COUNT(*)
-                                  FROM topic_users AS ftu
-                                  WHERE ftu.topic_id = topics.id
-                                    AND ftu.starred = true)
-                WHERE id = ?", id
-
-      if starred
-        StarLimiter.new(user).performed!
-      else
-        StarLimiter.new(user).rollback!
-      end
-    end
-  end
-
   def make_banner!(user)
     # only one banner at the same time
     previous_banner = Topic.where(archetype: Archetype.banner).first
@@ -658,10 +628,6 @@ class Topic < ActiveRecord::Base
       html: post.cooked,
       key: self.id
     }
-  end
-
-  def self.starred_counts_per_day(sinceDaysAgo=30)
-    TopicUser.starred_since(sinceDaysAgo).by_date_starred.count
   end
 
   # Even if the slug column in the database is null, topic.slug will return something:
@@ -851,6 +817,7 @@ class Topic < ActiveRecord::Base
 
 end
 
+
 # == Schema Information
 #
 # Table name: topics
@@ -876,7 +843,6 @@ end
 #  like_count                    :integer          default(0), not null
 #  incoming_link_count           :integer          default(0), not null
 #  bookmark_count                :integer          default(0), not null
-#  star_count                    :integer          default(0), not null
 #  category_id                   :integer
 #  visible                       :boolean          default(TRUE), not null
 #  moderator_posts_count         :integer          default(0), not null

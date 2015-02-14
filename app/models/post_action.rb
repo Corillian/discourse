@@ -80,6 +80,23 @@ class PostAction < ActiveRecord::Base
     user_actions
   end
 
+  def self.lookup_for(user, topics, post_action_type_id)
+    return if topics.blank?
+
+    map = {}
+    PostAction.where(user_id: user.id, post_action_type_id: post_action_type_id, deleted_at: nil)
+              .references(:post)
+              .includes(:post)
+              .where('posts.topic_id in (?)', topics.map(&:id))
+              .order('posts.topic_id, posts.post_number')
+              .pluck('posts.topic_id, posts.post_number')
+              .each do |topic_id, post_number|
+                (map[topic_id] ||= []) << post_number
+    end
+
+    map
+  end
+
   def self.active_flags_counts_for(collection)
     return {} if collection.blank?
 
@@ -110,13 +127,17 @@ class PostAction < ActiveRecord::Base
                         .where(post_id: post.id)
                         .where(post_action_type_id: PostActionType.flag_types.values)
 
+    trigger_spam = false
     actions.each do |action|
       action.agreed_at = Time.zone.now
       action.agreed_by_id = moderator.id
       # so callback is called
       action.save
       action.add_moderator_post_if_needed(moderator, :agreed, delete_post)
+      @trigger_spam = true if action.post_action_type_id == PostActionType.types[:spam]
     end
+
+    DiscourseEvent.trigger(:confirmed_spam_post, post) if @trigger_spam
 
     update_flagged_posts_count
   end
@@ -176,7 +197,7 @@ class PostAction < ActiveRecord::Base
   def self.create_message_for_post_action(user, post, post_action_type_id, opts)
     post_action_type = PostActionType.types[post_action_type_id]
 
-    return unless opts[:message] && [:notify_moderators, :notify_user].include?(post_action_type)
+    return unless opts[:message] && [:notify_moderators, :notify_user, :spam].include?(post_action_type)
 
     title = I18n.t("post_action_types.#{post_action_type}.email_title", title: post.topic.title)
     body = I18n.t("post_action_types.#{post_action_type}.email_body", message: opts[:message], link: "#{Discourse.base_url}#{post.url}")
@@ -189,7 +210,7 @@ class PostAction < ActiveRecord::Base
       raw: body
     }
 
-    if post_action_type == :notify_moderators
+    if [:notify_moderators, :spam].include?(post_action_type)
       opts[:subtype] = TopicSubtype.notify_moderators
       opts[:target_group_names] = "moderators"
     else
@@ -367,7 +388,16 @@ class PostAction < ActiveRecord::Base
       Post.where(id: post_id).update_all ["#{column} = ?", count]
     end
 
+
     topic_id = Post.with_deleted.where(id: post_id).pluck(:topic_id).first
+
+    # topic_user
+    if [:like,:bookmark].include? post_action_type_key
+      TopicUser.update_post_action_cache(user_id: user_id,
+                                         topic_id: topic_id,
+                                         post_action_type: post_action_type_key)
+    end
+
     topic_count = Post.where(topic_id: topic_id).sum(column)
     Topic.where(id: topic_id).update_all ["#{column} = ?", topic_count]
 
@@ -379,7 +409,7 @@ class PostAction < ActiveRecord::Base
 
   def enforce_rules
     post = Post.with_deleted.where(id: post_id).first
-    PostAction.auto_close_if_treshold_reached(post.topic)
+    PostAction.auto_close_if_threshold_reached(post.topic)
     PostAction.auto_hide_if_needed(user, post, post_action_type_key)
     SpamRulesEnforcer.enforce!(post.user) if post_action_type_key == :spam
   end
@@ -392,7 +422,7 @@ class PostAction < ActiveRecord::Base
 
   MAXIMUM_FLAGS_PER_POST = 3
 
-  def self.auto_close_if_treshold_reached(topic)
+  def self.auto_close_if_threshold_reached(topic)
     return if topic.closed?
 
     flags = PostAction.active

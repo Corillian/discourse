@@ -39,7 +39,34 @@ export default DiscourseController.extend({
 
     // Import a quote from the post
     importQuote: function() {
-      this.get('model').importQuote();
+      var postStream = this.get('topic.postStream'),
+          postId = this.get('model.post.id');
+
+      // If there is no current post, use the first post id from the stream
+      if (!postId && postStream) {
+        postId = postStream.get('firstPostId');
+      }
+
+      // If we're editing a post, fetch the reply when importing a quote
+      if (this.get('model.editingPost')) {
+        var replyToPostNumber = this.get('model.post.reply_to_post_number');
+        if (replyToPostNumber) {
+          var replyPost = postStream.get('posts').findBy('post_number', replyToPostNumber);
+          if (replyPost) {
+            postId = replyPost.get('id');
+          }
+        }
+      }
+
+      if (postId) {
+        this.set('model.loading', true);
+        var composer = this;
+        return Discourse.Post.load(postId).then(function(post) {
+          var quote = Discourse.Quote.build(post, post.get("raw"));
+          composer.appendBlockAtCursor(quote);
+          composer.set('model.loading', false);
+        });
+      }
     },
 
     cancel: function() {
@@ -135,7 +162,6 @@ export default DiscourseController.extend({
     var composer = this.get('model'),
         self = this;
 
-
     // Clear the warning state if we're not showing the checkbox anymore
     if (!this.get('showWarning')) {
       this.set('model.isWarning', false);
@@ -155,11 +181,11 @@ export default DiscourseController.extend({
 
     // for now handle a very narrow use case
     // if we are replying to a topic AND not on the topic pop the window up
-    if(!force && composer.get('replyingToTopic')) {
+    if (!force && composer.get('replyingToTopic')) {
       var topic = this.get('topic');
       if (!topic || topic.get('id') !== composer.get('topic.id'))
       {
-        var message = I18n.t("composer.posting_not_on_topic", {title: this.get('model.topic.title')});
+        var message = I18n.t("composer.posting_not_on_topic");
 
         var buttons = [{
           "label": I18n.t("composer.cancel"),
@@ -167,11 +193,11 @@ export default DiscourseController.extend({
           "link": true
         }];
 
-        if(topic) {
+        if (topic) {
           buttons.push({
-            "label": I18n.t("composer.reply_here") + "<br/><div class='topic-title overflow-ellipsis'>" + topic.get('title') + "</div>",
+            "label": I18n.t("composer.reply_here") + "<br/><div class='topic-title overflow-ellipsis'>" + Handlebars.Utils.escapeExpression(topic.get('title')) + "</div>",
             "class": "btn btn-reply-here",
-            "callback": function(){
+            "callback": function() {
               composer.set('topic', topic);
               composer.set('post', null);
               self.save(true);
@@ -180,14 +206,14 @@ export default DiscourseController.extend({
         }
 
         buttons.push({
-          "label": I18n.t("composer.reply_original") + "<br/><div class='topic-title overflow-ellipsis'>" + this.get('model.topic.title') + "</div>",
+          "label": I18n.t("composer.reply_original") + "<br/><div class='topic-title overflow-ellipsis'>" + Handlebars.Utils.escapeExpression(this.get('model.topic.title')) + "</div>",
           "class": "btn-primary btn-reply-on-original",
-          "callback": function(){
+          "callback": function() {
             self.save(true);
           }
         });
 
-        bootbox.dialog(message, buttons, {"classes": "reply-where-modal"});
+        bootbox.dialog(message, buttons, { "classes": "reply-where-modal" });
         return;
       }
     }
@@ -213,7 +239,9 @@ export default DiscourseController.extend({
       }
 
       if ((!composer.get('replyingToTopic')) || (!Discourse.User.currentProp('disable_jump_reply'))) {
-        Discourse.URL.routeTo(opts.post.get('url'));
+        if (opts.post) {
+          Discourse.URL.routeTo(opts.post.get('url'));
+        }
       }
     }, function(error) {
       composer.set('disableDrafts', false);
@@ -344,8 +372,8 @@ export default DiscourseController.extend({
         if (composerModel.get('composeState') === Discourse.Composer.DRAFT &&
             composerModel.get('draftKey') === opts.draftKey) {
 
-            composerModel.set('composeState', Discourse.Composer.OPEN);
-            return resolve();
+          composerModel.set('composeState', Discourse.Composer.OPEN);
+          return resolve();
         }
 
         // If it's a different draft, cancel it and try opening again.

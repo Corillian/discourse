@@ -201,18 +201,19 @@ SQL
   end
 
   def ensure_slug
-    if name.present?
-      self.name.strip!
+    return unless name.present?
 
-      if slug.present?
-        # custom slug
-        errors.add(:slug, "is already in use") if duplicate_slug?
-      else
-        # auto slug
-        self.slug = Slug.for(name)
-        return if self.slug.blank?
-        self.slug = '' if duplicate_slug?
-      end
+    self.name.strip!
+
+    if slug.present?
+      # santized custom slug
+      self.slug = Slug.for(slug)
+      errors.add(:slug, 'is already in use') if duplicate_slug?
+    else
+      # auto slug
+      self.slug = Slug.for(name)
+      return if self.slug.blank?
+      self.slug = '' if duplicate_slug?
     end
   end
 
@@ -340,9 +341,9 @@ SQL
     self.where(id: parent_slug.to_i).pluck(:id).first
   end
 
-  def self.query_category(slug, parent_category_id)
-    self.where(slug: slug, parent_category_id: parent_category_id).includes(:featured_users).first ||
-    self.where(id: slug.to_i, parent_category_id: parent_category_id).includes(:featured_users).first
+  def self.query_category(slug_or_id, parent_category_id)
+    self.where(slug: slug_or_id, parent_category_id: parent_category_id).includes(:featured_users).first ||
+    self.where(id: slug_or_id.to_i, parent_category_id: parent_category_id).includes(:featured_users).first
   end
 
   def self.find_by_email(email)
@@ -365,10 +366,14 @@ SQL
     @@url_cache.clear
   end
 
+  def full_slug
+    url[3..-1].gsub("/", "-")
+  end
+
   def url
     url = @@url_cache[self.id]
     unless url
-      url = "/category"
+      url = "/c"
       url << "/#{parent_category.slug}" if parent_category_id
       url << "/#{slug}"
       url.freeze

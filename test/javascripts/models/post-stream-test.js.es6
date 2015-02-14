@@ -1,7 +1,10 @@
-module("Discourse.PostStream");
+module("model:post-stream");
+
+import PostStream from 'discourse/models/post-stream';
+import Topic from 'discourse/models/topic';
 
 var buildStream = function(id, stream) {
-  var topic = Discourse.Topic.create({id: id, chunk_size: 5});
+  var topic = Topic.create({id: id, chunk_size: 5});
   var ps = topic.get('postStream');
   if (stream) {
     ps.set('stream', stream);
@@ -12,7 +15,7 @@ var buildStream = function(id, stream) {
 var participant = {username: 'eviltrout'};
 
 test('create', function() {
-  ok(Discourse.PostStream.create(), 'it can be created with no parameters');
+  ok(PostStream.create(), 'it can be created with no parameters');
 });
 
 test('defaults', function() {
@@ -119,6 +122,17 @@ test("cancelFilter", function() {
   postStream.toggleParticipant(participant);
   postStream.cancelFilter();
   blank(postStream.get('userFilters'), "cancelling the filters clears the userFilters");
+});
+
+test("findPostIdForPostNumber", function() {
+  var postStream = buildStream(1234, [10, 20, 30, 40, 50, 60, 70]);
+  postStream.set('gaps', { before: { 60: [55, 58] } });
+
+  equal(postStream.findPostIdForPostNumber(500), null, 'it returns null when the post cannot be found');
+  equal(postStream.findPostIdForPostNumber(1), 10, 'it finds the postId at the beginning');
+  equal(postStream.findPostIdForPostNumber(5), 50, 'it finds the postId in the middle');
+  equal(postStream.findPostIdForPostNumber(8), 60, 'it respects gaps');
+
 });
 
 test("toggleParticipant", function() {
