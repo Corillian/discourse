@@ -107,6 +107,7 @@ gem 'ember-rails'
 gem 'ember-source', '1.9.0.beta.4'
 gem 'handlebars-source', '2.0.0'
 gem 'barber'
+gem '6to5'
 
 gem 'message_bus'
 gem 'rails_multisite', path: 'vendor/gems/rails_multisite'
@@ -116,8 +117,11 @@ gem 'eventmachine'
 gem 'fast_xs'
 
 gem 'fast_xor'
-gem 'fastimage'
+
 gem 'azure', require: false
+
+# while we sort out https://github.com/sdsykes/fastimage/pull/46
+gem 'fastimage_discourse', require: 'fastimage'
 gem 'fog', '1.26.0', require: false
 gem 'unf', require: false
 
@@ -143,15 +147,10 @@ gem 'omniauth-github-discourse', require: 'omniauth-github'
 gem 'omniauth-oauth2', require: false
 gem 'omniauth-google-oauth2'
 gem 'oj'
-
-if rails_master?
-  # native casting
-  gem 'pg', '0.18.0.pre20141117110243'
-else
-  # while resolving https://groups.google.com/forum/#!topic/ruby-pg/5_ylGmog1S4
-  gem 'pg', '0.15.1'
-end
-
+# pg is downgraded while we investigate a severe memory issu
+#  during multi threading that shows up on 0.18.1
+# This also means we DO NOT work on Ruby 2.2 at the moment
+gem 'pg', '0.15.1'
 gem 'pry-rails', require: false
 gem 'rake'
 

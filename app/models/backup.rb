@@ -1,4 +1,3 @@
-require "s3_helper"
 require "azure"
 
 class Backup
@@ -50,8 +49,8 @@ class Backup
   end
 
   def s3
-    return @s3_helper if @s3_helper
-    @s3_helper = S3Helper.new(s3_bucket)
+    require "s3_helper" unless defined? S3Helper
+    @s3_helper ||= S3Helper.new(s3_bucket)
   end
 
   def upload_to_s3
