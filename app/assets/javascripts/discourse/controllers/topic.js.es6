@@ -44,16 +44,18 @@ export default ObjectController.extend(Discourse.SelectedPostsCount, BufferedCon
   }.observes('controllers.search.term', 'controllers.header.visibleDropdown'),
 
   postStreamLoadedAllPostsChanged: function(){
-    // hold back rendering 1 run loop for every transition.
-    var self = this;
+    // semantics of loaded all posts are slightly diff at topic level,
+    // it just means that we "once" loaded all posts, this means we don't
+    // keep re-rendering the suggested topics when new posts zoom in
     var loaded = this.get('postStream.loadedAllPosts');
-    this.set('loadedAllPosts', false);
 
-    if(loaded){
-      Em.run.next(function(){
-        self.set('loadedAllPosts',true);
-      });
+    if(loaded) {
+      this.set('loadedTopicId', this.get('model.id'));
+    } else {
+      loaded = this.get('loadedTopicId') === this.get('model.id');
     }
+
+    this.set('loadedAllPosts', loaded);
 
   }.observes('postStream', 'postStream.loadedAllPosts'),
 

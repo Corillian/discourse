@@ -640,6 +640,7 @@ en:
       requires_invite: "Sorry, access to this forum is by invite only."
       not_activated: "You can't log in yet. We previously sent an activation email to you at <b>{{sentTo}}</b>. Please follow the instructions in that email to activate your account."
       not_allowed_from_ip_address: "You can't login from that IP address."
+      admin_not_allowed_from_ip_address: "You can't log in as admin from that IP address."
       resend_activation_email: "Click here to send the activation email again."
       sent_activation_email_again: "We sent another activation email to you at <b>{{currentEmail}}</b>. It might take a few minutes for it to arrive; be sure to check your spam folder."
       google:
@@ -813,6 +814,7 @@ en:
         close_topics: "Close Topics"
         archive_topics: "Archive Topics"
         notification_level: "Change Notification Level"
+        choose_new_category: "Choose the new category for the topics:"
         selected:
           one: "You have selected <b>1</b> topic."
           other: "You have selected <b>{{count}}</b> topics."
@@ -1407,7 +1409,7 @@ en:
     posts_lowercase: "posts"
     posts_long: "there are {{number}} posts in this topic"
     posts_likes_MF: |
-      This topic has {count, plural, one {1 post} other {# posts}} {ratio, select,
+      This topic has {count, plural, one {1 reply} other {# replies}} {ratio, select,
         low {with a high like to post ratio}
         med {with a very high like to post ratio}
         high {with an extremely high like to post ratio}
@@ -1493,6 +1495,7 @@ en:
           title: "Top Weekly"
         daily:
           title: "Top Daily"
+        all: "All Time"
         this_year: "This year"
         this_month: "This month"
         this_week: "This week"
@@ -2050,6 +2053,7 @@ en:
         time_read: "Read Time"
         delete: "Delete User"
         delete_forbidden_because_staff: "Admins and moderators can't be deleted."
+        delete_posts_forbidden_because_staff: "Can't delete all posts of admins and moderators."
         delete_forbidden:
           one: "Users can't be deleted if they have posts. Delete all posts before trying to delete a user. (Posts older than %{count} day old can't be deleted.)"
           other: "Users can't be deleted if they have posts. Delete all posts before trying to delete a user. (Posts older than %{count} days old can't be deleted.)"
@@ -2160,6 +2164,7 @@ en:
         none: 'none'
         no_results: "No results found."
         clear_filter: "Clear"
+        add_url: "add URL"
         categories:
           all_results: 'All'
           required: 'Required'

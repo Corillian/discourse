@@ -6,10 +6,6 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    6to5 (0.5.0)
-      6to5-source (>= 1.14, < 4)
-      execjs (~> 2.0)
-    6to5-source (3.3.7)
     CFPropertyList (2.2.8)
     actionmailer (4.1.9)
       actionpack (= 4.1.9)
@@ -42,14 +38,18 @@ GEM
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
     annotate (2.6.5)
+      activerecord (>= 2.3.0)
+      rake (>= 0.8.7)
     arel (5.0.1.20140414130214)
     azure (0.6.0)
-      activerecord (>= 2.3.0)
       json
       mime-types (~> 1.0)
       nokogiri (~> 1.5)
-      rake (>= 0.8.7)
       uuid
+    babel-source (4.6.6)
+    babel-transpiler (0.6.0)
+      babel-source (>= 4.0, < 5)
+      execjs (~> 2.0)
     barber (0.5.0)
       ember-source
       execjs
@@ -213,7 +213,7 @@ GEM
     libv8 (3.16.14.7)
     listen (0.7.3)
     logster (0.1.7)
-    lru_redux (0.8.3)
+    lru_redux (0.8.4)
     macaddr (1.6.1)
       systemu (~> 2.5.0)
     mail (2.5.4)
@@ -466,11 +466,11 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  6to5
   actionpack-action_caching
   active_model_serializers (~> 0.8.0)
   annotate
   azure
+  babel-transpiler
   barber
   better_errors
   binding_of_caller

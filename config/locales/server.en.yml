@@ -15,18 +15,6 @@
 # http://yamllint.com/
 
 en:
-  stringex:
-    characters:
-      ellipsis: ""
-      number: "-"
-  # some default transliteration rules may be missing, add them to your locale
-  i18n:
-    transliterate:
-      rule:
-        ț: "t"
-        Ț: "t"
-        ș: "s"
-        Ș: "s"
   dates:
     short_date_no_year: "D MMM"
     short_date: "D MMM, YYYY"
@@ -1044,6 +1032,7 @@ en:
 
     white_listed_spam_host_domains: "A list of domains excluded from spam host testing. New users will never be restricted from creating posts with links to these domains."
     staff_like_weight: "How much extra weighting factor to give staff likes."
+    topic_view_duration_hours: "Count new a topic view once per IP/User every N hours"
 
     levenshtein_distance_spammer_emails: "When matching spammer emails, number of characters difference that will still allow a fuzzy match."
     max_new_accounts_per_registration_ip: "If there are already (n) trust level 0 accounts from this IP (and none is a staff member or at TL2 or higher), stop accepting new signups from that IP."
@@ -1087,6 +1076,7 @@ en:
     allow_uploaded_avatars: "Allow users to upload custom avatars."
     allow_animated_avatars: "Allow users to use animated gif avatars. WARNING: run the avatars:refresh rake task after changing this setting."
     allow_animated_thumbnails: "Generates animated thumbnails of animated gifs."
+    default_avatars: "URLs to avatars that will be used by default for new users until they change them."
     automatically_download_gravatars: "Download Gravatars for users upon account creation or email change."
     digest_topics: "The maximum number of topics to display in the email digest."
     digest_min_excerpt_length: "Minimum post excerpt in the email digest, in characters."
@@ -1097,7 +1087,8 @@ en:
 
     detect_custom_avatars: "Whether or not to check that users have uploaded custom avatars."
     max_daily_gravatar_crawls: "Maximum number of times Discourse will check Gravatar for custom avatars in a day"
-    public_user_custom_fields: "A whitelist of custom fields for a user that can be shown publically."
+    public_user_custom_fields: "A whitelist of custom fields for a user that can be shown publicly."
+    staff_user_custom_fields: "A whitelist of custom fields for a user that can be shown to staff."
 
     allow_profile_backgrounds: "Allow users to upload profile backgrounds."
 
@@ -1248,7 +1239,8 @@ en:
     active: "Your account is activated and ready to use."
     activate_email: "<p>You're almost done! We sent an activation mail to <b>%{email}</b>. Please follow the instructions in the email to activate your account.</p><p>If it doesn't arrive, check your spam folder, or try to log in again to send another activation mail.</p>"
     not_activated: "You can't log in yet. We sent an activation email to you. Please follow the instructions in the email to activate your account."
-    not_allowed_from_ip_address: "You can't login as %{username} from that IP address."
+    not_allowed_from_ip_address: "You can't log in as %{username} from that IP address."
+    admin_not_allowed_from_ip_address: "You can't log in as admin from that IP address."
     suspended: "You can't log in until %{date}."
     suspended_with_reason: "You can't log in until %{date}. The reason you were suspended: %{reason}"
     errors: "%{errors}"
