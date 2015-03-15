@@ -183,11 +183,12 @@ class PostAction < ActiveRecord::Base
   end
 
   def add_moderator_post_if_needed(moderator, disposition, delete_post=false)
+    return if !SiteSetting.auto_respond_to_flag_actions
     return if related_post.nil? || related_post.topic.nil?
     return if moderator_already_replied?(related_post.topic, moderator)
     message_key = "flags_dispositions.#{disposition}"
     message_key << "_and_deleted" if delete_post
-    related_post.topic.add_moderator_post(moderator, I18n.t(message_key))
+    related_post.topic.add_moderator_post(moderator, I18n.t(message_key), skip_notifications: true)
   end
 
   def moderator_already_replied?(topic, moderator)

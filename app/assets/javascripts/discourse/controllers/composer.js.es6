@@ -1,7 +1,7 @@
 import DiscourseController from 'discourse/controllers/controller';
 
 export default DiscourseController.extend({
-  needs: ['modal', 'topic', 'composer-messages'],
+  needs: ['modal', 'topic', 'composer-messages', 'application'],
 
   replyAsNewTopicDraft: Em.computed.equal('model.draftKey', Discourse.Composer.REPLY_AS_NEW_TOPIC_KEY),
   checkedMessages: false,
@@ -93,11 +93,6 @@ export default DiscourseController.extend({
       }
     },
 
-  },
-
-  updateDraftStatus() {
-    const c = this.get('model');
-    if (c) { c.updateDraftStatus(); }
   },
 
   appendText(text, opts) {
@@ -238,6 +233,8 @@ export default DiscourseController.extend({
         currentUser.set('reply_count', currentUser.get('reply_count') + 1);
       }
 
+      // TODO disableJumpReply is super crude, it needs to provide some sort
+      // of notification to the end user
       if (!composer.get('replyingToTopic') || !disableJumpReply) {
         if (opts.post && !staged) {
           Discourse.URL.routeTo(opts.post.get('url'));
@@ -248,7 +245,11 @@ export default DiscourseController.extend({
       bootbox.alert(error);
     });
 
-    staged = composer.get('stagedPost');
+
+    if ( this.get('controllers.application.currentRouteName').split('.')[0] === 'topic' &&
+         composer.get('topic.id') === this.get('controllers.topic.model.id') ) {
+      staged = composer.get('stagedPost');
+    }
 
     Em.run.schedule('afterRender', function() {
       if (staged && !disableJumpReply) {
@@ -409,7 +410,7 @@ export default DiscourseController.extend({
   // Given a potential instance and options, set the model for this composer.
   _setModel(composerModel, opts) {
     if (opts.draft) {
-      composerModel = Discourse.Composer.loadDraft(opts.draftKey, opts.draftSequence, opts.draft);
+      composerModel = Discourse.Composer.loadDraft(opts);
       if (composerModel) {
         composerModel.set('topic', opts.topic);
       }
