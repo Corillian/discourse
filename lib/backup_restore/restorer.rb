@@ -1,14 +1,17 @@
 module BackupRestore
 
-  class RestoreDisabledError  < RuntimeError; end
+  class RestoreDisabledError < RuntimeError; end
   class FilenameMissingError < RuntimeError; end
 
   class Restorer
 
     attr_reader :success
 
-    def initialize(user_id, filename, publish_to_message_bus = false)
-      @user_id, @filename, @publish_to_message_bus = user_id, filename, publish_to_message_bus
+    def initialize(user_id, opts={})
+      @user_id = user_id
+      @client_id = opts[:client_id]
+      @filename = opts[:filename]
+      @publish_to_message_bus = opts[:publish_to_message_bus] || false
 
       ensure_restore_is_enabled
       ensure_no_operation_is_running
@@ -45,11 +48,10 @@ module BackupRestore
 
       switch_schema!
 
-      # TOFIX: MessageBus is busted...
-
       migrate_database
       reconnect_database
       reload_site_settings
+      clear_emoji_cache
 
       disable_readonly_mode
       ### READ-ONLY / END ###
@@ -73,7 +75,7 @@ module BackupRestore
     protected
 
     def ensure_restore_is_enabled
-      raise Restore::RestoreDisabledError unless Rails.env.development? || SiteSetting.allow_restore?
+      raise BackupRestore::RestoreDisabledError unless Rails.env.development? || SiteSetting.allow_restore?
     end
 
     def ensure_no_operation_is_running
@@ -88,7 +90,7 @@ module BackupRestore
     end
 
     def ensure_we_have_a_filename
-      raise Restore::FilenameMissingError if @filename.nil?
+      raise BackupRestore::FilenameMissingError if @filename.nil?
     end
 
     def initialize_state
@@ -267,6 +269,11 @@ module BackupRestore
       SiteSetting.refresh!
     end
 
+    def clear_emoji_cache
+      log "Clearing emoji cache..."
+      Emoji.clear_cache
+    end
+
     def extract_uploads
       if `tar --list --file #{@tar_filename} | grep 'uploads/'`.present?
         log "Extracting uploads..."
@@ -348,7 +355,7 @@ module BackupRestore
     def publish_log(message, timestamp)
       return unless @publish_to_message_bus
       data = { timestamp: timestamp, operation: "restore", message: message }
-      MessageBus.publish(BackupRestore::LOGS_CHANNEL, data, user_ids: [@user_id])
+      MessageBus.publish(BackupRestore::LOGS_CHANNEL, data, user_ids: [@user_id], client_ids: [@client_id])
     end
 
     def save_log(message, timestamp)

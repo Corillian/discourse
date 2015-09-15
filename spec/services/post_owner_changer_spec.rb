@@ -47,7 +47,7 @@ describe PostOwnerChanger do
         p2user.user_stat.update_attributes(topic_count: 0, post_count: 1, first_post_created_at: p2.created_at, topic_reply_count: 1)
 
         UserAction.create!( action_type: UserAction::NEW_TOPIC, user_id: p1user.id, acting_user_id: p1user.id,
-                            target_post_id: p1.id, target_topic_id: p1.topic_id, created_at: p1.created_at )
+                            target_post_id: -1, target_topic_id: p1.topic_id, created_at: p1.created_at )
         UserAction.create!( action_type: UserAction::REPLY, user_id: p2user.id, acting_user_id: p2user.id,
                             target_post_id: p2.id, target_topic_id: p2.topic_id, created_at: p2.created_at )
 
@@ -60,33 +60,33 @@ describe PostOwnerChanger do
         change_owners
 
         p1user.reload; p2user.reload; user_a.reload
-        p1user.topic_count.should == 0
-        p1user.post_count.should == 0
-        p2user.topic_count.should == 0
-        p2user.post_count.should == 0
-        user_a.topic_count.should == 1
-        user_a.post_count.should == 2
-        p1user.user_stat.first_post_created_at.should == nil
-        p2user.user_stat.first_post_created_at.should == nil
-        p1user.user_stat.topic_reply_count.should == 0
-        p2user.user_stat.topic_reply_count.should == 0
-        user_a.user_stat.first_post_created_at.should be_present
+        expect(p1user.topic_count).to eq(0)
+        expect(p1user.post_count).to eq(0)
+        expect(p2user.topic_count).to eq(0)
+        expect(p2user.post_count).to eq(0)
+        expect(user_a.topic_count).to eq(1)
+        expect(user_a.post_count).to eq(2)
+        expect(p1user.user_stat.first_post_created_at).to eq(nil)
+        expect(p2user.user_stat.first_post_created_at).to eq(nil)
+        expect(p1user.user_stat.topic_reply_count).to eq(0)
+        expect(p2user.user_stat.topic_reply_count).to eq(0)
+        expect(user_a.user_stat.first_post_created_at).to be_present
       end
 
       it "updates UserAction records" do
         g = Guardian.new(editor)
-        UserAction.stats(user_a.id, g).should == []
+        expect(UserAction.stats(user_a.id, g)).to eq([])
 
         change_owners
 
-        UserAction.stats(p1user.id, g).should == []
-        UserAction.stats(p2user.id, g).should == []
+        expect(UserAction.stats(p1user.id, g)).to eq([])
+        expect(UserAction.stats(p2user.id, g)).to eq([])
         stats = UserAction.stats(user_a.id, g)
-        stats.size.should == 2
-        stats[0].action_type.should == UserAction::NEW_TOPIC
-        stats[0].count.should == 1
-        stats[1].action_type.should == UserAction::REPLY
-        stats[1].count.should == 1
+        expect(stats.size).to eq(2)
+        expect(stats[0].action_type).to eq(UserAction::NEW_TOPIC)
+        expect(stats[0].count).to eq(1)
+        expect(stats[1].action_type).to eq(UserAction::REPLY)
+        expect(stats[1].count).to eq(1)
       end
     end
   end

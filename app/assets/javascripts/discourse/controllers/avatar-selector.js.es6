@@ -1,29 +1,44 @@
-import ModalFunctionality from 'discourse/mixins/modal-functionality';
-import DiscourseController from 'discourse/controllers/controller';
+import computed from "ember-addons/ember-computed-decorators";
+import ModalFunctionality from "discourse/mixins/modal-functionality";
 
-export default DiscourseController.extend(ModalFunctionality, {
+export default Ember.Controller.extend(ModalFunctionality, {
+  @computed("selected", "system_avatar_upload_id", "gravatar_avatar_upload_id", "custom_avatar_upload_id")
+  selectedUploadId(selected, system, gravatar, custom) {
+    switch (selected) {
+      case "system": return system;
+      case "gravatar": return gravatar;
+      default: return custom;
+    }
+  },
 
-  selectedUploadId: function(){
-      switch (this.get("selected")) {
-        case "system": return this.get("system_avatar_upload_id");
-        case "gravatar": return this.get("gravatar_avatar_upload_id");
-        default: return this.get("custom_avatar_upload_id");
-      }
-  }.property('selected', 'system_avatar_upload_id', 'gravatar_avatar_upload_id', 'custom_avatar_upload_id'),
+  @computed("selected", "system_avatar_template", "gravatar_avatar_template", "custom_avatar_template")
+  selectedAvatarTemplate(selected, system, gravatar, custom) {
+    switch (selected) {
+      case "system": return system;
+      case "gravatar": return gravatar;
+      default: return custom;
+    }
+  },
+
+  @computed()
+  allowImageUpload() {
+    return Discourse.Utilities.allowsImages();
+  },
 
   actions: {
-    useUploadedAvatar: function() { this.set("selected", "uploaded"); },
-    useGravatar: function() { this.set("selected", "gravatar"); },
-    useSystem: function() { this.set("selected", "system"); },
-    refreshGravatar: function() {
-      var self = this;
-      self.set("gravatarRefreshDisabled", true);
-      Discourse
-          .ajax("/user_avatar/" + this.get("username") + "/refresh_gravatar", {method: 'POST'})
-          .then(function(result){
-            self.set("gravatarRefreshDisabled", false);
-            self.set("gravatar_avatar_upload_id", result.upload_id);
-          });
+    useUploadedAvatar() { this.set("selected", "uploaded"); },
+    useGravatar() { this.set("selected", "gravatar"); },
+    useSystem() { this.set("selected", "system"); },
+
+    refreshGravatar() {
+      this.set("gravatarRefreshDisabled", true);
+      return Discourse
+        .ajax(`/user_avatar/${this.get("username")}/refresh_gravatar.json`, { method: "POST" })
+        .then(result => this.setProperties({
+          gravatar_avatar_template: result.gravatar_avatar_template,
+          gravatar_upload_id: result.gravatar_upload_id,
+        }))
+        .finally(() => this.set("gravatarRefreshDisabled", false));
     }
   }
 

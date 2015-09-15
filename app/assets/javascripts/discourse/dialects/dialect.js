@@ -167,6 +167,11 @@ function outdent(t) {
   return t.replace(/^([ ]{4}|\t)/gm, "");
 }
 
+function removeEmptyLines(t) {
+  return t.replace(/^\n+/, "")
+          .replace(/\s+$/, "");
+}
+
 function hideBackslashEscapedCharacters(t) {
   return t.replace(/\\\\/g, "\u1E800")
           .replace(/\\`/g, "\u1E8001");
@@ -183,17 +188,10 @@ function hoistCodeBlocksAndSpans(text) {
 
   // /!\ the order is important /!\
 
-  // <pre>...</pre> code blocks
-  text = text.replace(/(^\n*|\n\n)<pre>([\s\S]*?)<\/pre>/ig, function(_, before, content) {
-    var hash = md5(content);
-    hoisted[hash] = escape(showBackslashEscapedCharacters(content.trim()));
-    return before + "<pre>" + hash + "</pre>";
-  });
-
   // fenced code blocks (AKA GitHub code blocks)
-  text = text.replace(/(^\n*|\n\n)```([a-z0-9\-]*)\n([\s\S]*?)\n```/g, function(_, before, language, content) {
+  text = text.replace(/(^\n*|\n)```([a-z0-9\-]*)\n([\s\S]*?)\n```/g, function(_, before, language, content) {
     var hash = md5(content);
-    hoisted[hash] = escape(showBackslashEscapedCharacters(content.trim()));
+    hoisted[hash] = escape(showBackslashEscapedCharacters(removeEmptyLines(content)));
     return before + "```" + language + "\n" + hash + "\n```";
   });
 
@@ -209,10 +207,15 @@ function hoistCodeBlocksAndSpans(text) {
     }
     // we can safely hoist the code block
     var hash = md5(content);
-    // only remove trailing whitespace
-    content = content.replace(/\s+$/, "");
-    hoisted[hash] = escape(outdent(showBackslashEscapedCharacters(content)));
+    hoisted[hash] = escape(outdent(showBackslashEscapedCharacters(removeEmptyLines(content))));
     return before + "    " + hash + "\n";
+  });
+
+  // <pre>...</pre> code blocks
+  text = text.replace(/(\s|^)<pre>([\s\S]*?)<\/pre>/ig, function(_, before, content) {
+    var hash = md5(content);
+    hoisted[hash] = escape(showBackslashEscapedCharacters(removeEmptyLines(content)));
+    return before + "<pre>" + hash + "</pre>";
   });
 
   // code spans (double & single `)
@@ -274,9 +277,19 @@ Discourse.Dialect = {
     // If we hoisted out anything, put it back
     var keys = Object.keys(hoisted);
     if (keys.length) {
-      keys.forEach(function(key) {
-        result = result.replace(new RegExp(key, "g"), hoisted[key]);
-      });
+      var found = true;
+
+      var unhoist = function(key) {
+        result = result.replace(new RegExp(key, "g"), function() {
+          found = true;
+          return hoisted[key];
+        });
+      };
+
+      while(found) {
+        found = false;
+        keys.forEach(unhoist);
+      }
     }
 
     return result.trim();
@@ -470,7 +483,7 @@ Discourse.Dialect = {
 
   **/
   replaceBlock: function(args) {
-    this.registerBlock(args.start.toString(), function(block, next) {
+    var fn = function(block, next) {
 
       var linebreaks = dialect.options.traditional_markdown_linebreaks ||
           Discourse.SiteSettings.traditional_markdown_linebreaks;
@@ -488,6 +501,12 @@ Discourse.Dialect = {
       var pos = args.start.lastIndex - match[0].length,
           leading = block.slice(0, pos),
           trailing = match[2] ? match[2].replace(/^\n*/, "") : "";
+
+      if(args.withoutLeading && args.withoutLeading.test(leading)) {
+        //The other leading block should be processed first! eg a code block wrapped around a code block.
+        return;
+      }
+
       // just give up if there's no stop tag in this or any next block
       args.stop.lastIndex = block.length - trailing.length;
       if (!args.stop.exec(block) && lastChance()) { return; }
@@ -560,7 +579,13 @@ Discourse.Dialect = {
       var emitterResult = args.emitter.call(this, contentBlocks, match, dialect.options);
       if (emitterResult) { result.push(emitterResult); }
       return result;
-    });
+    };
+
+    if (args.priority) {
+      fn.priority = args.priority;
+    }
+
+    this.registerBlock(args.start.toString(), fn);
   },
 
   /**

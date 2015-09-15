@@ -50,7 +50,6 @@ const Group = Discourse.Model.extend({
       type: "PUT",
       data: { usernames: usernames }
     }).then(function() {
-      // reload member list
       self.findMembers();
     });
   },
@@ -61,7 +60,10 @@ const Group = Discourse.Model.extend({
       alias_level: this.get('alias_level'),
       visible: !!this.get('visible'),
       automatic_membership_email_domains: this.get('emailDomains'),
-      automatic_membership_retroactive: !!this.get('automatic_membership_retroactive')
+      automatic_membership_retroactive: !!this.get('automatic_membership_retroactive'),
+      title: this.get('title'),
+      primary_group: !!this.get('primary_group'),
+      grant_trust_level: this.get('grant_trust_level')
     };
   },
 

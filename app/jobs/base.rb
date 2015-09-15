@@ -14,7 +14,7 @@ module Jobs
   end
 
   def self.num_email_retry_jobs
-    Sidekiq::RetrySet.new.select { |job| job.klass =~ /Email$/ }.size
+    Sidekiq::RetrySet.new.count { |job| job.klass =~ /Email$/ }
   end
 
   class Base
@@ -186,7 +186,7 @@ module Jobs
 
   end
 
-  class HandledExceptionWrapper < Exception
+  class HandledExceptionWrapper < StandardError
     attr_accessor :wrapped
     def initialize(ex)
       super("Wrapped #{ex.class}: #{ex.message}")
@@ -227,7 +227,8 @@ module Jobs
   end
 
   def self.enqueue_at(datetime, job_name, opts={})
-    enqueue_in( [(datetime - Time.zone.now).to_i, 0].max, job_name, opts )
+    secs = [(datetime - Time.zone.now).to_i, 0].max
+    enqueue_in(secs, job_name, opts)
   end
 
   def self.cancel_scheduled_job(job_name, params={})

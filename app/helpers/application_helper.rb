@@ -7,12 +7,22 @@ require_dependency 'configurable_urls'
 require_dependency 'mobile_detection'
 require_dependency 'category_badge'
 require_dependency 'global_path'
+require_dependency 'canonical_url'
 
 module ApplicationHelper
   include CurrentUser
   include CanonicalURL::Helpers
   include ConfigurableUrls
   include GlobalPath
+
+  def ga_universal_json
+    cookie_domain = SiteSetting.ga_universal_domain_name.gsub(/^http(s)?:\/\//, '')
+    result = {cookieDomain: cookie_domain}
+    if current_user.present?
+      result[:userId] = current_user.id
+    end
+    result.to_json.html_safe
+  end
 
   def shared_session_key
     if SiteSetting.long_polling_base_url != '/'.freeze && current_user
@@ -46,7 +56,7 @@ module ApplicationHelper
   end
 
   def html_classes
-    "#{mobile_view? ? 'mobile-view' : 'desktop-view'} #{mobile_device? ? 'mobile-device' : 'not-mobile-device'} #{rtl_class}"
+    "#{mobile_view? ? 'mobile-view' : 'desktop-view'} #{mobile_device? ? 'mobile-device' : 'not-mobile-device'} #{rtl_class} #{current_user ? '' : 'anon'}"
   end
 
   def rtl_class
@@ -94,6 +104,16 @@ module ApplicationHelper
 
   def staff?
     current_user.try(:staff?)
+  end
+
+  def rtl?
+    ["ar", "fa_IR", "he"].include?(user_locale)
+  end
+
+  def user_locale
+    locale = current_user.locale if current_user && SiteSetting.allow_user_locale
+    # changing back to default shoves a blank string there
+    locale.present? ? locale : SiteSetting.default_locale
   end
 
   # Creates open graph and twitter card meta data
@@ -165,6 +185,24 @@ module ApplicationHelper
 
   def category_badge(category, opts=nil)
     CategoryBadge.html_for(category, opts).html_safe
+  end
+
+  def self.all_connectors
+    @all_connectors = Dir.glob("plugins/*/app/views/connectors/**/*.html.erb")
+  end
+
+  def server_plugin_outlet(name)
+
+    # Don't evaluate plugins in test
+    return "" if Rails.env.test?
+
+    matcher = Regexp.new("/connectors/#{name}/.*\.html\.erb$")
+    erbs = ApplicationHelper.all_connectors.select {|c| c =~ matcher }
+    return "" if erbs.blank?
+
+    result = ""
+    erbs.each {|erb| result << render(file: erb) }
+    result.html_safe
   end
 
 end

@@ -2,7 +2,9 @@
   A model representing a Topic's details that aren't always present, such as a list of participants.
   When showing topics in lists and such this information should not be required.
 **/
-const TopicDetails = Discourse.Model.extend({
+import RestModel from 'discourse/models/rest';
+
+const TopicDetails = RestModel.extend({
   loaded: false,
 
   updateFromJson(details) {
@@ -15,8 +17,9 @@ const TopicDetails = Discourse.Model.extend({
     }
 
     if (details.suggested_topics) {
+      const store = this.store;
       details.suggested_topics = details.suggested_topics.map(function (st) {
-        return Discourse.Topic.create(st);
+        return store.createRecord('topic', st);
       });
     }
 
@@ -32,7 +35,7 @@ const TopicDetails = Discourse.Model.extend({
   },
 
   fewParticipants: function() {
-    if (!this.present('participants')) return null;
+    if (!!Ember.isEmpty(this.get('participants'))) return null;
     return this.get('participants').slice(0, 3);
   }.property('participants'),
 

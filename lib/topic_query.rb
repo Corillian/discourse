@@ -1,15 +1,16 @@
 #
-# Helps us find topics. Returns a TopicList object containing the topics
-# found.
+# Helps us find topics.
+# Returns a TopicList object containing the topics found.
 #
+
 require_dependency 'topic_list'
 require_dependency 'suggested_topics_builder'
 require_dependency 'topic_query_sql'
 
 class TopicQuery
   # Could be rewritten to %i if Ruby 1.9 is no longer supported
-  VALID_OPTIONS = %w(except_topic_ids
-                     exclude_category
+  VALID_OPTIONS = %i(except_topic_ids
+                     exclude_category_ids
                      limit
                      page
                      per_page
@@ -27,7 +28,7 @@ class TopicQuery
                      search
                      slow_platform
                      filter
-                     ).map(&:to_sym)
+                     q)
 
   # Maps `order` to a columns in `topics`
   SORTABLE_MAPPING = {
@@ -105,6 +106,7 @@ class TopicQuery
   end
 
   def list_topics_by(user)
+    @options[:filtered_to_user] = user.id
     create_list(:user_topics) do |topics|
       topics.where(user_id: user.id)
     end
@@ -130,10 +132,10 @@ class TopicQuery
   def list_category_topic_ids(category)
     query = default_results(category: category.id)
     pinned_ids = query.where('pinned_at IS NOT NULL AND category_id = ?', category.id)
+                      .limit(nil)
                       .order('pinned_at DESC').pluck(:id)
     non_pinned_ids = query.where('pinned_at IS NULL OR category_id <> ?', category.id).pluck(:id)
-
-    (pinned_ids + non_pinned_ids)[0...@options[:per_page]]
+    (pinned_ids + non_pinned_ids)
   end
 
   def list_new_in_category(category)
@@ -162,7 +164,7 @@ class TopicQuery
     end
 
     unpinned_topics = topics.where("NOT ( #{pinned_clause} )")
-    pinned_topics = topics.where(pinned_clause)
+    pinned_topics = topics.dup.offset(nil).where(pinned_clause)
 
     per_page = options[:per_page] || per_page_setting
     limit = per_page unless options[:limit] == false
@@ -171,7 +173,7 @@ class TopicQuery
     if page == 0
       (pinned_topics + unpinned_topics)[0...limit] if limit
     else
-      offset = (page * per_page - pinned_topics.count) - 1
+      offset = (page * per_page) - pinned_topics.count - 1
       offset = 0 unless offset > 0
       unpinned_topics.offset(offset).to_a
     end
@@ -188,7 +190,7 @@ class TopicQuery
     end
 
     topics = topics.to_a.each do |t|
-      t.allowed_user_ids = filter == :private_messags ? t.allowed_users.map{|u| u.id} : []
+      t.allowed_user_ids = filter == :private_messages ? t.allowed_users.map{|u| u.id} : []
     end
 
     list = TopicList.new(filter, @user, topics.to_a, options.merge(@options))
@@ -281,6 +283,10 @@ class TopicQuery
       options.reverse_merge!(@options)
       options.reverse_merge!(per_page: per_page_setting)
 
+      # Whether to return visible topics
+      options[:visible] = true if @user.nil? || @user.regular?
+      options[:visible] = false if @user && @user.id == options[:filtered_to_user]
+
       # Start with a list of all topics
       result = Topic.unscoped
 
@@ -295,14 +301,17 @@ class TopicQuery
         if options[:no_subcategories]
           result = result.where('categories.id = ?', category_id)
         else
-          result = result.where('categories.id = ? or (categories.parent_category_id = ? AND categories.topic_id <> topics.id)', category_id, category_id)
+          result = result.where('categories.id = :category_id OR (categories.parent_category_id = :category_id AND categories.topic_id <> topics.id)', category_id: category_id)
         end
         result = result.references(:categories)
       end
 
       result = apply_ordering(result, options)
       result = result.listable_topics.includes(:category)
-      result = result.where('categories.name is null or categories.name <> ?', options[:exclude_category]).references(:categories) if options[:exclude_category]
+
+      if options[:exclude_category_ids] && options[:exclude_category_ids].is_a?(Array) && options[:exclude_category_ids].size > 0
+        result = result.where("categories.id NOT IN (?)", options[:exclude_category_ids]).references(:categories)
+      end
 
       # Don't include the category topics if excluded
       if options[:no_definitions]
@@ -310,7 +319,8 @@ class TopicQuery
       end
 
       result = result.limit(options[:per_page]) unless options[:limit] == false
-      result = result.visible if options[:visible] || @user.nil? || @user.regular?
+
+      result = result.visible if options[:visible]
       result = result.where.not(topics: {id: options[:except_topic_ids]}).references(:topics) if options[:except_topic_ids]
       result = result.offset(options[:page].to_i * options[:per_page]) if options[:page]
 
@@ -386,19 +396,20 @@ class TopicQuery
 
     def remove_muted_categories(list, user, opts=nil)
       category_id = get_category_id(opts[:exclude]) if opts
+
       if user
-        list = list.where("NOT EXISTS(
-                         SELECT 1 FROM category_users cu
-                         WHERE cu.user_id = ? AND
-                               cu.category_id = topics.category_id AND
-                               cu.notification_level = ? AND
-                               cu.category_id <> ?
-                         )",
-                          user.id,
-                          CategoryUser.notification_levels[:muted],
-                          category_id || -1
-                         )
-                      .references('cu')
+        list = list.references("cu")
+                   .where("
+          NOT EXISTS (
+            SELECT 1
+              FROM category_users cu
+             WHERE cu.user_id = :user_id
+               AND cu.category_id = topics.category_id
+               AND cu.notification_level = :muted
+               AND cu.category_id <> :category_id
+          )", user_id: user.id,
+              muted: CategoryUser.notification_levels[:muted],
+              category_id: category_id || -1)
       end
 
       list

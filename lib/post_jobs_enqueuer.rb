@@ -9,16 +9,21 @@ class PostJobsEnqueuer
   def enqueue_jobs
     # We need to enqueue jobs after the transaction. Otherwise they might begin before the data has
     # been comitted.
+    enqueue_post_alerts unless @opts[:import_mode]
     feature_topic_users unless @opts[:import_mode]
     trigger_post_post_process
+
     unless skip_after_create?
       after_post_create
       after_topic_create
     end
   end
 
-
   private
+
+  def enqueue_post_alerts
+    Jobs.enqueue(:post_alert, post_id: @post.id)
+  end
 
   def feature_topic_users
     Jobs.enqueue(:feature_topic_users, topic_id: @topic.id)
@@ -51,6 +56,9 @@ class PostJobsEnqueuer
   end
 
   def skip_after_create?
-    @opts[:import_mode] || @topic.private_message? || @post.post_type == Post.types[:moderator_action]
+    @opts[:import_mode] ||
+      @topic.private_message? ||
+      @post.post_type == Post.types[:moderator_action] ||
+      @post.post_type == Post.types[:small_action]
   end
 end

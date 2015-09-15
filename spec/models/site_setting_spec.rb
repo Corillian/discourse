@@ -4,23 +4,6 @@ require_dependency 'site_setting_extension'
 
 describe SiteSetting do
 
-  describe "normalized_embeddable_host" do
-    it 'returns the `embeddable_host` value' do
-      SiteSetting.stubs(:embeddable_host).returns("eviltrout.com")
-      expect(SiteSetting.normalized_embeddable_host).to eq("eviltrout.com")
-    end
-
-    it 'strip http from `embeddable_host` value' do
-      SiteSetting.stubs(:embeddable_host).returns("http://eviltrout.com")
-      expect(SiteSetting.normalized_embeddable_host).to eq("eviltrout.com")
-    end
-
-    it 'strip https from `embeddable_host` value' do
-      SiteSetting.stubs(:embeddable_host).returns("https://eviltrout.com")
-      expect(SiteSetting.normalized_embeddable_host).to eq("eviltrout.com")
-    end
-  end
-
   describe 'topic_title_length' do
     it 'returns a range of min/max topic title length' do
       expect(SiteSetting.topic_title_length).to eq(
@@ -32,6 +15,12 @@ describe SiteSetting do
   describe 'post_length' do
     it 'returns a range of min/max post length' do
       expect(SiteSetting.post_length).to eq(SiteSetting.defaults[:min_post_length]..SiteSetting.defaults[:max_post_length])
+    end
+  end
+
+  describe 'first_post_length' do
+    it 'returns a range of min/max first post length' do
+      expect(SiteSetting.first_post_length).to eq(SiteSetting.defaults[:min_first_post_length]..SiteSetting.defaults[:max_post_length])
     end
   end
 

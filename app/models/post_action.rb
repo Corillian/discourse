@@ -39,11 +39,13 @@ class PostAction < ActiveRecord::Base
     nil
   end
 
-  def self.flag_count_by_date(start_date, end_date)
-    where('created_at >= ? and created_at <= ?', start_date, end_date)
-      .where(post_action_type_id: PostActionType.flag_types.values)
-      .group('date(created_at)').order('date(created_at)')
-      .count
+  def self.flag_count_by_date(start_date, end_date, category_id=nil)
+    result = where('post_actions.created_at >= ? AND post_actions.created_at <= ?', start_date, end_date)
+    result = result.where(post_action_type_id: PostActionType.flag_types.values)
+    result = result.joins(post: :topic).where("topics.category_id = ?", category_id) if category_id
+    result.group('date(post_actions.created_at)')
+          .order('date(post_actions.created_at)')
+          .count
   end
 
   def self.update_flagged_posts_count
@@ -82,17 +84,25 @@ class PostAction < ActiveRecord::Base
 
   def self.lookup_for(user, topics, post_action_type_id)
     return if topics.blank?
-
+    # in critical path 2x faster than AR
+    #
+    topic_ids = topics.map(&:id)
     map = {}
-    PostAction.where(user_id: user.id, post_action_type_id: post_action_type_id, deleted_at: nil)
-              .references(:post)
-              .includes(:post)
-              .where('posts.topic_id in (?)', topics.map(&:id))
-              .order('posts.topic_id, posts.post_number')
-              .pluck('posts.topic_id, posts.post_number')
-              .each do |topic_id, post_number|
-                (map[topic_id] ||= []) << post_number
+        builder = SqlBuilder.new <<SQL
+        SELECT p.topic_id, p.post_number
+        FROM post_actions pa
+        JOIN posts p ON pa.post_id = p.id
+        WHERE p.deleted_at IS NULL AND pa.deleted_at IS NULL AND
+           pa.post_action_type_id = :post_action_type_id AND
+           pa.user_id = :user_id AND
+           p.topic_id IN (:topic_ids)
+        ORDER BY p.topic_id, p.post_number
+SQL
+
+    builder.map_exec(OpenStruct, user_id: user.id, post_action_type_id: post_action_type_id, topic_ids: topic_ids).each do |row|
+      (map[row.topic_id] ||= []) << row.post_number
     end
+
 
     map
   end
@@ -114,12 +124,15 @@ class PostAction < ActiveRecord::Base
     user_actions
   end
 
-  def self.count_per_day_for_type(post_action_type, since_days_ago=30)
-    unscoped.where(post_action_type_id: post_action_type)
-            .where('created_at >= ?', since_days_ago.days.ago)
-            .group('date(created_at)')
-            .order('date(created_at)')
-            .count
+  def self.count_per_day_for_type(post_action_type, opts=nil)
+    opts ||= {}
+    opts[:since_days_ago] ||= 30
+    result = unscoped.where(post_action_type_id: post_action_type)
+    result = result.where('post_actions.created_at >= ?', opts[:since_days_ago].days.ago)
+    result = result.joins(post: :topic).where('topics.category_id = ?', opts[:category_id]) if opts[:category_id]
+    result.group('date(post_actions.created_at)')
+          .order('date(post_actions.created_at)')
+          .count
   end
 
   def self.agree_flags!(post, moderator, delete_post=false)
@@ -185,14 +198,14 @@ class PostAction < ActiveRecord::Base
   def add_moderator_post_if_needed(moderator, disposition, delete_post=false)
     return if !SiteSetting.auto_respond_to_flag_actions
     return if related_post.nil? || related_post.topic.nil?
-    return if moderator_already_replied?(related_post.topic, moderator)
+    return if staff_already_replied?(related_post.topic)
     message_key = "flags_dispositions.#{disposition}"
     message_key << "_and_deleted" if delete_post
-    related_post.topic.add_moderator_post(moderator, I18n.t(message_key), skip_notifications: true)
+    related_post.topic.add_moderator_post(moderator, I18n.t(message_key))
   end
 
-  def moderator_already_replied?(topic, moderator)
-    topic.posts.where("user_id = :user_id OR post_type = :post_type", user_id: moderator.id, post_type: Post.types[:moderator_action]).exists?
+  def staff_already_replied?(topic)
+    topic.posts.where("user_id IN (SELECT id FROM users WHERE moderator OR admin) OR (post_type != :regular_post_type)", regular_post_type: Post.types[:regular]).exists?
   end
 
   def self.create_message_for_post_action(user, post, post_action_type_id, opts)
@@ -267,9 +280,12 @@ class PostAction < ActiveRecord::Base
     end
 
     # agree with other flags
-    PostAction.agree_flags!(post, user) if staff_took_action
-    # update counters
-    post_action.try(:update_counters)
+    if staff_took_action
+      PostAction.agree_flags!(post, user)
+
+      # update counters
+      post_action.try(:update_counters)
+    end
 
     post_action
   rescue ActiveRecord::RecordNotUnique
@@ -320,7 +336,16 @@ class PostAction < ActiveRecord::Base
 
     %w(like flag bookmark).each do |type|
       if send("is_#{type}?")
-        @rate_limiter = RateLimiter.new(user, "create_#{type}", SiteSetting.send("max_#{type}s_per_day"), 1.day.to_i)
+        limit = SiteSetting.send("max_#{type}s_per_day")
+
+        if is_like? && user && user.trust_level >= 2
+          multiplier = SiteSetting.send("tl#{user.trust_level}_additional_likes_per_day_multiplier").to_f
+          multiplier = 1.0 if multiplier < 1.0
+
+          limit = (limit * multiplier ).to_i
+        end
+
+        @rate_limiter = RateLimiter.new(user, "create_#{type}",limit, 1.day.to_i)
         return @rate_limiter
       end
     end
@@ -440,7 +465,7 @@ class PostAction < ActiveRecord::Base
 
     # the threshold has been reached, we will close the topic waiting for intervention
     message = I18n.t("temporarily_closed_due_to_flags")
-    topic.update_status("closed", true, Discourse.system_user, message)
+    topic.update_status("closed", true, Discourse.system_user, message: message)
   end
 
   def self.auto_hide_if_needed(acting_user, post, post_action_type)

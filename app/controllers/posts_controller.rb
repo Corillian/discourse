@@ -1,13 +1,15 @@
+require_dependency 'new_post_manager'
 require_dependency 'post_creator'
 require_dependency 'post_destroyer'
 require_dependency 'distributed_memoizer'
+require_dependency 'new_post_result_serializer'
 
 class PostsController < ApplicationController
 
   # Need to be logged in for all actions here
   before_filter :ensure_logged_in, except: [:show, :replies, :by_number, :short_link, :reply_history, :revisions, :latest_revision, :expand_embed, :markdown_id, :markdown_num, :cooked, :latest]
 
-  skip_before_filter :check_xhr, only: [:markdown_id, :markdown_num, :short_link]
+  skip_before_filter :preload_json, :check_xhr, only: [:markdown_id, :markdown_num, :short_link, :latest]
 
   def markdown_id
     markdown Post.find(params[:id].to_i)
@@ -35,21 +37,33 @@ class PostsController < ApplicationController
                 .where('posts.id <= ?', last_post_id)
                 .where('posts.id > ?', last_post_id - 50)
                 .includes(topic: :category)
-                .includes(:user)
+                .includes(user: :primary_group)
+                .includes(:reply_to_user)
                 .limit(50)
     # Remove posts the user doesn't have permission to see
     # This isn't leaking any information we weren't already through the post ID numbers
     posts = posts.reject { |post| !guardian.can_see?(post) }
-
     counts = PostAction.counts_for(posts, current_user)
 
-    render_json_dump(serialize_data(posts,
-                                    PostSerializer,
-                                    scope: guardian,
-                                    root: 'latest_posts',
-                                    add_raw: true,
-                                    all_post_actions: counts)
-    )
+    respond_to do |format|
+      format.rss do
+        @posts = posts
+        @title = "#{SiteSetting.title} - #{I18n.t("rss_description.posts")}"
+        @link = Discourse.base_url
+        @description = I18n.t("rss_description.posts")
+        render 'posts/latest', formats: [:rss]
+      end
+      format.json do
+        render_json_dump(serialize_data(posts,
+                                        PostSerializer,
+                                        scope: guardian,
+                                        root: 'latest_posts',
+                                        add_raw: true,
+                                        add_title: true,
+                                        all_post_actions: counts)
+                                      )
+      end
+    end
   end
 
   def cooked
@@ -76,49 +90,32 @@ class PostsController < ApplicationController
   end
 
   def create
-    params = create_params
 
-    key = params_key(params)
-    error_json = nil
+    if !is_api? && current_user.blocked?
 
-    if (is_api?)
-      payload = DistributedMemoizer.memoize(key, 120) do
-        success, json = create_post(params)
-        unless success
-          error_json = json
-          raise Discourse::InvalidPost
-        end
-        json
-      end
-    else
-      success, payload = create_post(params)
-      unless success
-        error_json = payload
-        raise Discourse::InvalidPost
-      end
+      # error has parity with what user would get if they posted when blocked
+      # and it went through post creator
+      render json: {errors: [I18n.t("topic_not_found")]}, status: 422
+      return
     end
 
-    render json: payload
+    @manager_params = create_params
+    @manager_params[:first_post_checks] = !is_api?
 
-  rescue Discourse::InvalidPost
-    render json: error_json, status: 422
-  end
+    manager = NewPostManager.new(current_user, @manager_params)
 
-  def create_post(params)
-    post_creator = PostCreator.new(current_user, params)
-    post = post_creator.create
+    if is_api?
+      memoized_payload = DistributedMemoizer.memoize(signature_for(@manager_params), 120) do
+        result = manager.perform
+        MultiJson.dump(serialize_data(result, NewPostResultSerializer, root: false))
+      end
 
-    if post_creator.errors.present?
-      # If the post was spam, flag all the user's posts as spam
-      current_user.flag_linked_posts_as_spam if post_creator.spam?
-      [false, MultiJson.dump(errors: post_creator.errors.full_messages)]
-
+      parsed_payload = JSON.parse(memoized_payload)
+      backwards_compatible_json(parsed_payload, parsed_payload['success'])
     else
-      DiscourseEvent.trigger(:topic_created, post.topic, params, current_user) unless params[:topic_id]
-      DiscourseEvent.trigger(:post_created, post, params, current_user)
-      post_serializer = PostSerializer.new(post, scope: guardian, root: false)
-      post_serializer.draft_sequence = DraftSequence.current(current_user, post.topic.draft_key)
-      [true, MultiJson.dump(post_serializer)]
+      result = manager.perform
+      json = serialize_data(result, NewPostResultSerializer, root: false)
+      backwards_compatible_json(json, result.success?)
     end
   end
 
@@ -142,16 +139,19 @@ class PostsController < ApplicationController
     }
 
     # to stay consistent with the create api, we allow for title & category changes here
-    if post.post_number == 1
+    if post.is_first_post?
       changes[:title] = params[:title] if params[:title]
       changes[:category_id] = params[:post][:category_id] if params[:post][:category_id]
     end
 
-    revisor = PostRevisor.new(post)
-    if revisor.revise!(current_user, changes)
-      TopicLink.extract_from(post)
-      QuotedPost.extract_from(post)
+    # We don't need to validate edits to small action posts by staff
+    opts = {}
+    if post.post_type == Post.types[:small_action] && current_user.staff?
+      opts[:skip_validations] = true
     end
+
+    revisor = PostRevisor.new(post)
+    revisor.revise!(current_user, changes, opts)
 
     return render_json_error(post) if post.errors.present?
     return render_json_error(post.topic) if post.topic.errors.present?
@@ -161,7 +161,7 @@ class PostsController < ApplicationController
     link_counts = TopicLink.counts_for(guardian,post.topic, [post])
     post_serializer.single_post_link_counts = link_counts[post.id] if link_counts.present?
 
-    result = {post: post_serializer.as_json}
+    result = { post: post_serializer.as_json }
     if revisor.category_changed.present?
       result[:category] = BasicCategorySerializer.new(revisor.category_changed, scope: guardian, root: false).as_json
     end
@@ -186,6 +186,7 @@ class PostsController < ApplicationController
 
   def destroy
     post = find_post_from_params
+    RateLimiter.new(current_user, "delete_post", 3, 1.minute).performed! unless current_user.staff?
 
     if too_late_to(:delete_post, post)
       render json: {errors: [I18n.t('too_late_to_edit')]}, status: 422
@@ -208,6 +209,7 @@ class PostsController < ApplicationController
 
   def recover
     post = find_post_from_params
+    RateLimiter.new(current_user, "delete_post", 3, 1.minute).performed! unless current_user.staff?
     guardian.ensure_can_recover_post!(post)
     destroyer = PostDestroyer.new(current_user, post)
     destroyer.recover
@@ -335,7 +337,7 @@ class PostsController < ApplicationController
     offset = [params[:offset].to_i, 0].max
     limit = [(params[:limit] || 60).to_i, 100].min
 
-    posts = user_posts(user.id, offset, limit)
+    posts = user_posts(guardian, user.id, offset: offset, limit: limit)
               .where(id: PostAction.where(post_action_type_id: PostActionType.notify_flag_type_ids)
                                    .where(disagreed_at: nil)
                                    .select(:post_id))
@@ -351,12 +353,25 @@ class PostsController < ApplicationController
     offset = [params[:offset].to_i, 0].max
     limit = [(params[:limit] || 60).to_i, 100].min
 
-    posts = user_posts(user.id, offset, limit).where.not(deleted_at: nil)
+    posts = user_posts(guardian, user.id, offset: offset, limit: limit).where.not(deleted_at: nil)
 
     render_serialized(posts, AdminPostSerializer)
   end
 
   protected
+
+  # We can't break the API for making posts. The new, queue supporting API
+  # doesn't return the post as the root JSON object, but as a nested object.
+  # If a param is present it uses that result structure.
+  def backwards_compatible_json(json_obj, success)
+    json_obj.symbolize_keys!
+    if params[:nested_post].blank? && json_obj[:errors].blank? && json_obj[:action] != :enqueued
+      json_obj = json_obj[:post]
+    end
+
+    render json: json_obj, status: (!!success) ? 200 : 422
+  end
+
 
   def find_post_revision_from_params
     post_id = params[:id] || params[:post_id]
@@ -389,22 +404,25 @@ class PostsController < ApplicationController
 
   private
 
-  def user_posts(user_id, offset=0, limit=60)
-    Post.includes(:user, :topic, :deleted_by, :user_actions)
-        .with_deleted
-        .where(user_id: user_id)
-        .order(created_at: :desc)
-        .offset(offset)
-        .limit(limit)
-  end
+  def user_posts(guardian, user_id, opts)
+    posts = Post.includes(:user, :topic, :deleted_by, :user_actions)
+                .where(user_id: user_id)
+                .with_deleted
+                .order(created_at: :desc)
 
-  def params_key(params)
-    "post##" << Digest::SHA1.hexdigest(params
-      .to_a
-      .concat([["user", current_user.id]])
-      .sort{|x,y| x[0] <=> y[0]}.join do |x,y|
-        "#{x}:#{y}"
-      end)
+    if guardian.user.moderator?
+
+      # Awful hack, but you can't seem to remove the `default_scope` when joining
+      # So instead I grab the topics separately
+      topic_ids = posts.dup.pluck(:topic_id)
+      topics = Topic.where(id: topic_ids).with_deleted.where.not(archetype: 'private_message')
+      topics = topics.secured(guardian)
+
+      posts = posts.where(topic_id: topics.pluck(:id))
+    end
+
+    posts.offset(opts[:offset])
+         .limit(opts[:limit])
   end
 
   def create_params
@@ -415,7 +433,9 @@ class PostsController < ApplicationController
       :category,
       :target_usernames,
       :reply_to_post_number,
-      :auto_track
+      :auto_track,
+      :typing_duration_msecs,
+      :composer_open_duration_msecs
     ]
 
     # param munging for WordPress
@@ -441,9 +461,15 @@ class PostsController < ApplicationController
     if current_user.staff?
       params.permit(:is_warning)
       result[:is_warning] = (params[:is_warning] == "true")
+    else
+      result[:is_warning] = false
     end
 
-    PostRevisor.tracked_topic_fields.keys.each do |f|
+    if SiteSetting.enable_whispers? && params[:whisper] == "true"
+      result[:post_type] = Post.types[:whisper]
+    end
+
+    PostRevisor.tracked_topic_fields.each_key do |f|
       params.permit(f => [])
       result[f] = params[f] if params.has_key?(f)
     end
@@ -454,6 +480,15 @@ class PostsController < ApplicationController
     result[:referrer] = request.env["HTTP_REFERER"]
 
     result
+  end
+
+  def signature_for(args)
+    "post##" << Digest::SHA1.hexdigest(args
+      .to_a
+      .concat([["user", current_user.id]])
+      .sort{|x,y| x[0] <=> y[0]}.join do |x,y|
+        "#{x}:#{y}"
+      end)
   end
 
   def too_late_to(action, post)

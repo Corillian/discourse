@@ -6,22 +6,15 @@ class DiscourseRedis
 
   def self.raw_connection(config = nil)
     config ||= self.config
-    redis_opts = {host: config['host'], port: config['port'], db: config['db']}
-    redis_opts[:password] = config['password'] if config['password']
-    Redis.new(redis_opts)
+    Redis.new(config)
   end
 
   def self.config
-    @config ||= YAML.load(ERB.new(File.new("#{Rails.root}/config/redis.yml").read).result)[Rails.env]
+    GlobalSetting.redis_config
   end
 
-  def self.url(config=nil)
-    config ||= self.config
-    "redis://#{(':' + config['password'] + '@') if config['password']}#{config['host']}:#{config['port']}/#{config['db']}"
-  end
-
-  def initialize
-    @config = DiscourseRedis.config
+  def initialize(config=nil)
+    @config = config || DiscourseRedis.config
     @redis = DiscourseRedis.raw_connection(@config)
   end
 
@@ -30,14 +23,23 @@ class DiscourseRedis
     @redis
   end
 
-  def url
-    self.class.url(@config)
+  def self.ignore_readonly
+    yield
+  rescue Redis::CommandError => ex
+    if ex.message =~ /READONLY/
+      unless Discourse.recently_readonly?
+        STDERR.puts "WARN: Redis is in a readonly state. Performed a noop"
+      end
+      Discourse.received_readonly!
+    else
+      raise ex
+    end
   end
 
   # prefix the key with the namespace
   def method_missing(meth, *args, &block)
     if @redis.respond_to?(meth)
-      @redis.send(meth, *args, &block)
+      DiscourseRedis.ignore_readonly { @redis.send(meth, *args, &block) }
     else
       super
     end
@@ -53,36 +55,49 @@ class DiscourseRedis
    :sunion, :ttl, :type, :watch, :zadd, :zcard, :zcount, :zincrby, :zrange, :zrangebyscore, :zrank, :zrem, :zremrangebyrank,
    :zremrangebyscore, :zrevrange, :zrevrangebyscore, :zrevrank, :zrangebyscore].each do |m|
     define_method m do |*args|
-      args[0] = "#{DiscourseRedis.namespace}:#{args[0]}"
-      @redis.send(m, *args)
+      args[0] = "#{namespace}:#{args[0]}"
+      DiscourseRedis.ignore_readonly { @redis.send(m, *args) }
     end
   end
 
   def del(k)
-    k = "#{DiscourseRedis.namespace}:#{k}"
-    @redis.del k
+    DiscourseRedis.ignore_readonly do
+      k = "#{namespace}:#{k}"
+      @redis.del k
+    end
   end
 
   def keys(pattern=nil)
-    len = DiscourseRedis.namespace.length + 1
-    @redis.keys("#{DiscourseRedis.namespace}:#{pattern || '*'}").map{
-      |k| k[len..-1]
-    }
+    DiscourseRedis.ignore_readonly do
+      len = namespace.length + 1
+      @redis.keys("#{namespace}:#{pattern || '*'}").map{
+        |k| k[len..-1]
+      }
+    end
   end
 
   def delete_prefixed(prefix)
-    keys("#{prefix}*").each { |k| $redis.del(k) }
+    DiscourseRedis.ignore_readonly do
+      keys("#{prefix}*").each { |k| $redis.del(k) }
+    end
   end
 
   def flushdb
-    keys.each{|k| del(k)}
+    DiscourseRedis.ignore_readonly do
+      keys.each{|k| del(k)}
+    end
   end
 
   def reconnect
     @redis.client.reconnect
   end
 
+  def namespace
+    RailsMultisite::ConnectionManagement.current_db
+  end
+
   def self.namespace
+    Rails.logger.warn("DiscourseRedis.namespace is going to be deprecated, do not use it!")
     RailsMultisite::ConnectionManagement.current_db
   end
 

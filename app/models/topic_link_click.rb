@@ -2,10 +2,6 @@ require_dependency 'discourse'
 require 'ipaddr'
 require 'url_helper'
 
-class TopicLinkClickHelper
-  include UrlHelper
-end
-
 class TopicLinkClick < ActiveRecord::Base
   belongs_to :topic_link, counter_cache: :clicks
   belongs_to :user
@@ -13,12 +9,13 @@ class TopicLinkClick < ActiveRecord::Base
   validates_presence_of :topic_link_id
   validates_presence_of :ip_address
 
+  WHITELISTED_REDIRECT_HOSTNAMES = Set.new(%W{www.youtube.com youtu.be})
+
   # Create a click from a URL and post_id
   def self.create_from(args={})
     url = args[:url]
     return nil if url.blank?
 
-    helper = TopicLinkClickHelper.new
     uri = URI.parse(url) rescue nil
 
     urls = Set.new
@@ -26,11 +23,20 @@ class TopicLinkClick < ActiveRecord::Base
     if url =~ /^http/
       urls << url.sub(/^https/, 'http')
       urls << url.sub(/^http:/, 'https:')
-      urls << helper.schemaless(url)
+      urls << UrlHelper.schemaless(url)
     end
-    urls << helper.absolute_without_cdn(url)
+    urls << UrlHelper.absolute_without_cdn(url)
     urls << uri.path if uri.try(:host) == Discourse.current_hostname
     urls << url.sub(/\?.*$/, '') if url.include?('?')
+
+    # add a cdn link
+    if uri && Discourse.asset_host.present?
+      cdn_uri = URI.parse(Discourse.asset_host) rescue nil
+      if cdn_uri && cdn_uri.hostname == uri.hostname && uri.path.starts_with?(cdn_uri.path)
+        is_cdn_link = true
+        urls << uri.path[(cdn_uri.path.length)..-1]
+      end
+    end
 
     link = TopicLink.select([:id, :user_id])
 
@@ -52,7 +58,14 @@ class TopicLinkClick < ActiveRecord::Base
       # If we have it somewhere else on the site, just allow the redirect.
       # This is likely due to a onebox of another topic.
       link = TopicLink.find_by(url: url)
-      return link.present? ? link.url : nil
+      return link.url if link.present?
+
+      return nil unless uri
+
+      # Only redirect to whitelisted hostnames
+      return url if WHITELISTED_REDIRECT_HOSTNAMES.include?(uri.hostname) || is_cdn_link
+
+      return nil
     end
 
     return url if args[:user_id] && link.user_id == args[:user_id]

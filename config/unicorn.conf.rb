@@ -80,19 +80,64 @@ before_fork do |server, worker|
       class ::Unicorn::HttpServer
         alias :master_sleep_orig :master_sleep
 
+        def max_rss
+          rss = `ps -eo rss,args | grep sidekiq | grep -v grep | awk '{print $1}'`
+                .split("\n")
+                .map(&:to_i)
+                .max
+
+          rss ||= 0
+
+          rss * 1024
+        end
+
+        def max_allowed_size
+          [ENV['UNICORN_SIDEKIQ_MAX_RSS'].to_i, 500].max.megabytes
+        end
+
+        def out_of_memory?
+          max_rss > max_allowed_size
+        end
+
+        def force_kill_rogue_sidekiq
+          info = `ps -eo pid,rss,args | grep sidekiq | grep -v grep | awk '{print $1,$2}'`
+          info.split("\n").each do |row|
+            pid,mem = row.split(" ").map(&:to_i)
+            if pid > 0 && (mem*1024) > max_allowed_size
+              Rails.logger.warn "Detected rogue Sidekiq pid #{pid} mem #{mem*1024}, killing"
+              Process.kill("KILL", pid) rescue nil
+            end
+          end
+        end
+
         def check_sidekiq_heartbeat
           @sidekiq_heartbeat_interval ||= 30.minutes
           @sidekiq_next_heartbeat_check ||= Time.new.to_i + @sidekiq_heartbeat_interval
 
           if @sidekiq_next_heartbeat_check < Time.new.to_i
+
             last_heartbeat = Jobs::RunHeartbeat.last_heartbeat
+            restart = false
+
+            if out_of_memory?
+              Rails.logger.warn("Sidekiq is consuming too much memory (using: %0.2fM) for '%s', restarting" % [(max_rss.to_f / 1.megabyte), ENV["DISCOURSE_HOSTNAME"]])
+              restart = true
+            end
+
             if last_heartbeat < Time.new.to_i - @sidekiq_heartbeat_interval
               STDERR.puts "Sidekiq heartbeat test failed, restarting"
-              puts "Sidekiq heartbeat test failed, restarting"
+              Rails.logger.warn "Sidekiq heartbeat test failed, restarting"
 
-              Demon::Sidekiq.restart
+              restart = true
             end
             @sidekiq_next_heartbeat_check = Time.new.to_i + @sidekiq_heartbeat_interval
+
+            if restart
+              Demon::Sidekiq.restart
+              sleep 10
+              force_kill_rogue_sidekiq
+            end
+            $redis.client.disconnect
           end
         end
 

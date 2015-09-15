@@ -8,8 +8,8 @@ describe Jobs::FeatureTopicUsers do
     expect { Jobs::FeatureTopicUsers.new.execute({}) }.to raise_error(Discourse::InvalidParameters)
   end
 
-  it "raises an error with a missing topic_id" do
-    expect { Jobs::FeatureTopicUsers.new.execute(topic_id: 123) }.to raise_error(Discourse::InvalidParameters)
+  it "raises no error with a missing topic_id" do
+    Jobs::FeatureTopicUsers.new.execute(topic_id: 123)
   end
 
   context 'with a topic' do
@@ -28,11 +28,6 @@ describe Jobs::FeatureTopicUsers do
     it "features the second poster" do
       Jobs::FeatureTopicUsers.new.execute(topic_id: topic.id)
       expect(topic.reload.featured_user_ids.include?(coding_horror.id)).to eq(true)
-    end
-
-    it "will not feature the second poster if we supply their post to be ignored" do
-      Jobs::FeatureTopicUsers.new.execute(topic_id: topic.id, except_post_id: second_post.id)
-      expect(topic.reload.featured_user_ids.include?(coding_horror.id)).to eq(false)
     end
 
     it "won't feature the last poster" do

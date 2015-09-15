@@ -152,13 +152,6 @@ Discourse.Markdown = {
     return this.markdownConverter(opts).makeHtml(raw);
   },
 
-  /**
-    Creates a new pagedown markdown editor, supplying i18n translations.
-
-    @method createEditor
-    @param {Object} converterOptions custom options for our markdown converter
-    @return {Markdown.Editor} the editor instance
-  **/
   createEditor: function(converterOptions) {
     if (!converterOptions) converterOptions = {};
 
@@ -168,6 +161,7 @@ Discourse.Markdown = {
     var markdownConverter = Discourse.Markdown.markdownConverter(converterOptions);
 
     var editorOptions = {
+      containerElement: converterOptions.containerElement,
       strings: {
         bold: I18n.t("composer.bold_title") + " <strong> Ctrl+B",
         boldexample: I18n.t("composer.bold_text"),
@@ -259,14 +253,14 @@ Discourse.Markdown = {
     // The first time, let's add some more whitelisted tags
     if (!_decoratedCaja) {
 
-      // Add anything whitelisted to the list of elements if it's not in there
-      // already.
+      // Add anything whitelisted to the list of elements if it's not in there already.
       var elements = window.html4.ELEMENTS;
       Object.keys(_validTags).forEach(function(t) {
         if (!elements[t]) {
           elements[t] = 0;
         }
       });
+
       _decoratedCaja = true;
     }
 

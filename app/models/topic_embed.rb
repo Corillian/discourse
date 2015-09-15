@@ -4,6 +4,7 @@ class TopicEmbed < ActiveRecord::Base
   belongs_to :topic
   belongs_to :post
   validates_presence_of :embed_url
+  validates_uniqueness_of :embed_url
 
   def self.normalize_url(url)
     url.downcase.sub(/\/$/, '').sub(/\-+/, '-').strip
@@ -20,6 +21,7 @@ class TopicEmbed < ActiveRecord::Base
     if SiteSetting.embed_truncate
       contents = first_paragraph_from(contents)
     end
+    contents ||= ''
     contents << imported_from_html(url)
 
     url = normalize_url(url)
@@ -31,12 +33,14 @@ class TopicEmbed < ActiveRecord::Base
     # If there is no embed, create a topic, post and the embed.
     if embed.blank?
       Topic.transaction do
+        eh = EmbeddableHost.record_for_host(url)
+
         creator = PostCreator.new(user,
                                   title: title,
                                   raw: absolutize_urls(url, contents),
                                   skip_validations: true,
                                   cook_method: Post.cook_methods[:raw_html],
-                                  category: SiteSetting.embed_category)
+                                  category: eh.try(:category_id))
         post = creator.create
         if post.present?
           TopicEmbed.create!(topic_id: post.topic_id,
@@ -80,7 +84,7 @@ class TopicEmbed < ActiveRecord::Base
     doc.search(tags.keys.join(',')).each do |node|
       url_param = tags[node.name]
       src = node[url_param]
-      unless (src.empty?)
+      unless (src.nil? || src.empty?)
         begin
           uri = URI.parse(src)
           unless uri.host

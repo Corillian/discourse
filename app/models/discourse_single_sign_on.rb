@@ -57,10 +57,10 @@ class DiscourseSingleSignOn < SingleSignOn
       change_external_attributes_and_override(sso_record, user)
     end
 
-    if sso_record && (user = sso_record.user) && !user.active
+    if sso_record && (user = sso_record.user) && !user.active && !require_activation
       user.active = true
       user.save!
-      user.enqueue_welcome_message('welcome_user')
+      user.enqueue_welcome_message('welcome_user') unless suppress_welcome_message
     end
 
     custom_fields.each do |k,v|
@@ -88,7 +88,7 @@ class DiscourseSingleSignOn < SingleSignOn
 
     user_params = {
       email: email,
-      name:  User.suggest_name(try_name || try_username || email),
+      name:  try_name || User.suggest_name(try_username || email),
       username: UserNameSuggester.suggest(try_username || try_name || email),
       ip_address: ip_address
     }
@@ -110,49 +110,23 @@ class DiscourseSingleSignOn < SingleSignOn
   end
 
   def change_external_attributes_and_override(sso_record, user)
-    if SiteSetting.sso_overrides_email && email != sso_record.external_email
-      # set the user's email to whatever came in the payload
+    if SiteSetting.sso_overrides_email && user.email != email
       user.email = email
     end
 
-    if SiteSetting.sso_overrides_username && username != sso_record.external_username && user.username != username
-      # we have an external username change, and the user's current username doesn't match
-      # run it through the UserNameSuggester to override it
-      user.username = UserNameSuggester.suggest(username || name || email)
+    if SiteSetting.sso_overrides_username && user.username != username && username.present?
+      user.username = UserNameSuggester.suggest(username || name || email, user.username)
     end
 
-    if SiteSetting.sso_overrides_name && name != sso_record.external_name && user.name != name
-      # we have an external name change, and the user's current name doesn't match
-      # run it through the name suggester to override it
-      user.name = User.suggest_name(name || username || email)
+    if SiteSetting.sso_overrides_name && user.name != name && name.present?
+      user.name = name || User.suggest_name(username.blank? ? email : username)
     end
 
     if SiteSetting.sso_overrides_avatar && avatar_url.present? && (
       avatar_force_update ||
       sso_record.external_avatar_url != avatar_url)
 
-      begin
-        tempfile = FileHelper.download(avatar_url, SiteSetting.max_image_size_kb.kilobytes, "sso-avatar", true)
-
-        ext = FastImage.type(tempfile).to_s
-        tempfile.rewind
-
-        upload = Upload.create_for(user.id, tempfile, "external-avatar." + ext, tempfile.size, { origin: avatar_url })
-        user.uploaded_avatar_id = upload.id
-
-        unless user.user_avatar
-          user.build_user_avatar
-        end
-
-        if !user.user_avatar.contains_upload?(upload.id)
-          user.user_avatar.custom_upload_id = upload.id
-        end
-      rescue SocketError
-        # skip saving, we are not connected to the net
-        Rails.logger.warn "Failed to download external avatar: #{avatar_url}, socket error - user id #{ user.id }"
-      ensure
-        tempfile.close! if tempfile && tempfile.respond_to?(:close!)
-      end
+      UserAvatar.import_url_for_user(avatar_url, user)
     end
 
     # change external attributes for sso record

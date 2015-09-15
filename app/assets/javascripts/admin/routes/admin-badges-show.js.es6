@@ -1,3 +1,4 @@
+import Badge from 'discourse/models/badge';
 import showModal from 'discourse/lib/show-modal';
 
 export default Ember.Route.extend({
@@ -7,7 +8,7 @@ export default Ember.Route.extend({
 
   model(params) {
     if (params.badge_id === "new") {
-      return Discourse.Badge.create({
+      return Badge.create({
         name: I18n.t('admin.badges.new_badge')
       });
     }
@@ -24,8 +25,8 @@ export default Ember.Route.extend({
     },
 
     editGroupings() {
-      const groupings = this.controllerFor('admin-badges').get('badgeGroupings');
-      showModal('modals/admin-edit-badge-groupings', groupings);
+      const model = this.controllerFor('admin-badges').get('badgeGroupings');
+      showModal('modals/admin-edit-badge-groupings', { model });
     },
 
     preview(badge, explain) {
@@ -38,9 +39,9 @@ export default Ember.Route.extend({
           trigger: badge.get('trigger'),
           explain
         }
-      }).then(function(json) {
+      }).then(function(model) {
         badge.set('preview_loading', false);
-        showModal('modals/admin-badge-preview', json);
+        showModal('modals/admin-badge-preview', { model });
       }).catch(function(error) {
         badge.set('preview_loading', false);
         Em.Logger.error(error);

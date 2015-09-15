@@ -1,7 +1,7 @@
-import DiscourseController from 'discourse/controllers/controller';
 import loadScript from 'discourse/lib/load-script';
+import Quote from 'discourse/lib/quote';
 
-export default DiscourseController.extend({
+export default Ember.Controller.extend({
   needs: ['topic', 'composer'],
 
   _loadSanitizer: function() {
@@ -10,23 +10,24 @@ export default DiscourseController.extend({
 
   //  If the buffer is cleared, clear out other state (post)
   bufferChanged: function() {
-    if (this.blank('buffer')) this.set('post', null);
+    if (Ember.isEmpty(this.get('buffer'))) this.set('post', null);
   }.observes('buffer'),
 
-  /**
-    Save the currently selected text and displays the
-    "quote reply" button
-  **/
+  // Save the currently selected text and displays the
+  //  "quote reply" button
   selectText(postId) {
     // anonymous users cannot "quote-reply"
-    if (!Discourse.User.current()) return;
+    if (!this.currentUser) return;
 
-    // don't display the "quote-reply" button if we can't create a post
-    if (!this.get('controllers.topic.model.details.can_create_post')) return;
+    // don't display the "quote-reply" button if we can't reply
+    const topicDetails = this.get('controllers.topic.model.details');
+    if (!(topicDetails.get('can_reply_as_new_topic') || topicDetails.get('can_create_post'))) {
+      return;
+    }
 
     const selection = window.getSelection();
     // no selections
-    if (selection.rangeCount === 0) return;
+    if (selection.isCollapsed) return;
 
     // retrieve the selected range
     const range = selection.getRangeAt(0),
@@ -42,21 +43,21 @@ export default DiscourseController.extend({
     if (this.get('buffer') === selectedText) return;
 
     // we need to retrieve the post data from the posts collection in the topic controller
-    const postStream = this.get('controllers.topic.postStream');
+    const postStream = this.get('controllers.topic.model.postStream');
     this.set('post', postStream.findLoadedPost(postId));
     this.set('buffer', selectedText);
 
     // create a marker element
     const markerElement = document.createElement("span");
     // containing a single invisible character
-    markerElement.appendChild(document.createTextNode("\u{feff}"));
+    markerElement.appendChild(document.createTextNode("\ufeff"));
 
     // collapse the range at the beginning/end of the selection
     range.collapse(!Discourse.Mobile.isMobileDevice);
     // and insert it at the start of our selection range
     range.insertNode(markerElement);
 
-    // retrieve the position of the market
+    // retrieve the position of the marker
     const markerOffset = $(markerElement).offset(),
           $quoteButton = $('.quote-button');
 
@@ -85,7 +86,15 @@ export default DiscourseController.extend({
   },
 
   quoteText() {
+
     const post = this.get('post');
+
+    // If we can't create a post, delegate to reply as new topic
+    if (!this.get('controllers.topic.model.details.can_create_post')) {
+      this.get('controllers.topic').send('replyAsNewTopic', post);
+      return;
+    }
+
     const composerController = this.get('controllers.composer');
     const composerOpts = {
       action: Discourse.Composer.REPLY,
@@ -105,7 +114,7 @@ export default DiscourseController.extend({
     }
 
     const buffer = this.get('buffer');
-    const quotedText = Discourse.Quote.build(post, buffer);
+    const quotedText = Quote.build(post, buffer);
     composerOpts.quote = quotedText;
     if (composerController.get('content.viewOpen') || composerController.get('content.viewDraft')) {
       composerController.appendBlockAtCursor(quotedText.trim());

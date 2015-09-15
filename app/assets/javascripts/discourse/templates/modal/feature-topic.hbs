@@ -1,60 +1,97 @@
-<div class="modal-body">
-  {{#if pinned_at}}
-    <div>
-      {{d-button action="unpin" icon="thumb-tack" label="topic.actions.unpin" class="btn-primary btn-small"}}
-      <p>{{{unPinMessage}}}</p>
-      {{#if pinned_globally}}
-        <p>{{i18n "topic.feature_topic.global_pin_note"}}</p>
-        <p>
-          {{#loading-spinner size="small" condition=loading}}
-            {{{i18n "topic.feature_topic.already_pinned_globally" count=pinnedGloballyCount}}}
-          {{/loading-spinner}}
-        </p>
-      {{else}}
-        <p>{{i18n "topic.feature_topic.pin_note"}}</p>
-        <p>
-          {{#loading-spinner size="small" condition=loading}}
-            {{{alreadyPinnedMessage}}}
-          {{/loading-spinner}}
-        </p>
-      {{/if}}
+<div class="modal-body feature-topic">
+  {{#if model.pinned_at}}
+    <div class="feature-section">
+      <div class="desc">
+        {{#if model.pinned_globally}}
+          <p>
+            {{#conditional-loading-spinner size="small" condition=loading}}
+              {{{i18n "topic.feature_topic.already_pinned_globally" count=pinnedGloballyCount}}}
+            {{/conditional-loading-spinner}}
+          </p>
+          <p>{{i18n "topic.feature_topic.global_pin_note"}}</p>
+        {{else}}
+          <p>
+            {{#conditional-loading-spinner size="small" condition=loading}}
+              {{{alreadyPinnedMessage}}}
+            {{/conditional-loading-spinner}}
+          </p>
+          <p>{{i18n "topic.feature_topic.pin_note"}}</p>
+        {{/if}}
+        <p>{{{unPinMessage}}}</p>
+        <p>{{d-button action="unpin" icon="thumb-tack" label="topic.feature.unpin" class="btn-primary"}}</p>
+      </div>
     </div>
   {{else}}
-    <div>
-      {{d-button action="pin" icon="thumb-tack" label="topic.actions.pin" class="btn-primary btn-small"}}
-      <p>{{{pinMessage}}}</p>
-      <p>{{i18n "topic.feature_topic.pin_note"}}</p>
-      <p>
-        {{#loading-spinner size="small" condition=loading}}
-          {{{alreadyPinnedMessage}}}
-        {{/loading-spinner}}
-      </p>
+    <div class="feature-section">
+      <div class="desc">
+        <p>
+          {{#conditional-loading-spinner size="small" condition=loading}}
+            {{{alreadyPinnedMessage}}}
+          {{/conditional-loading-spinner}}
+        </p>
+        <p>
+          {{i18n "topic.feature_topic.pin_note"}}
+        </p>
+        <p class="with-validation">
+          {{{pinMessage}}}
+          {{fa-icon "clock-o"}}
+          {{date-picker value=model.pinnedInCategoryUntil}}
+          {{popup-input-tip validation=pinInCategoryValidation shownAt=pinInCategoryTipShownAt}}
+        </p>
+        <p>
+          {{d-button action="pin" icon="thumb-tack" label="topic.feature.pin" class="btn-primary"}}
+        </p>
+      </div>
     </div>
-    <div>
-      {{d-button action="pinGlobally" icon="thumb-tack" label="topic.actions.pin_globally" class="btn-primary btn-small"}}
-      <p>{{i18n "topic.feature_topic.pin_globally"}}</p>
-      <p>{{i18n "topic.feature_topic.global_pin_note"}}</p>
-      <p>
-        {{#loading-spinner size="small" condition=loading}}
-          {{{i18n "topic.feature_topic.already_pinned_globally" count=pinnedGloballyCount}}}
-        {{/loading-spinner}}
-      </p>
+    <hr>
+    <div class="feature-section">
+      <div class="desc">
+        <p>
+          {{#conditional-loading-spinner size="small" condition=loading}}
+            {{{i18n "topic.feature_topic.already_pinned_globally" count=pinnedGloballyCount}}}
+          {{/conditional-loading-spinner}}
+        </p>
+        <p>
+          {{i18n "topic.feature_topic.global_pin_note"}}
+        </p>
+        <p class="with-validation">
+          {{i18n "topic.feature_topic.pin_globally"}}
+          {{fa-icon "clock-o"}}
+          {{date-picker value=model.pinnedGloballyUntil}}
+          {{popup-input-tip validation=pinGloballyValidation shownAt=pinGloballyTipShownAt}}
+        </p>
+        <p>
+          {{d-button action="pinGlobally" icon="thumb-tack" label="topic.feature.pin_globally" class="btn-primary"}}
+        </p>
+      </div>
     </div>
   {{/if}}
-  <div>
-    {{#if isBanner}}
-      {{d-button action="removeBanner" icon="bullhorn" label="topic.actions.remove_banner" class="btn-primary btn-small"}}
-      <p>{{i18n "topic.feature_topic.remove_banner"}}</p>
-    {{else}}
-      {{d-button action="makeBanner" icon="bullhorn" label="topic.actions.make_banner" class="btn-primary btn-small"}}
-      <p>{{i18n "topic.feature_topic.make_banner"}}</p>
-    {{/if}}
-    <p>{{i18n "topic.feature_topic.banner_note"}}</p>
-    <p>
-      {{#loading-spinner size="small" condition=loading}}
-        {{{i18n "topic.feature_topic.already_banner" count=bannerCount}}}
-      {{/loading-spinner}}
-    </p>
+  <hr>
+  <div class="feature-section">
+    <div class="desc">
+      <p>
+        {{#conditional-loading-spinner size="small" condition=loading}}
+          {{{i18n "topic.feature_topic.already_banner" count=bannerCount}}}
+        {{/conditional-loading-spinner}}
+      </p>
+      <p>
+        {{i18n "topic.feature_topic.banner_note"}}
+      </p>
+      <p>
+        {{#if model.isBanner}}
+          {{i18n "topic.feature_topic.remove_banner"}}
+        {{else}}
+          {{i18n "topic.feature_topic.make_banner"}}
+        {{/if}}
+      </p>
+      <p>
+        {{#if model.isBanner}}
+          {{d-button action="removeBanner" icon="thumb-tack" label="topic.feature.remove_banner" class="btn-primary"}}
+        {{else}}
+          {{d-button action="makeBanner" icon="thumb-tack" label="topic.feature.make_banner" class="btn-primary"}}
+        {{/if}}
+      </p>
+    </div>
   </div>
 </div>
 <div class="modal-footer">

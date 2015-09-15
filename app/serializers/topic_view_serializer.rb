@@ -1,4 +1,5 @@
 require_dependency 'pinned_check'
+require_dependency 'new_post_manager'
 
 class TopicViewSerializer < ApplicationSerializer
   include PostStreamSerializerMixin
@@ -30,7 +31,9 @@ class TopicViewSerializer < ApplicationSerializer
                         :slug,
                         :category_id,
                         :word_count,
-                        :deleted_at
+                        :deleted_at,
+                        :pending_posts_count,
+                        :user_id
 
   attributes :draft,
              :draft_key,
@@ -40,6 +43,7 @@ class TopicViewSerializer < ApplicationSerializer
              :pinned_globally,
              :pinned,    # Is topic pinned and viewer hasn't cleared the pin?
              :pinned_at, # Ignores clear pin
+             :pinned_until,
              :details,
              :highest_post_number,
              :last_read_post_number,
@@ -122,6 +126,7 @@ class TopicViewSerializer < ApplicationSerializer
   def include_is_warning?
     is_warning
   end
+
   def draft
     object.draft
   end
@@ -173,6 +178,10 @@ class TopicViewSerializer < ApplicationSerializer
     object.topic.pinned_at
   end
 
+  def pinned_until
+    object.topic.pinned_until
+  end
+
   def actions_summary
     result = []
     return [] unless post = object.posts.try(:first)
@@ -204,6 +213,10 @@ class TopicViewSerializer < ApplicationSerializer
 
   def bookmarked
     object.topic_user.try(:bookmarked)
+  end
+
+  def include_pending_posts_count
+    scope.user.staff? && NewPostManager.queue_enabled?
   end
 
 end

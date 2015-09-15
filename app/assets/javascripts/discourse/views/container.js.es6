@@ -1,4 +1,4 @@
-export default Ember.ContainerView.extend(Discourse.Presence, {
+export default Ember.ContainerView.extend({
 
   attachViewWithArgs(viewArgs, viewClass) {
     if (!viewClass) { viewClass = Ember.View.extend(); }

@@ -1,4 +1,4 @@
-import { queryParams, filterQueryParams } from 'discourse/routes/build-topic-route';
+import { queryParams, filterQueryParams, findTopicList } from 'discourse/routes/build-topic-route';
 
 // A helper function to create a category route with parameters
 export default function(filter, params) {
@@ -36,7 +36,7 @@ export default function(filter, params) {
       this._categoryList = null;
       if (Em.isNone(model.get('parentCategory')) && Discourse.SiteSettings.show_subcategory_list) {
         var self = this;
-        return Discourse.CategoryList.listForParent(model).then(function(list) {
+        return Discourse.CategoryList.listForParent(this.store, model).then(function(list) {
           self._categoryList = list;
         });
       }
@@ -52,7 +52,7 @@ export default function(filter, params) {
       var findOpts = filterQueryParams(transition.queryParams, params),
           extras = { cached: this.isPoppedState(transition) };
 
-      return Discourse.TopicList.list(listFilter, findOpts, extras).then(function(list) {
+      return findTopicList(this.store, this.topicTrackingState, listFilter, findOpts, extras).then(function(list) {
         Discourse.TopicList.hideUniformCategory(list, model);
         self.set('topics', list);
       });
@@ -67,14 +67,13 @@ export default function(filter, params) {
 
     setupController: function(controller, model) {
       var topics = this.get('topics'),
-          periods = this.controllerFor('discovery').get('periods'),
           periodId = topics.get('for_period') || (filter.indexOf('/') > 0 ? filter.split('/')[1] : '');
 
       this.controllerFor('navigation/category').set('canCreateTopic', topics.get('can_create_topic'));
       this.controllerFor('discovery/topics').setProperties({
         model: topics,
         category: model,
-        period: periods.findBy('id', periodId),
+        period: periodId,
         selected: [],
         noSubcategories: params && !!params.no_subcategories,
         order: topics.get('params.order'),
@@ -82,7 +81,7 @@ export default function(filter, params) {
         expandAllPinned: true
       });
 
-      this.controllerFor('search').set('searchContext', model.get('searchContext'));
+      this.searchService.set('searchContext', model.get('searchContext'));
       this.set('topics', null);
 
       this.openTopicDraft(topics);
@@ -99,7 +98,7 @@ export default function(filter, params) {
 
     deactivate: function() {
       this._super();
-      this.controllerFor('search').set('searchContext', null);
+      this.searchService.set('searchContext', null);
     },
 
     actions: {

@@ -1,22 +1,26 @@
-export default Discourse.View.extend({
+import { observes, on } from "ember-addons/ember-computed-decorators";
+
+export default Ember.View.extend({
   focusInput: true,
 
-  _setupModal: function() {
+  @on("didInsertElement")
+  _setupModal() {
     $('#modal-alert').hide();
     $('#discourse-modal').modal('show');
 
     // Focus on first element
     if (!Discourse.Mobile.mobileView && this.get('focusInput')) {
-      Em.run.schedule('afterRender', () => this.$('input:first').focus() );
+      Em.run.schedule('afterRender', () => this.$('input:first').focus());
     }
 
     const title = this.get('title');
     if (title) {
       this.set('controller.controllers.modal.title', title);
     }
-  }.on('didInsertElement'),
+  },
 
-  flashMessageChanged: function() {
+  @observes("controller.flashMessage")
+  flashMessageChanged() {
     const flashMessage = this.get('controller.flashMessage');
     if (flashMessage) {
       const messageClass = flashMessage.get('messageClass') || 'success';
@@ -25,6 +29,6 @@ export default Discourse.View.extend({
                        .addClass("alert alert-" + messageClass).html(flashMessage.get('message'))
                        .fadeIn();
     }
-  }.observes('controller.flashMessage')
+  }
 
 });

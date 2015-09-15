@@ -11,18 +11,24 @@ describe ListController do
     SiteSetting.stubs(:top_menu).returns('latest,-video|new|unread|categories|category/beer')
   end
 
+  describe 'titles for crawler layout' do
+    it 'has no title for the default URL' do
+      xhr :get, Discourse.anonymous_filters[0], _escaped_fragment_: 'true'
+      expect(assigns(:title)).to be_blank
+    end
+
+    it 'has a title for non-default URLs' do
+      xhr :get, Discourse.anonymous_filters[1], _escaped_fragment_: 'true'
+      expect(assigns(:title)).to be_present
+    end
+  end
+
   describe 'indexes' do
 
     (Discourse.anonymous_filters - [:categories]).each do |filter|
       context "#{filter}" do
         before { xhr :get, filter }
         it { is_expected.to respond_with(:success) }
-      end
-    end
-
-    Discourse.logged_in_filters.each do |filter|
-      context "#{filter}" do
-        it { expect { xhr :get, filter }.to raise_error(Discourse::NotLoggedIn) }
       end
     end
 
@@ -39,14 +45,10 @@ describe ListController do
 
   describe 'RSS feeds' do
 
-    Discourse.feed_filters.each do |filter|
-
-      it 'renders RSS' do
-        get "#{filter}_feed", format: :rss
-        expect(response).to be_success
-        expect(response.content_type).to eq('application/rss+xml')
-      end
-
+    it 'renders RSS' do
+      get "latest_feed", format: :rss
+      expect(response).to be_success
+      expect(response.content_type).to eq('application/rss+xml')
     end
 
   end

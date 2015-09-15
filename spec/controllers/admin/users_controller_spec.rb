@@ -121,6 +121,17 @@ describe Admin::UsersController do
 
     end
 
+    context '.suspend' do
+
+      let(:evil_trout) { Fabricate(:evil_trout) }
+
+      it "also revoke any api keys" do
+        User.any_instance.expects(:revoke_api_key)
+        xhr :put, :suspend, user_id: evil_trout.id
+      end
+
+    end
+
     context '.revoke_admin' do
       before do
         @another_admin = Fabricate(:admin)
@@ -187,7 +198,7 @@ describe Admin::UsersController do
 
     context '.trust_level' do
       before do
-        @another_user = Fabricate(:coding_horror)
+        @another_user = Fabricate(:coding_horror, created_at: 1.month.ago)
       end
 
       it "raises an error when the user doesn't have permission" do
@@ -500,7 +511,6 @@ describe Admin::UsersController do
 
     user = DiscourseSingleSignOn.parse(sso.payload)
                                 .lookup_or_create_user
-
 
     sso.name = "Bill"
     sso.username = "Hokli$$!!"

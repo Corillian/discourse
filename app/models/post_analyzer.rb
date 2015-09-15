@@ -45,14 +45,21 @@ class PostAnalyzer
     return [] if @raw.blank?
     return @raw_mentions if @raw_mentions.present?
 
-    # strip quotes and code blocks
+    # strip quotes, code blocks and oneboxes
     cooked_stripped = cooked_document
     cooked_stripped.css("aside.quote").remove
     cooked_stripped.css("pre").remove
     cooked_stripped.css("code").remove
+    cooked_stripped.css(".onebox").remove
 
     results = cooked_stripped.to_html.scan(PrettyText.mention_matcher)
     @raw_mentions = results.uniq.map { |un| un.first.downcase.gsub!(/^@/, '') }
+  end
+
+  # from rack ... compat with ruby 2.2
+  def self.parse_uri_rfc2396(uri)
+    @parser ||= defined?(URI::RFC2396_Parser) ? URI::RFC2396_Parser.new : URI
+    @parser.parse(uri)
   end
 
   # Count how many hosts are linked in the post
@@ -64,7 +71,7 @@ class PostAnalyzer
 
     raw_links.each do |u|
       begin
-        uri = URI.parse(u)
+        uri = self.class.parse_uri_rfc2396(u)
         host = uri.host
         @linked_hosts[host] ||= 1 unless host.nil?
       rescue URI::InvalidURIError

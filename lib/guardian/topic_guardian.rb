@@ -15,7 +15,7 @@ module TopicGuardian
 
   def can_create_topic_on_category?(category)
     can_create_topic?(nil) &&
-    (!category || Category.topic_create_allowed(self).where(:id => category.id).count == 1)
+    (!category || Category.topic_create_allowed(self).where(id: category.id).count == 1)
   end
 
   def can_create_post_on_topic?(topic)
@@ -29,7 +29,9 @@ module TopicGuardian
   def can_edit_topic?(topic)
     return false if Discourse.static_doc_topic_ids.include?(topic.id) && !is_admin?
     return false unless can_see?(topic)
-    return true if is_staff? || (!topic.private_message? && user.has_trust_level?(TrustLevel[3]))
+    return true if is_staff?
+    return true if (!topic.private_message? && user.has_trust_level?(TrustLevel[3]) && can_create_post?(topic))
+
     return false if topic.archived
     is_my_own?(topic) && !topic.edit_time_limit_expired?
   end

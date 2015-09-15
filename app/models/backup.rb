@@ -1,7 +1,6 @@
 require "azure"
 
 class Backup
-  include UrlHelper
   include ActiveModel::SerializerSupport
 
   attr_reader :filename
@@ -12,7 +11,7 @@ class Backup
   end
 
   def self.all
-    Dir.glob(File.join(Backup.base_directory, "*.tar.gz"))
+    Dir.glob(File.join(Backup.base_directory, "*.{gz,tgz}"))
        .sort_by { |file| File.mtime(file) }
        .reverse
        .map { |backup| Backup.create_from_filename(File.basename(backup)) }
@@ -127,7 +126,7 @@ class Backup
   def self.create_from_filename(filename)
     Backup.new(filename).tap do |b|
       b.path = File.join(Backup.base_directory, b.filename)
-      b.link = b.schemaless "#{Discourse.base_url}/admin/backups/#{b.filename}"
+      b.link = UrlHelper.schemaless "#{Discourse.base_url}/admin/backups/#{b.filename}"
       b.size = File.size(b.path)
     end
   end

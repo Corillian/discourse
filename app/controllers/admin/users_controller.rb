@@ -38,7 +38,7 @@ class Admin::UsersController < Admin::AdminController
 
   def show
     @user = User.find_by(username_lower: params[:id])
-    raise Discourse::NotFound.new unless @user
+    raise Discourse::NotFound unless @user
     render_serialized(@user, AdminDetailedUserSerializer, root: false)
   end
 
@@ -53,6 +53,7 @@ class Admin::UsersController < Admin::AdminController
     @user.suspended_till = params[:duration].to_i.days.from_now
     @user.suspended_at = DateTime.now
     @user.save!
+    @user.revoke_api_key
     StaffActionLogger.new(current_user).log_user_suspend(@user, params[:reason])
     MessageBus.publish "/logout", @user.id, user_ids: [@user.id]
     render nothing: true
@@ -166,7 +167,7 @@ class Admin::UsersController < Admin::AdminController
 
     new_lock = params[:locked].to_s
     unless new_lock =~ /true|false/
-      return render_json_error I18n.t('errors.invalid_boolaen')
+      return render_json_error I18n.t('errors.invalid_boolean')
     end
 
     @user.trust_level_locked = new_lock == "true"

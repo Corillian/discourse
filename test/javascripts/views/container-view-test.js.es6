@@ -17,11 +17,6 @@ function childHasProperty(containerView, name) {
 
 moduleFor("view:container");
 
-test("mixes in Discourse.Presence", function() {
-  var containerView = this.subject();
-  ok(Discourse.Presence.detect(containerView));
-});
-
 test("attachViewWithArgs: creates a view of a given class with given properties and appends it to the container", function() {
   var containerView = this.subject();
   containerView.attachViewWithArgs({foo: "foo"}, SomeViewClass);

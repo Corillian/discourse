@@ -2,14 +2,17 @@
   The parent route for all discovery routes.
   Handles the logic for showing the loading spinners.
 **/
+import OpenComposer from "discourse/mixins/open-composer";
+import { scrollTop } from "discourse/mixins/scroll-top";
 
-import ShowFooter from "discourse/mixins/show-footer";
+const DiscoveryRoute = Discourse.Route.extend(OpenComposer, {
+  redirect() {
+    return this.redirectIfLoginRequired();
+  },
 
-const DiscoveryRoute = Discourse.Route.extend(Discourse.ScrollTop, Discourse.OpenComposer, ShowFooter, {
-  redirect: function() { return this.redirectIfLoginRequired(); },
-
-  beforeModel: function(transition) {
-    if (transition.targetName.indexOf("discovery.top") === -1 &&
+  beforeModel(transition) {
+    if (transition.intent.url === "/" &&
+        transition.targetName.indexOf("discovery.top") === -1 &&
         Discourse.User.currentProp("should_be_redirected_to_top")) {
       Discourse.User.currentProp("should_be_redirected_to_top", false);
       this.replaceWith("discovery.top");
@@ -17,31 +20,31 @@ const DiscoveryRoute = Discourse.Route.extend(Discourse.ScrollTop, Discourse.Ope
   },
 
   actions: {
-    loading: function() {
-      this.controllerFor('discovery').set("loading", true);
+    loading() {
+      this.controllerFor("discovery").set("loading", true);
       return true;
     },
 
-    loadingComplete: function() {
-      this.controllerFor('discovery').set('loading', false);
-      if (!this.session.get('topicListScrollPosition')) {
-        this._scrollTop();
+    loadingComplete() {
+      this.controllerFor("discovery").set("loading", false);
+      if (!this.session.get("topicListScrollPosition")) {
+        scrollTop();
       }
     },
 
-    didTransition: function() {
+    didTransition() {
       this.controllerFor("discovery")._showFooter();
-      this.send('loadingComplete');
+      this.send("loadingComplete");
       return true;
     },
 
     // clear a pinned topic
-    clearPin: function(topic) {
+    clearPin(topic) {
       topic.clearPin();
     },
 
-    createTopic: function() {
-      this.openComposer(this.controllerFor('discovery/topics'));
+    createTopic() {
+      this.openComposer(this.controllerFor("discovery/topics"));
     }
   }
 

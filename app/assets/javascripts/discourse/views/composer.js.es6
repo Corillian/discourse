@@ -1,9 +1,12 @@
 import userSearch from 'discourse/lib/user-search';
 import afterTransition from 'discourse/lib/after-transition';
 import loadScript from 'discourse/lib/load-script';
-import avatarTemplate from 'discourse/lib/avatar-template';
+import positioningWorkaround from 'discourse/lib/safari-hacks';
+import debounce from 'discourse/lib/debounce';
+import { linkSeenMentions, fetchUnseenMentions } from 'discourse/lib/link-mentions';
+import { headerHeight } from 'discourse/views/header';
 
-const ComposerView = Discourse.View.extend(Ember.Evented, {
+const ComposerView = Ember.View.extend(Ember.Evented, {
   _lastKeyTimeout: null,
   templateName: 'composer',
   elementId: 'reply-control',
@@ -28,17 +31,17 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
   // Disable fields when we're loading
   loadingChanged: function() {
     if (this.get('loading')) {
-      $('#wmd-input, #reply-title').prop('disabled', 'disabled');
+      this.$('.wmd-input, #reply-title').prop('disabled', 'disabled');
     } else {
-      $('#wmd-input, #reply-title').prop('disabled', '');
+      this.$('.wmd-input, #reply-title').prop('disabled', '');
     }
   }.observes('loading'),
 
   postMade: function() {
-    return this.present('controller.createdPost') ? 'created-post' : null;
+    return !Ember.isEmpty(this.get('model.createdPost')) ? 'created-post' : null;
   }.property('model.createdPost'),
 
-  refreshPreview: Discourse.debounce(function() {
+  refreshPreview: debounce(function() {
     if (this.editor) {
       this.editor.refreshPreview();
     }
@@ -57,23 +60,22 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
   },
 
   resize: function() {
-    const self = this;
-    Em.run.scheduleOnce('afterRender', function() {
-      const h = $('#reply-control').height() || 0;
-      self.movePanels.apply(self, [h + "px"]);
+    Ember.run.scheduleOnce('afterRender', () => {
+      let h = $('#reply-control').height() || 0;
+      this.movePanels(h + "px");
 
       // Figure out the size of the fields
-      const $fields = self.$('.composer-fields');
+      const $fields = this.$('.composer-fields');
       let pos = $fields.position();
 
       if (pos) {
-        self.$('.wmd-controls').css('top', $fields.height() + pos.top + 5);
+        this.$('.wmd-controls').css('top', $fields.height() + pos.top + 5);
       }
 
       // get the submit panel height
-      pos = self.$('.submit-panel').position();
+      pos = this.$('.submit-panel').position();
       if (pos) {
-        self.$('.wmd-controls').css('bottom', h - pos.top + 7);
+        this.$('.wmd-controls').css('bottom', h - pos.top + 7);
       }
 
     });
@@ -82,6 +84,8 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
   keyUp() {
     const controller = this.get('controller');
     controller.checkReplyLength();
+
+    this.get('controller.model').typing();
 
     const lastKeyUp = new Date();
     this.set('lastKeyUp', lastKeyUp);
@@ -112,36 +116,29 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
   },
 
   _enableResizing: function() {
-    const $replyControl = $('#reply-control'),
-        self = this;
+    const $replyControl = $('#reply-control');
+
+    const runResize = () => {
+      Ember.run(() => this.resize());
+    };
 
     $replyControl.DivResizer({
-      resize: this.resize.bind(self),
-      onDrag(sizePx) { self.movePanels.apply(self, [sizePx]); }
+      maxHeight(winHeight) {
+        return winHeight - headerHeight();
+      },
+      resize: runResize,
+      onDrag: (sizePx) => this.movePanels(sizePx)
     });
-    afterTransition($replyControl, this.resize.bind(self));
-    this.ensureMaximumDimensionForImagesInPreview();
+
+    afterTransition($replyControl, runResize);
     this.set('controller.view', this);
+
+    positioningWorkaround(this.$());
   }.on('didInsertElement'),
 
   _unlinkView: function() {
     this.set('controller.view', null);
   }.on('willDestroyElement'),
-
-  ensureMaximumDimensionForImagesInPreview() {
-    // This enforce maximum dimensions of images in the preview according
-    // to the current site settings.
-    // For interactivity, we immediately insert the locally cooked version
-    // of the post into the stream when the user hits reply. We therefore also
-    // need to enforce these rules on the .cooked version.
-    // Meanwhile, the server is busy post-processing the post and generating thumbnails.
-    const style = Discourse.Mobile.mobileView ?
-                'max-width: 100%; height: auto;' :
-                'max-width:' + Discourse.SiteSettings.max_image_width + 'px;' +
-                'max-height:' + Discourse.SiteSettings.max_image_height + 'px;';
-
-    $('<style>#wmd-preview img:not(.thumbnail), .cooked img:not(.thumbnail) {' + style + '}</style>').appendTo('head');
-  },
 
   click() {
     this.get('controller').send('openIfDraft');
@@ -149,7 +146,9 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
 
   // Called after the preview renders. Debounced for performance
   afterRender() {
-    const $wmdPreview = $('#wmd-preview');
+    if (this._state !== "inDOM") { return; }
+
+    const $wmdPreview = this.$('.wmd-preview');
     if ($wmdPreview.length === 0) return;
 
     const post = this.get('model.post');
@@ -157,7 +156,7 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
 
     // If we are editing a post, we'll refresh its contents once. This is a feature that
     // allows a user to refresh its contents once.
-    if (post && post.blank('refreshedPost')) {
+    if (post && !post.get('refreshedPost')) {
       refresh = true;
       post.set('refreshedPost', true);
     }
@@ -166,18 +165,27 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
     $('a.onebox', $wmdPreview).each(function(i, e) {
       Discourse.Onebox.load(e, refresh);
     });
-    $('span.mention', $wmdPreview).each(function(i, e) {
-      Discourse.Mention.paint(e);
-    });
+
+    const unseen = linkSeenMentions($wmdPreview, this.siteSettings);
+    if (unseen.length) {
+      Ember.run.debounce(this, this._renderUnseen, $wmdPreview, unseen, 500);
+    }
 
     this.trigger('previewRefreshed', $wmdPreview);
+  },
+
+  _renderUnseen: function($wmdPreview, unseen) {
+    fetchUnseenMentions($wmdPreview, unseen, this.siteSettings).then(() => {
+      linkSeenMentions($wmdPreview, this.siteSettings);
+      this.trigger('previewRefreshed', $wmdPreview);
+    });
   },
 
   _applyEmojiAutocomplete() {
     if (!this.siteSettings.enable_emoji) { return; }
 
     const template = this.container.lookup('template:emoji-selector-autocomplete.raw');
-    $('#wmd-input').autocomplete({
+    this.$('.wmd-input').autocomplete({
       template: template,
       key: ":",
       transformComplete(v) { return v.code + ":"; },
@@ -209,9 +217,9 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
   initEditor() {
     // not quite right, need a callback to pass in, meaning this gets called once,
     // but if you start replying to another topic it will get the avatars wrong
-    let $wmdInput, editor;
+    let $wmdInput;
     const self = this;
-    this.wmdInput = $wmdInput = $('#wmd-input');
+    this.wmdInput = $wmdInput = this.$('.wmd-input');
     if ($wmdInput.length === 0 || $wmdInput.data('init') === true) return;
 
     loadScript('defer/html-sanitizer-bundle');
@@ -231,24 +239,18 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
       },
       key: "@",
       transformComplete(v) {
-          if (v.username) {
-            return v.username;
-          } else {
-            return v.usernames.join(", @");
-          }
-        }
+        return v.username ? v.username : v.usernames.join(", @");
+      }
     });
 
-    this.editor = editor = Discourse.Markdown.createEditor({
-      lookupAvatarByPostNumber(postNumber) {
-        const posts = self.get('controller.controllers.topic.postStream.posts');
-        if (posts) {
+    this.editor = Discourse.Markdown.createEditor({
+      containerElement: this.element,
+      lookupAvatarByPostNumber(postNumber, topicId) {
+        const posts = self.get('controller.controllers.topic.model.postStream.posts');
+        if (posts && topicId === self.get('controller.controllers.topic.model.id')) {
           const quotedPost = posts.findProperty("post_number", postNumber);
           if (quotedPost) {
-            const username = quotedPost.get('username'),
-                  uploadId = quotedPost.get('uploaded_avatar_id');
-
-            return Discourse.Utilities.tinyAvatar(avatarTemplate(username, uploadId));
+            return Discourse.Utilities.tinyAvatar(quotedPost.get('avatar_template'));
           }
         }
       }
@@ -275,7 +277,7 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
     this.set('editor', this.editor);
     this.loadingChanged();
 
-    const saveDraft = Discourse.debounce((function() {
+    const saveDraft = debounce((function() {
       return self.get('controller').saveDraft();
     }), 2000);
 
@@ -307,78 +309,78 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
     // in case it's still bound somehow
     this._unbindUploadTarget();
 
-    const $uploadTarget = $('#reply-control'),
-        csrf = Discourse.Session.currentProp('csrfToken');
-    let cancelledByTheUser;
+    const $uploadTarget = $("#reply-control"),
+          csrf = Discourse.Session.currentProp("csrfToken"),
+          reset = () => this.setProperties({ uploadProgress: 0, isUploading: false });
 
-    // NOTE: we need both the .json extension and the CSRF token as a query parameter for IE9
+    var cancelledByTheUser;
+
+    this.messageBus.subscribe("/uploads/composer", upload => {
+      if (!cancelledByTheUser) {
+        if (upload && upload.url) {
+          const old = Discourse.Utilities.getUploadPlaceholder(upload.original_filename),
+                markdown = Discourse.Utilities.getUploadMarkdown(upload);
+          this.replaceMarkdown(old, markdown);
+        } else {
+          Discourse.Utilities.displayErrorForUpload(upload);
+        }
+      }
+      // reset upload state
+      reset();
+    });
+
     $uploadTarget.fileupload({
-      url: Discourse.getURL('/uploads.json?authenticity_token=' + encodeURIComponent(csrf)),
-      dataType: 'json',
-      pasteZone: $uploadTarget
+      url: Discourse.getURL("/uploads.json?client_id=" + this.messageBus.clientId + "&authenticity_token=" + encodeURIComponent(csrf)),
+      dataType: "json",
+      pasteZone: $uploadTarget,
     });
 
-    // submit - this event is triggered for each upload
-    $uploadTarget.on('fileuploadsubmit', function (e, data) {
-      const result = Discourse.Utilities.validateUploadedFiles(data.files);
-      // reset upload status when everything is ok
-      if (result) self.setProperties({ uploadProgress: 0, isUploading: true });
-      return result;
+    $uploadTarget.on("fileuploadsubmit", (e, data) => {
+      const isValid = Discourse.Utilities.validateUploadedFiles(data.files);
+      data.formData = { type: "composer" };
+      this.setProperties({ uploadProgress: 0, isUploading: isValid });
+      return isValid;
     });
 
-    // send - this event is triggered when the upload request is about to start
-    $uploadTarget.on('fileuploadsend', function (e, data) {
-      cancelledByTheUser = false;
+    $uploadTarget.on("fileuploadsend", (e, data) => {
       // hide the "file selector" modal
-      self.get('controller').send('closeModal');
-      // NOTE: IE9 doesn't support XHR
+      this.get("controller").send("closeModal");
+      // deal with cancellation
+      cancelledByTheUser = false;
+      // add upload placeholder
+      const markdown = Discourse.Utilities.getUploadPlaceholder(data.files[0].name);
+      this.addMarkdown(markdown);
+      //
       if (data["xhr"]) {
         const jqHXR = data.xhr();
         if (jqHXR) {
           // need to wait for the link to show up in the DOM
-          Em.run.schedule('afterRender', function() {
-            // bind on the click event on the cancel link
-            $('#cancel-file-upload').on('click', function() {
-              // cancel the upload
-              self.set('isUploading', false);
-              // NOTE: this might trigger a 'fileuploadfail' event with status = 0
-              if (jqHXR) { cancelledByTheUser = true; jqHXR.abort(); }
+          Em.run.schedule("afterRender", () => {
+            const $cancel = $("#cancel-file-upload");
+            $cancel.on("click", () => {
+              if (jqHXR) {
+                cancelledByTheUser = true;
+                // might trigger a "fileuploadfail" event with status = 0
+                jqHXR.abort();
+                // make sure we always reset the uploading status
+                reset();
+              }
               // unbind
-              $(this).off('click');
+              $cancel.off("click");
             });
           });
         }
       }
     });
 
-    // progress all
-    $uploadTarget.on('fileuploadprogressall', function (e, data) {
+    $uploadTarget.on("fileuploadprogressall", (e, data) => {
       const progress = parseInt(data.loaded / data.total * 100, 10);
-      self.set('uploadProgress', progress);
+      this.set("uploadProgress", progress);
     });
 
-    // done
-    $uploadTarget.on('fileuploaddone', function (e, data) {
+    $uploadTarget.on("fileuploadfail", (e, data) => {
+      reset();
       if (!cancelledByTheUser) {
-        // make sure we have a url
-        if (data.result.url) {
-          const markdown = Discourse.Utilities.getUploadMarkdown(data.result);
-          // appends a space at the end of the inserted markdown
-          self.addMarkdown(markdown + " ");
-          self.set('isUploading', false);
-        } else {
-          // display the error message sent by the server
-          bootbox.alert(data.result.join("\n"));
-        }
-      }
-    });
-
-    // fail
-    $uploadTarget.on('fileuploadfail', function (e, data) {
-      // hide upload status
-      self.set('isUploading', false);
-      if (!cancelledByTheUser) {
-        // display an error message
         Discourse.Utilities.displayErrorForUpload(data);
       }
     });
@@ -491,7 +493,7 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
   },
 
   addMarkdown(text) {
-    const ctrl = $('#wmd-input').get(0),
+    const ctrl = this.$('.wmd-input').get(0),
         caretPosition = Discourse.Utilities.caretPosition(ctrl),
         current = this.get('model.reply');
     this.set('model.reply', current.substring(0, caretPosition) + text + current.substring(caretPosition, current.length));
@@ -501,10 +503,15 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
     });
   },
 
+  replaceMarkdown(old, text) {
+    const reply = this.get("model.reply");
+    this.set("model.reply", reply.replace(old, text));
+  },
+
   // Uses javascript to get the image sizes from the preview, if present
   imageSizes() {
     const result = {};
-    $('#wmd-preview img').each(function(i, e) {
+    this.$('.wmd-preview img').each(function(i, e) {
       const $img = $(e),
           src = $img.prop('src');
 
@@ -516,21 +523,41 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
   },
 
   childDidInsertElement() {
-    return this.initEditor();
+    this.initEditor();
+
+    // Disable links in the preview
+    this.$('.wmd-preview').on('click.preview', (e) => {
+      e.preventDefault();
+      return false;
+    });
   },
 
   childWillDestroyElement() {
-    const self = this;
-
     this._unbindUploadTarget();
 
-    Em.run.next(function() {
+    this.$('.wmd-preview').off('click.preview');
+
+    const self = this;
+
+    Em.run.next(() => {
       $('#main-outlet').css('padding-bottom', 0);
       // need to wait a bit for the "slide down" transition of the composer
-      Em.run.later(function() {
-        self.appEvents.trigger("composer:closed");
+      Em.run.later(() => {
+        if (self.get('composeState') !== Discourse.Composer.CLOSED) {
+          $('#main-outlet').css('padding-bottom', $('#reply-control').height());
+        }
+
+        this.appEvents.trigger("composer:closed");
       }, 400);
     });
+  },
+
+  _unbindUploadTarget() {
+    this.messageBus.unsubscribe("/uploads/composer");
+    const $uploadTarget = $("#reply-control");
+    try { $uploadTarget.fileupload("destroy"); }
+    catch (e) { /* wasn't initialized yet */ }
+    $uploadTarget.off();
   },
 
   titleValidation: function() {
@@ -557,26 +584,27 @@ const ComposerView = Discourse.View.extend(Ember.Evented, {
   }.property('model.categoryId'),
 
   replyValidation: function() {
+    const postType = this.get('model.post.post_type');
+    if (postType === this.site.get('post_types.small_action')) { return; }
+
     const replyLength = this.get('model.replyLength'),
-        missingChars = this.get('model.missingReplyCharacters');
+          missingChars = this.get('model.missingReplyCharacters');
+
     let reason;
-    if( replyLength < 1 ){
+    if (replyLength < 1) {
       reason = I18n.t('composer.error.post_missing');
-    } else if( missingChars > 0 ) {
+    } else if (missingChars > 0) {
       reason = I18n.t('composer.error.post_length', {min: this.get('model.minimumPostLength')});
+      const tl = Discourse.User.currentProp("trust_level");
+      if (tl === 0 || tl === 1) {
+        reason += "<br/>" + I18n.t('composer.error.try_like');
+      }
     }
 
-    if( reason ) {
-      return Discourse.InputValidation.create({ failed: true, reason: reason });
+    if (reason) {
+      return Discourse.InputValidation.create({ failed: true, reason });
     }
   }.property('model.reply', 'model.replyLength', 'model.missingReplyCharacters', 'model.minimumPostLength'),
-
-  _unbindUploadTarget() {
-    const $uploadTarget = $('#reply-control');
-    try { $uploadTarget.fileupload('destroy'); }
-    catch (e) { /* wasn't initialized yet */ }
-    $uploadTarget.off();
-  }
 });
 
 RSVP.EventTarget.mixin(ComposerView);

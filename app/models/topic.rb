@@ -85,6 +85,7 @@ class Topic < ActiveRecord::Base
   has_many :allowed_group_users, through: :allowed_groups, source: :users
   has_many :allowed_groups, through: :topic_allowed_groups, source: :group
   has_many :allowed_users, through: :topic_allowed_users, source: :user
+  has_many :queued_posts
 
   has_one :top_topic
   belongs_to :user
@@ -106,6 +107,7 @@ class Topic < ActiveRecord::Base
 
   # When we want to temporarily attach some data to a forum topic (usually before serialization)
   attr_accessor :user_data
+
   attr_accessor :posters  # TODO: can replace with posters_summary once we remove old list code
   attr_accessor :participants
   attr_accessor :topic_list
@@ -216,6 +218,13 @@ class Topic < ActiveRecord::Base
     end
   end
 
+  def visible_post_types(viewed_by=nil)
+    types = Post.types
+    result = [types[:regular], types[:moderator_action], types[:small_action]]
+    result << types[:whisper] if viewed_by.try(:staff?)
+    result
+  end
+
   def self.top_viewed(max = 10)
     Topic.listable_topics.visible.secured.order('views desc').limit(max)
   end
@@ -250,7 +259,7 @@ class Topic < ActiveRecord::Base
   # Additional rate limits on topics: per day and private messages per day
   def limit_topics_per_day
     apply_per_day_rate_limit_for("topics", :max_topics_per_day)
-    limit_first_day_topics_per_day if user.added_a_day_ago?
+    limit_first_day_topics_per_day if user.first_day_user?
   end
 
   def limit_private_messages_per_day
@@ -269,6 +278,10 @@ class Topic < ActiveRecord::Base
     require 'redcarpet' unless defined? Redcarpet
 
     Redcarpet::Render::SmartyPants.render(sanitized_title)
+  end
+
+  def pending_posts_count
+    queued_posts.new_count
   end
 
   # Returns hot topics since a date for display in email digest.
@@ -352,8 +365,10 @@ class Topic < ActiveRecord::Base
     custom_fields[key.to_s]
   end
 
-  def self.listable_count_per_day(start_date, end_date)
-    listable_topics.where('created_at >= ? and created_at <= ?', start_date, end_date).group('date(created_at)').order('date(created_at)').count
+  def self.listable_count_per_day(start_date, end_date, category_id=nil)
+    result = listable_topics.where('created_at >= ? and created_at <= ?', start_date, end_date)
+    result = result.where(category_id: category_id) if category_id
+    result.group('date(created_at)').order('date(created_at)').count
   end
 
   def private_message?
@@ -388,7 +403,7 @@ class Topic < ActiveRecord::Base
 
     return [] unless candidate_ids.present?
 
-    similar = Topic.select(sanitize_sql_array(["topics.*, similarity(topics.title, :title) + similarity(topics.title, :raw) AS similarity", title: title, raw: raw]))
+    similar = Topic.select(sanitize_sql_array(["topics.*, similarity(topics.title, :title) + similarity(topics.title, :raw) AS similarity, p.cooked as blurb", title: title, raw: raw]))
                      .joins("JOIN posts AS p ON p.topic_id = topics.id AND p.post_number = 1")
                      .limit(SiteSetting.max_similar_results)
                      .where("topics.id IN (?)", candidate_ids)
@@ -398,8 +413,8 @@ class Topic < ActiveRecord::Base
     similar
   end
 
-  def update_status(status, enabled, user, message=nil)
-    TopicStatusUpdate.new(self, user).update!(status, enabled, message)
+  def update_status(status, enabled, user, opts={})
+    TopicStatusUpdate.new(self, user).update!(status, enabled, opts)
   end
 
   # Atomically creates the next post number
@@ -474,22 +489,25 @@ class Topic < ActiveRecord::Base
       Category.where(id: new_category.id).update_all("topic_count = topic_count + 1")
       CategoryFeaturedTopic.feature_topics_for(old_category) unless @import_mode
       CategoryFeaturedTopic.feature_topics_for(new_category) unless @import_mode || old_category.id == new_category.id
-      CategoryUser.auto_watch_new_topic(self)
-      CategoryUser.auto_track_new_topic(self)
+      CategoryUser.auto_watch_new_topic(self, new_category)
+      CategoryUser.auto_track_new_topic(self, new_category)
     end
 
     true
   end
 
-  def add_moderator_post(user, text, opts={})
+  def add_moderator_post(user, text, opts=nil)
+    opts ||= {}
     new_post = nil
     Topic.transaction do
       creator = PostCreator.new(user,
                                 raw: text,
-                                post_type: Post.types[:moderator_action],
+                                post_type: opts[:post_type] || Post.types[:moderator_action],
+                                action_code: opts[:action_code],
                                 no_bump: opts[:bump].blank?,
                                 skip_notifications: opts[:skip_notifications],
-                                topic_id: self.id)
+                                topic_id: self.id,
+                                skip_validations: true)
       new_post = creator.create
       increment!(:moderator_posts_count)
     end
@@ -537,7 +555,7 @@ class Topic < ActiveRecord::Base
   # Invite a user to the topic by username or email. Returns success/failure
   def invite(invited_by, username_or_email, group_ids=nil)
     if private_message?
-      # If the user exists, add them to the topic.
+      # If the user exists, add them to the message.
       user = User.find_by_username_or_email(username_or_email)
       if user && topic_allowed_users.create!(user_id: user.id)
 
@@ -551,11 +569,29 @@ class Topic < ActiveRecord::Base
       end
     end
 
-    if username_or_email =~ /^.+@.+$/
+    if username_or_email =~ /^.+@.+$/ && !SiteSetting.enable_sso
+      # rate limit topic invite
+      RateLimiter.new(invited_by, "topic-invitations-per-day", SiteSetting.max_topic_invitations_per_day, 1.day.to_i).performed!
+
       # NOTE callers expect an invite object if an invite was sent via email
       invite_by_email(invited_by, username_or_email, group_ids)
     else
-      false
+      # invite existing member to a topic
+      user = User.find_by_username(username_or_email)
+      if user && topic_allowed_users.create!(user_id: user.id)
+        # rate limit topic invite
+        RateLimiter.new(invited_by, "topic-invitations-per-day", SiteSetting.max_topic_invitations_per_day, 1.day.to_i).performed!
+
+        # Notify the user they've been invited
+        user.notifications.create(notification_type: Notification.types[:invited_to_topic],
+                                  topic_id: id,
+                                  post_number: 1,
+                                  data: { topic_title: title,
+                                          display_username: invited_by.username }.to_json)
+        return true
+      else
+        false
+      end
     end
   end
 
@@ -600,7 +636,7 @@ class Topic < ActiveRecord::Base
   end
 
   def update_action_counts
-    PostActionType.types.keys.each do |type|
+    PostActionType.types.each_key do |type|
       count_field = "#{type}_count"
       update_column(count_field, Post.where(topic_id: id).sum(count_field))
     end
@@ -639,7 +675,8 @@ class Topic < ActiveRecord::Base
 
     {
       html: post.cooked,
-      key: self.id
+      key: self.id,
+      url: self.url
     }
   end
 
@@ -647,7 +684,7 @@ class Topic < ActiveRecord::Base
   def slug
     unless slug = read_attribute(:slug)
       return '' unless title.present?
-      slug = Slug.for(title).presence || "topic"
+      slug = Slug.for(title)
       if new_record?
         write_attribute(:slug, slug)
       else
@@ -659,7 +696,7 @@ class Topic < ActiveRecord::Base
   end
 
   def title=(t)
-    slug = (Slug.for(t.to_s).presence || "topic")
+    slug = Slug.for(t.to_s)
     write_attribute(:slug, slug)
     write_attribute(:title,t)
   end
@@ -667,7 +704,7 @@ class Topic < ActiveRecord::Base
   # NOTE: These are probably better off somewhere else.
   #       Having a model know about URLs seems a bit strange.
   def last_post_url
-    "/t/#{slug}/#{id}/#{posts_count}"
+    "#{Discourse.base_uri}/t/#{slug}/#{id}/#{posts_count}"
   end
 
   def self.url(id, slug, post_number=nil)
@@ -681,9 +718,13 @@ class Topic < ActiveRecord::Base
   end
 
   def relative_url(post_number=nil)
-    url = "/t/#{slug}/#{id}"
+    url = "#{Discourse.base_uri}/t/#{slug}/#{id}"
     url << "/#{post_number}" if post_number.to_i > 1
     url
+  end
+
+  def unsubscribe_url
+    "#{url}/unsubscribe"
   end
 
   def clear_pin_for(user)
@@ -696,9 +737,17 @@ class Topic < ActiveRecord::Base
     TopicUser.change(user.id, id, cleared_pinned_at: nil)
   end
 
-  def update_pinned(status, global=false)
-    update_column(:pinned_at, status ? Time.now : nil)
-    update_column(:pinned_globally, global)
+  def update_pinned(status, global=false, pinned_until=nil)
+    pinned_until = Time.parse(pinned_until) rescue nil
+
+    update_columns(
+      pinned_at: status ? Time.now : nil,
+      pinned_globally: global,
+      pinned_until: pinned_until
+    )
+
+    Jobs.cancel_scheduled_job(:unpin_topic, topic_id: self.id)
+    Jobs.enqueue_at(pinned_until, :unpin_topic, topic_id: self.id) if pinned_until
   end
 
   def draft_key
@@ -713,6 +762,11 @@ class Topic < ActiveRecord::Base
     if user && user.id
       notifier.muted?(user.id)
     end
+  end
+
+  def self.ensure_consistency!
+    # unpin topics that might have been missed
+    Topic.where("pinned_until < now()").update_all(pinned_at: nil, pinned_globally: false, pinned_until: nil)
   end
 
   def self.auto_close
@@ -737,8 +791,13 @@ class Topic < ActiveRecord::Base
   #  * A timestamp, like "2013-11-25 13:00", when the topic should close.
   #  * A timestamp with timezone in JSON format. (e.g., "2013-11-26T21:00:00.000Z")
   #  * nil, to prevent the topic from automatically closing.
-  def set_auto_close(arg, by_user=nil)
+  # Options:
+  #  * by_user: User who is setting the auto close time
+  #  * timezone_offset: (Integer) offset from UTC in minutes of the given argument. Default 0.
+  def set_auto_close(arg, opts={})
     self.auto_close_hours = nil
+    by_user = opts[:by_user]
+    offset_minutes = opts[:timezone_offset]
 
     if self.auto_close_based_on_last_post
       num_hours = arg.to_f
@@ -750,12 +809,17 @@ class Topic < ActiveRecord::Base
         self.auto_close_at = nil
       end
     else
+      utc = Time.find_zone("UTC")
       if arg.is_a?(String) && m = /^(\d{1,2}):(\d{2})(?:\s*[AP]M)?$/i.match(arg.strip)
-        now = Time.zone.now
-        self.auto_close_at = Time.zone.local(now.year, now.month, now.day, m[1].to_i, m[2].to_i)
+        # a time of day in client's time zone, like "15:00"
+        now = utc.now
+        self.auto_close_at = utc.local(now.year, now.month, now.day, m[1].to_i, m[2].to_i)
+        self.auto_close_at += offset_minutes * 60 if offset_minutes
         self.auto_close_at += 1.day if self.auto_close_at < now
-      elsif arg.is_a?(String) && arg.include?("-") && timestamp = Time.zone.parse(arg)
+      elsif arg.is_a?(String) && arg.include?("-") && timestamp = utc.parse(arg)
+        # a timestamp in client's time zone, like "2015-5-27 12:00"
         self.auto_close_at = timestamp
+        self.auto_close_at += offset_minutes * 60 if offset_minutes
         self.errors.add(:auto_close_at, :invalid) if timestamp < Time.zone.now
       else
         num_hours = arg.to_f
@@ -809,7 +873,100 @@ class Topic < ActiveRecord::Base
   end
 
   def expandable_first_post?
-    SiteSetting.embeddable_host.present? && SiteSetting.embed_truncate? && has_topic_embed?
+    SiteSetting.embed_truncate? && has_topic_embed?
+  end
+
+  TIME_TO_FIRST_RESPONSE_SQL ||= <<-SQL
+    SELECT AVG(t.hours)::float AS "hours", t.created_at AS "date"
+    FROM (
+      SELECT t.id, t.created_at::date AS created_at, EXTRACT(EPOCH FROM MIN(p.created_at) - t.created_at)::float / 3600.0 AS "hours"
+      FROM topics t
+      LEFT JOIN posts p ON p.topic_id = t.id
+      /*where*/
+      GROUP BY t.id
+    ) t
+    GROUP BY t.created_at
+    ORDER BY t.created_at
+  SQL
+
+  TIME_TO_FIRST_RESPONSE_TOTAL_SQL ||= <<-SQL
+    SELECT AVG(t.hours)::float AS "hours"
+    FROM (
+      SELECT t.id, EXTRACT(EPOCH FROM MIN(p.created_at) - t.created_at)::float / 3600.0 AS "hours"
+      FROM topics t
+      LEFT JOIN posts p ON p.topic_id = t.id
+      /*where*/
+      GROUP BY t.id
+    ) t
+  SQL
+
+  def self.time_to_first_response(sql, opts=nil)
+    opts ||= {}
+    builder = SqlBuilder.new(sql)
+    builder.where("t.created_at >= :start_date", start_date: opts[:start_date]) if opts[:start_date]
+    builder.where("t.created_at < :end_date", end_date: opts[:end_date]) if opts[:end_date]
+    builder.where("t.category_id = :category_id", category_id: opts[:category_id]) if opts[:category_id]
+    builder.where("t.archetype <> '#{Archetype.private_message}'")
+    builder.where("t.deleted_at IS NULL")
+    builder.where("p.deleted_at IS NULL")
+    builder.where("p.post_number > 1")
+    builder.where("p.user_id != t.user_id")
+    builder.where("p.user_id in (:user_ids)", {user_ids: opts[:user_ids]}) if opts[:user_ids]
+    builder.where("EXTRACT(EPOCH FROM p.created_at - t.created_at) > 0")
+    builder.exec
+  end
+
+  def self.time_to_first_response_per_day(start_date, end_date, opts={})
+    time_to_first_response(TIME_TO_FIRST_RESPONSE_SQL, opts.merge({start_date: start_date, end_date: end_date}))
+  end
+
+  def self.time_to_first_response_total(opts=nil)
+    total = time_to_first_response(TIME_TO_FIRST_RESPONSE_TOTAL_SQL, opts)
+    total.first["hours"].to_f.round(2)
+  end
+
+  WITH_NO_RESPONSE_SQL ||= <<-SQL
+    SELECT COUNT(*) as count, tt.created_at AS "date"
+    FROM (
+      SELECT t.id, t.created_at::date AS created_at, MIN(p.post_number) first_reply
+      FROM topics t
+      LEFT JOIN posts p ON p.topic_id = t.id AND p.user_id != t.user_id AND p.deleted_at IS NULL
+      /*where*/
+      GROUP BY t.id
+    ) tt
+    WHERE tt.first_reply IS NULL
+    GROUP BY tt.created_at
+    ORDER BY tt.created_at
+  SQL
+
+  def self.with_no_response_per_day(start_date, end_date, category_id=nil)
+    builder = SqlBuilder.new(WITH_NO_RESPONSE_SQL)
+    builder.where("t.created_at >= :start_date", start_date: start_date) if start_date
+    builder.where("t.created_at < :end_date", end_date: end_date) if end_date
+    builder.where("t.category_id = :category_id", category_id: category_id) if category_id
+    builder.where("t.archetype <> '#{Archetype.private_message}'")
+    builder.where("t.deleted_at IS NULL")
+    builder.exec
+  end
+
+  WITH_NO_RESPONSE_TOTAL_SQL ||= <<-SQL
+    SELECT COUNT(*) as count
+    FROM (
+      SELECT t.id, MIN(p.post_number) first_reply
+      FROM topics t
+      LEFT JOIN posts p ON p.topic_id = t.id AND p.user_id != t.user_id AND p.deleted_at IS NULL
+      /*where*/
+      GROUP BY t.id
+    ) tt
+    WHERE tt.first_reply IS NULL
+  SQL
+
+  def self.with_no_response_total(opts={})
+    builder = SqlBuilder.new(WITH_NO_RESPONSE_TOTAL_SQL)
+    builder.where("t.category_id = :category_id", category_id: opts[:category_id]) if opts[:category_id]
+    builder.where("t.archetype <> '#{Archetype.private_message}'")
+    builder.where("t.deleted_at IS NULL")
+    builder.exec.first["count"].to_i
   end
 
   private

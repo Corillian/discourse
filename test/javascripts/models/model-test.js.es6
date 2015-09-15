@@ -1,14 +1,12 @@
-module("Discourse.Model");
+import Model from 'discourse/models/model';
 
-test("mixes in Discourse.Presence", function() {
-  ok(Discourse.Presence.detect(Discourse.Model.create()));
-});
+module("model:discourse");
 
 test("extractByKey: converts a list of hashes into a hash of instances of specified class, indexed by their ids", function() {
   var firstObject = {id: "id_1", foo: "foo_1"};
   var secondObject = {id: "id_2", foo: "foo_2"};
 
-  var actual = Discourse.Model.extractByKey([firstObject, secondObject], Ember.Object);
+  var actual = Model.extractByKey([firstObject, secondObject], Ember.Object);
   var expected = {
     id_1: Ember.Object.create(firstObject),
     id_2: Ember.Object.create(secondObject)
@@ -18,6 +16,6 @@ test("extractByKey: converts a list of hashes into a hash of instances of specif
 });
 
 test("extractByKey: returns an empty hash if there isn't anything to convert", function() {
-  deepEqual(Discourse.Model.extractByKey(), {}, "when called without parameters");
-  deepEqual(Discourse.Model.extractByKey([]), {}, "when called with an empty array");
+  deepEqual(Model.extractByKey(), {}, "when called without parameters");
+  deepEqual(Model.extractByKey([]), {}, "when called with an empty array");
 });

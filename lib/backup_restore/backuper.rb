@@ -6,6 +6,7 @@ module BackupRestore
 
     def initialize(user_id, opts={})
       @user_id = user_id
+      @client_id = opts[:client_id]
       @publish_to_message_bus = opts[:publish_to_message_bus] || false
       @with_uploads = opts[:with_uploads].nil? ? true : opts[:with_uploads]
 
@@ -174,7 +175,7 @@ module BackupRestore
     def pg_dump_command
       db_conf = BackupRestore.database_configuration
 
-      password_argument = "PGPASSWORD=#{db_conf.password}" if db_conf.password.present?
+      password_argument = "PGPASSWORD='#{db_conf.password}'" if db_conf.password.present?
       host_argument     = "--host=#{db_conf.host}"         if db_conf.host.present?
       port_argument     = "--port=#{db_conf.port}"         if db_conf.port.present?
       username_argument = "--username=#{db_conf.username}" if db_conf.username.present?
@@ -258,7 +259,7 @@ module BackupRestore
       end
 
       log "Gzipping archive..."
-      `gzip --best #{tar_filename}`
+      `gzip #{tar_filename}`
     end
 
     def after_create_hook
@@ -336,7 +337,7 @@ module BackupRestore
     def publish_log(message, timestamp)
       return unless @publish_to_message_bus
       data = { timestamp: timestamp, operation: "backup", message: message }
-      MessageBus.publish(BackupRestore::LOGS_CHANNEL, data, user_ids: [@user_id])
+      MessageBus.publish(BackupRestore::LOGS_CHANNEL, data, user_ids: [@user_id], client_ids: [@client_id])
     end
 
     def save_log(message, timestamp)

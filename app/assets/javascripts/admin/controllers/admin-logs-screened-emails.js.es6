@@ -1,6 +1,7 @@
+import { exportEntity } from 'discourse/lib/export-csv';
 import { outputExportResult } from 'discourse/lib/export-result';
 
-export default Ember.ArrayController.extend(Discourse.Presence, {
+export default Ember.ArrayController.extend({
   loading: false,
 
   actions: {
@@ -12,7 +13,7 @@ export default Ember.ArrayController.extend(Discourse.Presence, {
     },
 
     exportScreenedEmailList() {
-      Discourse.ExportCsv.exportScreenedEmailList().then(outputExportResult);
+      exportEntity('screened_email').then(outputExportResult);
     }
   },
 

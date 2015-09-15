@@ -1,27 +1,32 @@
-import ObjectController from 'discourse/controllers/object';
+import { exportUserArchive } from 'discourse/lib/export-csv';
 import CanCheckEmails from 'discourse/mixins/can-check-emails';
+import computed from 'ember-addons/ember-computed-decorators';
 
-export default ObjectController.extend(CanCheckEmails, {
+export default Ember.Controller.extend(CanCheckEmails, {
   indexStream: false,
-  needs: ['user-notifications', 'user_topics_list'],
+  pmView: false,
+  userActionType: null,
+  needs: ['user-notifications', 'user-topics-list'],
 
   viewingSelf: function() {
     return this.get('content.username') === Discourse.User.currentProp('username');
   }.property('content.username'),
 
-  collapsedInfo: Em.computed.not('indexStream'),
+  @computed('indexStream', 'viewingSelf', 'forceExpand')
+  collapsedInfo(indexStream, viewingSelf, forceExpand){
+    return (!indexStream || viewingSelf) && !forceExpand;
+  },
 
-  websiteName: function() {
-    var website = this.get('website');
-    if (Em.isEmpty(website)) { return; }
-    return this.get('website').split("/")[2];
-  }.property('website'),
+  linkWebsite: Em.computed.not('model.isBasic'),
 
-  linkWebsite: Em.computed.not('isBasic'),
+  removeNoFollow: function() {
+    return this.get('model.trust_level') > 2 && !this.siteSettings.tl3_links_no_follow;
+  }.property('model.trust_level'),
 
-  canSeePrivateMessages: function() {
-    return this.get('viewingSelf') || Discourse.User.currentProp('admin');
-  }.property('viewingSelf'),
+  @computed('viewSelf', 'currentUser.admin')
+  canSeePrivateMessages(viewingSelf, isAdmin) {
+    return this.siteSettings.enable_private_messages && (viewingSelf || isAdmin);
+  },
 
   canSeeNotificationHistory: Em.computed.alias('canSeePrivateMessages'),
 
@@ -39,13 +44,13 @@ export default ObjectController.extend(CanCheckEmails, {
   }.property(),
 
   canDeleteUser: function() {
-    return this.get('can_be_deleted') && this.get('can_delete_all_posts');
-  }.property('can_be_deleted', 'can_delete_all_posts'),
+    return this.get('model.can_be_deleted') && this.get('model.can_delete_all_posts');
+  }.property('model.can_be_deleted', 'model.can_delete_all_posts'),
 
   publicUserFields: function() {
     var siteUserFields = this.site.get('user_fields');
     if (!Ember.isEmpty(siteUserFields)) {
-      var userFields = this.get('user_fields');
+      var userFields = this.get('model.user_fields');
       return siteUserFields.filterProperty('show_on_profile', true).sortBy('id').map(function(uf) {
         var val = userFields ? userFields[uf.get('id').toString()] : null;
         if (Ember.isEmpty(val)) {
@@ -55,15 +60,18 @@ export default ObjectController.extend(CanCheckEmails, {
         }
       }).compact();
     }
-  }.property('user_fields.@each.value'),
+  }.property('model.user_fields.@each.value'),
 
   privateMessagesActive: Em.computed.equal('pmView', 'index'),
   privateMessagesMineActive: Em.computed.equal('pmView', 'mine'),
   privateMessagesUnreadActive: Em.computed.equal('pmView', 'unread'),
 
   actions: {
+    expandProfile: function() {
+      this.set('forceExpand', true);
+    },
     adminDelete: function() {
-      Discourse.AdminUser.find(this.get('username').toLowerCase()).then(function(user){
+      Discourse.AdminUser.find(this.get('model.username').toLowerCase()).then(function(user){
         user.destroy({deletePosts: true});
       });
     },
@@ -75,7 +83,7 @@ export default ObjectController.extend(CanCheckEmails, {
         I18n.t("yes_value"),
         function(confirmed) {
           if (confirmed) {
-            Discourse.ExportCsv.exportUserArchive();
+            exportUserArchive();
           }
         }
       );

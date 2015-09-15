@@ -27,6 +27,10 @@ class Emoji
     Discourse.cache.fetch("standard_emojis") { load_standard }
   end
 
+  def self.aliases
+    Discourse.cache.fetch("aliases_emojis") { load_aliases }
+  end
+
   def self.custom
     Discourse.cache.fetch("custom_emojis") { load_custom }
   end
@@ -43,7 +47,7 @@ class Emoji
     extension = File.extname(path)
     Emoji.new(path).tap do |e|
       e.name = File.basename(path, ".*")
-      e.url = "/#{base_url}/#{e.name}#{extension}"
+      e.url = "#{base_url}/#{e.name}#{extension}"
     end
   end
 
@@ -74,6 +78,7 @@ class Emoji
   def self.clear_cache
     Discourse.cache.delete("custom_emojis")
     Discourse.cache.delete("standard_emojis")
+    Discourse.cache.delete("aliases_emojis")
     Discourse.cache.delete("all_emojis")
   end
 
@@ -81,9 +86,21 @@ class Emoji
     "#{Rails.root}/lib/emoji/db.json"
   end
 
+  def self.db
+    @db ||= File.open(db_file, "r:UTF-8") { |f| JSON.parse(f.read) }
+  end
+
   def self.load_standard
-    File.open(db_file, "r:UTF-8") { |f| JSON.parse(f.read) }
-        .map { |emoji| Emoji.create_from_db_item(emoji) }
+    db.map { |emoji| Emoji.create_from_db_item(emoji) }
+  end
+
+  def self.load_aliases
+    aliases = {}
+
+    db.select { |emoji| emoji["aliases"].count > 1 }
+      .each { |emoji| aliases[emoji["aliases"][0]] = emoji["aliases"][1..-1] }
+
+    aliases
   end
 
   def self.load_custom
@@ -93,12 +110,12 @@ class Emoji
   end
 
   def self.base_directory
-    "public/#{base_url}"
+    "public#{base_url}"
   end
 
   def self.base_url
     db = RailsMultisite::ConnectionManagement.current_db
-    "uploads/#{db}/_emoji"
+    "#{Discourse.base_uri}/uploads/#{db}/_emoji"
   end
 
 end

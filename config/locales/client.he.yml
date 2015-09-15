@@ -8,6 +8,9 @@
 he:
   js:
     number:
+      format:
+        separator: " ."
+        delimiter: ","
       human:
         storage_units:
           format: '%n %u'
@@ -19,12 +22,17 @@ he:
             kb: KB
             mb: MB
             tb: TB
+      short:
+        thousands: "k{{number}}"
+        millions: "{{number}}M"
     dates:
       time: "h:mm a"
       long_no_year: "MMM D h:mm a"
       long_no_year_no_time: "MMM D"
+      full_no_year_no_time: "MMMM Do"
       long_with_year: "MMM D, YYYY h:mm a"
       long_with_year_no_time: "MMM D, YYYY"
+      full_with_year_no_time: "MMMM Do, YYYY"
       long_date_with_year: "MMM D, 'YY LT"
       long_date_without_year: "MMM D, LT"
       long_date_with_year_without_time: "MMM D, 'YY"
@@ -82,6 +90,16 @@ he:
         x_days:
           one: "אתמול"
           other: "לפני %{count} ימים"
+      later:
+        x_days:
+          one: "אחרי יום אחד"
+          other: "אחרי {count}% ימים"
+        x_months:
+          one: "אחרי חודש אחד"
+          other: "אחרי {{count}}% חודשים"
+        x_years:
+          one: "אחרי שנה אחת"
+          other: "אחרי {{count}}% שנים"
     share:
       topic: 'שתפו קישור לנושא זה'
       post: 'פרסום #%{postNumber}'
@@ -90,6 +108,26 @@ he:
       facebook: 'שתפו קישור זה בפייסבוק'
       google+: 'שתף קישור זה בגוגל+'
       email: 'שלח קישור בדוא"ל'
+    action_codes:
+      split_topic: "פצל נושא זה"
+      autoclosed:
+        enabled: 'סגר  %{when}'
+        disabled: 'פתח %{when}'
+      closed:
+        enabled: 'סגר  %{when}'
+        disabled: 'פתח  %{when}'
+      archived:
+        enabled: 'עבר לארכיון %{when}'
+        disabled: 'הוצא מהארכיון %{when}'
+      pinned:
+        enabled: 'ננעץ %{when}'
+        disabled: 'נעיצה בוטלה %{when}'
+      pinned_globally:
+        enabled: 'ננעץ גלובלית %{when}'
+        disabled: 'נעיצה בוטלה %{when}'
+      visible:
+        enabled: 'נכנס לרשימה %{when}'
+        disabled: 'הוצא מהרשימה %{when}'
     topic_admin_menu: "פעולות ניהול לנושא"
     emails_are_disabled: "כל הדוא\"ל היוצא נוטרל באופן גורף על ידי מנהל אתר. שום הודעת דוא\"ל, מכל סוג שהוא, תשלח."
     edit: 'ערוך את הכותרת והקטגוריה של הנושא'
@@ -105,9 +143,11 @@ he:
     admin_title: "ניהול"
     flags_title: "סימוני הודעה"
     show_more: "הראה עוד"
-    show_help: "עזרה"
+    show_help: "אפשרויות"
     links: "קישורים"
-    links_lowercase: "קישורים"
+    links_lowercase:
+      one: "קישור"
+      other: "קישורים"
     faq: "שאלות נפוצות"
     guidelines: "כללי התנהלות"
     privacy_policy: "מדיניות פרטיות"
@@ -125,7 +165,9 @@ he:
     daily: "יומית"
     weekly: "שבועית"
     every_two_weeks: "דו-שבועית"
+    every_three_days: "כל שלושה ימים"
     max_of_count: "מקסימום של {{count}}"
+    alternation: "או"
     character_count:
       one: "תו אחד"
       other: "{{count}} תווים"
@@ -147,6 +189,7 @@ he:
       user_count: "חדשים"
       active_user_count: "משתמשים פעילים"
       contact: "צרו קשר"
+      contact_info: "במקרה של ארוע בנושא חשוב או חירומים המשפיע על האתר, אנא צרו איתנו קשר ב:%{contact_info}."
     bookmarked:
       title: "סימניה"
       clear_bookmarks: "ניקוי סימניות"
@@ -159,6 +202,7 @@ he:
       not_bookmarked: "קראת הודעה זו, לחץ להוספה למועדפים"
       last_read: "זו ההודעה האחרונה שקראת, לחץ להוספה למועדפים"
       remove: "הסר מהמועדפים"
+      confirm_clear: "האם את/ה בטוחים שאתם מעוניינים לנקות את כל הסימניות מנושא זה?"
     topic_count_latest:
       one: "נושא חדש או עדכון {{count}} ."
       other: "{{count}} נושאים חדשים או עדכונים."
@@ -182,13 +226,38 @@ he:
     undo: "ביטול (Undo)"
     revert: "לחזור"
     failed: "נכשל"
+    switch_to_anon: "מצב אנונימי"
+    switch_from_anon: "יצאה ממצב אנונימי"
     banner:
       close: "שחרור באנר זה."
+      edit: "ערוך את הבאנר"
     choose_topic:
       none_found: "לא נמצאו נושאים."
       title:
         search: "חפש נושא לפי שם, כתובת או מזהה:"
         placeholder: "הקלד את כותרת הנושא כאן"
+    queue:
+      topic: "נושא:"
+      approve: 'לאשר'
+      reject: 'לדחות'
+      delete_user: 'מחק משתמש'
+      title: "זקוק לאישור"
+      none: "לא נותרו הודעות לבדיקה"
+      edit: "ערוך"
+      cancel: "ביטול"
+      view_pending: "הצג הודעות ממתינות"
+      has_pending_posts:
+        one: " בנושא זה ישנה הודעה אחת הממתינה לאישור"
+        other: "בנושא זה ישנם <b>{{count}}</b>  הודעות הממתינות לאישור"
+      confirm: "שמור שינויים"
+      delete_prompt: "אתה בטוח שאתה רוצה למחוק את המשתמש <b>%{username}</b>? פעולה זו תמחק את כל ההודעות , תחסום את הדואר האלקטרוני וכתובת ה-IP של המשתמש."
+      approval:
+        title: "ההודעה זקוקה לאישור"
+        description: "קיבלנו את הודעתך אך נדרש אישור של מנחה לפני שההודעה תוצג, אנא המתן בסבלנות."
+        pending_posts:
+          one: "יש לך הודעה <strong>אחת</strong> ממתינה לאישור"
+          other: "יש לך  <strong>{{count}}</strong>  הודעות ממתינות."
+        ok: "אשר"
     user_action:
       user_posted_topic: "<a href='{{userUrl}}'>{{user}}</a> פרסם <a href='{{topicUrl}}'>את הנושא</a>"
       you_posted_topic: "<a href='{{userUrl}}'>את/ה</a> פרסמת <a href='{{topicUrl}}'>את הנושא</a>"
@@ -203,6 +272,26 @@ he:
       posted_by_you: "פורסם על <a href='{{userUrl}}'>ידך</a>"
       sent_by_user: "נשלח על ידי <a href='{{userUrl}}'>{{user}}</a>"
       sent_by_you: "נשלח <a href='{{userUrl}}'>על ידך</a>"
+    directory:
+      filter_name: "סינון לפי שם_משתמש/ת"
+      title: "משתמשים"
+      likes_given: "ניתנ/ו"
+      likes_received: "התקבל/ו"
+      topics_entered: "כניסות"
+      topics_entered_long: "נושאים אליהם נכנסת"
+      time_read: "זמן קריאה"
+      topic_count: "נושאים"
+      topic_count_long: "נושאים שנוצרו"
+      post_count: "תגובות"
+      post_count_long: "תגובות שפורסמו"
+      no_results: "לא נמצאו תוצאות"
+      days_visited: "ביקורים"
+      days_visited_long: "ימים לביקור"
+      posts_read: "נקראו"
+      posts_read_long: "פרסומים שנקראו"
+      total_rows:
+        one: "משתמש/ת 1"
+        other: "%{count} משתמשים"
     groups:
       visible: "הקבוצה זמינה לכל המשתמשים"
       title:
@@ -222,7 +311,7 @@ he:
       '2': "לייקים שהתקבלו"
       '3': "מועדפים"
       '4': "נושאים"
-      '5': "הודעות"
+      '5': "תשובות"
       '6': "תגובות"
       '7': "אזכורים"
       '9': "ציטוטים"
@@ -230,6 +319,7 @@ he:
       '11': "עריכות"
       '12': "פריטים שנשלחו"
       '13': "דואר נכנס"
+      '14': "ממתין"
     categories:
       all: "כל הקטגוריות"
       all_subcategories: "הכל"
@@ -264,14 +354,16 @@ he:
       topics_entered: "כניסה לנושאים"
       post_count: "# פרסומים"
       confirm_delete_other_accounts: "אתה בטוח שברצונך למחוק חשבונות אלו?"
+    user_fields:
+      none: "(בחר נושא)"
     user:
       said: "{{username}}:"
       profile: "פרופיל"
       mute: "השתק"
       edit: "ערוך העדפות"
       download_archive: "הורדת הפרסומים שלי"
-      new_private_message: "מסר פרטי חדש"
-      private_message: "הודעה פרטית"
+      new_private_message: "הודעה חדשה"
+      private_message: "הודעה"
       private_messages: "הודעות"
       activity_stream: "פעילות"
       preferences: "העדפות"
@@ -280,10 +372,21 @@ he:
       invited_by: "הוזמן/הוזמנה על ידי"
       trust_level: "רמת אמון"
       notifications: "התראות"
+      desktop_notifications:
+        label: "התראות לשולחן העבודה"
+        not_supported: "התראות לא נתמכות בדפדפן זה. מצטערים."
+        perm_default: "הדלק התראות"
+        perm_denied_btn: "הרשאות נדחו"
+        perm_denied_expl: "נטרלת הראשות עבור התראות. השתמש בדפדפן שלך לאפשר התראות, לאחר מכן לחץ על הכפתור. "
+        disable: "כבה התראות"
+        currently_enabled: "(כרגע מאופשר)"
+        enable: "אפשר התראות"
+        currently_disabled: "(כרגע לא מאופשר)"
+        each_browser_note: "הערה: עליך לשנות הגדרה זו עבור כל דפדפן בנפרד."
       dismiss_notifications: "סימון הכל כנקרא"
       dismiss_notifications_tooltip: "סימון כל ההתראות שלא נקראו כהתראות שנקראו"
       disable_jump_reply: "אל תקפצו לפרסומים שלי לאחר שאני משיב/ה"
-      dynamic_favicon: "הראה התראה על הודעות חדשות באייקון העמוד (נסיוני)"
+      dynamic_favicon: "הצג את מספר נושאים חדשים/מעודכנים על האייקון של הדפדפן"
       edit_history_public: "אפשרו למשתמשים אחרים לראות את תיקוני הפרסומים שלי"
       external_links_in_new_tab: "פתח את כל הקישורים החיצוניים בעמוד חדש"
       enable_quoting: "אפשרו תגובת ציטוט לטקסט מסומן"
@@ -292,14 +395,15 @@ he:
       admin: "{{user}} הוא מנהל ראשי"
       moderator_tooltip: "משתמש זה הינו מנחה (Moderator)"
       admin_tooltip: "משתמש זה הינו מנהל מערכת (Admin)"
+      blocked_tooltip: "משתמש זה חסום"
       suspended_notice: "המשתמש הזה מושעה עד לתאריך: {{date}}."
       suspended_reason: "הסיבה: "
       github_profile: "גיטהאב"
       mailing_list_mode: "שלחו לי דוא\"ל על כל פרסום חדש (אלא אם אשתיק את המעקב אחר הנושא או הקטגוריה)"
-      watched_categories: "נצפה"
-      watched_categories_instructions: "את/ה תצפו אוטומטית בכל הנושאים החדשים בקטגוריות האלה ותקבלו התראות על כל ההודעות והנושאים החדשים. כמו כן כמות ההודעות החדשות ואלו שלא נקראו תופיע לצד כל נושא."
-      tracked_categories: "במעקב"
-      tracked_categories_instructions: "מעקב אוטומטי אחרי נושאים חדשים בקטגוריות אלו. מספר הפרסומים החדשים ואלו שלא נקראו יופיע לצד הנושא."
+      watched_categories: "עוקב"
+      watched_categories_instructions: "תעקבו באופן אוטומטי אחרי כל הנושאים החדשים בקטגוריות אלה. תקבלו התראה על כל פרסום ונושא חדש."
+      tracked_categories: "רגיל+"
+      tracked_categories_instructions: "בקטגוריות אלה סך הפרסומים החדשים שלא נקראו יופיע לצד שם הנושא."
       muted_categories: "מושתק"
       muted_categories_instructions: "לא תקבלו התראות על נושאים חדשים בקטגוריות אלו, והם לא יופיעו בעמוד הלא נקראו שלך."
       delete_account: "מחק את החשבון שלי"
@@ -308,6 +412,9 @@ he:
       delete_yourself_not_allowed: "אתה לא יכול למחוק את חשבונך כרגע. צור קשר עם מנהל כדי שימחק אותו בשבילך."
       unread_message_count: "הודעות"
       admin_delete: "מחק"
+      users: "משתמשים"
+      muted_users: "מושתק"
+      muted_users_instructions: "להשבית כל התראה ממשתמשים אלו"
       staff_counters:
         flags_given: "סימונים שעוזרים"
         flagged_posts: "הודעות מסומנות"
@@ -326,6 +433,7 @@ he:
         set_password: "הזן סיסמה"
       change_about:
         title: "שינוי בנוגע אליי"
+        error: "הייתה שגיאה בשינוי הערך"
       change_username:
         title: "שנה שם משתמש"
         confirm: "אם תשנו את שם המשתמש/ת שלך, כל הציטוטים של ההודעות שלך ואזכורי @שם_המשתמש שלך יישברו. את/ה בטוחים לחלוטין שברצונך לשנות?"
@@ -340,13 +448,15 @@ he:
       change_avatar:
         title: "שינוי תמונת הפרופיל"
         gravatar: "<a href='//gravatar.com/emails' target='_blank'>Gravatar</a>, מבוסס על"
+        gravatar_title: "שנה את ה-avatar  שלך באתר-Gravatar"
         refresh_gravatar_title: "רענון האווטר שלכם"
         letter_based: "תמונת פרופיל משובצת מערכתית"
         uploaded_avatar: "תמונה אישית"
         uploaded_avatar_empty: "הוסף תמונה אישית"
         upload_title: "העלה את התמונה שלך"
         upload_picture: "העלאת תמונה"
-        image_is_not_a_square: "אזהרה: חתכנו את התמונה שלך, היא לא ריבועית"
+        image_is_not_a_square: "אזהרה: קיצצנו את התמונה שלך; האורך והרוחב לא היו שווים."
+        cache_notice: "שינית את תמונת הפרופיל שלך בהצלחה אבל יכול לקחת קצת זמן    עד שהתמונה תופיע."
       change_profile_background:
         title: "שינוי רקע פרופיל"
         instructions: "רקעי הפרופיל ימורכזו ויוצגו ברוחב ברירת מחדל של 850px."
@@ -366,6 +476,7 @@ he:
       name:
         title: "שם"
         instructions: "שמך המלא (רשות)"
+        instructions_required: "שמך המלא"
         too_short: "השם שלך קצר מידי"
         ok: "השם נראה טוב"
       username:
@@ -400,42 +511,47 @@ he:
       email_digests:
         title: "כשאיני מבקר/ת כאן, שלחו לי מייל עם תקציר העדכונים:"
         daily: "יומית"
+        every_three_days: "כל שלושה ימים"
         weekly: "שבועית"
-        every_two_weeks: "דו-שבועית"
-      email_direct: "שלחו לי דואל כשמישהו/י מצטטים אותי, מגיבים לפרסום שלי או מזכירים את @שם_המשתמש/ת"
-      email_private_messages: "שלחו לי דוא\"ל כשמישהו/מישהי שולחים לי מסר פרטי"
-      email_always: "אל תמנעו התראות דוא\"ל כאשר אני פעיל/ה באתר"
+        every_two_weeks: "כל שבועיים"
+      email_direct: "שלחו לי דוא\"ל כשמישהו/י מצטטים אותי, מגיבם לפרסום שלי, מזכירים את @שם_המשתמש/ת שלי, או מזמינים אותי לנושא"
+      email_private_messages: "שלחו לי דוא\"ל כשמישהו/י שולחים לי מסר"
+      email_always: "שלח לי נוטיפקציות מייל גם כשאני פעיל/ה באתר. "
       other_settings: "אחר"
       categories_settings: "קטגוריות"
       new_topic_duration:
         label: "נושא יחשב כנושא חדש כאשר"
         not_viewed: "עוד לא ראיתי אותם"
         last_here: "נוצרו מאז הביקור האחרון שלי כאן"
-        after_n_days:
-          one: "נוצר ביום האחרון"
-          other: "נוצרו ב-{{count}} ימים האחרונים"
-        after_n_weeks:
-          one: "נוצר/ו בשבוע האחרון"
-          other: "נוצר/ו ב-{{count}} שבועות האחרונים"
+        after_1_day: "נוצר ביום האחרון"
+        after_2_days: "נוצר במהלך היומיים האחרונים"
+        after_1_week: "נוצר במהלך השבוע האחרון"
+        after_2_weeks: "נוצר בשבועיים האחרונים"
       auto_track_topics: "מעקב אוטומטי נושאים אליהם נכנסתי"
       auto_track_options:
         never: "אף פעם"
-        always: "תמיד"
-        after_n_seconds:
-          one: "אחרי שנייה אחת"
-          other: "אחרי {{count}} שניות"
-        after_n_minutes:
-          one: "אחרי דקה אחת"
-          other: "אחרי {{count}} שניות"
+        immediately: "מיידי"
+        after_30_seconds: "אחרי 30 שניות"
+        after_1_minute: "אחרי דקה"
+        after_2_minutes: "אחרי שתי דקות"
+        after_3_minutes: "אחרי 3 דקות"
+        after_4_minutes: "אחרי 4 דקות"
+        after_5_minutes: "אחרי 5 דקות"
+        after_10_minutes: "אחרי 10 דקות"
       invited:
         search: "הקלידו כדי לחפש הזמנות..."
         title: "הזמנות"
         user: "משתמש/ת שהוזמנו"
-        none: "עוד לא הזמנת לכאן אף אחד."
+        sent: "נשלח"
+        none: "אין הזמנות ממתינות להציג"
         truncated: "מראה את  {{count}} ההזמנות הראשונות."
         redeemed: "הזמנות נוצלו"
+        redeemed_tab: "נענו"
+        redeemed_tab_with_count: "נוצלו ({{count}})"
         redeemed_at: "נפדו ב"
         pending: "הזמנות ממתינות"
+        pending_tab: "ממתין"
+        pending_tab_with_count: "ממתינות ({{count}})"
         topics_entered: "נושאים נצפו"
         posts_read_count: "הודעות נקראו"
         expired: "פג תוקף ההזמנה."
@@ -447,16 +563,20 @@ he:
         days_visited: "מספר ימי ביקור"
         account_age_days: "גיל החשבון בימים"
         create: "שליחת הזמנה"
+        generate_link: "העתק קישור הזמנה"
+        generated_link_message: '<p>הזמנה נוצרה בהצלחה</p><p><input class="invite-link-input" style="width: 75%;" type="text" value="%{inviteLink}"></p><p>לינק ההזמנה תקף רק למייל הזה:  <b>%{invitedEmail}</b></p>'
         bulk_invite:
           none: "נכון לעכשיו לא הזמנת לכאן אף אחד. תוכלו לשלוח הזמנות אישיות, או להזמין כמה אנשים בבת אחת באמצעות   <a href='https://meta.discourse.org/t/send-bulk-invites/16468'> העלאת קובץ הזמנה קבוצתית</a>."
           text: "הזמנה קבוצתית מקובץ"
           uploading: "העלאה..."
-          success: "הקובץ הועלה בהצלחה, תקבלו התראה באמצעות מסר פרטי כאשר התהליך יושלם"
+          success: "העלאת הקובץ החלה בהצלחה, תקבלו התראה באמצעות מסר כאשר התהליך יושלם."
           error: "חלה תקלה בהעלאת \"'{{filename}}': \n{{message}}"
       password:
         title: "סיסמה"
         too_short: "הסיסמה שלך קצרה מידי."
         common: "הסיסמה הזו נפוצה מידי."
+        same_as_username: "הסיסמה שלך זהה לשם המשתמש/ת שלך."
+        same_as_email: "הסיסמה שלך זהה לכתובת הדוא\"ל שלך."
         ok: "הסיסמה שלך נראית טוב."
         instructions: "לפחות %{count} תווים."
       associated_accounts: "התחברויות"
@@ -466,6 +586,7 @@ he:
         title: "כתובת IP בהרשמה"
       avatar:
         title: "תמונת פרופיל"
+        header_title: "פרופיל, הודעות, סימניות והגדרות "
       title:
         title: "כותרת"
       filters:
@@ -473,7 +594,7 @@ he:
       stream:
         posted_by: "פורסם על ידי"
         sent_by: "נשלח על ידי"
-        private_message: "הודעה פרטית"
+        private_message: "הודעה"
         the_topic: "הנושא"
     loading: "טוען..."
     errors:
@@ -498,9 +619,9 @@ he:
     logout: "נותקת מהמערכת"
     refresh: "רענן"
     read_only_mode:
-      enabled: "מצב קריאה בלבד למנהל ראשי. ניתן להמשיך לקרוא באתר אבל פעולות לא יעבדו כראוי."
+      enabled: "מופעל מצב קריאה בלבד. אפשר להמשיך לגלוש באתר, אך חלק מהפעולות עלולות לא לעבוד."
       login_disabled: "התחברות אינה מתאפשרת כשהאתר במצב קריאה בלבד."
-    too_few_topics_notice: "צרו לפחות 5 נושאים ציבוריים ו-%{posts} פרסומים פומביים כדי להתחיל את הדיון. משתמשים חדשים לא יכולים להרוויח דרגת אמון אלא אם יש להם תוכן לקרוא. הודעה זו מופיעה רק לצוות."
+    too_few_topics_notice: "בואו <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'> נתניע את הדיון הזה! </a> כרגע יש <strong>%{currentTopics} / %{requiredTopics}</strong>  נושאים ו<strong>%{currentPosts} / %{requiredPosts}</strong> פרסומים. מבקרים חדשים צריכים עוד שיחות לקרוא ולהגיב אליהם."
     learn_more: "למד עוד..."
     year: 'שנה'
     year_desc: 'נושאים שפורסמו ב-365 הימים האחרונים'
@@ -513,7 +634,10 @@ he:
     mute: השתק
     unmute: בטל השתקה
     last_post: הודעה אחרונה
-    last_post_lowercase: פרסום אחרון
+    last_reply_lowercase: תגובה אחרונה
+    replies_lowercase:
+      one: תגובה
+      other: תגובות
     summary:
       enabled_description: "אתם צופים בסיכום נושא זה: הפרסומים המעניינים ביותר כפי שסומנו על ידי הקהילה."
       description: "ישנן <b> {{count}}</b> תגובות"
@@ -526,9 +650,9 @@ he:
       enable: "הסתר פרסומים שנמחקו"
       disable: "הצגת פרסומים שנמחקו"
     private_message_info:
-      title: "הודעה פרטית"
+      title: "הודעה"
       invite: "הזמינו אחרים..."
-      remove_allowed_user: "האם באמת להסיר את {{name}} מההודעה הפרטית הזו?"
+      remove_allowed_user: "האם את/ה באמת רוצה להסיר את {{name}} מהודעה זו?"
     email: 'דוא"ל'
     username: 'שם משתמש'
     last_seen: 'נצפה'
@@ -540,7 +664,7 @@ he:
       title: "יצירת חשבון חדש"
       failed: "משהו לא בסדר, אולי כבר קיימת כתובת דואר אלקטרוני כזו. נסה את קישור שכחתי סיסמה."
     forgot_password:
-      title: "שכחתי סיסמה"
+      title: "אתחול סיסמה"
       action: "שכחתי את הסיסמה שלי"
       invite: "הזן שם משתמש או כתובת דואר אלקטרוני ונשלח לך קישור לאיפוס סיסמה"
       reset: "איפוס סיסמה"
@@ -557,6 +681,7 @@ he:
       email_placeholder: "דואר אלקטרוני או סיסמה"
       caps_lock_warning: "מקש Caps Lock לחוץ"
       error: "שגיאה לא ידועה"
+      rate_limit: "בבקשה המתן לפני שתנסה להתחבר שוב."
       blank_username_or_password: "אנא הקישור את כתובת הדוא\"ל או שם המשתמש/ת שלכם וסיסמא."
       reset_password: 'אפס סיסמה'
       logging_in: "מתחבר...."
@@ -567,6 +692,7 @@ he:
       requires_invite: "סליחה, גישה לפורום הזה היא בהזמנה בלבד."
       not_activated: "אינך יכול להתחבר עדיין. שלחנו לך דואר אלקטרוני להפעלת החשבון לכתובת: <b>{{sentTo}}</b>. יש לעקוב אחר ההוראות בדואר כדי להפעיל את החשבון."
       not_allowed_from_ip_address: "אינכם יכולים להתחבר מכתובת IP זו."
+      admin_not_allowed_from_ip_address: "אינך יכול/ה להתחבר כמנהל מערכת מכתובת IP זו."
       resend_activation_email: "יש ללחוץ כאן לשליחת דואר אלקטרוני חוזר להפעלת החשבון."
       sent_activation_email_again: "שלחנו לך הודעת דואר אלקטרוני נוספת להפעלת החשבון לכתובת <b>{{currentEmail}}</b>. זה יכול לקחת כמה דקות עד שיגיע, לא לשכוח לבדוק את תיבת דואר הזבל."
       google:
@@ -595,34 +721,32 @@ he:
       emoji: "Emoji :smile:"
       add_warning: "זוהי התראה רשמית."
       posting_not_on_topic: "לאיזה נושא רצית להגיב?"
-      saving_draft_tip: "שומר"
+      saving_draft_tip: "שמירה..."
       saved_draft_tip: "נשמר"
       saved_local_draft_tip: "נשמר מקומית"
       similar_topics: "הנושא שלך דומה ל..."
       drafts_offline: "טיוטות מנותקות"
-      min_length:
-        need_more_for_title: "{{n}} תווים נשארו לכותרת"
-        need_more_for_reply: "עוד {{n}} "
       error:
         title_missing: "יש להזין כותרת."
         title_too_short: "על הכותרת להיות באורך {{min}} תווים לפחות."
         title_too_long: "על הכותרת להיות באורך {{max}} לכל היותר."
         post_missing: "ההודעה אינה יכולה להיות ריקה."
         post_length: "על ההודעה להיות באורך {{min}} תווים לפחות."
+        try_like: 'האם ניסית את כפתור ה-<i class="fa fa-heart"></i>'
         category_missing: "עליך לבחור קטגוריה."
       save_edit: "שמירת עריכה"
       reply_original: "תגובה לנושא המקורי"
       reply_here: "תגובה כאן"
       reply: "תגובה"
       cancel: "ביטול"
-      create_topic: "נושא חדש"
-      create_pm: "הודעה פרטית"
+      create_topic: "יצירת נושא"
+      create_pm: "הודעה"
       title: "או לחץ Ctrl+Enter"
       users_placeholder: "הוספת משתמש"
       title_placeholder: " במשפט אחד, במה עוסק הדיון הזה?"
       edit_reason_placeholder: "מדוע ערכת?"
       show_edit_reason: "(הוספת סיבת עריכה)"
-      reply_placeholder: "יש להקליד כאן. ניתן להשתמש ב Markdown או BBCode כדי להתאים את הטקסט. גרירת או הדבקת תמונה תעלה אותה."
+      reply_placeholder: "הקלד כאן. השתמש בMarkdown BBCode או HTML לערוך. גרור והדבק תמונה כדי להעלות אותה."
       view_new_post: "הצגת את ההודעה החדשה שלך."
       saving: "שומר..."
       saved: "נשמר!"
@@ -666,11 +790,11 @@ he:
           units: "(# מספר שעות)"
           examples: 'הזינו מספר שעות (24).'
     notifications:
-      title: "התראות של אזכורי @שם, תגובות להודעות ונושאים שלך, הודעות פרטיות וכיו\"ב"
+      title: "התראות אודות אזכור @שם, תגובות לפרסומים ולנושאים שלך, הודעות וכו'"
       none: "לא ניתן לטעון כעת התראות."
       more: "הצגת התראות ישנות יותר"
       total_flagged: "סך הכל נושאים מדוגללים"
-      mentioned: "<i title='mentioned' class='icon'>@</i><p><span>{{username}}</span> {{description}}</p>"
+      mentioned: "<i title='mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
       quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
       replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
       posted: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
@@ -678,10 +802,18 @@ he:
       liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
       private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
       invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
+      invited_to_topic: "<i title='invited to topic' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
       invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> אישר/ה את הזמנתך</p>"
       moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> הזיז/ה {{description}}</p>"
       linked: "<i title='linked post' class='fa fa-arrow-left'></i><p><span>{{username}}</span> {{description}}</p>"
       granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>הרוויח/ה '{{description}}'</p>"
+      popup:
+        mentioned: '{{username}} הזכיר אותך ב{{topic}}" - {{site_title}}"'
+        quoted: '{{username}} ציטט אותך ב"{{topic}}" - {{site_title}}'
+        replied: '{{username}} הגיב לך ב"{{topic}}" - {{site_title}}'
+        posted: '{{username}} הגיב ב"{{topic}}" - {{site_title}}'
+        private_message: '{{username}} שלח לך הודעה פרטית ב"{{topic}}" - {{site_title}}'
+        linked: '{{username}} קישר להודעה שלך מ"{{topic}}" - {{site_title}}'
     upload_selector:
       title: "הוספת תמונה"
       title_with_attachments: "הוספת תמונה או קובץ"
@@ -689,23 +821,26 @@ he:
       from_the_web: "מהאינטרנט"
       remote_tip: "קישור לתמונה"
       remote_tip_with_attachments: "קישור לתמונה או קובץ ({{authorized_extensions}})"
-      local_tip: "לחץ לבחירת תמונה מהמכשיר שלך"
-      local_tip_with_attachments: "לחץ לבחירת תמונה או קובץ מהמכשיר שלך ({{authorized_extensions}})"
+      local_tip: "בחר תמונות ממכשירך"
+      local_tip_with_attachments: "בחר תמונות או קבצים ממכשירך ({{authorized_extensions}})"
       hint: "(ניתן גם לגרור לעורך להעלאה)"
-      hint_for_supported_browsers: "(אתה יכול גם לעשות drag and drop או להדביק תמונות אל תוך העורך כדי להעלות אותן)"
+      hint_for_supported_browsers: "אתה יכול גם לגרור או להדביק תמונות לעורך כדי להעלות אותם"
       uploading: "מעלה"
+      select_file: "בחר קובץ"
       image_link: "קישור לתמונה יצביע ל"
     search:
       title: "חיפוש נושאים, פרסומים, משתמשים או קטגוריות"
       no_results: "אין תוצאות."
+      no_more_results: "לא נמצאו עוד תוצאות."
+      search_help: עזרה בחיפוש
       searching: "מחפש ..."
       post_format: "#{{post_number}} מאת {{username}}"
       context:
         user: "חיפוש פרסומים לפי @{{username}}"
         category: "חיפוש בקטגוריה \"{{category}}\""
         topic: "חפשו בנושא זה"
-        private_messages: "חיפוש הודעות פרטיות"
-    site_map: "לך לרשימת נושאים או קטגוריה אחרת"
+        private_messages: "חיפוש הודעות"
+    hamburger_menu: "עבור לרשימת נושאים אחרת או קטגוריה"
     go_back: 'חזור אחורה'
     not_logged_in_user: 'עמוד משתמש עם סיכום פעילות נוכחית והעדפות'
     current_user: 'לך לעמוד המשתמש שלך'
@@ -724,6 +859,7 @@ he:
         close_topics: "סגירת נושאים"
         archive_topics: "ארכיון הנושאים"
         notification_level: "שינוי רמת התראה"
+        choose_new_category: "בחרו את הקטגוריה עבור הנושאים:"
         selected:
           one: "בחרת נושא <b>אחד</b>."
           other: "בחרת <b>{{count}}</b> נושאים."
@@ -737,6 +873,7 @@ he:
         bookmarks: "אין לך עדיין סימניות לנושאים."
         category: "אין נושאים בקטגוריה {{category}}."
         top: "אין נושאים מובילים."
+        search: "אין תוצאות חיפוש"
         educate:
           new: '<p>הנושאים החדשים שלך יופיעו כאן.</p><p> כברירת מחדל, נושאים נחשבים חדשים ויופיעו עם האינדיקציה <span class="badge new-topic badge-notification" style="vertical-align:middle;line-height:inherit;"> חדש </span> אם הם נוצרו ב-2 הימים האחרונים. .</p><p> תוכלו לשנות זאת ב <a href="%{userPrefsUrl}">העדפות </a>.</p>'
           unread: '<p> הנושאים הלא-נקראים שלך מופיעים כאן.</p><p>כברירת מחדל נושאים נחשבים ככאלה שלא נקראו ויוצגו כ- <span class="badge new-posts badge-notification">1</span> אם את/ה:</p><ul><li> יצרת את הנושא</li></ul><p>או אם כיוונתם את הנושא הזה להיות תחת מעקב או צפייה באמצעות כפתור ההתראות שבתחתית כל נושא. </p><p> את/ה יכולים לשנות זאת ב<a href="%{userPrefsUrl}">העדפות</a>.</p>'
@@ -750,11 +887,15 @@ he:
         category: "אין עוד נושאים בקטגוריה {{category}}."
         top: "אין עוד נושאים מובילים."
         bookmarks: "אין עוד סימניות לנושאים."
+        search: "אין עוד תוצאות חיפוש"
     topic:
+      unsubscribe:
+        stop_notifications: "תקבלו פחות התראות עבור <strong>{{title}}</strong>"
+        change_notification_state: "מצב ההתראות הנוכחי שלך הוא"
       filter_to: "{{post_count}} הודעות בנושא"
       create: 'נושא חדש'
       create_long: 'יצירת נושא חדש'
-      private_message: 'התחלת הודעה פרטית'
+      private_message: 'תחילת הודעה'
       list: 'נושאים'
       new: 'נושא חדש'
       unread: 'לא נקרא/ו'
@@ -793,10 +934,10 @@ he:
       toggle_information: "הצגת פרטי נושא"
       read_more_in_category: "רוצה לקרוא עוד? עיין נושאים אחרים ב {{catLink}} או {{latestLink}}."
       read_more: "רוצה לקרוא עוד? {{catLink}} or {{latestLink}}."
-      read_more_MF: "יש { UNREAD, plural, =0 {} one { <a href='/unread'>1 שלא נקרא</a> } other { <a href='/unread'># שלא נקראו</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{ו} false {} other{}} נושא חדש <a href='/new'>אחד</a>} other { {BOTH, select, true{ו} false {} other{}} <a href='/new'>#</a> נושאים חדשים} } remaining, or {CATEGORY, select, true {עיין בנושאים אחרים ב {catLink}} false {{latestLink}} other {}}."
+      read_more_MF: "There { UNREAD, plural, =0 {} one { is <a href='/unread'>1 unread</a> } other { are <a href='/unread'># unread</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{and } false {is } other{}} <a href='/new'>1 new</a> topic} other { {BOTH, select, true{and } false {are } other{}} <a href='/new'># new</a> topics} } remaining, or {CATEGORY, select, true {browse other topics in {catLink}} false {{latestLink}} other {}}"
       browse_all_categories: עיין בכל הקטגוריות
       view_latest_topics: הצגת נושאים מדוברים
-      suggest_create_topic: מדוע לא ליצור נושא?
+      suggest_create_topic: לחץ כאן כדי ליצור נושא חדש.
       jump_reply_up: קפיצה לתגובה קודמת
       jump_reply_down: קפיצה לתגובה מאוחרת
       deleted: "הנושא הזה נמחק"
@@ -810,67 +951,71 @@ he:
         go_top: "למעלה"
         go_bottom: "למטה"
         go: "קדימה"
+        jump_bottom: "עבור להודעה האחרונה"
         jump_bottom_with_number: "קפיצה להודעה %{post_number}"
         total: סך הכל הודעות
         current: הודעה נוכחית
         position: "הודעה %{current} מתוך %{total}"
       notifications:
         reasons:
-          '3_6': 'תקבלו התראות כיוון שאת/ה צופה בקטגוריה הזו.'
-          '3_5': 'תקבל/י התראות כיוון שהתחלת לצפות בנושא הזה אוטומטית.'
-          '3_2': 'תקבל/י התראות כיוון שאת/ה צופים בנושא הזה.'
+          '3_6': 'תקבלו התראות כיוון שאת/ה עוקב אחרי קטגוריה זו.'
+          '3_5': 'תקבל/י התראות כיוון שהתחלת לעקוב אחרי הנושא הזה אוטומטית.'
+          '3_2': 'תקבל/י התראות כיוון שאת/ה עוקב אחרי נושא הזה.'
           '3_1': 'תקבל/י התראות כיוון שאת/ה יצרת את הנושא הזה.'
-          '3': 'תקבל/י התראות כיוון שאת/ה צופה בנושא הזה.'
+          '3': 'תקבל/י התראות כיוון שאת/ה עוקב אחרי נושא זה.'
           '2_8': 'תקבלו התראות כיוון שאת/ה צופה בקטגוריה הזו.'
           '2_4': 'תקבל/י התראות כיוון שפרסמת תגובה לנושא הזה.'
-          '2_2': 'תקבל/י התראות כיוון שאת/ה עוקב/ת אחרי הנושא הזה.'
+          '2_2': 'תקבל/י התראות כיוון שאת/ה צופה אחרי הנושא הזה.'
           '2': 'תקבל/י התראות כיוון ש<a href="/users/{{username}}/preferences">קראת את הנושא הזה</a>.'
-          '1_2': 'תקבלו הודעה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך.'
+          '1_2': 'תקבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך.'
           '1': 'תקבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך.'
           '0_7': 'את/ה מתעלם/מתעלמת מכל ההתראות בקטגוריה זו.'
           '0_2': 'אתה מתעלם מכל ההתראות בנושא זה.'
           '0': 'אתה מתעלם מכל ההתראות בנושא זה.'
         watching_pm:
-          title: "צופה"
-          description: "תקבל/י התראה על כל פרסום חדש במסר הפרטי הזה. סך הפרסומים החדשים ושלא נקראו יופיע גם לצד הנושא."
+          title: "עוקב"
+          description: "תקבל/י התראה על כל תגובה חדשה בהודעה זו. בנוסף מספר התגובות שלא נקראו יופיעו ליד ההודעה. "
         watching:
-          title: "צופה"
-          description: "תקבל/י התראה על כל פרסום חדש תחת נושא זה. סך הפרסומים החדשים ושלא נקראו יופיע גם לצד הנושא."
+          title: "עוקב"
+          description: "תקבל/י התראה על כל תגובה חדשה בנושא זה ומספר התגובות החדשות יוצג. "
         tracking_pm:
-          title: "עוקב"
-          description: "סך הפרסום החדש והלא נקראים שלך יופיע לצד המסר הפרטי. תקבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך."
+          title: "רגיל+"
+          description: "כמו רגיל, בנוסף מספר התגובות החדשות יוצג ליד ההודעה. "
         tracking:
-          title: "עוקב"
-          description: "סך הפרסום החדשים והלא נקראים יופיע לצד הנושא. תקבלו התראה אם מישהו יזכיר את @שם_המשתמש שלך או ישיב על פרסום שלך."
+          title: "רגיל+"
+          description: "כמו רגיל, בנוסף מספר התגובות שלא נקראו יוצג לנושא זה. "
         regular:
           title: "רגיל"
-          description: "תרבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך."
+          description: "תקבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך."
         regular_pm:
           title: "רגיל"
-          description: "תקבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך במסר הפרטי."
+          description: "תקבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך."
         muted_pm:
           title: "מושתק"
-          description: "לעולם לא תקבל/י התראות על כל הקשור להודעה פרטית זו."
+          description: "לעולם לא תקבל/י התראה בנוגע להודעה זו."
         muted:
           title: "מושתק"
-          description: "לעולם לא תקבל/י התראות על הנושא הזה, והוא לא יופיע בעמוד הלא נקראו שלך."
+          description: "לעולם לא תקבל/י התראות על הנושא הזה, והוא לא יופיע בעמוד ה\"לא נקראו\" שלך."
       actions:
         recover: "שחזר נושא"
         delete: "מחק נושא"
         open: "פתח נושא"
         close: "נעל נושא"
-        auto_close: "נעילה אוטומטית"
-        make_banner: "נושא הבאנר"
-        remove_banner: "הסרת נושא הבאנר"
-        unpin: "בטל נעיצת נושא"
-        pin: "נעץ נושא"
-        pin_globally: "נעץ נושא גלובלית"
+        multi_select: "בחר/י פרסומים..."
+        auto_close: "סגירה אוטומטית..."
+        pin: "נעיצת נושא.."
+        unpin: "שחרור נעיצת נושא..."
         unarchive: "הוצא נושא מארכיון"
         archive: "הכנס נושא לארכיון"
         invisible: "הסתרה"
         visible: "גילוי"
         reset_read: "אפס מידע שנקרא"
-        multi_select: "בחר הודעות"
+      feature:
+        pin: "נעיצת נושא"
+        unpin: "שחרור נעיצת נושא"
+        pin_globally: "נעיצת נושא גלובלית"
+        make_banner: "באנר נושא"
+        remove_banner: "הסרת באנר נושא"
       reply:
         title: 'תגובה'
         help: 'החל בכתיבת הודעה לנושא זה'
@@ -884,26 +1029,59 @@ he:
         title: 'סימון'
         help: 'סמנו נושא זה באופן פרטי לתשומת לב או שלחו התראה פרטית בנוגע אליו'
         success_message: 'סמנת נושא זה בהצלחה.'
+      feature_topic:
+        title: "הצגת נושא זה"
+        pin: "גרמו לנושא זה להופיע בראש קטגוריה  {{categoryLink}}  עד"
+        confirm_pin: "יש לך כבר {{count}} נושאים נעוצים. מספר גדול מידי של נושאים נעוצים עשויים להכביד על משתמשים חדשים או אנונימיים. האם את/ה בטוחים שאתם רוצים להצמיד נושא נוסף בקטגוריה זו? "
+        unpin: "הסרת נושא זה מראש הקטגוריה {{categoryLink}}."
+        unpin_until: "גרמו לנושא זה להופיע בראש הקטגוריה {{categoryLink}} או המתן עד <strong>%{until}</strong>."
+        pin_note: "המשתמש/ת יכולים להסיר את הנושא באופן עצמאי עבור עצמם."
+        pin_validation: "דרוש תאריך על מנת לנעוץ את הנושא. "
+        already_pinned:
+          zero: "אין נושאים מוצמדים בקטגוריה {{categoryLink}}."
+          one: "נושאים שנעוצים ב {{categoryLink}}: <strong class='badge badge-notification unread'>1</strong>."
+          other: "נושאים שנעוצים ב{{categoryLink}}: <strong class='badge badge-notification unread'>{{count}}</strong>."
+        pin_globally: "גרמו לנושא זה להופיע בראש כל רשימות הנושאים עד"
+        confirm_pin_globally: "יש לך כבר {{count}} נושאים המוצמדים באופן גלובאלי. עודף נושאים מוצמדים עשוי להכביד על משתמשים חדשים או אנונימיים. האם את/ה בטוחים שאתם מעוניינים להצמיד נושא גלובאלי נוסף?"
+        unpin_globally: "הסרת נושא זה מראש כל רשימות הנושאים."
+        unpin_globally_until: "הסרת נושא זה מראש כל רשימות הנושאים או המתינו עד <strong>%{until}</strong>."
+        global_pin_note: "משתמשים יכולים להסיר את הצמדת הנושא באופן עצמאי לעצמם."
+        already_pinned_globally:
+          zero: "אין נושאים המוצמדים באופן גלובלי."
+          one: "נושאים שכרגע נעוצים גלובלית: <strong class='badge badge-notification unread'>1</strong>."
+          other: "נושאים שכרגע מוצמדים גלובלית: <strong class='badge badge-notification unread'>{{count}}</strong>."
+        make_banner: "הפכו נושא זה לבאנר אשר מופיע בראש כל העמודים."
+        remove_banner: "הסרת הבאנר שמופיע בראש כל העמודים."
+        banner_note: "משתמשים יכולים לבטל את הבאנר על ידי סגירתו. רק נושא אחד יכול לשמש כבאנר בזמן נתון."
+        already_banner:
+          zero: "לא מוגדר באנר נושא"
+          one: "<strong class='badge badge-notification unread'>יש</strong> כרגע באנר נושאי."
       inviting: "מזמין..."
       automatically_add_to_groups_optional: "הזמנה זו כוללת גישה לקבוצות הללו: (אופציונלי, רק מנהל/ת)"
       automatically_add_to_groups_required: "הזמנה זו כוללת גישה לקבוצות הללו: (<b>חובה</b>, רק מנהל/ת)"
       invite_private:
-        title: 'הזמנה להודעה פרטית'
+        title: 'הזמן להודעה'
         email_or_username: "כתובת דואר אלקטרוני או שם משתמש של המוזמן"
         email_or_username_placeholder: "כתובת דואר אלקטרוני או שם משתמש"
         action: "הזמנה"
-        success: "הזמנו את המשתמש/ת להשתתף בשיחה פרטית זו."
+        success: "הזמנו את המשתמש להשתתף בשיחה."
         error: "סליחה, הייתה שגיאה בהזמנת משתמש זה."
         group_name: "שם הקבוצה"
       invite_reply:
         title: 'הזמנה'
-        action: 'הזמנה באמצעות דואר אלקטרוני'
-        help: 'שלח הזמנה לחברים כדי שהם יוכלו להגיב לנושא בלחיצה אחת'
-        to_topic: "נשלח מייל קצר המאפשר לחברך להצטרף באופן מיידי ולהשיב לנושא באמצעות לחיצה על קישור, ללא צורך להירשם למערכת הפורומים."
+        username_placeholder: "שם משתמש"
+        action: 'שלח הזמנה'
+        help: 'הזמן אנשים אחרים לנושא זה דרך דואר אלקטרוני או התראות'
         to_forum: "נשלח מייל קצר המאפשר לחברך להצטרף באופן מיידי באמצעות לחיצה על קישור, ללא צורך בהתחברות למערכת הפורומים."
+        sso_enabled: "הכנס את שם המשתמש של האדם שברצונך להזמין לנושא זה."
+        to_topic_blank: "הכנס את שם המשתמש או כתובת דואר האלקטרוני של האדם שברצונך להזמין לנושא זה."
+        to_topic_email: "הזנת כתובת אימייל. אנחנו נשלח הזמנה שתאפשר לחברך להשיב לנושא הזה."
+        to_topic_username: "הזנת שם משתמש/ת. נשלח התראה עם לינק הזמנה לנושא הזה. "
+        to_username: "הכנסת את שם המשתמש של האדם שברצונך להזמין. אנו נשלח התראה למשתמש זה עם קישור המזמין אותו לנושא זה."
         email_placeholder: 'name@example.com'
-        success: "שלחנו הזמנה אל  <b>{{email}}</b>. נודיע לך כאשר ההזמנה תתקבל. בדקו את לשונית ההזמנות בעמוד המשתמש/ת שלך כדי לעקוב אחר ההזמנות ששלחת."
-        error: "מצטערים לא יכלנו להזמין איש/ה אלו. ייתכן שהם כבר משתמשים באתר? (הזמנות הן בעלות הגבלת קצב)"
+        success_email: "שלחנו הזמנה ל:  <b>{{emailOrUsername}}</b>. נודיע לך כשהזמנה תענה. בדוק את טאב ההזמנות בעמוד המשתמש שלך בשביל לעקוב אחרי ההזמנות ששלחת. "
+        success_username: "הזמנו את המשתמש להשתתף בנושא."
+        error: "מצטערים, לא יכלנו להזמין האיש הזה. אולי הוא כבר הוזמן בעבר? (תדירות שליחת ההזמנות מוגבלת)"
       login_reply: 'התחברו כדי להשיב'
       filters:
         n_posts:
@@ -935,6 +1113,12 @@ he:
           one: "אנא בחר את הבעלים החדש של ההודעות מאת <b>{{old_user}}</b>."
           other: "אנא בחר את הבעלים החדש של {{count}} ההודעות מאת <b>{{old_user}}</b>."
         instructions_warn: "יש לשים לב שהתראות על הודעה זו יועברו למשתמש החדש רטרואקטיבית.<br>זהירות: כרגע, שום מידע תלוי-הודעה אינו מועבר למשתמש החדש. השתמשו בזהירות."
+      change_timestamp:
+        title: "שנה חותמת זמן"
+        action: "זנה חותמת זמן"
+        invalid_timestamp: "חותמת זמן לא יכולה להיות בעתיד"
+        error: "הייתה שגיאה בשינוי חותמת הזמן של הנושא"
+        instructions: "אנא בחרו את חותמת הזמן החדשה של הנושא. פרסומים בנושא יועדכנו לאותם הפרשי זמנים."
       multi_select:
         select: 'בחירה'
         selected: 'נבחרו ({{count}})'
@@ -947,13 +1131,12 @@ he:
           one: בחרת הודעה אחת.
           other: בחרת <b>{{count}}</b> הודעות.
     post:
-      reply: "מגיב ל {{link}} מאת {{replyAvatar}} {{username}}"
-      reply_topic: "תגובה ל {{link}}"
+      reply: "<i class='fa fa-mail-forward'></i> {{replyAvatar}} {{usernameLink}}"
+      reply_topic: "<i class='fa fa-mail-forward'></i> {{link}}"
       quote_reply: "תגובה עם ציטוט"
-      edit: "עורך את {{link}} מאת {{replyAvatar}} {{username}}"
+      edit: "עורך את {{link}} {{replyAvatar}} {{username}}"
       edit_reason: "סיבה: "
       post_number: "הודעה {{number}}"
-      in_reply_to: "השב ל"
       last_edited_on: "הודעה נערכה לאחרונה ב"
       reply_as_new_topic: "תגובה כנושא מקושר"
       continue_discussion: "ממשיך את הדיון מ {{postLink}}:"
@@ -965,13 +1148,23 @@ he:
         other: "(ההודעה בוטלה על ידי הכותב/ת, היא תמחק אוטומטית בעוד %{count} שעות אלא אם כן היא תסומן )"
       expand_collapse: "הרחב/צמצם"
       gap:
-        one: "הודעה אחת נסתרת"
-        other: "{{count}} הודעות נסתרות"
+        one: "הצג הודעה אחת שהוסתרה"
+        other: "הצג {{count}} הודעות שהוסתרו"
       more_links: "עוד {{count}}..."
       unread: "הפוסט טרם נקרא"
       has_replies:
-        one: "תגובה"
-        other: "תגובות"
+        one: "תגובה אחת"
+        other: "{{count}} תגובות"
+      has_likes:
+        one: "לייק אחד"
+        other: "{{count}} לייקים "
+      has_likes_title:
+        one: "מישהו אחד אהב את התגובה הזו"
+        other: "{{count}} אנשים אהבו את התגובה הזו"
+      has_likes_title_you:
+        zero: "אתה אהבת את התגובה הזו"
+        one: "אתה ואדם נוסף אהבתם את התגובה הזו"
+        other: "אתה ו{{count}} אנשים נוספים אהבתם את התגובה הזו"
       errors:
         create: "סליחה, הייתה שגיאה ביצירת ההודעה שלך. אנא נסה שנית."
         edit: "סליחה, הייתה שגיאה בעריכת ההודעה שלך. אנא נסה שנית."
@@ -1045,8 +1238,8 @@ he:
           inappropriate: "{{icons}} סומן בלתי ראוי"
           notify_moderators: "{{icons}} הודיעו למנהלים"
           notify_moderators_with_url: "{{icons}} <a href='{{postUrl}}'>הודיעו למנהלים</a>"
-          notify_user: "{{icons}} שלחו הודעה פרטית"
-          notify_user_with_url: "{{icons}} שלחו <a href='{{postUrl}}'>הודעה פרטית</a>"
+          notify_user: "{{icons}} שלח הודעה"
+          notify_user_with_url: "{{icons}}  שלח <a href='{{postUrl}}'>הודעה</a>"
           bookmark: "{{icons}} סימנו כמועדף"
           like: "{{icons}} נתנו לייק"
           vote: "{{icons}} הצביעו עבור זה"
@@ -1055,7 +1248,7 @@ he:
           spam: "סמנת את זה כספאם"
           inappropriate: "סמנת את זה כלא ראוי"
           notify_moderators: "סמנת את זה עבור המנהלים"
-          notify_user: "שלחת הודעה פרטית למשתמש הזה"
+          notify_user: "שלחת הודעה למשתמש זה"
           bookmark: "סימנת הודעה זו כמועדפת"
           like: "נתת לזה לייק"
           vote: "הצבעת להודעה זו"
@@ -1073,8 +1266,8 @@ he:
             one: "אתה ועוד אחד דגללתם את זה עבור ניהול"
             other: "את/ה ועוד {{count}} אנשים אחרים סמנתם את זה לניהול"
           notify_user:
-            one: "אתה ועוד אחד שלחתם הודעה פרטית למשתמש זה"
-            other: "אתה ועוד {{count}} אנשים אחרים שלחתם הודעה פרטית למשתמש זה"
+            one: "אתה ו-1 נוסף שלחתם הודעה למשתמש הזה. "
+            other: "אתה ו{{count}} אנשים נוספים שלחתם הודעה למשתמש הזה"
           bookmark:
             one: "אתה ועוד אחד סימנתם הודעה זו כמועדפת"
             other: "אתה ועוד {{count}} אנשים אחרים סימנתם הודעה זו כמועדפת"
@@ -1098,8 +1291,8 @@ he:
             one: "אדם אחד דגלל את זה לניהול"
             other: "{{count}} אנשים סמנו את זה לניהול"
           notify_user:
-            one: "אדם אחד שלח הודעה פרטית למשתמש הזה"
-            other: "{{count}} אנשים שלחו הודעה פרטית למשתמש הזה"
+            one: "אדם אחד שלח הודעה למשתמש זה"
+            other: "{{count}} שלחו הודעה למשתמש זה"
           bookmark:
             one: "אדם אחד סימן הודעה זו כמועדפת"
             other: "{{count}} אנשים סימנו הודעה זו כמועדפת"
@@ -1125,7 +1318,7 @@ he:
           last: "מהדורה אחרונה"
           hide: "הסתרת שינויים"
           show: "הצגת שינויים"
-          comparing_previous_to_current_out_of_total: "<strong>{{previous}}</strong> מול <strong>{{current}}</strong> / {{total}}"
+          comparing_previous_to_current_out_of_total: "<strong>{{קודם}}</strong> <i class='fa fa-arrows-h'></i> <strong>{{נוכחי}}</strong> / {כוללl}}"
         displays:
           inline:
             title: "הצג את הפלט עם תוספות והסרות בתוכו"
@@ -1136,17 +1329,17 @@ he:
           side_by_side_markdown:
             title: "הציגו את ההבדלי המקור הגולמיים זה לצד זה"
             button: '<i class="fa fa-columns"></i> גלם'
-        details:
-          edited_by: "נערך על ידי"
     category:
       can: 'יכול&hellip; '
       none: '(ללא קטגוריה)'
+      all: 'כל הקטגוריות'
       choose: 'בחר קטגוריה&hellip;'
       edit: 'ערוך'
       edit_long: "עריכה"
       view: 'הצג נושאים בקטגוריה'
       general: 'כללי'
       settings: 'הגדרות'
+      topic_template: "תבנית נושא"
       delete: 'מחק קטגוריה'
       create: 'קטגוריה חדשה'
       save: 'שמור קטגוריה'
@@ -1189,14 +1382,14 @@ he:
       parent: "קטגורית אם"
       notifications:
         watching:
-          title: "צופה"
-          description: "תצפו באופן אוטומטי בכל הנושאים החדשים בקטגוריות אלה. תקבלו התראה על כל פרסום ונושא חדש, ובנוסף, סך הפרסומים החדשים ושלא נקראו יופיעו לצד הנושא."
+          title: "עוקב"
+          description: "תעקבו באופן אוטומטי אחרי כל הנושאים החדשים בקטגוריות אלה. תקבלו התראה על כל פרסום ונושא חדש."
         tracking:
-          title: "במעקב"
-          description: "תעקבו באופן אוטומטי אחרי כל הנושאים החדשים בקטגוריות אלה. סך הפרסומים החדשים ושלא נקראו יופיעו לצד הנושא."
+          title: "רגיל+"
+          description: "בקטגוריות אלה סך הפרסומים החדשים שלא נקראו יופיע לצד שם הנושא."
         regular:
           title: "רגיל"
-          description: "תקבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלכם או ישיב לפרסום שלך."
+          description: "תקבלו התראה אם מישהו יזכיר את @שם_המשתמש/ת שלך או ישיב לפרסום שלך."
         muted:
           title: "מושתק"
           description: "לא תקבל התראות בנוגע לנושאים חדשים בקטגוריות האלה, והם לא יופיעו בלשונית ה\"לא נקראו\" שלך."
@@ -1205,7 +1398,7 @@ he:
       private_reminder: 'דגלים הם פרטיים וניתנים לצפייה ע"י הצוות <b>בלבד</b>'
       action: 'סימון פרסום'
       take_action: "בצע פעולה"
-      notify_action: 'הודעה פרטית'
+      notify_action: 'הודעה'
       delete_spammer: "מחק ספאמר"
       delete_confirm: "אתה עומד למחוק <b>%{posts}</b> הודעות ו-<b>%{topics}</b> נושאים של המשתמש הזה, להסיר את החשבון שלהם, לחסור הרשמה מכתובת ה-IP שלהם <b>%{ip_address}</b>, ולהוסיף את כתובת הדואר האלקטרוני <b>%{email}</b> לרשימה שחורה. אתה בטוח שזה באמת ספאמר?"
       yes_delete_spammer: "כן, מחק ספאמר"
@@ -1227,9 +1420,11 @@ he:
     flagging_topic:
       title: "תודה על עזרתך לשמירה על תרבות הקהילה שלנו!"
       action: "סימון נושא"
-      notify_action: "הודעה פרטית"
+      notify_action: "הודעה"
     topic_map:
       title: "סיכום נושא"
+      participants_title: "מפרסמים מתמידים"
+      links_title: "לינקים פופלארים"
       links_shown: "הצג את כל הקישורים {{totalLinks}}..."
       clicks:
         one: "לחיצה אחת"
@@ -1241,6 +1436,10 @@ he:
         help: "יצרת סימניה לנושא זה"
       locked:
         help: "הנושא הזה נעול, הוא לא מקבל יותר תגובות חדשות"
+      archived:
+        help: "הנושא הזה אוכסן בארכיון; הוא הוקפא ולא ניתן לשנותו"
+      locked_and_archived:
+        help: "הנושא הזה סגור ומאורכב. לא ניתן להגיב בו יותר או לשנות אותו. "
       unpinned:
         title: "הורד מנעיצה"
         help: "נושא זה אינו מקובע עבורך; הוא יופיע בסדר הרגיל"
@@ -1250,8 +1449,6 @@ he:
       pinned:
         title: "נעוץ"
         help: "נושא זה מקובע עבורך, הוא יופיע בראש הקטגוריה"
-      archived:
-        help: "הנושא הזה אוכסן בארכיון; הוא הוקפא ולא ניתן לשנותו"
       invisible:
         help: "נושא זה מוסתר; הוא לא יוצג ברשימות הנושאים, וזמין רק באמצעות קישור ישיר."
     posts: "הודעות"
@@ -1265,15 +1462,21 @@ he:
       אחר {}}
     original_post: "הודעה מקורית"
     views: "צפיות"
-    views_lowercase: "תצוגות"
+    views_lowercase:
+      one: "צפיה"
+      other: "צפיות"
     replies: "תגובות"
     views_long: "הנושא הזה נצפה {{number}} פעמים"
     activity: "פעילות"
     likes: "לייקים"
-    likes_lowercase: "לייקים"
+    likes_lowercase:
+      one: "לייקים"
+      other: "לייקים"
     likes_long: "יש {{number}} לייקים לנושא הזה"
     users: "משתמשים"
-    users_lowercase: "משתמשים"
+    users_lowercase:
+      one: "משתמש"
+      other: "משתמשים"
     category_title: "קטגוריה"
     history: "היסטוריה"
     changed_by: "מאת {{author}}"
@@ -1285,7 +1488,10 @@ he:
       with_topics: "%{filter} נושאים"
       with_category: "%{filter} %{category} נושאים"
       latest:
-        title: "מדוברים"
+        title:
+          zero: "פורסמו לאחרונה"
+          one: "פורסמו לאחרונה"
+          other: "({{count}}) פורסמו לאחרונה"
         help: "נושאים עם תגובות לאחרונה"
       hot:
         title: "חם"
@@ -1293,6 +1499,9 @@ he:
       read:
         title: "נקרא"
         help: "נושאים שקראת, לפי סדר קריאתם"
+      search:
+        title: "חיפוש"
+        help: "חיפוש בכל הנושאים"
       categories:
         title: "קטגוריות"
         title_in: "קטגוריה - {{categoryName}}"
@@ -1331,19 +1540,25 @@ he:
       top:
         title: "מובילים"
         help: "הנושאים הפעילים ביותר בשנה, חודש, שבוע או יום האחרונים"
+        all:
+          title: "תמיד"
         yearly:
-          title: "מובילים שנתי"
+          title: "שנתי"
+        quarterly:
+          title: "רבעוני"
         monthly:
-          title: "מובילים חודשי"
+          title: "חודשי"
         weekly:
-          title: "המיטב השבועי"
+          title: "שבועי"
         daily:
-          title: "המיטב היומי"
-        this_year: "השנה"
-        this_month: "החודש"
-        this_week: "השבוע"
+          title: "יומי"
+        all_time: "כל הזמנים"
+        this_year: "שנה"
+        this_quarter: "רבע"
+        this_month: "חודש"
+        this_week: "שבוע"
         today: "היום"
-        other_periods: "ראו עוד נושאים מובילים."
+        other_periods: "ראה חלק עליון"
     browser_update: 'למרבה הצער, <a href="http://www.discourse.org/faq/#browser">הדפדפן שלכם זקן מידי מכדי לעבוד באתר זה.</a>. אנא <a href="http://browsehappy.com">שדרגו את הדפדפן שלכם</a>.'
     permission_types:
       full: "צרו / תגובה/ צפייה"
@@ -1375,8 +1590,9 @@ he:
         admins: 'מנהלים ראשיים:'
         blocked: 'חסומים:'
         suspended: 'מושעים:'
-        private_messages_short: "ה\"פ"
-        private_messages_title: "הודעות פרטיות"
+        private_messages_short: "הודעות"
+        private_messages_title: "הודעות"
+        mobile_title: "סלולר"
         space_free: "{{size}} חופשיים"
         uploads: "העלאות"
         backups: "גיבויים"
@@ -1410,7 +1626,7 @@ he:
         agree_title: "אישור סימון זה כתקין ונכון"
         agree_flag_modal_title: "הסכמה ו..."
         agree_flag_hide_post: "קבחה (הסתרת פרסום + שליחת מסר פרטי)"
-        agree_flag_hide_post_title: "הסתירו פרסום זה ושלחו למשתמ/ת מסר פרטי אוטומטי עם בקשה לערוך אותו."
+        agree_flag_hide_post_title: "הסתרת הודעה זו ושליחה אוטומטית של  הודעה פרטית למשתמש/ת שמאיצה בהם לערוך אותה"
         agree_flag_restore_post: "הסכמה (שחזור הפרסום)"
         agree_flag_restore_post_title: "שחזור פרסום זה"
         agree_flag: "הסכמה עם הסימון"
@@ -1483,9 +1699,11 @@ he:
         add: "הוספה"
         add_members: "הוספת חברים וחברות"
         custom: "מותאם"
-        automatic: "אוטומטית"
+        automatic: "אוטומטי"
         automatic_membership_email_domains: "משתמשים אשר נרשמים עם מארח דוא\"ל שתואם בדיוק לאחד מהרשימה, יוספו באופן אוטומטי לקבוצה זו:"
         automatic_membership_retroactive: "החלת כלל מארח דוא\"ל זהה כדי להוסיף משתמשים רשומים"
+        default_title: "ברירת המחדל לכל המשתמשים בקבוצה זו"
+        primary_group: "קבע כקבוצה ראשית באופן אוטומטי"
       api:
         generate_master: "ייצר מפתח מאסטר ל-API"
         none: "אין מפתחות API פעילים כרגע."
@@ -1506,7 +1724,12 @@ he:
         name: "שם"
         none_installed: "אין לך הרחבות מותקנות"
         version: "גרסה"
+        enabled: "מאופשר?"
+        is_enabled: "Y"
+        not_enabled: "N"
+        cant_disable: "-"
         change_settings: "שינוי הגדרות"
+        change_settings_short: "הגדרות"
         howto: "איך אני מתקין/מתקינה הרחבות?"
       backups:
         title: "גיבויים"
@@ -1517,18 +1740,19 @@ he:
         read_only:
           enable:
             title: "אפשר מצב קריאה בלבד"
-            text: "אפשר מצב קריאה בלבד"
+            label: "אפשר מצב \"קריאה בלבד\""
             confirm: "אתה בטוח שברצונך לאפשר את מצב קריאה בלבד??"
           disable:
             title: "בטל מצב קריאה בלבד"
-            text: "בטל מצב קריאה בלבד"
+            label: "בטל מצב \"קריאה בלבד\""
         logs:
           none: "עדיין אין לוגים..."
         columns:
           filename: "שם קובץ"
           size: "גודל"
         upload:
-          text: "העלאה"
+          label: "העלה"
+          title: "טען גיבוי לinstance הזה"
           uploading: "מעלה..."
           success: "'{{filename}}' הועלה בהצלחה."
           error: "הייתה שגיאה במהלך העלאת '{{filename}}': {{message}}"
@@ -1536,33 +1760,32 @@ he:
           is_running: "פעולה רצה כרגע..."
           failed: "ה{{operation}} נכשלה. אנא בדוק את הלוגים."
           cancel:
-            text: "ביטול"
+            label: "ביטול"
             title: "בטל את הפעולה הנוכחית"
             confirm: "אתה בטוח שברצונך לבטל את הפעולה הנוכחית?"
           backup:
-            text: "גיבוי"
+            label: "גבה"
             title: "צור גיבוי"
             confirm: "האם תרצו להתחיל גיבוי חדש?"
             without_uploads: "כן (ללא הכללת קבצים)"
           download:
-            text: "הורד"
+            label: "הורד"
             title: "הורד את הגיבוי"
           destroy:
-            text: "מחק"
             title: "הסר את הגיבוי"
             confirm: "אתה בטוח שברצונך להשמיד את הגיבוי הזה?"
           restore:
             is_disabled: "שחזור אינו מאופשר לפי הגדרות האתר."
-            text: "שחזר"
+            label: "שחזר"
             title: "שחזר את הגיבוי"
             confirm: "אתה בטוח שברצונך לשחזר את הגיבוי הזה?"
           rollback:
-            text: "חזור לאחור"
+            label: "חזור לאחור"
             title: "הזחר את מסד הנתונים למצב עבודה קודם"
             confirm: "אתה בטוח שברצונך להחזיר את מסד הנתונים למצב עבודה קודם?"
       export_csv:
         user_archive_confirm: "האם את/ה בטוח/ה שאתם רוצים להוריד את הפרסומים שלכם?"
-        success: "פעולת היצוא החלה, תקבלו התראה באמצעות מסר פרטי כאשר התהליך יושלם."
+        success: "יצוא החל, תקבלו הודעה כשהתהליך יסתיים"
         failed: "הייצוא נכשל. אנא בדקו ברישומי הלוג."
         rate_limit_error: "ניתן להוריד פרסומים פעם ביום, אנא נסו שוב מחר."
         button_text: "ייצוא"
@@ -1572,6 +1795,8 @@ he:
           screened_email: "יצוא רשימת דוא\"ל מלאה בפורמט CSV"
           screened_ip: "יצוא רשימת IP מלאה בפורמט CSV"
           screened_url: "יצוא רשימת URL מלאה בפורמט CSV"
+      export_json:
+        button_text: "ייצוא"
       invite:
         button_text: "משלוח הזמנות"
         button_title: "משלוח הזמנות"
@@ -1582,6 +1807,7 @@ he:
         header: "כותרת"
         top: "למעלה"
         footer: "כותרת תחתית"
+        embedded_css: "Embedded CSS"
         head_tag:
           text: "</head>"
           title: "קוד HTML שיוכנס לפני התגית </head>"
@@ -1599,6 +1825,8 @@ he:
         save: "שמור"
         new: "חדש"
         new_style: "סגנון חדש"
+        import: "יבוא"
+        import_title: "בחר קובץ או הדביקו טקסט"
         delete: "מחק"
         delete_confirm: "מחק את ההתאמה הזו?"
         about: "שינוי סגנונות CSS וכותרות HTML באתר. הוספת התאמות כדי להתחיל לערוך."
@@ -1671,7 +1899,7 @@ he:
         sent_test: "נשלח!"
         delivery_method: "שיטת העברה"
         preview_digest: "תצוגה מקדימה של סיכום"
-        preview_digest_desc: "צפה בתקציר השבועי הנשלח בדואר אלקטרוני למשתמשים לא פעילים."
+        preview_digest_desc: "תצוגה מקדימה של מייל סיכום שנשלח למשתמשים לא פעילים. "
         refresh: "רענן"
         format: "פורמט"
         html: "html"
@@ -1735,6 +1963,8 @@ he:
             delete_topic: "מחיקת נושא"
             delete_post: "מחיקת פרסום"
             impersonate: "התחזה"
+            anonymize_user: "הפיכת משתמש/ת לאנונימיים"
+            roll_up: "roll up IP blocks"
         screened_emails:
           title: "הודעות דואר מסוננות"
           description: "כשמישהו מנסה ליצור חשבון חדש, כתובות הדואר האלקטרוני הבאות ייבדקו וההרשמה תחסם או שיבוצו פעולות אחרות."
@@ -1770,6 +2000,8 @@ he:
       impersonate:
         title: "התחזות"
         help: "השתמשו בכלי כזה כדי להתחזות לחשבון משתמש לצרכי דיבוג. עליכם להתנתק ברגע שתסיימו."
+        not_found: "לא ניתן למצוא את המשתמש הזה."
+        invalid: "סליחה, אך אינך מורשה להתחזות למשתמש הזה."
       users:
         title: 'משתמשים'
         create: 'הוסף מנהל'
@@ -1868,8 +2100,13 @@ he:
         approve_success: "משתמש אושר ונשלחה לו הודעות דואר אלקטרוני עם הוראות הפעלה"
         approve_bulk_success: "הצלחה! כל המשתמשים שנבחרו אושרו ויודעו על כך."
         time_read: "זמן קריאה"
+        anonymize: "הפיכת משתמש/ת לאנונימיים"
+        anonymize_confirm: "האם אתם ב-ט-ו-ח-י-ם שאתם רוצים להפוך חשבון זה לאנונימי? פעולה זו תשנה את שם המשתמש/ת וכתובת הדוא\"ל ותאתחל את כל המידע בפרופיל."
+        anonymize_yes: "כן, הפיכת חשבון זה לאנונימי"
+        anonymize_failed: "התרחשה בעיה בהפיכת חשבון זה לאנונימי."
         delete: "מחק משתמש"
         delete_forbidden_because_staff: "לא ניתן למחוק מנהלים ראשיים ומנהלים."
+        delete_posts_forbidden_because_staff: "לא ניתן למחוק את כל הפרסומים של מנהלי מערכת ומפקחים."
         delete_forbidden:
           one: "לא ניתן למחוק משתמשים אם יש להם הודעות. מחק את כל ההודעות לפני ניסיון מחיקה של משתמש. (הודעות ישנות יותר מ-%{count} ימים לא ניתן למחוק.)"
           other: "לא ניתן למחוק משתמשים אם יש להם הודעות. מחק את כל ההודעות לפני ניסיון מחיקה של משתמש. (הודעות ישנות יותר מ-%{count} ימים לא ניתן למחוק.)"
@@ -1897,8 +2134,6 @@ he:
         suspended_explanation: "משתמש מושעה לא יכול להתחבר."
         block_explanation: "משתמש חסום לא יכול לפרסם הודעות או נושאים."
         trust_level_change_failed: "הייתה בעיה בשינוי רמת האמון של המשתמש."
-        grant_admin_failed: "ישנה בעיה להעניק השראות מנהל/ת מערכת."
-        grant_moderation_failed: "התגלתה בעיה בהענקת הרשאות בקרה."
         suspend_modal_title: "השעה משתמש"
         trust_level_2_users: "משתמשי רמת אמון 2"
         trust_level_3_requirements: "דרישות רמת אמון 3"
@@ -1951,6 +2186,7 @@ he:
         delete: "מחיקה"
         cancel: "ביטול"
         delete_confirm: "האם את/ה בטוחים שאתם רוצים למחוק את שדה משתמש/ת הזה?"
+        options: "אפשרויות"
         required:
           title: "נדרש בעת הרשמה?"
           enabled: "נדרש"
@@ -1966,6 +2202,7 @@ he:
         field_types:
           text: 'שדה טקסט'
           confirm: 'אישור'
+          dropdown: "נגלל"
       site_text:
         none: "בחרו את סוג התוכן לתחילת עריכה."
         title: 'תוכן טקסטואלי'
@@ -1976,6 +2213,8 @@ he:
         none: 'ללא'
         no_results: "לא נמצאו תוצאות."
         clear_filter: "נקה"
+        add_url: "הוספת כתובת URL"
+        add_host: "הוסיפו מארח"
         categories:
           all_results: 'הכל'
           required: 'נדרש'
@@ -1997,6 +2236,7 @@ he:
           backups: "גיבויים"
           login: "התחברות"
           plugins: "הרחבות"
+          user_preferences: "הגדרות משתמש"
       badges:
         title: תגים
         new_badge: תג חדש
@@ -2011,10 +2251,13 @@ he:
           modal_title: תג קבוצות
         granted_by: הוענק ע"י
         granted_at: הוענק ב
+        reason_help: (קישור לפרסום או לנושא)
         save: שמור
         delete: מחק
         delete_confirm: אתה בטוח שברצונך למחוק את התג הזה?
         revoke: שלול
+        reason: סיבה
+        expand: הרחבה &hellip;
         revoke_confirm: אתה בטוח שברצונך לשלול את התג הזה?
         edit_badges: ערוך תגים
         grant_badge: הענק תג
@@ -2067,6 +2310,26 @@ he:
         name: "שם"
         image: "תמונה"
         delete_confirm: "האם את/ה בטוח/ה שאתם רוצים למחוק את האמוג'י :%{name}:?"
+      embedding:
+        get_started: "אם ברצונך לשלב את דיסקורס באתר אחר, התחל בהוספת המערך שלו (host). "
+        confirm_delete: "האם אתה בטוח שאתה רוצה למחוק את הhost הזה? "
+        sample: "השתמש בקוד HTML הבא באתר שלך על מנת ליצור נושאי דיסקורס משולבים. החלף <b>REPLACE_ME</b> בURL הקאנוני של העמוד שבו אתה מכניס נושא מכונן. "
+        title: "שילוב (embedding)"
+      permalink:
+        title: "קישורים קבועים"
+        url: "כתובת"
+        topic_id: "מזהה לנושא"
+        topic_title: "נושא"
+        post_id: "מזהה לפרסום"
+        post_title: "הודעה"
+        category_id: "מזהה לקטגוריה"
+        category_title: "קטגוריה"
+        external_url: "ID חיצוני"
+        delete_confirm: אתה בטוח שברצונך למחוק את הלינק הקבוע?
+        form:
+          label: "חדש:"
+          add: "הוסף"
+          filter: "חפש (כתובת או כתובת חיצונית)"
     lightbox:
       download: "הורד"
     search_help:
@@ -2075,12 +2338,13 @@ he:
       title: 'קיצורי מקלדת'
       jump_to:
         title: 'קפוץ ל'
-        home: '<b>g</b>, <b>h</b> Home (Latest)'
+        home: '<b>g</b>, <b>h</b> בית'
         latest: '<b>g</b>, <b>l</b> Latest'
         new: '<b>g</b>, <b>n</b> New'
         unread: '<b>g</b>, <b>u</b> Unread'
         categories: '<b>g</b>, <b>c</b> Categories'
         top: '<b>g</b>, <b>t</b> Top'
+        bookmarks: 'סימניות <b>g</b>, <b>b</b>'
       navigation:
         title: 'ניווט'
         jump: '<b>#</b> מעבר לפרסום #'
@@ -2092,7 +2356,6 @@ he:
         title: 'יישום'
         create: '<b>c</b> צור נושא חדש'
         notifications: '<b>n</b> פתח התראות'
-        site_map_menu: '<b>=</b> פתיחת תפריט האתר'
         user_profile_menu: '<b>p</b>פתיחת תפריט משתמש/ת'
         show_incoming_updated_topics: '<b>.</b> הצגת נושאים שעודכנו'
         search: '<b>/</b> חיפוש'
@@ -2202,6 +2465,15 @@ he:
         first_flag:
           name: סימון ראשון
           description: סימן/סימנה פרסום
+        promoter:
+          name: מקדם
+          description: הזמן משתמש
+        campaigner:
+          name: קמפיינר
+          description: הזמן 3 משתמשים בסיסים (דרגת אמון 1)
+        champion:
+          name: אלוף
+          description: הזמן 5 משתמשים (דרגת אמון 2)
         first_share:
           name: שיתוף ראשון
           description: שיתף/שיתפה פרסום
@@ -2217,12 +2489,3 @@ he:
         reader:
           name: מקראה
           description: קראו כל פרסום בנושא עם יותר מ-100 פרסומים
-    google_search: |
-      <h2>חפשו עם גוגל</h2>
-      <p>
-        <form action='//google.com/search' id='google-search' onsubmit="document.getElementById('google-query').value = 'site:' + window.location.host + ' ' + document.getElementById('user-query').value; return true;">
-          <input type="text" id='user-query' value="">
-          <input type='hidden' id='google-query' name="q">
-          <button class="btn btn-primary">גוגל</button>
-        </form>
-      </p>
