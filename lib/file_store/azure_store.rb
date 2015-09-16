@@ -1,36 +1,61 @@
-require 'file_store/base_store'
+require_dependency "file_store/base_store"
+require_dependency "file_store/local_store"
 require_dependency "file_helper"
 
-require 'azure'
+require "azure"
 
 module FileStore
   class AzureStore < BaseStore
 
     def store_upload(file, upload, content_type = nil)
       path = get_path_for_upload(file, upload)
-      store_file(file, path, upload.original_filename, content_type)
+      store_file(file, path, filename: upload.original_filename, content_type: content_type, cache_locally: true)
     end
 
-    def store_optimized_image(file, optimized_image)
-      path = get_path_for_optimized_image(file, optimized_image)
-      store_file(file, path)
+    def store_file(file, path, opts={})
+      # if this fails, it will throw an exception
+      # upload(file, path, filename, content_type)
+
+      filename      = opts[:filename].presence
+      content_type  = opts[:content_type].presence
+
+      # cache file locally when needed
+      cache_file(file, File.basename(path)) if opts[:cache_locally]
+      
+      # stored uploaded are public by default
+      metadata = { }
+      
+      # add a "content disposition" header for "attachments"
+      metadata[:content_disposition] = "attachment; filename=\"#{filename}\"" if filename && !FileHelper.is_image?(filename)
+      
+      # create azure options
+      options = { :metadata => metadata }
+
+      # add a "content type" header when provided
+      if content_type
+        options[:content_type] = content_type
+      else
+        options[:content_type] = get_content_type(filename)
+      end
+
+      # upload file
+      get_or_create_directory(azure_container).create_block_blob(azure_container, unique_filename, file.read(), options)
+
+      # url
+      "#{absolute_base_url}/#{path}"
     end
 
-    def store_avatar(file, avatar, size)
-      path = get_path_for_avatar(file, avatar, size)
-      store_file(file, path)
-    end
-
-    def remove_upload(upload)
-      remove_file(upload.url)
-    end
-
-    def remove_optimized_image(optimized_image)
-      remove_file(optimized_image.url)
+    def remove_file(url)
+      return unless has_been_uploaded?(url)
+      filename = File.basename(url)
+      remove(filename)
     end
 
     def has_been_uploaded?(url)
-      url.present? && url.start_with?(absolute_base_url)
+      return false if url.blank?
+      return true if url.start_with?(absolute_base_url)
+      #return true if SiteSetting.azure_cdn_url.present? && url.start_with?(SiteSetting.azure_cdn_url)
+      false
     end
 
     def absolute_base_url
@@ -41,52 +66,12 @@ module FileStore
       true
     end
 
-    def internal?
-      !external?
-    end
-
-    def download(upload)
-      url = SiteSetting.scheme + ":" + upload.url
-      max_file_size = [SiteSetting.max_image_size_kb, SiteSetting.max_attachment_size_kb].max.kilobytes
-
-      FileHelper.download(url, max_file_size, "discourse-azure")
-    end
-    
-    def avatar_template(avatar)
-      template = relative_avatar_template(avatar)
-      "#{absolute_base_url}/#{template}"
+    def path_for(upload)
+      url = upload.try(:url)
+      FileStore::LocalStore.new.path_for(upload) if url && url[0] == "/" && url[1] != "/"
     end
 
     private
-
-    def get_path_for_upload(file, upload)
-      "#{upload.id}#{upload.sha1}#{upload.extension}"
-    end
-
-    def get_path_for_optimized_image(file, optimized_image)
-      "#{optimized_image.id}#{optimized_image.sha1}_#{optimized_image.width}x#{optimized_image.height}#{optimized_image.extension}"
-    end
-
-    def get_path_for_avatar(file, avatar, size)
-      relative_avatar_template(avatar).gsub("{size}", size.to_s)
-    end
-
-    def relative_avatar_template(avatar)
-      "avatars/#{avatar.sha1}/{size}#{avatar.extension}"
-    end
-
-    def store_file(file, path, filename = nil, content_type = nil)
-      # if this fails, it will throw an exception
-      upload(file, path, filename, content_type)
-      # url
-      "#{absolute_base_url}/#{path}"
-    end
-
-    def remove_file(url)
-      return unless has_been_uploaded?(url)
-      filename = File.basename(url)
-      remove(filename)
-    end
 
     def azure_container
       SiteSetting.azure_blob_container.downcase
@@ -104,9 +89,9 @@ module FileStore
     end
 
     def check_missing_site_settings
-      raise Discourse::SiteSettingMissing.new("azure_blob_container")     if SiteSetting.azure_blob_container.blank?
+      raise Discourse::SiteSettingMissing.new("azure_blob_container")      if SiteSetting.azure_blob_container.blank?
       raise Discourse::SiteSettingMissing.new("azure_storage_account")     if SiteSetting.azure_storage_account.blank?
-      raise Discourse::SiteSettingMissing.new("azure_storage_access_key") if SiteSetting.azure_storage_access_key.blank?
+      raise Discourse::SiteSettingMissing.new("azure_storage_access_key")  if SiteSetting.azure_storage_access_key.blank?
 
       load_azure_settings()
     end
@@ -127,21 +112,6 @@ module FileStore
       end
 
       azure_blob_service
-    end
-
-    def upload(file, unique_filename, filename=nil, content_type=nil)
-      metadata = { }
-      metadata[:content_disposition] = "attachment; filename=\"#{filename}\"" if filename
-
-      options = { :metadata => metadata }
-
-      if content_type
-        options[:content_type] = content_type
-      else
-        options[:content_type] = get_content_type(unique_filename)
-      end
-
-      get_or_create_directory(azure_container).create_block_blob(azure_container, unique_filename, file.read(), options)
     end
 
     def remove(unique_filename)
