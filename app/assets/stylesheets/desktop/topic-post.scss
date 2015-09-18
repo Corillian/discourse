@@ -964,6 +964,13 @@ span.highlighted {
   transition: opacity ease-out 1s;
 }
 
+.signup-cta {
+  width: $topic-body-width;
+  a {
+    float: right;
+    text-decoration: underline;
+  }
+}
 
 /* Tablet (portrait) ----------- */
 
