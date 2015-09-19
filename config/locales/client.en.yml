@@ -727,10 +727,10 @@ en:
     signup_cta:
       sign_up: "Sign Up"
       hide_session: "Remind me tomorrow"
-      hide_forever: "No thanks"
+      hide_forever: "no thanks"
       hidden_for_session: "OK, I'll ask you tomorrow. You can always use 'Log In' to create an account, too."
       intro: "Hey there! :heart_eyes: Looks like you're enjoying the discussion, but you're not signed up for an account."
-      value_prop: "When you create an account, we can track exactly what you've read, so you always come right back where you left off. You can also get notifications, here and via email, whenever new posts are made. And you can like posts to share the love. :heartbeat:"
+      value_prop: "When you create an account, we remember exactly what you've read, so you always come right back where you left off. You also get notifications, here and via email, whenever new posts are made. And you can like posts to share the love. :heartbeat:"
       methods:
         sso: "Signing up is easy: all you need is an account on the main site."
         only_email: "Signing up is easy: all you need is an email and password."
@@ -968,8 +968,16 @@ en:
       image_link: "link your image will point to"
 
     search:
+      sort_by: "Sort by"
+      relevance: "Relevance"
+      latest_post: "Latest Post"
+      most_viewed: "Most Viewed"
+      most_liked: "Most Liked"
       select_all: "Select All"
       clear_all: "Clear All"
+      result_count:
+        one: "1 result for <span class='term'>\"{{term}}\"</span>"
+        other: "{{count}} results for <span class='term'>\"{{term}}\"</span>"
       title: "search topics, posts, users, or categories"
       no_results: "No results found."
       no_more_results: "No more results found."
@@ -1589,16 +1597,16 @@ en:
         reasons:
         watching:
           title: "Watching"
-          description: "You will automatically watch all new topics in these categories. You will be notified of all new posts and topics, and a count of new replies will appear for these topics."
+          description: "You will automatically watch all new topics in these categories. You will be notified of every new post in every topic, and a count of new replies will be shown."
         tracking:
           title: "Tracking"
-          description: "You will automatically track all new topics in these categories. A count of new replies will appear for these topics."
+          description: "You will automatically track all new topics in these categories. You will be notified if someone mentions your @name or replies to you, and a count of new replies will be shown."
         regular:
-          title: "Regular"
+          title: "Normal"
           description: "You will be notified if someone mentions your @name or replies to you."
         muted:
           title: "Muted"
-          description: "You will not be notified of anything about new topics in these categories, and they will not appear on your unread tab."
+          description: "You will never be notified of anything about new topics in these categories, and they will not appear on your unread tab."
 
     flagging:
       title: 'Thanks for helping to keep our community civil!'
