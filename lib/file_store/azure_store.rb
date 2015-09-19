@@ -39,7 +39,7 @@ module FileStore
       end
 
       # upload file
-      get_or_create_directory(azure_container).create_block_blob(azure_container, unique_filename, file.read(), options)
+      get_or_create_directory(azure_container).create_block_blob(azure_container, filename, file.read(), options)
 
       # url
       "#{absolute_base_url}/#{path}"
