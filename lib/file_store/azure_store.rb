@@ -5,10 +5,11 @@ require_dependency "file_helper"
 require "azure"
 
 module FileStore
+
   class AzureStore < BaseStore
 
     def store_upload(file, upload, content_type = nil)
-      path = get_path_for_upload(file, upload)
+      path = get_path_for_upload(upload)
       store_file(file, path, filename: upload.original_filename, content_type: content_type, cache_locally: true)
     end
 
