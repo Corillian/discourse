@@ -26,7 +26,7 @@ module FileStore
       metadata = { }
       
       # add a "content disposition" header for "attachments"
-      metadata[:content_disposition] = "attachment; filename=\"#{filename}\"" if filename && !FileHelper.is_image?(filename)
+      metadata[:content_disposition] = "attachment; filename=\"#{filename}\"" if filename
       
       # create azure options
       options = { :metadata => metadata }
