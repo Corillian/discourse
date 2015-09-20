@@ -20,6 +20,10 @@ module FileStore
       filename      = opts[:filename].presence
       content_type  = opts[:content_type].presence
 
+      if filename == nil
+        filename = File.basename(path)
+      end
+
       # cache file locally when needed
       cache_file(file, File.basename(path)) if opts[:cache_locally]
       
@@ -129,7 +133,7 @@ module FileStore
     end
     
     def get_content_type(filename)
-      ext = File.extname(filename)
+      ext = File.extname(filename) if filename != nil
       content_type = "application/octet-stream"
 
       if ext != nil
