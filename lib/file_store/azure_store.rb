@@ -40,7 +40,7 @@ module FileStore
       end
 
       # upload file
-      get_or_create_directory(azure_container).create_block_blob(azure_container, filename, file.read(), options)
+      get_or_create_directory(azure_container).create_block_blob(azure_container, path, file.read(), options)
 
       # url
       "#{absolute_base_url}/#{path}"
@@ -100,25 +100,32 @@ module FileStore
     def get_or_create_directory(container)
       check_missing_site_settings()
 
-      azure_blob_service = Azure::BlobService.new
-
-      options = { :public_access_level => "blob" }
+      # NOTE: An Azure.blobs object MUST be created before a call to Azure::BlobService.new
+      blobs = Azure.blobs
 
       begin
-        azure_blob_service.create_container(container, options)
+        blobs.create_container(container, { :public_access_level => "blob" })
       rescue Exception => e
         # NOTE: If the container already exists an exception will be thrown
         # so eat it
         Rails.logger.warn(e.message)
       end
 
-      azure_blob_service
+      Azure::BlobService.new
     end
 
     def remove(unique_filename)
       check_missing_site_settings()
-      azure_blob_service = Azure::BlobService.new
-      azure_blob_service.delete_blob(azure_container, unique_filename)
+
+      # NOTE: An Azure.blobs object MUST be created before a call to Azure::BlobService.new
+      blobs = Azure.blobs
+
+      begin
+        azure_blob_service = Azure::BlobService.new
+        azure_blob_service.delete_blob(azure_container, unique_filename)
+      rescue Exception => e
+        Rails.logger.error(e.message)
+      end
     end
     
     def get_content_type(filename)
