@@ -73,6 +73,7 @@ class TopicTrackingState
           highest_post_number: post.post_number,
           created_at: post.created_at,
           topic_id: post.topic_id,
+          category_id: post.topic.category_id,
           notification_level: tu.notification_level
         }
       }
@@ -127,13 +128,9 @@ class TopicTrackingState
     #  cycles from usual requests
     #
     #
-    sql = report_raw_sql(topic_id: topic_id)
-
-    sql = <<SQL
-    WITH x AS (
-      #{sql}
-    ) SELECT * FROM x LIMIT #{SiteSetting.max_tracked_new_unread.to_i}
-SQL
+    sql = report_raw_sql(topic_id: topic_id, skip_unread: true, skip_order: true)
+    sql << "\nUNION ALL\n\n"
+    sql << report_raw_sql(topic_id: topic_id, skip_new: true, skip_order: true)
 
     SqlBuilder.new(sql)
       .map_exec(TopicTrackingState, user_id: user_id, topic_id: topic_id)
@@ -197,7 +194,11 @@ SQL
       sql << " AND topics.id = :topic_id"
     end
 
-    sql << " ORDER BY topics.bumped_at DESC"
+    unless opts && opts[:skip_order]
+      sql << " ORDER BY topics.bumped_at DESC"
+    end
+
+    sql
   end
 
 end

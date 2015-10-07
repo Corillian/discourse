@@ -109,7 +109,7 @@ pt:
       google+: 'partilhar esta hiperligação no Google+'
       email: 'enviar esta hiperligação por email'
     action_codes:
-      split_topic: "dividir este tópico"
+      split_topic: "dividir este tópico %{when}"
       autoclosed:
         enabled: 'fechado %{when}'
         disabled: 'aberto %{when}'
@@ -136,7 +136,7 @@ pt:
     yes_value: "Sim"
     generic_error: "Pedimos desculpa, ocorreu um erro."
     generic_error_with_reason: "Ocorreu um erro: %{error}"
-    sign_up: "Registar"
+    sign_up: "Inscrever-se"
     log_in: "Entrar"
     age: "Idade"
     joined: "Juntou-se"
@@ -228,7 +228,7 @@ pt:
     revert: "Reverter"
     failed: "Falhou"
     switch_to_anon: "Modo Anónimo"
-    switch_from_anon: "Sair do Modo Anónimo"
+    switch_from_anon: "Sair de Anónimo"
     banner:
       close: "Destituir esta faixa."
       edit: "Editar esta faixa >>"
@@ -617,11 +617,13 @@ pt:
         server: "Erro de Servidor"
         forbidden: "Acesso Negado"
         unknown: "Erro"
+        not_found: "Página Não Encontrada"
       desc:
         network: "Por favor verifique a sua ligação."
         network_fixed: "Parece que está de volta."
         server: "Código de Erro: {{status}}"
         forbidden: "Não tem permissão para visualizar isso."
+        not_found: "Oops, a aplicação tentou carregar um URL que não existe."
         unknown: "Algo correu mal."
       buttons:
         back: "Voltar Atrás"
@@ -634,7 +636,9 @@ pt:
     read_only_mode:
       enabled: "O modo só de leitura está ativo. Pode continuar a navegar no sítio mas as interações podem não funcionar."
       login_disabled: "A função de início de sessão está desativada enquanto o sítio se encontrar no modo só de leitura."
-    too_few_topics_notice: "Vamos <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'> começar esta discussão!</a> Atualmente há <strong>%{currentTopics} / %{requiredTopics}</strong> tópicos e <strong>%{currentPosts} / %{requiredPosts}</strong> mensagens. Novos visitantes precisam de algumas conversações para ler e responder a."
+    too_few_topics_and_posts_notice: "Vamos <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>começar esta discussão!</a> Atualmente existem <strong>%{currentTopics} / %{requiredTopics}</strong> tópicos e <strong>%{currentPosts} / %{requiredPosts}</strong> mensagens. Novos visitantes precisam de conversações para ler e responder a."
+    too_few_topics_notice: "Vamos <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>começar esta discussão!</a> Atualmente existem <strong>%{currentTopics} / %{requiredTopics}</strong> tópios. Novos visitantes precisam de algumas conversações para ler e responder a."
+    too_few_posts_notice: "Vamos <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>começar esta discussão!</a> Atualmente existem <strong>%{currentPosts} / %{requiredPosts}</strong> mensagens. Novos visitantes precisam de algumas conversações para ler e responder a."
     learn_more: "saber mais..."
     year: 'ano'
     year_desc: 'tópicos criados nos últimos 365 dias'
@@ -651,6 +655,21 @@ pt:
     replies_lowercase:
       one: resposta
       other: respostas
+    signup_cta:
+      sign_up: "Inscrever-se"
+      hide_session: "Lembrar-me amanhã"
+      hide_forever: "não obrigado"
+      hidden_for_session: "OK, Irei perguntar-lhe amanhã. Pode sempre usar 'Iniciar Sessão' para criar uma conta, também."
+      intro: "Olá! :heart_eyes: Parece que está a gostar da discussão, mas não está inscrito para uma conta."
+      value_prop: "Quando cria uma conta, nós lembramo-nos exatamente do que leu, por isso volta sempre ao sítio onde ficou. Também recebe notificações, aqui ou por email, sempre que novas mensagens são feitas. E pode gostar de mensagens para partilhar o amor. :heartbeat:"
+      methods:
+        sso: "Inscrever-se é fácil: tudo o que precisa é uma conta no sítio principal."
+        only_email: "Inscrever-se é fácil: tudo o que precisa é um email e uma palavra-passe."
+        only_other: "Utilize a sua conta %{provider} para se inscrever."
+        one_and_email: "Utilize a sua conta %{provider}, ou um email e palavra-passe, para se inscrever."
+        multiple_no_email: "Inscrever-se é fácil: utilize qualquer um dos nossos %{count} inícios de sessão sociais."
+        multiple: "Inscrever-se é fácil: utilize qualquer um dos nossos %{count} inícios de sessão sociais, ou um email e palavra-passe."
+        unknown: "erro ao obter métodos suportados de início de sessão "
     summary:
       enabled_description: "Está a ver um resumo deste tópico: as mensagens mais interessantes são determinados pela comunidade."
       description: "Existem <b>{{count}}</b> respostas."
@@ -732,8 +751,10 @@ pt:
     emoji_one: "Emoji One"
     composer:
       emoji: "Emoji :smile:"
+      options: "Opções"
+      whisper: "susurro"
       add_warning: "Este é um aviso oficial."
-      add_whisper: "Este é um susurro visível apenas para os moderadores"
+      toggle_whisper: "Alternar Sussuro"
       posting_not_on_topic: "A que tópico quer responder?"
       saving_draft_tip: "a guardar..."
       saved_draft_tip: "guardado"
@@ -857,8 +878,16 @@ pt:
       select_file: "Selecionar Ficheiro"
       image_link: "hiperligação da imagem irá apontar para"
     search:
+      sort_by: "Ordenar por"
+      relevance: "Relevância"
+      latest_post: "Última Mensagem"
+      most_viewed: "Mais Visto"
+      most_liked: "Mais Gostos"
       select_all: "Selecionar Tudo"
       clear_all: "Limpar Tudo"
+      result_count:
+        one: "1 resultado para <span class='term'>\"{{term}}\"</span>"
+        other: "{{count}} resultados para <span class='term'>\"{{term}}\"</span>"
       title: "pesquisar tópicos, mensagens, utilizadores, ou categorias"
       no_results: "Não foi encontrado nenhum resultado."
       no_more_results: "Mais nenhum resultado encontrado."
@@ -1418,16 +1447,16 @@ pt:
       notifications:
         watching:
           title: "A vigiar"
-          description: "Irá vigiar automaticamente todos os novos tópicos nestas categorias. Será notificado de todas as novas mensagens e tópicos, e uma contagem de novas respostas irá aparecer para estes tópicos."
+          description: "Irá vigiar automaticamente todos os novos tópicos nestas categorias. Irá ser notificado de cada nova mensagem em cada tópico, e uma contagem de novas respostas será exibida."
         tracking:
           title: "Acompanhar"
-          description: "Irá acompanhar automaticamente todos os novos tópicos nestas categorias. Uma contagem de novas respostas irá aparecer para estes tópicos."
+          description: "Irá acompanhar automaticamente todos os novos tópicos nestas categorias. Irá ser notificado se alguém mencionar o seu @nome ou lhe responder, e uma contagem de novas respostas será exibida."
         regular:
-          title: "Habitual"
+          title: "Normal"
           description: "Será notificado se alguém mencionar o seu @nome ou responder-lhe."
         muted:
           title: "Silenciado"
-          description: "Não será notificado relativamente acerca de novos tópicos nestas categorias, e não aparecerão no seu separador de não lidos."
+          description: "Nunca será notificado de nada acerca de novos tópicos nestas categorias, e estes não irão aparecer no seu separador de não lidos."
     flagging:
       title: 'Obrigado por ajudar a manter a nossa comunidade cívica!'
       private_reminder: 'as sinalizações são privadas, visíveis <b>apenas</b> para o pessoal'
@@ -1959,6 +1988,7 @@ pt:
         ip_address: "IP"
         topic_id: "ID do Tópico"
         post_id: "ID da Mensagem"
+        category_id: "ID da Categoria"
         delete: 'Eliminar'
         edit: 'Editar'
         save: 'Guardar'
@@ -1999,6 +2029,9 @@ pt:
             impersonate: "personificar"
             anonymize_user: "tornar utilizador anónimo"
             roll_up: "agregar blocos IP"
+            change_category_settings: "alterar configurações de categoria"
+            delete_category: "eliminar categoria"
+            create_category: "criar categoria"
         screened_emails:
           title: "Emails Filtrados"
           description: "Quando alguém tenta criar uma nova conta, os seguintes endereços de email serão verificados e o registo será bloqueado, ou outra ação será executada."
@@ -2363,7 +2396,9 @@ pt:
         embed_username_key_from_feed: "Chave para puxar o nome de utilizador discouse do feed"
         embed_truncate: "Truncar as mensagens incorporadas"
         embed_whitelist_selector: "Seletor CSS para elementos que são permitidos nas incorporações"
+        whitelist_example: "artigo, #história, .mensagem"
         embed_blacklist_selector: "Seletor CSS para elementos que são removidos das incorporações"
+        blacklist_example: ".unidade-anuncio, cabeçalho"
         feed_polling_enabled: "Importar mensagens através de RSS/ATOM"
         feed_polling_url: "URL do feed RSS/ATOM para rastreio"
         save: "Guardar Configurações de Incorporação"

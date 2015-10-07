@@ -441,6 +441,14 @@ const PostStream = RestModel.extend({
     return this.get('postIdentityMap').get(id);
   },
 
+  loadPost(postId){
+    const url = "/posts/" + postId;
+    const store = this.store;
+
+    return Discourse.ajax(url).then((p) =>
+        this.storePost(store.createRecord('post', p)));
+  },
+
   /**
     Finds and adds a post to the stream by id. Typically this would happen if we receive a message
     from the message bus indicating there's a new post. We'll only insert it if we currently
@@ -456,7 +464,12 @@ const PostStream = RestModel.extend({
 
     if (this.get('stream').indexOf(postId) === -1) {
       this.get('stream').addObject(postId);
-      if (loadedAllPosts) { this.appendMore(); }
+      if (loadedAllPosts) {
+        this.set('loadingLastPost', true);
+        this.appendMore().finally(
+            ()=>this.set('loadingLastPost', true)
+        );
+      }
     }
   },
 

@@ -9,6 +9,10 @@ module ImportScripts::PhpBB3
       @settings = settings
     end
 
+    def map_to_import_ids(array)
+      array.map {|u| u[:user_id]}
+    end
+
     def map_user(row)
       is_active_user = row[:user_inactive_reason] != Constants::INACTIVE_REGISTER
 
@@ -64,7 +68,8 @@ module ImportScripts::PhpBB3
 
     def parse_birthdate(row)
       return nil if row[:user_birthday].blank?
-      Date.strptime(row[:user_birthday].delete(' '), '%d-%m-%Y') rescue nil
+      birthdate = Date.strptime(row[:user_birthday].delete(' '), '%d-%m-%Y') rescue nil
+      birthdate && birthdate.year > 0 ? birthdate : nil
     end
 
     # Suspends the user if it is currently banned.

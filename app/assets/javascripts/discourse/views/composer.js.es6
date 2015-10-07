@@ -5,6 +5,7 @@ import positioningWorkaround from 'discourse/lib/safari-hacks';
 import debounce from 'discourse/lib/debounce';
 import { linkSeenMentions, fetchUnseenMentions } from 'discourse/lib/link-mentions';
 import { headerHeight } from 'discourse/views/header';
+import { showSelector } from 'discourse/lib/emoji/emoji-toolbar';
 
 const ComposerView = Ember.View.extend(Ember.Evented, {
   _lastKeyTimeout: null,
@@ -185,13 +186,23 @@ const ComposerView = Ember.View.extend(Ember.Evented, {
     if (!this.siteSettings.enable_emoji) { return; }
 
     const template = this.container.lookup('template:emoji-selector-autocomplete.raw');
+
     this.$('.wmd-input').autocomplete({
       template: template,
       key: ":",
-      transformComplete(v) { return v.code + ":"; },
-      dataSource(term){
-        return new Ember.RSVP.Promise(function(resolve) {
-          const full = ":" + term;
+
+      transformComplete(v) {
+        if (v.code) {
+          return `${v.code}:`;
+        } else {
+          showSelector({ skipPrefix: true });
+          return "";
+        }
+      },
+
+      dataSource(term) {
+        return new Ember.RSVP.Promise(resolve => {
+          const full = `:${term}`;
           term = term.toLowerCase();
 
           if (term === "") {
@@ -205,10 +216,13 @@ const ComposerView = Ember.View.extend(Ember.Evented, {
           const options = Discourse.Emoji.search(term, {maxResults: 5});
 
           return resolve(options);
-        }).then(function(list) {
-          return list.map(function(i) {
-            return {code: i, src: Discourse.Emoji.urlFor(i)};
-          });
+        }).then(list => list.map(code => {
+          return {code, src: Discourse.Emoji.urlFor(code)};
+        })).then(list => {
+          if (list.length) {
+            list.push({ label: I18n.t("composer.more_emoji") });
+          }
+          return list;
         });
       }
     });
@@ -246,7 +260,7 @@ const ComposerView = Ember.View.extend(Ember.Evented, {
     });
 
 
-    const options ={
+    const options = {
       containerElement: this.element,
       lookupAvatarByPostNumber(postNumber, topicId) {
         const posts = controller.get('controllers.topic.model.postStream.posts');
@@ -340,17 +354,18 @@ const ComposerView = Ember.View.extend(Ember.Evented, {
     var cancelledByTheUser;
 
     this.messageBus.subscribe("/uploads/composer", upload => {
-      if (!cancelledByTheUser) {
-        if (upload && upload.url) {
-          const old = Discourse.Utilities.getUploadPlaceholder(upload.original_filename),
-                markdown = Discourse.Utilities.getUploadMarkdown(upload);
-          this.replaceMarkdown(old, markdown);
-        } else {
-          Discourse.Utilities.displayErrorForUpload(upload);
-        }
-      }
       // reset upload state
       reset();
+      // replace upload placeholder
+      if (upload && upload.url) {
+        if (!cancelledByTheUser) {
+          const uploadPlaceholder = Discourse.Utilities.getUploadPlaceholder(),
+                markdown = Discourse.Utilities.getUploadMarkdown(upload);
+          this.replaceMarkdown(uploadPlaceholder, markdown);
+        }
+      } else {
+        Discourse.Utilities.displayErrorForUpload(upload);
+      }
     });
 
     $uploadTarget.fileupload({
@@ -372,8 +387,8 @@ const ComposerView = Ember.View.extend(Ember.Evented, {
       // deal with cancellation
       cancelledByTheUser = false;
       // add upload placeholder
-      const markdown = Discourse.Utilities.getUploadPlaceholder(data.files[0].name);
-      this.addMarkdown(markdown);
+      const uploadPlaceholder = Discourse.Utilities.getUploadPlaceholder();
+      this.addMarkdown(uploadPlaceholder);
 
       if (data["xhr"]) {
         const jqHXR = data.xhr();
@@ -383,7 +398,10 @@ const ComposerView = Ember.View.extend(Ember.Evented, {
             const $cancel = $("#cancel-file-upload");
             $cancel.on("click", () => {
               if (jqHXR) {
+                // signal the upload was cancelled by the user
                 cancelledByTheUser = true;
+                // immediately remove upload placeholder
+                this.replaceMarkdown(uploadPlaceholder, "");
                 // might trigger a "fileuploadfail" event with status = 0
                 jqHXR.abort();
                 // make sure we always reset the uploading status
@@ -403,8 +421,14 @@ const ComposerView = Ember.View.extend(Ember.Evented, {
     });
 
     $uploadTarget.on("fileuploadfail", (e, data) => {
+      // reset upload state
       reset();
+
       if (!cancelledByTheUser) {
+        // remove upload placeholder when there's a failure
+        const uploadPlaceholder = Discourse.Utilities.getUploadPlaceholder();
+        this.replaceMarkdown(uploadPlaceholder, "");
+        // display the error
         Discourse.Utilities.displayErrorForUpload(data);
       }
     });
@@ -518,18 +542,23 @@ const ComposerView = Ember.View.extend(Ember.Evented, {
 
   addMarkdown(text) {
     const ctrl = this.$('.wmd-input').get(0),
-        caretPosition = Discourse.Utilities.caretPosition(ctrl),
-        current = this.get('model.reply');
-    this.set('model.reply', current.substring(0, caretPosition) + text + current.substring(caretPosition, current.length));
+          reply = this.get('model.reply'),
+          caretPosition = Discourse.Utilities.caretPosition(ctrl);
 
-    Em.run.schedule('afterRender', function() {
-      Discourse.Utilities.setCaretPosition(ctrl, caretPosition + text.length);
-    });
+    this.set('model.reply', reply.substring(0, caretPosition) + text + reply.substring(caretPosition, reply.length));
+
+    Em.run.schedule('afterRender', () => Discourse.Utilities.setCaretPosition(ctrl, caretPosition + text.length));
   },
 
   replaceMarkdown(old, text) {
-    const reply = this.get("model.reply");
+    const ctrl = this.$(".wmd-input").get(0),
+          reply = this.get("model.reply"),
+          beforeCaretPosition = Discourse.Utilities.caretPosition(ctrl),
+          afterCaretPosition = beforeCaretPosition <= reply.indexOf(old) ? beforeCaretPosition :  beforeCaretPosition - old.length + text.length;
+
     this.set("model.reply", reply.replace(old, text));
+
+    Ember.run.schedule("afterRender", () => Discourse.Utilities.setCaretPosition(ctrl, afterCaretPosition));
   },
 
   // Uses javascript to get the image sizes from the preview, if present
