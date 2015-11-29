@@ -1,9 +1,10 @@
 import DiscourseURL from 'discourse/lib/url';
+import Composer from 'discourse/models/composer';
 
 const bindings = {
   '!':               {postAction: 'showFlags'},
   '#':               {handler: 'toggleProgress', anonymous: true},
-  '/':               {handler: 'showSearch', anonymous: true},
+  '/':               {handler: 'toggleSearch', anonymous: true},
   '=':               {handler: 'toggleHamburgerMenu', anonymous: true},
   '?':               {handler: 'showHelpModal', anonymous: true},
   '.':               {click: '.alert.alert-info.clickable', anonymous: true}, // show incoming/updated topics
@@ -96,10 +97,10 @@ export default {
   },
 
   quoteReply() {
-    $('.topic-post.selected button.create').click();
+    this._replyToPost();
     // lazy but should work for now
     setTimeout(function() {
-      $('#wmd-quote-post').click();
+      $('.d-editor .quote').click();
     }, 500);
   },
 
@@ -118,7 +119,7 @@ export default {
   },
 
   replyToTopic() {
-    this.container.lookup('controller:topic').send('replyToPost');
+    this._replyToPost();
   },
 
   selectDown() {
@@ -142,6 +143,11 @@ export default {
   },
 
   showBuiltinSearch() {
+    if (this.container.lookup('controller:header').get('searchVisible')) {
+      this.toggleSearch();
+      return true;
+    }
+
     this.searchService.set('searchContextEnabled', false);
 
     const currentPath = this.container.lookup('controller:application').get('currentPath'),
@@ -157,7 +163,7 @@ export default {
 
     if (showSearch) {
       this.searchService.set('searchContextEnabled', true);
-      this.showSearch();
+      this.toggleSearch();
       return false;
     }
 
@@ -165,7 +171,7 @@ export default {
   },
 
   createTopic() {
-    this.container.lookup('controller:composer').open({action: Discourse.Composer.CREATE_TOPIC, draftKey: Discourse.Composer.CREATE_TOPIC});
+    this.container.lookup('controller:composer').open({action: Composer.CREATE_TOPIC, draftKey: Composer.CREATE_TOPIC});
   },
 
   pinUnpinTopic() {
@@ -176,7 +182,7 @@ export default {
     this.container.lookup('controller:topic-progress').send('toggleExpansion', {highlight: true});
   },
 
-  showSearch() {
+  toggleSearch() {
     this.container.lookup('controller:header').send('toggleSearch');
     return false;
   },
@@ -353,8 +359,8 @@ export default {
   },
 
   _changeSection(direction) {
-    const $sections = $('#navigation-bar li'),
-        active = $('#navigation-bar li.active'),
+    const $sections = $('.nav.nav-pills li'),
+        active = $('.nav.nav-pills li.active'),
         index = $sections.index(active) + direction;
 
     if (index >= 0 && index < $sections.length) {
@@ -363,14 +369,17 @@ export default {
   },
 
   _stopCallback() {
-    const oldStopCallback = this.keyTrapper.stopCallback;
+    const oldStopCallback = this.keyTrapper.prototype.stopCallback;
 
-    this.keyTrapper.stopCallback = function(e, element, combo) {
+    this.keyTrapper.prototype.stopCallback = function(e, element, combo, sequence) {
       if ((combo === 'ctrl+f' || combo === 'command+f') && element.id === 'search-term') {
         return false;
       }
-
-      return oldStopCallback(e, element, combo);
+      return oldStopCallback.call(this, e, element, combo, sequence);
     };
+  },
+
+  _replyToPost() {
+    this.container.lookup('controller:topic').send('replyToPost');
   }
 };

@@ -57,6 +57,7 @@ class PostCreator
     opts[:title] = pg_clean_up(opts[:title]) if opts[:title] && opts[:title].include?("\u0000")
     opts[:raw] = pg_clean_up(opts[:raw]) if opts[:raw] && opts[:raw].include?("\u0000")
     opts.delete(:reply_to_post_number) unless opts[:topic_id]
+    @guardian = opts[:guardian] if opts[:guardian]
 
     @spam = false
   end
@@ -382,8 +383,11 @@ class PostCreator
                              post_number: @post.post_number,
                              msecs: 5000)
 
-
-    TopicUser.auto_track(@user.id, @topic.id, TopicUser.notification_reasons[:created_post])
+    if @user.staged
+      TopicUser.auto_watch(@user.id, @topic.id)
+    else
+      TopicUser.auto_track(@user.id, @topic.id, TopicUser.notification_reasons[:created_post])
+    end
   end
 
   def enqueue_jobs

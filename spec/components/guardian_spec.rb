@@ -63,10 +63,18 @@ describe Guardian do
     end
 
     it "returns false for notify_user if private messages are disabled" do
-      SiteSetting.stubs(:enable_private_messages).returns(false)
+      SiteSetting.enable_private_messages = false
       user.trust_level = TrustLevel[2]
       expect(Guardian.new(user).post_can_act?(post, :notify_user)).to be_falsey
       expect(Guardian.new(user).post_can_act?(post, :notify_moderators)).to be_falsey
+    end
+
+    it "returns false for notify_user if private messages are enabled but threshold not met" do
+      SiteSetting.enable_private_messages = true
+      SiteSetting.min_trust_to_send_messages = 2
+      user.trust_level = TrustLevel[1]
+      expect(Guardian.new(user).post_can_act?(post, :notify_user)).to be_falsey
+      expect(Guardian.new(user).post_can_act?(post, :notify_moderators)).to be_truthy
     end
 
     describe "trust levels" do
@@ -148,15 +156,21 @@ describe Guardian do
       expect(Guardian.new(user).can_send_private_message?(another_user)).to be_truthy
     end
 
+    it "disallows pms to other users if trust level is not met" do
+      SiteSetting.min_trust_to_send_messages = TrustLevel[2]
+      user.trust_level = TrustLevel[1]
+      expect(Guardian.new(user).can_send_private_message?(another_user)).to be_falsey
+    end
+
     context "enable_private_messages is false" do
-      before { SiteSetting.stubs(:enable_private_messages).returns(false) }
+      before { SiteSetting.enable_private_messages = false }
 
       it "returns false if user is not the contact user" do
         expect(Guardian.new(user).can_send_private_message?(another_user)).to be_falsey
       end
 
       it "returns true for the contact user and system user" do
-        SiteSetting.stubs(:site_contact_username).returns(user.username)
+        SiteSetting.site_contact_username = user.username
         expect(Guardian.new(user).can_send_private_message?(another_user)).to be_truthy
         expect(Guardian.new(Discourse.system_user).can_send_private_message?(another_user)).to be_truthy
       end
@@ -277,7 +291,7 @@ describe Guardian do
     let(:admin) { Fabricate(:admin) }
     let(:private_category)  { Fabricate(:private_category, group: group) }
     let(:group_private_topic) { Fabricate(:topic, category: private_category) }
-    let(:group_manager) { group_private_topic.user.tap { |u| group.add(u); group.appoint_manager(u) } }
+    let(:group_owner) { group_private_topic.user.tap { |u| group.add_owner(u) } }
 
     it 'handles invitation correctly' do
       expect(Guardian.new(nil).can_invite_to?(topic)).to be_falsey
@@ -302,12 +316,6 @@ describe Guardian do
       expect(Guardian.new(coding_horror).can_invite_to?(topic)).to be_falsey
     end
 
-    it 'returns false when local logins are disabled' do
-      SiteSetting.stubs(:enable_local_logins).returns(false)
-      expect(Guardian.new(moderator).can_invite_to?(topic)).to be_falsey
-      expect(Guardian.new(user).can_invite_to?(topic)).to be_falsey
-    end
-
     it 'returns false for normal user on private topic' do
       expect(Guardian.new(user).can_invite_to?(private_topic)).to be_falsey
     end
@@ -316,8 +324,8 @@ describe Guardian do
       expect(Guardian.new(admin).can_invite_to?(private_topic)).to be_truthy
     end
 
-    it 'returns true for a group manager' do
-      expect(Guardian.new(group_manager).can_invite_to?(group_private_topic)).to be_truthy
+    it 'returns true for a group owner' do
+      expect(Guardian.new(group_owner).can_invite_to?(group_private_topic)).to be_truthy
     end
   end
 

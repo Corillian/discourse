@@ -186,7 +186,7 @@ class TopicQuery
     topics = yield(topics) if block_given?
 
     options = options.merge(@options)
-    if (options[:order] || "activity") == "activity" && !options[:unordered]
+    if ["activity","default"].include?(options[:order] || "activity") && !options[:unordered]
       topics = prioritize_pinned_topics(topics, options)
     end
 
@@ -201,6 +201,7 @@ class TopicQuery
 
   def latest_results(options={})
     result = default_results(options)
+    result = remove_muted_topics(result, @user) unless options && options[:state] == "muted".freeze
     result = remove_muted_categories(result, @user, exclude: options[:category])
     result
   end
@@ -215,6 +216,7 @@ class TopicQuery
     # TODO does this make sense or should it be ordered on created_at
     #  it is ordering on bumped_at now
     result = TopicQuery.new_filter(default_results(options.reverse_merge(:unordered => true)), @user.treat_as_new_topic_start_date)
+    result = remove_muted_topics(result, @user)
     result = remove_muted_categories(result, @user, exclude: options[:category])
     suggested_ordering(result, options)
   end
@@ -395,6 +397,13 @@ class TopicQuery
       @guardian.filter_allowed_categories(result)
     end
 
+    def remove_muted_topics(list, user)
+      if user
+        list = list.where('COALESCE(tu.notification_level,1) > :muted', muted: TopicUser.notification_levels[:muted])
+      end
+
+      list
+    end
     def remove_muted_categories(list, user, opts=nil)
       category_id = get_category_id(opts[:exclude]) if opts
 
@@ -408,8 +417,10 @@ class TopicQuery
                AND cu.category_id = topics.category_id
                AND cu.notification_level = :muted
                AND cu.category_id <> :category_id
+               AND (tu.notification_level IS NULL OR tu.notification_level < :tracking)
           )", user_id: user.id,
               muted: CategoryUser.notification_levels[:muted],
+              tracking: TopicUser.notification_levels[:tracking],
               category_id: category_id || -1)
       end
 

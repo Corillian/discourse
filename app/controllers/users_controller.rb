@@ -29,7 +29,9 @@ class UsersController < ApplicationController
   end
 
   def show
-    @user = fetch_user_from_params
+    raise Discourse::InvalidAccess if SiteSetting.hide_user_profiles_from_public && !current_user
+
+    @user = fetch_user_from_params(include_inactive: current_user.try(:staff?))
     user_serializer = UserSerializer.new(@user, scope: guardian, root: 'user')
     if params[:stats].to_s == "false"
       user_serializer.omit_stats = true
@@ -162,11 +164,14 @@ class UsersController < ApplicationController
   end
 
   def my_redirect
-    if current_user.present? && params[:path] =~ /^[a-z\-\/]+$/
-      redirect_to path("/users/#{current_user.username}/#{params[:path]}")
-      return
+    raise Discourse::NotFound if params[:path] !~ /^[a-z\-\/]+$/
+
+    if current_user.blank?
+      cookies[:destination_url] = "/my/#{params[:path]}"
+      redirect_to "/login-preferences"
+    else
+      redirect_to(path("/users/#{current_user.username}/#{params[:path]}"))
     end
-    raise Discourse::NotFound
   end
 
   def invited
@@ -196,12 +201,15 @@ class UsersController < ApplicationController
   end
 
   def is_local_username
-    users = params[:usernames]
-    users = [params[:username]] if users.blank?
-    users.each(&:downcase!)
+    usernames = params[:usernames]
+    usernames = [params[:username]] if usernames.blank?
+    usernames.each(&:downcase!)
 
-    result = User.where(username_lower: users).pluck(:username_lower)
-    render json: {valid: result}
+    result = User.where(staged: false)
+                 .where(username_lower: usernames)
+                 .pluck(:username_lower)
+
+    render json: { valid: result }
   end
 
   def render_available_true
@@ -254,7 +262,12 @@ class UsersController < ApplicationController
       return fail_with("login.reserved_username")
     end
 
-    user = User.new(user_params)
+    if user = User.where(staged: true).find_by(email: params[:email].strip.downcase)
+      user_params.each { |k, v| user.send("#{k}=", v) }
+      user.staged = false
+    else
+      user = User.new(user_params)
+    end
 
     # Handle custom fields
     user_fields = UserField.all
@@ -494,8 +507,10 @@ class UsersController < ApplicationController
   end
 
   def send_activation_email
-    RateLimiter.new(nil, "activate-hr-#{request.remote_ip}", 30, 1.hour).performed!
-    RateLimiter.new(nil, "activate-min-#{request.remote_ip}", 6, 1.minute).performed!
+    if current_user.blank? || !current_user.staff?
+      RateLimiter.new(nil, "activate-hr-#{request.remote_ip}", 30, 1.hour).performed!
+      RateLimiter.new(nil, "activate-min-#{request.remote_ip}", 6, 1.minute).performed!
+    end
 
     @user = User.find_by_username_or_email(params[:username].to_s)
 
@@ -539,6 +554,16 @@ class UsersController < ApplicationController
 
     type = params[:type]
     upload_id = params[:upload_id]
+
+    if SiteSetting.sso_overrides_avatar
+      return render json: failed_json, status: 422
+    end
+
+    if !SiteSetting.allow_uploaded_avatars
+      if type == "uploaded" || type == "custom"
+        return render json: failed_json, status: 422
+      end
+    end
 
     user.uploaded_avatar_id = upload_id
 
@@ -596,7 +621,7 @@ class UsersController < ApplicationController
   end
 
   def staff_info
-    @user = fetch_user_from_params
+    @user = fetch_user_from_params(include_inactive: true)
     guardian.ensure_can_see_staff_info!(@user)
 
     result = {}

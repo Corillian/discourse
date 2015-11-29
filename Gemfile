@@ -30,12 +30,12 @@ gem 'onebox'
 
 gem 'ember-rails'
 gem 'ember-source', '1.12.1'
-gem 'handlebars-source', '2.0.0'
 gem 'barber'
 gem 'babel-transpiler'
 
 gem 'message_bus'
-gem 'rails_multisite', path: 'vendor/gems/rails_multisite'
+
+gem 'rails_multisite'
 
 gem 'fast_xs'
 
@@ -121,9 +121,10 @@ group :test, :development do
   gem 'simplecov', require: false
   gem 'timecop'
   gem 'rspec-given'
+  gem 'rspec-html-matchers'
   gem 'pry-nav'
   gem 'spork-rails'
-  gem 'byebug'
+  gem 'byebug', require: ENV['RM_INFO'].nil?
 end
 
 group :development do

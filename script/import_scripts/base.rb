@@ -197,18 +197,20 @@ class ImportScripts::Base
   def all_records_exist?(type, import_ids)
     return false if import_ids.empty?
 
-    existing = "#{type.to_s.classify}CustomField".constantize.where(name: 'import_id')
+    Post.exec_sql('create temp table import_ids(val varchar(200) primary key)')
 
-    if Fixnum === import_ids.first
-      existing = existing.where('cast(value as int) in (?)', import_ids)
-    else
-      existing = existing.where('value in (?)', import_ids)
-    end
+    import_id_clause = import_ids.map{|id| "('#{PG::Connection.escape_string(id.to_s)}')"}.join(",")
+    Post.exec_sql("insert into import_ids values #{import_id_clause}")
+
+    existing = "#{type.to_s.classify}CustomField".constantize.where(name: 'import_id')
+    existing = existing.joins('JOIN import_ids ON val=value')
 
     if existing.count == import_ids.length
-      # puts "Skipping #{import_ids.length} already imported #{type}"
-      true
+      puts "Skipping #{import_ids.length} already imported #{type}"
+      return true
     end
+  ensure
+    Post.exec_sql('drop table import_ids')
   end
 
   # Iterate through a list of user records to be imported.
@@ -244,7 +246,7 @@ class ImportScripts::Base
             failed += 1
             puts "Failed to create user id: #{import_id}, username: #{new_user.username}, email: #{new_user.email}"
             puts "user errors: #{new_user.errors.full_messages}"
-            puts "user_profile errors: #{new_user.user_profiler.errors.full_messages}"
+            puts "user_profile errors: #{new_user.user_profile.errors.full_messages}" if new_user.user_profile.present? && new_user.user_profile.errors.present?
           end
         else
           failed += 1
@@ -270,6 +272,10 @@ class ImportScripts::Base
     website = opts.delete(:website)
     location = opts.delete(:location)
     avatar_url = opts.delete(:avatar_url)
+
+    # Allow the || operations to work with empty strings ''
+    opts[:name] = nil if opts[:name].blank?
+    opts[:username] = nil if opts[:username].blank?
 
     opts[:name] = User.suggest_name(opts[:email]) unless opts[:name]
     if opts[:username].blank? ||
@@ -315,7 +321,7 @@ class ImportScripts::Base
           u = existing
         end
       else
-        puts "Error on record: #{opts}"
+        puts "Error on record: #{opts.inspect}"
         raise e
       end
     end
@@ -449,6 +455,8 @@ class ImportScripts::Base
     [created, skipped]
   end
 
+  STAFF_GUARDIAN = Guardian.new(User.find(-1))
+
   def create_post(opts, import_id)
     user = User.find(opts[:user_id])
     post_create_action = opts.delete(:post_create_action)
@@ -457,6 +465,7 @@ class ImportScripts::Base
     opts[:custom_fields] ||= {}
     opts[:custom_fields]['import_id'] = import_id
 
+    opts[:guardian] = STAFF_GUARDIAN
     if @bbcode_to_md
       opts[:raw] = opts[:raw].bbcode_to_md(false) rescue opts[:raw]
     end
