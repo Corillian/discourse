@@ -205,11 +205,22 @@ class UsersController < ApplicationController
     usernames = [params[:username]] if usernames.blank?
     usernames.each(&:downcase!)
 
+    groups = Group.where(name: usernames).pluck(:name)
+    mentionable_groups =
+      if current_user
+        Group.mentionable(current_user)
+          .where(name: usernames)
+          .pluck(:name, :user_count)
+          .map{ |name,user_count| {name: name, user_count: user_count} }
+      end
+
+    usernames -= groups
+
     result = User.where(staged: false)
                  .where(username_lower: usernames)
                  .pluck(:username_lower)
 
-    render json: { valid: result }
+    render json: {valid: result, valid_groups: groups, mentionable_groups: mentionable_groups}
   end
 
   def render_available_true
@@ -540,7 +551,17 @@ class UsersController < ApplicationController
     to_render = { users: results.as_json(only: user_fields, methods: [:avatar_template]) }
 
     if params[:include_groups] == "true"
-      to_render[:groups] = Group.search_group(term, current_user).map { |m| { name: m.name, usernames: m.usernames.split(",") } }
+      to_render[:groups] = Group.search_group(term).map do |m|
+        {name: m.name, usernames: []}
+      end
+    end
+
+    if params[:include_mentionable_groups] == "true" && current_user
+      to_render[:groups] = Group.mentionable(current_user)
+                                .where("name ILIKE :term_like", term_like: "#{term}%")
+                                .map do |m|
+        {name: m.name, usernames: []}
+      end
     end
 
     render json: to_render

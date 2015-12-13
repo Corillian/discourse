@@ -34,6 +34,17 @@ export default Ember.Controller.extend(SelectedPostsCount, BufferedContent, {
     }
   }.observes('model.title', 'category'),
 
+  @computed('model.postStream.posts')
+  postsToRender() {
+    return this.capabilities.isAndroid ? this.get('model.postStream.posts')
+                                       : this.get('model.postStream.postsWithPlaceholders');
+  },
+
+  @computed('model.postStream.loadingFilter')
+  androidLoading(loading) {
+    return this.capabilities.isAndroid && loading;
+  },
+
   @computed('model.postStream.summary')
   show_deleted: {
     set(value) {
@@ -668,8 +679,8 @@ export default Ember.Controller.extend(SelectedPostsCount, BufferedContent, {
   topVisibleChanged(post) {
     if (!post) { return; }
 
-    const postStream = this.get('model.postStream'),
-          firstLoadedPost = postStream.get('firstLoadedPost');
+    const postStream = this.get('model.postStream');
+    const firstLoadedPost = postStream.get('posts.firstObject');
 
     this.set('model.currentPost', post.get('post_number'));
 
@@ -680,15 +691,17 @@ export default Ember.Controller.extend(SelectedPostsCount, BufferedContent, {
       // trigger a scroll after a promise resolves in a controller? We need
       // to do this to preserve upwards infinte scrolling.
       const $body = $('body');
-      let $elem = $('#post-cloak-' + post.get('post_number'));
-      const distToElement = $body.scrollTop() - $elem.position().top;
+      const elemId = `#post_${post.get('post_number')}`;
+      const $elem = $(elemId).closest('.post-cloak');
+      const elemPos = $elem.position();
+      const distToElement = elemPos ? $body.scrollTop() - elemPos.top : 0;
 
       postStream.prependMore().then(function() {
         Em.run.next(function () {
-          $elem = $('#post-cloak-' + post.get('post_number'));
+          const $refreshedElem = $(elemId).closest('.post-cloak');
 
           // Quickly going back might mean the element is destroyed
-          const position = $elem.position();
+          const position = $refreshedElem.position();
           if (position && position.top) {
             $('html, body').scrollTop(position.top + distToElement);
           }
@@ -706,8 +719,8 @@ export default Ember.Controller.extend(SelectedPostsCount, BufferedContent, {
   bottomVisibleChanged(post) {
     if (!post) { return; }
 
-    const postStream = this.get('model.postStream'),
-        lastLoadedPost = postStream.get('lastLoadedPost');
+    const postStream = this.get('model.postStream');
+    const lastLoadedPost = postStream.get('posts.lastObject');
 
     this.set('controllers.topic-progress.progressPosition', postStream.progressIndexOfPost(post));
 

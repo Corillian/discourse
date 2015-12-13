@@ -330,6 +330,12 @@ en:
         other: "%{count} users"
 
     groups:
+      empty:
+        posts: "There is no post by members of this group."
+        members: "There is no member in this group."
+        mentions: "There is no mention of this group."
+        messages: "There is no message for this group."
+        topics: "There is no topic by members of this group."
       add: "Add"
       selector_placeholder: "Add members"
       owner: "owner"
@@ -340,7 +346,7 @@ en:
       members: "Members"
       posts: "Posts"
       alias_levels:
-        title: "Who can use this group as an alias?"
+        title: "Who can message and @mention this group?"
         nobody: "Nobody"
         only_admins: "Only admins"
         mods_and_admins: "Only moderators and Admins"
@@ -486,6 +492,7 @@ en:
         all: "All"
         mine: "Mine"
         unread: "Unread"
+        groups: "My Groups"
 
       change_password:
         success: "(email sent)"
@@ -850,6 +857,8 @@ en:
       similar_topics: "Your topic is similar to..."
       drafts_offline: "drafts offline"
 
+      group_mentioned: "By using {{group}}, you are about to notify <a href='{{group_link}}'>{{count}} people</a>."
+
       error:
         title_missing: "Title is required"
         title_too_short: "Title must be at least {{min}} characters"
@@ -927,6 +936,7 @@ en:
       more: "view older notifications"
       total_flagged: "total flagged posts"
       mentioned: "<i title='mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
+      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
       quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
       replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
       posted: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
@@ -1017,7 +1027,7 @@ en:
         dismiss_read: "Dismiss all unread"
         dismiss_button: "Dismiss…"
         dismiss_tooltip: "Dismiss just new posts or stop tracking topics"
-        also_dismiss_topics: "Stop tracking these topics? (Topics will no longer appear in the unread tab)"
+        also_dismiss_topics: "Stop tracking these topics so they never show up as unread for me again"
         dismiss_new: "Dismiss New"
         toggle: "toggle bulk selection of topics"
         actions: "Bulk Actions"
@@ -1132,6 +1142,7 @@ en:
       auto_close_title: 'Auto-Close Settings'
       auto_close_save: "Save"
       auto_close_remove: "Don't Auto-Close This Topic"
+      auto_close_immediate: "The last post in the topic is already %{hours} hours old, so the topic will be closed immediately."
 
       progress:
         title: topic progress
@@ -1263,6 +1274,8 @@ en:
         success: "We've invited that user to participate in this message."
         error: "Sorry, there was an error inviting that user."
         group_name: "group name"
+
+      controls: "Topic Controls"
 
       invite_reply:
         title: 'Invite'
@@ -1955,6 +1968,8 @@ en:
         primary_group: "Automatically set as primary group"
         group_owners: Owners
         add_owners: Add owners
+        incoming_email: "Custom incoming email address"
+        incoming_email_placeholder: "enter email address"
 
 
       api:
@@ -2491,6 +2506,7 @@ en:
         revert_confirm: "Are you sure you want to revert your changes?"
         go_back: "Back to Search"
         recommended: "We recommend customizing the following text to suit your needs:"
+        show_overriden: 'Only show overridden'
 
       site_settings:
         show_overriden: 'Only show overridden'

@@ -1,6 +1,6 @@
 # -*- encoding : utf-8 -*-
 
-require 'spec_helper'
+require 'rails_helper'
 require 'email/receiver'
 
 describe Email::Receiver do
@@ -171,6 +171,14 @@ the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown"
 
     it "strips iPhone signature" do
       expect(test_parse_body(fixture_file("emails/iphone_signature.eml"))).not_to match(/Sent from my iPhone/)
+    end
+
+    it "strips regular signature" do
+      expect(test_parse_body(fixture_file("emails/signature.eml"))).not_to match(/Arpit/)
+    end
+
+    it "strips 'original message' context" do
+      expect(test_parse_body(fixture_file("emails/original_message_context.eml"))).not_to match(/Context/)
     end
 
     it "properly renders email reply from gmail web client" do
@@ -437,7 +445,7 @@ This is a link http://example.com"
     end
   end
 
-  describe "posting a new topic" do
+  describe "posting a new topic in a category" do
     let(:category_destination) { raise "Override this in a lower describe block" }
     let(:email_raw) { raise "Override this in a lower describe block" }
     let(:allow_strangers) { false }
@@ -474,16 +482,17 @@ This is a link http://example.com"
 
   end
 
-  def fill_email(mail, from, to, body = nil, subject = nil)
+  def fill_email(mail, from, to, body = nil, subject = nil, cc = nil)
     result = mail.gsub("FROM", from).gsub("TO", to)
     result.gsub!(/Hey.*/m, body)  if body
     result.sub!(/We .*/, subject) if subject
+    result.sub!("CC", cc.presence || "")
     result
   end
 
   def process_email(opts)
     incoming_email = fixture_file("emails/valid_incoming.eml")
-    email = fill_email(incoming_email, opts[:from],  opts[:to], opts[:body], opts[:subject])
+    email = fill_email(incoming_email, opts[:from],  opts[:to], opts[:body], opts[:subject], opts[:cc])
     Email::Receiver.new(email).process
   end
 
@@ -532,16 +541,15 @@ greatest show ever created. Everyone should watch it.
   end
 
   describe "processes an email to a category" do
+    let(:to) { "some@email.com" }
+
     before do
       SiteSetting.email_in = true
+      SiteSetting.email_in_min_trust = TrustLevel[4].to_s
     end
 
-
     it "correctly can target categories" do
-      to = "some@email.com"
-
       Fabricate(:category, email_in_allow_strangers: false, email_in: to)
-      SiteSetting.email_in_min_trust = TrustLevel[4].to_s
 
       # no email in for user
       expect{
@@ -595,27 +603,88 @@ greatest show ever created. Everyone should watch it.
       }.to raise_error(Discourse::InvalidAccess)
     end
 
-
   end
 
-
   describe "processes an unknown email sender to category" do
+    let(:email_in) { "bob@bob.com" }
+    let(:user_email) { "#{SecureRandom.hex(32)}@foobar.com" }
+    let(:body) { "This is a new topic created\n\ninside a category ! :)" }
+
     before do
       SiteSetting.email_in = true
+      SiteSetting.allow_staged_accounts = true
     end
 
     it "rejects anon email" do
-      Fabricate(:category, email_in_allow_strangers: false, email_in: "bob@bob.com")
-      expect { process_email(from: "test@test.com", to: "bob@bob.com") }.to raise_error(Email::Receiver::UserNotFoundError)
+      Fabricate(:category, email_in_allow_strangers: false, email_in: email_in)
+
+      expect {
+        process_email(from: user_email, to: email_in, body: body)
+      }.to raise_error(Email::Receiver::UserNotFoundError)
     end
 
-    it "creates a topic for allowed category" do
-      Fabricate(:category, email_in_allow_strangers: true, email_in: "bob@bob.com")
-      process_email(from: "test@test.com", to: "bob@bob.com")
+    it "creates a topic for matching category" do
+      Fabricate(:category, email_in_allow_strangers: true, email_in: email_in)
+      process_email(from: user_email, to: email_in, body: body)
 
-      # This is the current implementation but it is wrong, it should register an account
-      expect(Discourse.system_user.posts.order("id desc").limit(1).pluck(:raw).first).to include("Hey folks")
+      staged_account = User.find_by_email(user_email)
+      expect(staged_account).to be
+      expect(staged_account.staged).to be(true)
+      expect(staged_account.posts.order(id: :desc).limit(1).pluck(:raw).first).to eq(body)
+    end
 
+  end
+
+  describe "processes an unknown email sender to group" do
+    let(:incoming_email) { "foo@bar.com" }
+    let(:user_email) { "#{SecureRandom.hex(32)}@foobar.com" }
+    let(:body) { "This is a message to\n\na group ;)" }
+
+    before do
+      SiteSetting.email_in = true
+      SiteSetting.allow_staged_accounts = true
+    end
+
+    it "creates a message for matching group" do
+      Fabricate(:group, incoming_email: incoming_email)
+      process_email(from: user_email, to: incoming_email, body: body)
+
+      staged_account = User.find_by_email(user_email)
+      expect(staged_account).to be
+      expect(staged_account.name).to eq("Jake the Dog")
+      expect(staged_account.staged).to be(true)
+
+      post = staged_account.posts.order(id: :desc).first
+      expect(post).to be
+      expect(post.raw).to eq(body)
+      expect(post.topic.private_message?).to eq(true)
+    end
+
+  end
+
+  describe "supports incoming mail in CC fields" do
+
+    let(:incoming_email) { "foo@bar.com" }
+    let(:user_email) { "#{SecureRandom.hex(32)}@foobar.com" }
+    let(:body) { "This is a message to\n\na group via CC ;)" }
+
+    before do
+      SiteSetting.email_in = true
+      SiteSetting.allow_staged_accounts = true
+    end
+
+    it "creates a message for matching group" do
+      Fabricate(:group, incoming_email: incoming_email)
+      process_email(from: user_email, to: "some@email.com", body: body, cc: incoming_email)
+
+      staged_account = User.find_by_email(user_email)
+      expect(staged_account).to be
+      expect(staged_account.staged).to be(true)
+
+      post = staged_account.posts.order(id: :desc).first
+      expect(post).to be
+      expect(post.raw).to eq(body)
+      expect(post.topic.private_message?).to eq(true)
     end
 
   end

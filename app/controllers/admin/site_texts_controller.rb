@@ -8,20 +8,32 @@ class Admin::SiteTextsController < Admin::AdminController
   end
 
   def index
-    if params[:q].blank?
+    overridden = params[:overridden] == 'true'
+    extras = {}
+
+    query = params[:q] || ""
+    if query.blank? && !overridden
+      extras[:recommended] = true
       results = self.class.preferred_keys.map {|k| {id: k, value: I18n.t(k) }}
     else
       results = []
-      translations = I18n.search(params[:q])
+      translations = I18n.search(query, overridden: overridden)
       translations.each do |k, v|
         results << {id: k, value: v}
       end
+
       results.sort! do |x, y|
-        (x[:id].size + x[:value].size) <=> (y[:id].size + y[:value].size)
+        if x[:value].casecmp(query) == 0
+          -1
+        elsif y[:value].casecmp(query) == 0
+          1
+        else
+          (x[:id].size + x[:value].size) <=> (y[:id].size + y[:value].size)
+        end
       end
     end
 
-    render_serialized(results[0..50], SiteTextSerializer, root: 'site_texts', rest_serializer: true)
+    render_serialized(results[0..50], SiteTextSerializer, root: 'site_texts', rest_serializer: true, extras: extras)
   end
 
   def show
