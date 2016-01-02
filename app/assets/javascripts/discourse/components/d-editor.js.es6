@@ -273,7 +273,7 @@ export default Ember.Component.extend({
           term = term.toLowerCase();
 
           if (term === "") {
-            return resolve(["smile", "smiley", "wink", "sunny", "blush"]);
+            return resolve(["slightly_smiling", "smile", "wink", "sunny", "blush"]);
           }
 
           if (Discourse.Emoji.translations[full]) {
@@ -317,12 +317,15 @@ export default Ember.Component.extend({
 
   _selectText(from, length) {
     Ember.run.scheduleOnce('afterRender', () => {
-      const textarea = this.$('textarea.d-editor-input')[0];
+      const $textarea = this.$('textarea.d-editor-input');
+      const textarea = $textarea[0];
+      const oldScrollPos = $textarea.scrollTop();
       if (!this.capabilities.isIOS) {
-        textarea.focus();
+        $textarea.focus();
       }
       textarea.selectionStart = from;
       textarea.selectionEnd = textarea.selectionStart + length;
+      $textarea.scrollTop(oldScrollPos);
     });
   },
 

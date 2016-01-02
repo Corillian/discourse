@@ -355,6 +355,19 @@ en:
       trust_levels:
         title: "Trust level automatically granted to members when they're added:"
         none: "None"
+      notifications:
+        watching:
+          title: "Watching"
+          description: "You will be notified of every new post in every message, and a count of new replies will be shown."
+        tracking:
+          title: "Tracking"
+          description: "You will be notified if someone mentions your @name or replies to you, and a count of new replies will be shown."
+        regular:
+          title: "Normal"
+          description: "You will be notified if someone mentions your @name or replies to you."
+        muted:
+          title: "Muted"
+          description: "You will never be notified of anything about new topics in this group."
 
     user_action_groups:
       "1": "Likes Given"
@@ -365,7 +378,6 @@ en:
       "6": "Responses"
       "7": "Mentions"
       "9": "Quotes"
-      "10": "Starred"
       "11": "Edits"
       "12": "Sent Items"
       "13": "Inbox"
@@ -376,6 +388,7 @@ en:
       all_subcategories: "all"
       no_subcategory: "none"
       category: "Category"
+      category_list: "Display category list"
       reorder:
         title: "Reorder Categories"
         title_long: "Reorganize the category list"
@@ -435,6 +448,7 @@ en:
       invited_by: "Invited By"
       trust_level: "Trust Level"
       notifications: "Notifications"
+      statistics: "Stats"
       desktop_notifications:
         label: "Desktop Notifications"
         not_supported: "Notifications are not supported on this browser. Sorry."
@@ -490,9 +504,14 @@ en:
 
       messages:
         all: "All"
-        mine: "Mine"
-        unread: "Unread"
+        inbox: "Inbox"
+        sent: "Sent"
+        archive: "Archive"
         groups: "My Groups"
+        bulk_select: "Select messages"
+        move_to_inbox: "Move to Inbox"
+        failed_to_move: "Failed to move selected messages (perhaps your network is down)"
+        select_all: "Select All"
 
       change_password:
         success: "(email sent)"
@@ -967,6 +986,7 @@ en:
 
       popup:
         mentioned: '{{username}} mentioned you in "{{topic}}" - {{site_title}}'
+        group_mentioned: '{{username}} mentioned you in "{{topic}}" - {{site_title}}'
         quoted: '{{username}} quoted you in "{{topic}}" - {{site_title}}'
         replied: '{{username}} replied to you in "{{topic}}" - {{site_title}}'
         posted: '{{username}} posted in "{{topic}}" - {{site_title}}'
@@ -1074,6 +1094,12 @@ en:
       create: 'New Topic'
       create_long: 'Create a new Topic'
       private_message: 'Start a message'
+      archive_message:
+        help: 'Move message to your archive'
+        title: 'Archive'
+      move_to_inbox:
+        title: 'Move to Inbox'
+        help: 'Move message back to Inbox'
       list: 'Topics'
       new: 'new topic'
       unread: 'unread'
@@ -1410,7 +1436,7 @@ en:
       whisper: "this post is a private whisper for moderators"
 
       wiki:
-        about: "this post is a wiki; basic users can edit it"
+        about: "this post is a wiki"
 
       archetypes:
         save: 'Save Options'
@@ -2240,6 +2266,7 @@ en:
             change_site_setting: "change site setting"
             change_site_customization: "change site customization"
             delete_site_customization: "delete site customization"
+            change_site_text: "change site text"
             suspend_user: "suspend user"
             unsuspend_user: "unsuspend user"
             grant_badge: "grant badge"
@@ -2434,7 +2461,7 @@ en:
         unlock_trust_level: "Unlock Trust Level"
         tl3_requirements:
           title: "Requirements for Trust Level 3"
-          table_title: "In the last 100 days:"
+          table_title: "In the last %{time_period} days:"
           value_heading: "Value"
           requirement_heading: "Requirement"
           visits: "Visits"

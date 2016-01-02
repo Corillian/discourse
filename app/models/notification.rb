@@ -36,6 +36,7 @@ class Notification < ActiveRecord::Base
 
   def self.mark_posts_read(user, topic_id, post_numbers)
     Notification.where(user_id: user.id, topic_id: topic_id, post_number: post_numbers, read: false).update_all "read = 't'"
+    user.publish_notifications_state
   end
 
   def self.interesting_after(min_date)
@@ -114,7 +115,7 @@ class Notification < ActiveRecord::Base
     if notifications.present?
       notifications += user
         .notifications
-        .order('notifications.created_at desc')
+        .order('notifications.created_at DESC')
         .where(read: false, notification_type: Notification.types[:private_message])
         .joins(:topic)
         .where('notifications.id < ?', notifications.last.id)

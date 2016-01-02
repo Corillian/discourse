@@ -529,6 +529,8 @@ email:
     client: true
   strip_images_from_short_emails: true
   short_email_length: 2800
+  display_name_on_email_from:
+    default: true
 
 files:
   max_image_size_kb: 3072
@@ -640,10 +642,12 @@ trust:
   tl2_requires_likes_received: 1
   tl2_requires_likes_given: 1
   tl2_requires_topic_reply_count: 3
+  tl3_time_period:
+    default: 100
+    min: 1
   tl3_requires_days_visited:
     default: 50
     min: 0
-    max: 100
   tl3_requires_topics_replied_to:
     default: 10
     min: 0
@@ -964,6 +968,7 @@ uncategorized:
   educate_until_posts: 2
   sequential_replies_threshold: 2
   dominating_topic_minimum_percent: 20
+  disable_avatar_education_message: false
 
   # Reporting
   daily_performance_report: false
@@ -1032,6 +1037,10 @@ uncategorized:
 
   automatically_unpin_topics:
     default: true
+    client: true
+
+  read_time_word_count:
+    default: 500
     client: true
 
 user_preferences:

@@ -118,6 +118,9 @@ en:
   invalid_access: "You are not permitted to view the requested resource."
   read_only_mode_enabled: "The site is in read only mode. Interactions are disabled."
 
+  reading_time: "Reading time"
+  likes: "Likes"
+
   too_many_replies:
     one: "We're sorry, but new users are temporarily limited to 1 reply in the same topic."
     other: "We're sorry, but new users are temporarily limited to %{count} replies in the same topic."
@@ -1005,7 +1008,8 @@ en:
     tl2_requires_likes_given: "How many likes a user must cast before promotion to trust level 2."
     tl2_requires_topic_reply_count: "How many topics user must reply to before promotion to trust level 2."
 
-    tl3_requires_days_visited: "Minimum number of days that a user needs to have visited the site in the last 100 days to qualify for promotion to trust level 3. (0 to 100)"
+    tl3_time_period: "Trust Level 3 requirements time period"
+    tl3_requires_days_visited: "Minimum number of days that a user needs to have visited the site in the last 100 days to qualify for promotion to trust level 3. Set higher than tl3 time period to disable promotions to tl3. (0 or higher)"
     tl3_requires_topics_replied_to: "Minimum number of topics a user needs to have replied to in the last 100 days to qualify for promotion to trust level 3. (0 or higher)"
     tl3_requires_topics_viewed: "The percentage of topics created in the last 100 days that a user needs to have viewed to qualify for promotion to trust level 3. (0 to 100)"
     tl3_requires_posts_read: "The percentage of posts created in the last 100 days that a user needs to have viewed to qualify for promotion to trust level 3. (0 to 100)"
@@ -1106,6 +1110,7 @@ en:
 
     strip_images_from_short_emails: "Strip images from emails having size less than 2800 Bytes"
     short_email_length: "Short email length in Bytes"
+    display_name_on_email_from: "Display full names on email from fields"
 
     pop3_polling_enabled: "Poll via POP3 for email replies."
     pop3_polling_ssl: "Use SSL while connecting to the POP3 server. (Recommended)"
@@ -1152,11 +1157,13 @@ en:
 
     allow_profile_backgrounds: "Allow users to upload profile backgrounds."
 
-    sequential_replies_threshold: "Number posts a user has to make in a row in a topic before being reminded about too many sequential replies. "
+    sequential_replies_threshold: "Number of posts a user has to make in a row in a topic before being reminded about too many sequential replies."
 
     enable_mobile_theme: "Mobile devices use a mobile-friendly theme, with the ability to switch to the full site. Disable this if you want to use a custom stylesheet that is fully responsive."
 
     dominating_topic_minimum_percent: "What percentage of posts a user has to make in a topic before being reminded about overly dominating a topic."
+
+    disable_avatar_education_message: "Disable education message for changing avatar."
 
     daily_performance_report: "Analyze NGINX logs daily and post a Staff Only topic with details"
 
@@ -1169,6 +1176,8 @@ en:
     disable_edit_notifications: "Disables edit notifications by the system user when 'download_remote_images_to_local' is active."
 
     automatically_unpin_topics: "Automatically unpin topics when the user reaches the bottom."
+
+    read_time_word_count: "Word count per minute for calculating estimated reading time."
 
     full_name_required: "Full name is a required field of a user's profile."
     enable_names: "Show the user's full name on their profile, user card, and emails. Disable to hide full name everywhere."
@@ -1855,9 +1864,9 @@ en:
       text_body_template: |
         This is an automated message.
 
-        The new user [%{username}](%{base_url}%{user_url}) was automatically blocked because multiple users flagged %{username}'s post(s).
+        The new user [%{username}](%{user_url}) was automatically blocked because multiple users flagged %{username}'s post(s).
 
-        Please [review the flags](%{base_url}/admin/flags). If %{username} was incorrectly blocked from posting, click the unblock button on [the admin page for this user](%{base_url}%{user_url}).
+        Please [review the flags](%{base_url}/admin/flags). If %{username} was incorrectly blocked from posting, click the unblock button on [the admin page for this user](%{user_url}).
 
         This threshold can be changed via the `block_new_user` site settings.
 
@@ -1866,9 +1875,9 @@ en:
       text_body_template: |
         This is an automated message.
 
-        The new user [%{username}](%{base_url}%{user_url}) tried to create multiple posts with links to %{domains}, but those posts were blocked to avoid spam. The user is still able to create new posts that do not link to %{domains}.
+        The new user [%{username}](%{user_url}) tried to create multiple posts with links to %{domains}, but those posts were blocked to avoid spam. The user is still able to create new posts that do not link to %{domains}.
 
-        Please [review the user](%{base_url}%{user_url}).
+        Please [review the user](%{user_url}).
 
         This can be modified via the `newuser_spam_host_threshold` and `white_listed_spam_host_domains` site settings.
 
@@ -1907,8 +1916,8 @@ en:
       description: "Not interested in getting these emails? No problem! Click below to unsubscribe instantly:"
 
     header_instructions: ''
-    reply_by_email: "To respond, reply to this email or [visit the topic](%{base_url}%{url}) in your browser."
-    visit_link_to_respond: "To respond, [visit the topic](%{base_url}%{url}) in your browser."
+    reply_by_email: "To respond, reply to this email or [visit the topic](%{base_url}%{url})."
+    visit_link_to_respond: "To respond, [visit the topic](%{base_url}%{url})."
 
     posted_by: "Posted by %{username} on %{post_date}"
 

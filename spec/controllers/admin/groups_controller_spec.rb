@@ -31,7 +31,9 @@ describe Admin::GroupsController do
         "title"=>nil,
         "primary_group"=>false,
         "grant_trust_level"=>nil,
-        "incoming_email"=>nil
+        "incoming_email"=>nil,
+        "notification_level"=>3,
+        "has_messages"=>false
       }])
     end
 

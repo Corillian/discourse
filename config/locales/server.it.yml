@@ -24,8 +24,6 @@ it:
   loading: "Caricamento"
   powered_by_html: 'Powered by <a href="http://www.discourse.org">Discourse</a>, è consigliato abilitare JavaScript '
   log_in: "Accedi"
-  via: "%{username} via %{site_name}"
-  is_reserved: "è riservato"
   purge_reason: "Cancellato automaticamente come account abbandonato e mai attivato"
   disable_remote_images_download_reason: "Lo scaricamento delle immagini remote è stato disabilitato perché non c'è abbastanza spazio disco disponibile."
   anonymous: "Anonimo"
@@ -159,6 +157,8 @@ it:
     errors:
       can_not_modify_automatic: "Non puoi modificare un gruppo automatico"
       member_already_exist: "'%{username}' è già membro di questo gruppo."
+      invalid_domain: "'%{domain}' non è un dominio valido."
+      invalid_incoming_email: "'%{incoming_email}' non è un indirizzo email valido."
     default_names:
       everyone: "chiunque"
       admins: "amministratori"
@@ -406,16 +406,16 @@ it:
       description: 'Questo messaggio ha dei contenuti che una persona ragionevole considererebbe offensivi, aggressivi o una violazione delle <a href="/guidelines">linee guida della comunità</a>.'
       long_form: 'segnalato come inappropriato'
     notify_user:
-      title: 'Contatta @{{username}} con un messaggio privato'
-      description: 'Vorrei discutere direttamente e privatamente con l''autore di questo messaggio. Non voglio attivare una segnalazione.'
+      title: 'Invia un messaggio a @{{username}}'
+      description: 'Vorrei discutere direttamente e privatamente con l''autore di questo messaggio.'
       long_form: 'messaggio inviato'
       email_title: 'Il tuo messaggio su "%{title}"'
       email_body: "%{link}\n\n%{message}"
     notify_moderators:
       title: "Altro"
-      description: 'Questo messaggio richiede attenzione da parte dei moderatori per altri motivi non elencati.'
-      long_form: 'segnalato all''attenzione dei moderatori'
-      email_title: 'Un messaggio "%{title}" richiede l''attenzione dei moderatori'
+      description: 'Questo messaggio richiede attenzione da parte dello staff per altri motivi non elencati.'
+      long_form: 'segnalato all''attenzione dello staff'
+      email_title: 'Un messaggio in "%{title}" richiede l''attenzione dello staff'
       email_body: "%{link}\n\n%{message}"
     bookmark:
       title: 'Segnalibro'
@@ -440,7 +440,7 @@ it:
       long_form: 'segnalato come inappropriato'
     notify_moderators:
       title: "Altro"
-      description: 'Questo argomento richiede attenzione da parte dei moderatori in base alle <a href="/guidelines">linee guida</a>, ai <a href="%{tos_url}">TOS</a> o per altri motivi non elencati.'
+      description: 'Questo argomento richiede attenzione da parte deilo staff in base alle <a href="/guidelines">linee guida</a>, ai <a href="%{tos_url}">TOS</a> o per altri motivi non elencati.'
       long_form: 'segnalato all''attenzione dei moderatori'
       email_title: 'L''argomento "%{title}" richiede l''attenzione di un moderatore'
       email_body: "%{link}\n\n%{message}"
@@ -566,7 +566,9 @@ it:
     page_view_logged_in_mobile_reqs:
       xaxis: "Giorno"
     page_view_anon_mobile_reqs:
+      title: "Richieste anonime API"
       xaxis: "Giorno"
+      yaxis: "Richieste anonime API da mobile"
     http_background_reqs:
       title: "Background"
       xaxis: "Giorno"
@@ -625,37 +627,6 @@ it:
     consumer_email_warning: "Il tuo sito è configurato per usare Gmail (o un altro servizio email consumer) per inviare le email. <a href='http://support.google.com/a/bin/answer.py?hl=en&answer=166852' target='_blank'>Gmail limita il numero di email che puoi inviare</a>. Considera l'utilizzo di un fornitore di servizi come mandrill.com per assicurare l'invio delle email."
     site_contact_username_warning: "Inserisci il nome di un membro dello staff da cui inviare messaggi importanti in maniera automatica. Aggiorna site_contact_username nelle <a href='/admin/site_settings'>Impostazioni Sito</a>."
     notification_email_warning: "Le email di notifica non vengono inviate da un indirizzo email valido del tuo dominio; l'invio di email sarà inaffidabile. Definisci notification_email con un indirizzo email valido nelle <a href='/admin/site_settings'>Impostazioni Sito</a>."
-  content_types:
-    education_new_reply:
-      title: "Educazione Nuovi Utenti: Prime Risposte"
-      description: "Per le prime due risposte dei nuovi utenti, durante la composizione del messaggio una pop-up verrà automaticamente visualizzata per mostrare dei consigli."
-    education_new_topic:
-      title: "Educatione Nuovi Utenti: Primi Argomenti"
-      description: "Per i primi due argomenti dei nuovi utenti, verrà automaticamente visualizzata una finestra pop-up  per mostrare dei consigli durante la composizione del messaggio."
-    usage_tips:
-      title: "Guida Nuovi Utenti"
-      description: "Guida e informazioni essenziali per nuovi utenti."
-    welcome_user:
-      title: "Benvenuto: Nuovo Utente"
-      description: "Verrà inviato automaticamente un messaggio a tutti i nuovi utenti dopo la registrazione."
-    welcome_invite:
-      title: "Benvenuto: Utente Invitato"
-      description: "Verrà inviato automaticamente un messaggio a tutti gli utenti invitati quando accettano l'invito a partecipare da parte di un altro utente."
-    login_required_welcome_message:
-      title: "Accesso Richiesto: Messaggio di Benvenuto"
-      description: "Messaggio che viene mostrato agli utenti non collegati quando l'impostazione \"login obbligatorio\" è attiva."
-    login_required:
-      title: "Login Richiesto: Homepage"
-      description: "Testo mostrato agli utenti non autorizzati quando il login è necessario."
-    head:
-      title: "Intestazione HTML"
-      description: "HTML che verrà inserito all'interno dei tag <head></head>."
-    top:
-      title: "Intestazione delle pagine"
-      description: "HTML che verrà aggiunto in cima a ogni pagina (dopo l'header, prima della barra di navigazione o del titolo dell'argomento)."
-    bottom:
-      title: "Fondo delle pagine"
-      description: "HTML che verrà aggiunto prima del tag  </body>."
   site_settings:
     censored_words: "Parole che saranno automaticamente sostituite con &#9632;&#9632;&#9632;&#9632;"
     delete_old_hidden_posts: "Cancella automaticamente tutti i messaggi nascosti che restano nascosti per più di 30 giorni."
@@ -937,6 +908,10 @@ it:
     notify_about_flags_after: "Se ci sono segnalazioni che non sono state revisionate dopo un tale numero di ore, invia un'email al contact_email. Imposta a 0 per disattivare."
     show_create_topics_notice: "Se il sito ha meno di 5 argomenti pubblici, mostra un avviso chiedendo agli amministratori di creare qualche argomento."
     enable_emoji: "Attiva gli emoji"
+    default_other_disable_jump_reply: "Non passare al post dell'utente dopo la sua risposta di default."
+    default_categories_watching: "Elenco di categorie osservate per default."
+    default_categories_tracking: "Elenco di categorie seguite per default."
+    default_categories_muted: "Elenco di categorie silenziate per default."
     errors:
       invalid_email: "Indirizzo email non valido."
       invalid_username: "Non c'è alcun utente con quel nome."
@@ -980,6 +955,7 @@ it:
     not_seen_in_a_month: "Bentornato! Non ti si vede da un po'. Questi sono gli argomenti più popolari da quando sei stato via."
   change_owner:
     post_revision_text: "Proprietà trasferita da %{old_user} a %{new_user}"
+    deleted_user: "un utente eliminato"
   topic_statuses:
     archived_enabled: "Questo argomento è stato archiviato. È congelato e non può più essere modificato."
     archived_disabled: "Questo argomento non è più archiviato. Non è più congelato e può essere modificato."
@@ -1026,6 +1002,7 @@ it:
     omniauth_error_unknown: "Qualcosa è andato storto durante il collegamento, per favore riprova."
     new_registrations_disabled: "Non sono permesse nuove registrazioni al momento."
     password_too_long: "Le password sono limitate a 200 caratteri."
+    reserved_username: "Quel nome utente non è permesso."
     missing_user_field: "Non hai inserito tutti i campi utente"
     close_window: "L'autenticazione è completa. Chiudi questa finestra per continuare."
   user:
@@ -1076,8 +1053,10 @@ it:
   system_messages:
     post_hidden:
       subject_template: "Messaggio nascosto a causa di segnalazioni dalla comunità"
+      text_body_template: "Salve,\n\nquesto è un messaggio automatico da parte di %{site_name} per informarti che il tuo messaggio è stato nascosto.\n\n%{base_url}%{url}\n\n%{flag_reason}\n\nVari membri della comunità hanno segnalato il messaggio prima che venisse nascosto, quindi per favore pensa come modificarlo alla luce di queste osservazioni. **Puoi modificare il messaggio dopo %{edit_delay} minuti, e verrà automaticamente ripubblicato.** \n\nTuttavia, se il messaggio dovesse venire nascosto dalla comunità una seconda volta, rimarrà nascosto fino a che un membro dello staff se ne occuperà – e saranno possibili ulteriori sanzioni, compresa la sospensione del tuo account.\n\nPer ulteriori informazioni, puoi far riferimento alle nostre [community guidelines](%{base_url}/guidelines).\n"
     welcome_user:
       subject_template: "Benvenuto su %{site_name}!"
+      text_body_template: "Grazie per esserti unito a %{site_name}, e benvenuto!\n\n%{new_user_tips} \n\nNoi crediamo in un [comportamento comunitario civile](%{base_url}/guidelines), sempre. Buona permanenza!\n\n(Se desideri comunicare con [i membri dello staff](%{base_url}/about) come nuovo utente, rispondi semplicemente a questo messaggio.)\n"
     welcome_invite:
       subject_template: "Benvenuto su %{site_name}!"
     backup_succeeded:
@@ -1115,12 +1094,35 @@ it:
     csv_export_failed:
       subject_template: "Esportazione dati fallita"
     email_reject_trust_level:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Livello di Esperienza insufficente"
       text_body_template: |
         Ci dispiace, ma il tuo messaggio email per %{destination} (con il titolo %{former_title}) non è stato processato.
 
         Il tuo utente non ha il livello di esperienza richiesto per inviare nuovi argomenti a questo indirizzo email. Se credi che ciò sia un errore, contatta un membro dello staff.
+    email_reject_no_account:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Account Sconosciuto"
+    email_reject_empty:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Nessun Contenuto"
+    email_reject_parsing:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Contenuto non riconosciuto"
+    email_reject_invalid_access:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Accesso non valido"
+    email_reject_post_error:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Errore di pubblicazione"
+    email_reject_post_error_specified:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Errore di pubblicazione"
+    email_reject_reply_key:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Chiave di risposta sconosciuta"
+    email_reject_destination:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Indirizzo di destinazione sconosciuto"
     email_reject_topic_not_found:
       subject_template: "[%{site_name}] Problema relativo all'email -- Argomento Non Trovato"
+    email_reject_topic_closed:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Argomento Chiuso"
+    email_reject_auto_generated:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Risposta Autogenerata"
+    email_error_notification:
+      subject_template: "[%{site_name}] Problema relativo all'email -- Errore di autenticazione POP"
     too_many_spam_flags:
       subject_template: "Nuovo account bloccato"
       text_body_template: "Ciao, \n\nil presente è un messaggio automatico da %{site_name} per informarti che i tuoi messaggi sono stati automaticamente nascosti perché segnalati dalla comunità. \n\nCome misura precauzionale, il tuo nuovo account non può creare altre risposte o argomenti finché il tuo account non verrà revisionato da un membro dello staff. \n\nPer ulteriori informazioni, ti rimandiamo alle [Linee guida della comunità](%{base_url}/guidelines).\n"
@@ -1176,8 +1178,6 @@ it:
     unsubscribe:
       title: "Annulla iscrizione"
       description: "Non vuoi ricevere queste email? Nessun problema! Clicca qui sotto per annullare l'iscrizione:"
-    reply_by_email: "Per intervenire, rispondi a questa email o visita %{base_url}%{url}."
-    visit_link_to_respond: "Per rispondere, visita %{base_url}%{url}"
     posted_by: "Pubblicato da %{username} il %{post_date}"
     user_invited_to_private_message_pm:
       subject_template: "[%{site_name}] %{username} ti invita al partecipare al messaggio '%{topic_title}'"

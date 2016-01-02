@@ -109,6 +109,14 @@ export default Ember.Controller.extend(SelectedPostsCount, BufferedContent, {
       this.deleteTopic();
     },
 
+    archiveMessage() {
+      this.get('model').archiveMessage();
+    },
+
+    moveToInbox() {
+      this.get('model').moveToInbox();
+    },
+
     // Post related methods
     replyToPost(post) {
       const composerController = this.get('controllers.composer'),
@@ -159,6 +167,9 @@ export default Ember.Controller.extend(SelectedPostsCount, BufferedContent, {
       if (post.get('post_number') === 1) {
         this.deleteTopic();
         return;
+      } else if (!post.can_delete) {
+        // check if current user can delete post
+        return false;
       }
 
       const user = Discourse.User.current(),
@@ -198,6 +209,11 @@ export default Ember.Controller.extend(SelectedPostsCount, BufferedContent, {
     editPost(post) {
       if (!Discourse.User.current()) {
         return bootbox.alert(I18n.t('post.controls.edit_anonymous'));
+      }
+
+      // check if current user can edit post
+      if (!post.can_edit) {
+        return false;
       }
 
       const composer = this.get('controllers.composer'),
@@ -412,12 +428,11 @@ export default Ember.Controller.extend(SelectedPostsCount, BufferedContent, {
         draftKey: Composer.REPLY_AS_NEW_TOPIC_KEY,
         categoryId: this.get('category.id')
       }).then(() => {
-        return Em.isEmpty(quotedText) ? Discourse.Post.loadQuote(post.get('id')) : quotedText;
+        return Em.isEmpty(quotedText) ? "" : quotedText;
       }).then(q => {
         const postUrl = `${location.protocol}//${location.host}${post.get('url')}`;
         const postLink = `[${Handlebars.escapeExpression(self.get('model.title'))}](${postUrl})`;
-
-        this.appEvents.trigger('composer:insert-text', `${I18n.t("post.continue_discussion", { postLink })}\n\n${q}`);
+        composerController.get('model').appendText(`${I18n.t("post.continue_discussion", { postLink })}\n\n${q}`);
       });
     },
 

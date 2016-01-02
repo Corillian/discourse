@@ -252,7 +252,9 @@ module PrettyText
     # we have a minor inconsistency
     options[:topicId] = opts[:topic_id]
 
-    sanitized = markdown(text.dup, options)
+    working_text = text.dup
+    Emoji.sub_unicode!(working_text) if SiteSetting.enable_emoji?
+    sanitized = markdown(working_text, options)
 
     doc = Nokogiri::HTML.fragment(sanitized)
 
