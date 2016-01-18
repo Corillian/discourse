@@ -86,8 +86,7 @@ const Category = RestModel.extend({
         allow_badges: this.get('allow_badges'),
         custom_fields: this.get('custom_fields'),
         topic_template: this.get('topic_template'),
-        suppress_from_homepage: this.get('suppress_from_homepage'),
-        contains_messages: this.get("contains_messages"),
+        suppress_from_homepage: this.get('suppress_from_homepage')
       },
       type: this.get('id') ? 'PUT' : 'POST'
     });
@@ -205,14 +204,14 @@ Category.reopenClass({
     return _uncategorized;
   },
 
-  slugFor(category) {
+  slugFor(category, separator = "/") {
     if (!category) return "";
 
     const parentCategory = Em.get(category, 'parentCategory');
     let result = "";
 
     if (parentCategory) {
-      result = Category.slugFor(parentCategory) + "/";
+      result = Category.slugFor(parentCategory) + separator;
     }
 
     const id = Em.get(category, 'id'),

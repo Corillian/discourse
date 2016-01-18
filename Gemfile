@@ -46,7 +46,7 @@ gem 'active_model_serializers', '~> 0.8.3'
 gem 'onebox'
 
 gem 'ember-rails'
-gem 'ember-source', '1.12.1'
+gem 'ember-source', '1.12.2'
 gem 'barber'
 gem 'babel-transpiler'
 
@@ -85,6 +85,7 @@ gem 'omniauth-twitter'
 gem 'omniauth-github-discourse', require: 'omniauth-github'
 
 gem 'omniauth-oauth2', require: false
+
 gem 'omniauth-google-oauth2'
 gem 'oj'
 gem 'pg'

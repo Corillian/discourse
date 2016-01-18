@@ -27,7 +27,7 @@ class Topic < ActiveRecord::Base
   attr_accessor :allowed_user_ids
 
   def self.max_sort_order
-    2**31 - 1
+    @max_sort_order ||= (2 ** 31) - 1
   end
 
   def featured_users
@@ -208,7 +208,7 @@ class Topic < ActiveRecord::Base
   def cancel_auto_close_job
     if (auto_close_at_changed? && !auto_close_at_was.nil?) || (auto_close_user_id_changed? && auto_close_at)
       self.auto_close_started_at ||= Time.zone.now if auto_close_at
-      Jobs.cancel_scheduled_job(:close_topic, { topic_id: id })
+      Jobs.cancel_scheduled_job(:close_topic, topic_id: id)
     end
   end
 
@@ -524,7 +524,8 @@ class Topic < ActiveRecord::Base
                               no_bump: opts[:bump].blank?,
                               skip_notifications: opts[:skip_notifications],
                               topic_id: self.id,
-                              skip_validations: true)
+                              skip_validations: true,
+                              custom_fields: opts[:custom_fields])
     new_post = creator.create
     increment!(:moderator_posts_count) if new_post.persisted?
 
@@ -543,7 +544,6 @@ class Topic < ActiveRecord::Base
 
   def change_category_to_id(category_id)
     return false if private_message?
-    return false if category.try(:contains_messages)
 
     new_category_id = category_id.to_i
     # if the category name is blank, reset the attribute
@@ -557,11 +557,19 @@ class Topic < ActiveRecord::Base
     changed_to_category(cat)
   end
 
-  def remove_allowed_user(username)
+  def remove_allowed_user(removed_by, username)
     if user = User.find_by(username: username)
       topic_user = topic_allowed_users.find_by(user_id: user.id)
       if topic_user
         topic_user.destroy
+        # add small action
+        self.add_moderator_post(
+          removed_by,
+          nil,
+          post_type: Post.types[:small_action],
+          action_code: "removed_user",
+          custom_fields: { action_code_who: user.username }
+        )
         return true
       end
     end
@@ -575,6 +583,14 @@ class Topic < ActiveRecord::Base
       # If the user exists, add them to the message.
       user = User.find_by_username_or_email(username_or_email)
       if user && topic_allowed_users.create!(user_id: user.id)
+        # Create a small action message
+        self.add_moderator_post(
+          invited_by,
+          nil,
+          post_type: Post.types[:small_action],
+          action_code: "invited_user",
+          custom_fields: { action_code_who: user.username }
+        )
 
         # Notify the user they've been invited
         user.notifications.create(notification_type: Notification.types[:invited_to_private_message],

@@ -1,9 +1,9 @@
 # encoding: utf-8
+#
 # This file contains content for the client portion of Discourse, sent out
 # to the Javascript app.
 #
-# To work with us on translations, see:
-# https://www.transifex.com/projects/p/discourse-org/
+# To work with us on translations, see: https://www.transifex.com/projects/p/discourse-org/
 #
 # This is a "source" file, which is used by Transifex to get translations for other languages.
 # After this file is changed, it needs to be pushed by a maintainer to Transifex:
@@ -12,8 +12,7 @@
 #
 # Read more here: https://meta.discourse.org/t/contribute-a-translation-to-discourse/14882
 #
-# To validate this YAML file after you change it, please paste it into
-# http://yamllint.com/
+# To validate this YAML file after you change it, please paste it into http://yamllint.com/
 
 en:
   js:
@@ -121,6 +120,8 @@ en:
 
     action_codes:
       split_topic: "split this topic %{when}"
+      invited_user: "invited %{who} %{when}"
+      removed_user: "removed %{who} %{when}"
       autoclosed:
         enabled: 'closed %{when}'
         disabled: 'opened %{when}'
@@ -862,7 +863,7 @@ en:
       alt: 'Alt'
 
     composer:
-      emoji: "Emoji :smile:"
+      emoji: "Emoji :)"
       more_emoji: "more..."
       options: "Options"
       whisper: "whisper"
@@ -1629,7 +1630,6 @@ en:
       email_in_allow_strangers: "Accept emails from anonymous users with no accounts"
       email_in_disabled: "Posting new topics via email is disabled in the Site Settings. To enable posting new topics via email, "
       email_in_disabled_click: 'enable the "email in" setting.'
-      contains_messages: "Change this category to only contain messages."
       suppress_from_homepage: "Suppress this category from the homepage."
       allow_badges_label: "Allow badges to be awarded in this category"
       edit_permissions: "Edit Permissions"
@@ -2280,6 +2280,8 @@ en:
             change_category_settings: "change category settings"
             delete_category: "delete category"
             create_category: "create category"
+            block_user: "block user"
+            unblock_user: "unblock user"
         screened_emails:
           title: "Screened Emails"
           description: "When someone tries to create a new account, the following email addresses will be checked and the registration will be blocked, or some other action performed."
@@ -2448,6 +2450,8 @@ en:
         deactivate_failed: "There was a problem deactivating the user."
         unblock_failed: 'There was a problem unblocking the user.'
         block_failed: 'There was a problem blocking the user.'
+        block_confirm: 'Are you sure you want to block this user? They will not be able to create any new topics or posts.'
+        block_accept: 'Yes, block this user'
         deactivate_explanation: "A deactivated user must re-validate their email."
         suspended_explanation: "A suspended user can't log in."
         block_explanation: "A blocked user can't post or start topics."
@@ -2742,6 +2746,10 @@ en:
         mark_watching: '<b>m</b>, <b>w</b> Watch topic'
 
     badges:
+      earned_n_times:
+        one: "Earned this badge 1 time"
+        other: "Earned this badge %{count} times"
+      more_with_badge: "Others with this badge"
       title: Badges
       allow_title: "can be used as a title"
       multiple_grant: "can be awarded multiple times"

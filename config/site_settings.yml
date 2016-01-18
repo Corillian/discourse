@@ -105,7 +105,7 @@ basic:
   post_menu:
     client: true
     type: list
-    default: 'like-count|like|share|flag|edit|bookmark|delete|admin|reply'
+    default: 'like-count|like|share|flag|edit|bookmark|wiki|delete|admin|reply'
     choices:
      - like-count
      - like
@@ -116,10 +116,11 @@ basic:
      - bookmark
      - admin
      - reply
+     - wiki
   post_menu_hidden_items:
     client: true
     type: list
-    default: 'bookmark|edit|delete|admin'
+    default: 'bookmark|edit|wiki|delete|admin'
     choices:
      - like
      - edit
@@ -129,6 +130,7 @@ basic:
      - bookmark
      - admin
      - reply
+     - wiki
   share_links:
     client: true
     type: list
@@ -325,7 +327,9 @@ users:
   show_email_on_profile:
     client: true
     default: false
-  email_token_valid_hours: 24
+  email_token_valid_hours:
+    default: 24
+    min: 1
   email_token_grace_period_hours: 0
   purge_unactivated_users_grace_period_days: 7
   public_user_custom_fields:
@@ -626,6 +630,9 @@ trust:
     enum: 'TrustLevelSetting'
   min_trust_to_edit_wiki_post:
     default: 1
+    enum: 'TrustLevelSetting'
+  min_trust_to_allow_self_wiki:
+    default: 3
     enum: 'TrustLevelSetting'
   min_trust_to_send_messages:
     default: 1

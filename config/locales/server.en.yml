@@ -1025,6 +1025,8 @@ en:
 
     min_trust_to_edit_wiki_post: "The minimum trust level required to edit post marked as wiki."
 
+    min_trust_to_allow_self_wiki: "The minimum trust level required to make user's own post wiki."
+
     min_trust_to_send_messages: "The minimum trust level required to create new private messages."
 
     newuser_max_links: "How many links a new user can add to a post."
@@ -1916,8 +1918,8 @@ en:
       description: "Not interested in getting these emails? No problem! Click below to unsubscribe instantly:"
 
     header_instructions: ''
-    reply_by_email: "To respond, reply to this email or [visit the topic](%{base_url}%{url})."
-    visit_link_to_respond: "To respond, [visit the topic](%{base_url}%{url})."
+    reply_by_email: "[Visit Topic](%{base_url}%{url}) or reply to this email to respond."
+    visit_link_to_respond: "[Visit Topic](%{base_url}%{url}) to respond."
 
     posted_by: "Posted by %{username} on %{post_date}"
 
