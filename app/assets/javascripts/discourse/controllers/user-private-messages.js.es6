@@ -11,6 +11,15 @@ export default Ember.Controller.extend({
   selected: Em.computed.alias('controllers.user-topics-list.selected'),
   bulkSelectEnabled: Em.computed.alias('controllers.user-topics-list.bulkSelectEnabled'),
 
+  mobileView: function() {
+    return Discourse.Mobile.mobileView;
+  }.property(),
+
+  showNewPM: function(){
+    return this.get('controllers.user.viewingSelf') &&
+           Discourse.User.currentProp('can_send_private_messages');
+  }.property('controllers.user.viewingSelf'),
+
   @computed('selected.@each', 'bulkSelectEnabled')
   hasSelection(selected, bulkSelectEnabled){
     return bulkSelectEnabled && selected && selected.length > 0;

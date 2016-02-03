@@ -119,9 +119,11 @@ Discourse::Application.routes.draw do
     resources :email, constraints: AdminConstraint.new do
       collection do
         post "test"
-        get "all"
         get "sent"
         get "skipped"
+        get "received"
+        get "rejected"
+        get "/incoming/:id/raw" => "email#raw_email"
         get "preview-digest" => "email#preview_digest"
         post "handle_mail"
       end
@@ -254,7 +256,7 @@ Discourse::Application.routes.draw do
   get "guidelines" => "static#show", id: "guidelines", as: 'guidelines'
   get "tos" => "static#show", id: "tos", as: 'tos'
   get "privacy" => "static#show", id: "privacy", as: 'privacy'
-  get "signup" => "list#latest"
+  get "signup" => "static#show", id: "signup"
   get "login-preferences" => "static#show", id: "login"
 
   get "users/admin-login" => "users#admin_login"
@@ -301,10 +303,13 @@ Discourse::Application.routes.draw do
   put "users/:username/preferences/card-badge" => "users#update_card_badge", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/staff-info" => "users#staff_info", constraints: {username: USERNAME_ROUTE_FORMAT}
 
+  get "users/:username/summary" => "users#summary", constraints: {username: USERNAME_ROUTE_FORMAT}
+
   get "users/:username/invited" => "users#invited", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/invited_count" => "users#invited_count", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/invited/:filter" => "users#invited", constraints: {username: USERNAME_ROUTE_FORMAT}
   post "users/action/send_activation_email" => "users#send_activation_email"
+  get "users/:username/summary" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/activity" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/activity/:filter" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}
   get "users/:username/badges" => "users#show", constraints: {username: USERNAME_ROUTE_FORMAT}

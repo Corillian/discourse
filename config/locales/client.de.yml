@@ -110,6 +110,8 @@ de:
       email: 'diesen Link per E-Mail senden'
     action_codes:
       split_topic: "Thema aufgeteilt, %{when}"
+      invited_user: "%{who} eingeladen, %{when}"
+      removed_user: "%{who} entfernt, %{when}"
       autoclosed:
         enabled: 'geschlossen, %{when}'
         disabled: 'geöffnet, %{when}'
@@ -130,6 +132,19 @@ de:
         disabled: 'unsichtbar gemacht, {when}'
     topic_admin_menu: "Thema administrieren"
     emails_are_disabled: "Die ausgehende E-Mail-Kommunikation wurde von einem Administrator global deaktiviert. Es werden keinerlei Benachrichtigungen per E-Mail verschickt."
+    s3:
+      regions:
+        us_east_1: "USA Ost (Nord-Virginia)"
+        us_west_1: "USA West (Nordkalifornien)"
+        us_west_2: "USA West (Oregon)"
+        us_gov_west_1: "AWS GovCloud (USA)"
+        eu_west_1: "EU (Irland)"
+        eu_central_1: "EU (Frankfurt)"
+        ap_southeast_1: "Asien-Pazifik (Singapur)"
+        ap_southeast_2: "Asien-Pazifik (Sydney)"
+        ap_northeast_1: "Asien-Pazifik (Tokio)"
+        ap_northeast_2: "Asien-Pazifik (Seoul)"
+        sa_east_1: "Südamerika (São Paulo)"
     edit: 'Titel und Kategorie dieses Themas ändern'
     not_implemented: "Entschuldige, diese Funktion wurde noch nicht implementiert!"
     no_value: "Nein"
@@ -321,10 +336,13 @@ de:
         none: "keine"
       notifications:
         watching:
+          title: "Beobachten"
           description: "Du wirst über jeden neuen Beitrag in jeder Nachricht benachrichtigt und die Anzahl der neuen Antworten wird angezeigt."
         tracking:
+          title: "Verfolgen"
           description: "Du wirst benachrichtigt, wenn jemand deinen @Namen erwähnt oder auf deinen Beitrag antwortet, und die Anzahl der neuen Antworten wird angezeigt."
         regular:
+          title: "Normal"
           description: "Du wirst benachrichtigt, wenn jemand deinen @Namen erwähnt oder dir antwortet."
         muted:
           title: "Stummgeschaltet"
@@ -347,6 +365,7 @@ de:
       all_subcategories: "alle"
       no_subcategory: "keine"
       category: "Kategorie"
+      category_list: "Kategorieliste anzeigen"
       reorder:
         title: "Kategorien neu sortieren"
         title_long: "Neustrukturierung der Kategorieliste"
@@ -462,7 +481,7 @@ de:
         archive: "Archiv"
         groups: "Meine Gruppen"
         bulk_select: "Nachrichten auswählen"
-        move_to_inbox: "Zum Posteingang verschieben"
+        move_to_inbox: "In Posteingang verschieben"
         failed_to_move: "Die ausgewählten Nachrichten konnten nicht bewegt werden (vielleicht gibt es ein Netzwerkproblem)."
         select_all: "Alle auswählen"
       change_password:
@@ -621,6 +640,21 @@ de:
         same_as_email: "Dein Passwort entspricht deiner E-Mail-Adresse."
         ok: "Dein Passwort sieht in Ordnung aus."
         instructions: "Mindestens %{count} Zeichen."
+      summary:
+        title: "Übersicht"
+        stats: "Statistiken"
+        topic_count: "Erstellte Themen"
+        post_count: "Erstelle Beiträge"
+        likes_given: "Abgegebene Likes"
+        likes_received: "Erhaltene Likes"
+        days_visited: "Besuchstage"
+        posts_read_count: "Gelesene Beiträge"
+        top_replies: "Die besten Beiträge"
+        top_topics: "Die besten Themen"
+        top_badges: "Die besten Abzeichen"
+        more_topics: "weitere Themen"
+        more_replies: "weitere Antworten"
+        more_badges: "weitere Abzeichen"
       associated_accounts: "Anmeldeinformationen"
       ip_address:
         title: "Letzte IP-Adresse"
@@ -663,7 +697,6 @@ de:
     logout: "Du wurdest abgemeldet."
     refresh: "Aktualisieren"
     read_only_mode:
-      enabled: "Der Nur-Lesen-Modus ist aktiviert. Du kannst die Website weiter durchsuchen und lesen. Einige Funktionen werden jedoch wahrscheinlich nicht funktionieren."
       login_disabled: "Die Anmeldung ist deaktiviert während sich die Website im Nur-Lesen-Modus befindet."
     too_few_topics_and_posts_notice: "Lass' <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>die Diskussionen starten!</a> Es existieren bisher <strong>%{currentTopics} von %{requiredTopics}</strong> benötigten Themen und <strong>%{currentPosts} von %{requiredPosts}</strong> benötigten Beiträgen. Neue Besucher benötigen bestehende Konversationen, die sie lesen und auf die sie antworten können."
     too_few_topics_notice: "Lass' <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>die Diskussionen starten!</a> Es existieren bisher <strong>%{currentTopics} von %{requiredTopics}</strong> benötigten Themen. Neue Besucher benötigen bestehende Konversationen, die sie lesen und auf die sie antworten können."
@@ -748,9 +781,9 @@ de:
       admin_not_allowed_from_ip_address: "Von dieser IP-Adresse darfst du dich nicht als Administrator anmelden."
       resend_activation_email: "Klicke hier, um eine neue Aktivierungsmail zu schicken."
       sent_activation_email_again: "Wir haben dir eine weitere E-Mail zur Aktivierung an <b>{{currentEmail}}</b> geschickt. Es könnte ein paar Minuten dauern, bis diese ankommt; sieh auch im Spam-Ordner nach."
-      to_continue: "Bitte einloggen"
-      preferences: "Du musst eingeloggt sein, um deine Benutzereinstellungen bearbeiten zu können."
-      forgot: "Ich kann mich an meine Konto-Daten nicht erinnern"
+      to_continue: "Melde dich bitte an"
+      preferences: "Du musst angemeldet sein, um deine Benutzereinstellungen bearbeiten zu können."
+      forgot: "Ich kann mich nicht an meine Zugangsdaten erinnern"
       google:
         title: "mit Google"
         message: "Authentifiziere mit Google (stelle sicher, dass keine Pop-up-Blocker aktiviert sind)"
@@ -778,7 +811,7 @@ de:
       ctrl: 'Strg'
       alt: 'Alt'
     composer:
-      emoji: "Emoji :smile:"
+      emoji: "Emoji :)"
       more_emoji: "mehr..."
       options: "Optionen"
       whisper: "flüstern"
@@ -947,6 +980,7 @@ de:
         dismiss_read: "Blende alle ungelesenen Beiträge aus"
         dismiss_button: "Ignorieren..."
         dismiss_tooltip: "Nur die neuen Beiträge ignorieren oder Themen nicht mehr verfolgen"
+        also_dismiss_topics: "Diese Themen nicht mehr verfolgen, sodass mir diese nicht mehr als ungelesen angezeigt werden"
         dismiss_new: "Neue Themen ignorieren"
         toggle: "zu Massenoperationen auf Themen umschalten"
         actions: "Massenoperationen"
@@ -993,6 +1027,12 @@ de:
       create: 'Neues Thema'
       create_long: 'Ein neues Thema erstellen'
       private_message: 'Eine Unterhaltung beginnen'
+      archive_message:
+        help: 'Nachricht ins Archiv verschieben'
+        title: 'Archivieren'
+      move_to_inbox:
+        title: 'In Posteingang verschieben'
+        help: 'Nachricht in den Posteingang zurück verschieben'
       list: 'Themen'
       new: 'neues Thema'
       unread: 'ungelesen'
@@ -1043,6 +1083,7 @@ de:
       auto_close_title: 'Automatisches Schließen'
       auto_close_save: "Speichern"
       auto_close_remove: "Dieses Thema nicht automatisch schließen"
+      auto_close_immediate: "Der letzte Beitrag in diesem Thema ist bereits %{hours} Stunden alt. Das Thema wird daher sofort geschlossen."
       progress:
         title: Themen-Fortschritt
         go_top: "Anfang"
@@ -1163,6 +1204,7 @@ de:
         success: "Wir haben den Benutzer gebeten, sich an dieser Unterhaltung zu beteiligen."
         error: "Entschuldige, es gab einen Fehler beim Einladen des Benutzers."
         group_name: "Gruppenname"
+      controls: "Weitere Aktionen"
       invite_reply:
         title: 'Einladen'
         username_placeholder: "Benutzername"
@@ -1280,7 +1322,7 @@ de:
       via_email: "dieser Beitrag ist per E-Mail eingetroffen"
       whisper: "Dieser Beitrag ist Privat für Moderatoren."
       wiki:
-        about: "dieser Beitrag ist ein Wiki; Anwärter können diesen bearbeiten"
+        about: "dieser Beitrag ist ein Wiki"
       archetypes:
         save: 'Speicheroptionen'
       controls:
@@ -1805,6 +1847,7 @@ de:
         primary_group: "Automatisch als primäre Gruppe festlegen"
         group_owners: Eigentümer
         add_owners: Eigentümer hinzufügen
+        incoming_email: "Benutzerdefinierte Adresse für eingehende E-Mails"
         incoming_email_placeholder: "E-Mail-Adresse eingeben"
       api:
         generate_master: "Master API Key erzeugen"
@@ -1903,7 +1946,7 @@ de:
         button_title: "Einladungen versenden"
       customize:
         title: "Anpassen"
-        long_title: "Website-Anpassungen"
+        long_title: "Anpassungen"
         css: "CSS"
         header: "Kopfbereich"
         top: "Anfang"
@@ -1937,10 +1980,11 @@ de:
         email_templates:
           title: "E-Mail-Vorlagen"
           subject: "Betreff"
+          multiple_subjects: "Diese E-Mail-Vorlage enthält mehrere Betreffzeilen."
           body: "Nachrichtentext"
           none_selected: "Wähle eine E-Mail-Vorlage aus, um diese zu bearbeiten."
-          revert: "Änderungen rückgängig machen"
-          revert_confirm: "Möchtest du wirklich die Änderungen rückgängig machen?"
+          revert: "Änderungen verwerfen"
+          revert_confirm: "Möchtest du wirklich deine Änderungen verwerfen?"
         css_html:
           title: "CSS/HTML"
           long_title: "CSS und HTML Anpassungen"
@@ -1989,9 +2033,10 @@ de:
             name: 'Wiki'
             description: "Die Standardfarbe wird als Hintergrundfarbe für Wiki-Beiträge genutzt."
       email:
-        title: "E-Mail"
+        title: "E-Mails"
         settings: "Einstellungen"
-        all: "Alle"
+        templates: "Vorlagen"
+        preview_digest: "Vorschau auf Neuigkeiten anzeigen"
         sending_test: "Versende Test-E-Mail..."
         error: "<b>FEHLER</b> - %{server_error}"
         test_error: "Es gab ein Problem beim Senden der Test-E-Mail. Bitte überprüfe nochmals deine E-Mail-Einstellungen, stelle sicher dass dein Anbieter keine E-Mail-Verbindungen blockiert und probiere es erneut."
@@ -2006,7 +2051,6 @@ de:
         send_test: "Test-E-Mail senden"
         sent_test: "Gesendet!"
         delivery_method: "Versandmethode"
-        preview_digest: "Vorschau auf Neuigkeiten anzeigen"
         preview_digest_desc: "Vorschau der Zusammenfassung der letzten Aktivitäten, die als E-Mail an inaktive Nutzer gesendet wird."
         refresh: "Aktualisieren"
         format: "Format"
@@ -2015,6 +2059,18 @@ de:
         last_seen_user: "Letzter Benutzer:"
         reply_key: "Antwort-Schlüssel"
         skipped_reason: "Grund des Überspringens"
+        incoming_emails:
+          from_address: "Von"
+          to_addresses: "An"
+          cc_addresses: "Cc"
+          subject: "Betreff"
+          error: "Fehler"
+          filters:
+            from_placeholder: "von@example.com"
+            to_placeholder: "an@example.com"
+            cc_placeholder: "cc@example.com"
+            subject_placeholder: "Betreff..."
+            error_placeholder: "Fehler"
         logs:
           none: "Keine Protokolleinträge gefunden."
           filters:
@@ -2061,9 +2117,10 @@ de:
             delete_user: "Benutzer löschen"
             change_trust_level: "Vertrauensstufe ändern"
             change_username: "Benutzernamen ändern"
-            change_site_setting: "Website-Einstellungen ändern"
-            change_site_customization: "Website-Anpassungen ändern"
-            delete_site_customization: "Website-Anpassungen löschen"
+            change_site_setting: "Einstellungen ändern"
+            change_site_customization: "Anpassungen ändern"
+            delete_site_customization: "Anpassungen löschen"
+            change_site_text: "Text ändern"
             suspend_user: "Benutzer sperren"
             unsuspend_user: "Benutzer entsperren"
             grant_badge: "Abzeichen verleihen"
@@ -2077,6 +2134,8 @@ de:
             change_category_settings: "Kategorieeinstellungen ändern"
             delete_category: "Kategorie löschen"
             create_category: "Kategorie erstellen"
+            block_user: "Benutzer blockieren"
+            unblock_user: "Blockierung von Benutzer aufheben"
         screened_emails:
           title: "Gefilterte E-Mails"
           description: "Wenn jemand ein Konto erstellt, werden die folgenden E-Mail-Adressen überprüft und es wird die Anmeldung blockiert oder eine andere Aktion ausgeführt."
@@ -2255,6 +2314,7 @@ de:
         unlock_trust_level: "Vertrauensstufe entsperren"
         tl3_requirements:
           title: "Anforderungen für Vertrauensstufe 3"
+          table_title: "In den letzten %{time_period} Tagen:"
           value_heading: "Wert"
           requirement_heading: "Anforderung"
           visits: "Aufrufe"
@@ -2315,10 +2375,14 @@ de:
           confirm: 'Bestätigung'
           dropdown: "Dropdown-Liste"
       site_text:
+        description: "Du kannst jeden Text deines Forums anpassen. Benutze dazu die Suche:"
+        search: "Suche nach dem Text, den du bearbeiten möchtest"
         title: 'Textinhalt'
         edit: 'bearbeiten'
-        revert: "Änderungen rückgängig machen"
+        revert: "Änderungen verwerfen"
+        revert_confirm: "Möchtest du wirklich deine Änderungen verwerfen?"
         go_back: "Zurück zur Suche"
+        recommended: "Wir empfehlen, dass du den folgenden Text an deine Bedürfnisse anpasst:"
         show_overriden: 'Nur geänderterte Texte anzeigen'
       site_settings:
         show_overriden: 'Nur geänderterte Einstellungen anzeigen'

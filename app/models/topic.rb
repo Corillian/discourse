@@ -514,6 +514,12 @@ class Topic < ActiveRecord::Base
     true
   end
 
+  def add_small_action(user, action_code, who=nil)
+    custom_fields = {}
+    custom_fields["action_code_who"] = who if who.present?
+    add_moderator_post(user, nil, post_type: Post.types[:small_action], action_code: action_code, custom_fields: custom_fields)
+  end
+
   def add_moderator_post(user, text, opts=nil)
     opts ||= {}
     new_post = nil
@@ -562,14 +568,7 @@ class Topic < ActiveRecord::Base
       topic_user = topic_allowed_users.find_by(user_id: user.id)
       if topic_user
         topic_user.destroy
-        # add small action
-        self.add_moderator_post(
-          removed_by,
-          nil,
-          post_type: Post.types[:small_action],
-          action_code: "removed_user",
-          custom_fields: { action_code_who: user.username }
-        )
+        add_small_action(removed_by, "removed_user", user.username)
         return true
       end
     end
@@ -584,13 +583,7 @@ class Topic < ActiveRecord::Base
       user = User.find_by_username_or_email(username_or_email)
       if user && topic_allowed_users.create!(user_id: user.id)
         # Create a small action message
-        self.add_moderator_post(
-          invited_by,
-          nil,
-          post_type: Post.types[:small_action],
-          action_code: "invited_user",
-          custom_fields: { action_code_who: user.username }
-        )
+        add_small_action(invited_by, "invited_user", user.username)
 
         # Notify the user they've been invited
         user.notifications.create(notification_type: Notification.types[:invited_to_private_message],
@@ -925,8 +918,10 @@ class Topic < ActiveRecord::Base
 
     sql = <<SQL
 SELECT 1 FROM topic_allowed_groups tg
-JOIN group_archived_messages gm ON gm.topic_id = tg.topic_id AND gm.group_id = tg.group_id
-  WHERE tg.group_id IN (SELECT g.id FROM group_users g WHERE g.user_id = :user_id)
+JOIN group_archived_messages gm
+      ON gm.topic_id = tg.topic_id AND
+         gm.group_id = tg.group_id
+  WHERE tg.group_id IN (SELECT g.group_id FROM group_users g WHERE g.user_id = :user_id)
     AND tg.topic_id = :topic_id
 
 UNION ALL
@@ -937,7 +932,6 @@ WHERE tu.user_id = :user_id AND tu.topic_id = :topic_id
 SQL
 
     User.exec_sql(sql, user_id: user.id, topic_id: id).to_a.length > 0
-
   end
 
   TIME_TO_FIRST_RESPONSE_SQL ||= <<-SQL

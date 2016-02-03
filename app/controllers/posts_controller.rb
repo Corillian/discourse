@@ -79,7 +79,7 @@ class PostsController < ApplicationController
   def raw_email
     post = Post.find(params[:id].to_i)
     guardian.ensure_can_view_raw_email!(post)
-    render json: {raw_email: post.raw_email}
+    render json: { raw_email: post.raw_email }
   end
 
   def short_link
@@ -95,14 +95,6 @@ class PostsController < ApplicationController
   end
 
   def create
-
-    if !is_api? && current_user.blocked?
-
-      # error has parity with what user would get if they posted when blocked
-      # and it went through post creator
-      render json: {errors: [I18n.t("topic_not_found")]}, status: 422
-      return
-    end
 
     @manager_params = create_params
     @manager_params[:first_post_checks] = !is_api?

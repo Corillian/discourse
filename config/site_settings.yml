@@ -331,7 +331,7 @@ users:
     default: 24
     min: 1
   email_token_grace_period_hours: 0
-  purge_unactivated_users_grace_period_days: 7
+  purge_unactivated_users_grace_period_days: 14
   public_user_custom_fields:
     type: list
     default: ''
@@ -394,7 +394,6 @@ posting:
     client: true
     default: true
     refresh: true
-  uncategorized_description: "Topics that don't need a category, or don't fit into any other existing category."
   allow_duplicate_topic_titles: false
   min_title_similar_length:
     client: true
@@ -535,6 +534,10 @@ email:
   short_email_length: 2800
   display_name_on_email_from:
     default: true
+  unsubscribe_via_email:
+    default: true
+  unsubscribe_via_email_footer:
+    default: false
 
 files:
   max_image_size_kb: 3072
@@ -803,6 +806,15 @@ developer:
   verbose_localization:
     default: false
     client: true
+  top_topics_formula_log_views_multiplier:
+    default: 2
+    min: 0
+  top_topics_formula_first_post_likes_multiplier:
+    default: 0.5
+    min: 0
+  top_topics_formula_least_likes_per_post_multiplier:
+    default: 3
+    min: 0
   migrate_to_new_scheme:
     hidden: true
     default: false
@@ -810,8 +822,6 @@ developer:
     default: 500
     client: true
     hidden: true
-  allow_staged_accounts:
-    default: false
 
 embedding:
   feed_polling_enabled:

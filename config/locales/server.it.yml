@@ -678,6 +678,8 @@ it:
     post_onebox_maxlength: "Lunghezza massima in caratteri di un messaggio Discourse in Onebox."
     onebox_domains_whitelist: "Lista di domini per i quali consentire la funzione di onebox; questi domini devono supportare OpenGraph o oEmbed. Testali su http://iframely.com/debug"
     logo_url: "L'immagine nel logo in alto a sinistra del sito, dovrebbe essere larga e di forma rettangolare. Se non impostata, verrà usato il testo del titolo del sito."
+    digest_logo_url: "Il logo alternativo usato in cima alla email di riepilogo. Dovrebbe essere a forma di un ampio rettangolo. Se lasciato vuoto, sarà utilizzato il campo `logo_url`."
+    logo_small_url: "Il piccolo logo in alto a sinistra del tuo sito, dovrebbe essere a forma di quadrato. Se non impostato, verrà mostrata l'icona di una casa."
     apple_touch_icon_url: "Icona usata per dispositivi touch Apple. La dimensione consigliata è 144 x 144 pixel."
     notification_email: "L'indirizzo presente nel campo from: usato per inviare tutte le email essenziali di sistema. Il dominio indicato deve avere i record SPF, DKIM e reverse PTR impostati correttamente perché l'email arrivi."
     email_custom_headers: "Una lista di intestazioni email personalizzate delimitata da una barra verticale (pipe |)"
@@ -818,7 +820,6 @@ it:
     tl2_requires_likes_received: "Quanti \"Mi piace\" deve ricevere un utente per essere promosso al livello di esperienza 2."
     tl2_requires_likes_given: "Quanti \"Mi piace\" deve dare un utente per essere promosso al livello di esperienza 2."
     tl2_requires_topic_reply_count: "A quanti argomenti deve rispondere un utente per essere promosso al livello di esperienza 2."
-    tl3_requires_days_visited: "Per quanti giorni un utente deve aver visitato il sito negli ultimi 100 giorni per essere promosso al livello di esperienza 3 (da 0 a 100)."
     tl3_requires_topics_replied_to: "Numero minimo di argomenti cui un utente deve aver risposto negli ultinmi 100 giorni per essere promosso al livello di esperienza 3 (0 o maggiore)."
     tl3_requires_topics_viewed: "Percentuale di argomenti creati negli ultimi 100 giorni che un utente deve leggere per essere promosso al livello di esperienza 3 (da 0 a 100)."
     tl3_requires_posts_read: "Percentuale di messaggi creati negli ultimi 100 giorni che un utente deve leggere per essere promosso al livello di esperienza 3 (da 0 a 100)."
@@ -844,6 +845,7 @@ it:
     title_max_word_length: "La lunghezza massima di una parola, in caratteri, nel titolo di un argomento."
     title_min_entropy: "Minima entropia (caratteri unici) richiesti come titolo di un argomento."
     body_min_entropy: "Minima entropia (caratteri unici) richiesti come corpo di un messaggio."
+    allow_uppercase_posts: "Permetti l'uso di tutti caratteri maiuscoli nel titolo di argomento o nel corpo di un messaggio. "
     title_fancy_entities: "Converti caratteri ASCII comuni in HTML nei titoli dell'argomento, tipo SmartyPants http://daringfireball.net/projects/smartypants/"
     min_title_similar_length: "Lunghezza minima di un titolo che attiva il controllo su argomenti simili."
     min_body_similar_length: "Lunghezza minima del corpo di un messaggio che attiva il controllo su argomenti simili."
@@ -1011,7 +1013,7 @@ it:
     omniauth_error_unknown: "Qualcosa è andato storto durante il collegamento, per favore riprova."
     new_registrations_disabled: "Non sono permesse nuove registrazioni al momento."
     password_too_long: "Le password sono limitate a 200 caratteri."
-    reserved_username: "Quel nome utente non è permesso."
+    reserved_username: "Questo utente non ha il permesso."
     missing_user_field: "Non hai inserito tutti i campi utente"
     close_window: "L'autenticazione è completa. Chiudi questa finestra per continuare."
   user:
@@ -1102,12 +1104,6 @@ it:
       subject_template: "Esportazione dati completa"
     csv_export_failed:
       subject_template: "Esportazione dati fallita"
-    email_reject_trust_level:
-      subject_template: "[%{site_name}] Problema relativo all'email -- Livello di Esperienza insufficente"
-      text_body_template: |
-        Ci dispiace, ma il tuo messaggio email per %{destination} (con il titolo %{former_title}) non è stato processato.
-
-        Il tuo utente non ha il livello di esperienza richiesto per inviare nuovi argomenti a questo indirizzo email. Se credi che ciò sia un errore, contatta un membro dello staff.
     email_reject_no_account:
       subject_template: "[%{site_name}] Problema relativo all'email -- Account Sconosciuto"
     email_reject_empty:
@@ -1116,14 +1112,8 @@ it:
       subject_template: "[%{site_name}] Problema relativo all'email -- Contenuto non riconosciuto"
     email_reject_invalid_access:
       subject_template: "[%{site_name}] Problema relativo all'email -- Accesso non valido"
-    email_reject_post_error:
-      subject_template: "[%{site_name}] Problema relativo all'email -- Errore di pubblicazione"
-    email_reject_post_error_specified:
-      subject_template: "[%{site_name}] Problema relativo all'email -- Errore di pubblicazione"
     email_reject_reply_key:
       subject_template: "[%{site_name}] Problema relativo all'email -- Chiave di risposta sconosciuta"
-    email_reject_destination:
-      subject_template: "[%{site_name}] Problema relativo all'email -- Indirizzo di destinazione sconosciuto"
     email_reject_topic_not_found:
       subject_template: "[%{site_name}] Problema relativo all'email -- Argomento Non Trovato"
     email_reject_topic_closed:

@@ -110,6 +110,8 @@ es:
       email: 'comparte este enlace por email'
     action_codes:
       split_topic: "separó este tema %{when}"
+      invited_user: "invitó a %{who} %{when}"
+      removed_user: "eliminó a %{who} %{when}"
       autoclosed:
         enabled: 'cerrado %{when}'
         disabled: 'abierto %{when}'
@@ -130,6 +132,19 @@ es:
         disabled: 'quitado de la lista, invisible %{when}'
     topic_admin_menu: "acciones de administrador para el tema"
     emails_are_disabled: "Todos los emails salientes han sido desactivados por un administrador. No se enviará ninguna notificación por email."
+    s3:
+      regions:
+        us_east_1: "US East (N. Virginia)"
+        us_west_1: "US West (N. California)"
+        us_west_2: "US West (Oregon)"
+        us_gov_west_1: "AWS GovCloud (US)"
+        eu_west_1: "UE (Irlanda)"
+        eu_central_1: "UE (Frankfurt)"
+        ap_southeast_1: "Asia Pacific (Singapur)"
+        ap_southeast_2: "Asia Pacific (Sydney)"
+        ap_northeast_1: "Asia Pacific (Tokyo)"
+        ap_northeast_2: "Asia Pacific (Seúl)"
+        sa_east_1: "Sudamérica (São Paulo)"
     edit: 'editar el título y la categoría de este tema'
     not_implemented: "Esta característica no ha sido implementada aún, ¡lo sentimos!"
     no_value: "No"
@@ -346,7 +361,7 @@ es:
       '13': "Bandeja de entrada"
       '14': "Pendiente"
     categories:
-      all: "Todas las categorías"
+      all: "Categorías"
       all_subcategories: "todas"
       no_subcategory: "ninguna"
       category: "Categoría"
@@ -625,6 +640,21 @@ es:
         same_as_email: "Tu contraseña es la misma que tu dirección de correo electrónico."
         ok: "Tu contraseña es válida."
         instructions: "Debe contener al menos %{count} caracteres."
+      summary:
+        title: "Resumen"
+        stats: "Estadísticas"
+        topic_count: "Temas creados"
+        post_count: "Posts publicados"
+        likes_given: "Me gusta dados"
+        likes_received: "Me gusta recibidos"
+        days_visited: "Visitas (en días)"
+        posts_read_count: "Posts leídos"
+        top_replies: "Respuestas top"
+        top_topics: "Temas top"
+        top_badges: "Distintivos top"
+        more_topics: "Más temas"
+        more_replies: "Más respuestas"
+        more_badges: "Más distintivos"
       associated_accounts: "Inicios de sesión"
       ip_address:
         title: "Última dirección IP"
@@ -667,7 +697,7 @@ es:
     logout: "Has cerrado sesión."
     refresh: "Actualizar"
     read_only_mode:
-      enabled: "Modo solo-lectura activado. Puedes continuar navegando por el sitio pero las interacciones podrían no funcionar."
+      enabled: "Este sitio está en modo solo-lectura. Puedes continuar navegando pero algunas acciones como responder o dar \"me gusta\" no están disponibles por ahora."
       login_disabled: "Iniciar sesión está desactivado mientras el foro esté en modo solo lectura."
     too_few_topics_and_posts_notice: "¡Vamos a <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>dar por comenzada la comunidad!</a> Hay <strong>%{currentTopics} / %{requiredTopics}</strong> temas y <strong>%{currentPosts} / %{requiredPosts}</strong> mensajes. Los nuevos visitantes necesitan algo que leer y a lo que responder."
     too_few_topics_notice: "¡Vamos a <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>dar por comenzada la comunidad!</a> Hay <strong>%{currentTopics} / %{requiredTopics}</strong> temas. Los nuevos visitantes necesitan algo que leer y a lo que responder."
@@ -782,7 +812,7 @@ es:
       ctrl: 'Ctrl'
       alt: 'Alt'
     composer:
-      emoji: "Emoji :smile:"
+      emoji: "Emoji :)"
       more_emoji: "más..."
       options: "Opciones"
       whisper: "susurrar"
@@ -948,7 +978,7 @@ es:
         reset_read: "Restablecer leídos"
         delete: "Eliminar temas"
         dismiss: "Descartar"
-        dismiss_read: "Descartar todos los temas no leídos"
+        dismiss_read: "Descartar todos los temas sin leer"
         dismiss_button: "Descartar..."
         dismiss_tooltip: "Descartar solo los nuevos posts o dejar de seguir los temas"
         also_dismiss_topics: "Parar de seguir estos temas para que no aparezcan más en mis mensajes no leídos"
@@ -969,7 +999,7 @@ es:
         read: "Todavía no has leído ningún tema."
         posted: "Todavía no has publicado en ningún tema."
         latest: "No hay temas recientes. Qué pena..."
-        hot: "No hay temas calientes nuevos."
+        hot: "No hay temas candentes nuevos."
         bookmarks: "No tienes temas guardados en marcadores todavía."
         category: "No hay temas en la categoría {{category}}."
         top: "No hay temas en el top más vistos."
@@ -979,7 +1009,7 @@ es:
           unread: '<p>Tus temas sin leer aparecerán aquí.</p><p>Por defecto, los temas son considerados no leídos y mostrán contadores de post sin leer <span class="badge new-posts badge-notification">1</span> si:</p><ul><li>Creaste el tema</li><li>Respondiste al tema</li><li>Leíste el tema durante más de 4 minutos</li></ul><p>O si has establecido específicamente el tema a Seguir o Vigilar en el control de notificaciones al pie de cada tema.</p><p>Puedes cambiar esto en tus <a href="%{userPrefsUrl}">preferencias</a>.</p>'
       bottom:
         latest: "No hay más temas recientes para leer."
-        hot: "No hay más temas calientes."
+        hot: "No hay más temas candentes."
         posted: "No hay más temas publicados."
         read: "No hay más temas leídos."
         new: "No hay más nuevos temas."
@@ -996,9 +1026,15 @@ es:
       create: 'Crear tema'
       create_long: 'Crear un nuevo tema'
       private_message: 'Empezar un mensaje'
+      archive_message:
+        help: 'Archivar mensaje'
+        title: 'Archivar'
+      move_to_inbox:
+        title: 'Mover a la bandeja de entrada'
+        help: 'Restaurar mensaje a la bandeja de entrada'
       list: 'Temas'
       new: 'nuevo tema'
-      unread: 'No leídos'
+      unread: 'sin leer'
       new_topics:
         one: '1 tema nuevo'
         other: '{{count}} temas nuevos'
@@ -1285,7 +1321,7 @@ es:
       via_email: "este post llegó por email"
       whisper: "esto post es un susurro privado para moderadores"
       wiki:
-        about: "Este post es tipo wiki, cualquier usuario registrado puede editarlo"
+        about: "este post es tipo wiki"
       archetypes:
         save: 'Guardar opciones'
       controls:
@@ -1431,7 +1467,7 @@ es:
     category:
       can: 'puede&hellip; '
       none: '(sin categoría)'
-      all: 'Todas las categorías'
+      all: 'Categorías'
       choose: 'Seleccionar una categoría&hellip;'
       edit: 'editar'
       edit_long: "Editar"
@@ -1472,7 +1508,6 @@ es:
       email_in_allow_strangers: "Aceptar emails de usuarios anónimos sin cuenta"
       email_in_disabled: "La posibilidad de publicar nuevos temas por email está deshabilitada en los ajustes del sitio. Para habilitar la publicación de nuevos temas por email,"
       email_in_disabled_click: 'activa la opción "email in".'
-      contains_messages: "Cambiar esta categoría a sólo mensajes."
       suppress_from_homepage: "Ocultar categoría de la página de inicio."
       allow_badges_label: "Permitir conceder distintivos en esta categoría"
       edit_permissions: "Editar permisos"
@@ -1598,8 +1633,8 @@ es:
           other: "Recientes ({{count}})"
         help: "temas con posts recientes"
       hot:
-        title: "Popular"
-        help: "una selección de los temas más populares"
+        title: "Candente"
+        help: "una selección de los temas más candentes"
       read:
         title: "Leídos"
         help: "temas que ya has leído"
@@ -1613,8 +1648,8 @@ es:
       unread:
         title: "Sin leer"
         title_with_count:
-          one: "Unread (1)"
-          other: "No leídos ({{count}})"
+          one: "Sin leer (1)"
+          other: "Sin leer ({{count}})"
         help: "temas que estás vigilando o siguiendo actualmente con posts no leídos"
         lower_title_with_count:
           one: "{{count}} sin leer"
@@ -2001,14 +2036,17 @@ es:
             name: 'wiki'
             description: "Color base usado para el fondo en los posts del wiki."
       email:
-        title: "Email"
+        title: "Emails"
         settings: "Ajustes"
-        all: "Todos"
+        templates: "Plantillas"
+        preview_digest: "Vista previa de Resumen"
         sending_test: "Enviando e-mail de prueba..."
         error: "<b>ERROR</b> - %{server_error}"
         test_error: "Hubo un error al enviar el email de prueba. Por favor, revisa la configuración de correo, verifica que tu servicio de alojamiento no esté bloqueando los puertos de conexión de correo, y prueba de nuevo."
         sent: "Enviado"
         skipped: "Omitidos"
+        received: "Recibidos"
+        rejected: "Rechazados"
         sent_at: "Enviado a"
         time: "Fecha"
         user: "Usuario"
@@ -2018,7 +2056,6 @@ es:
         send_test: "Enviar email de prueba"
         sent_test: "enviado!"
         delivery_method: "Método de entrega"
-        preview_digest: "Vista previa de Resumen"
         preview_digest_desc: "Previsualiza el contenido del email de resumen enviado a usuarios inactivos."
         refresh: "Actualizar"
         format: "Formato"
@@ -2027,6 +2064,19 @@ es:
         last_seen_user: "Último usuario visto:"
         reply_key: "Clave de respuesta"
         skipped_reason: "Saltar motivo"
+        incoming_emails:
+          from_address: "De"
+          to_addresses: "Para"
+          cc_addresses: "Cc"
+          subject: "Asunto"
+          error: "Error"
+          none: "No se encontraron emails entrantes."
+          filters:
+            from_placeholder: "from@example.com"
+            to_placeholder: "to@example.com"
+            cc_placeholder: "cc@example.com"
+            subject_placeholder: "Asunto..."
+            error_placeholder: "Error"
         logs:
           none: "No se han encontrado registros."
           filters:
@@ -2090,6 +2140,8 @@ es:
             change_category_settings: "cambiar opciones de categoría"
             delete_category: "eliminar categoría"
             create_category: "crear categoría"
+            block_user: "bloquear usuario"
+            unblock_user: "desbloquear usuario"
         screened_emails:
           title: "Correos bloqueados"
           description: "Cuando alguien trata de crear una cuenta nueva, los siguientes correos serán revisados y el registro será bloqueado, o alguna otra acción será realizada."
@@ -2191,6 +2243,7 @@ es:
         moderator: "¿Moderador?"
         admin: "¿Administrador?"
         blocked: "¿Bloqueado?"
+        staged: "¿Provisional?"
         show_admin_profile: "Administrador"
         edit_title: "Editar título"
         save_title: "Guardar título"
@@ -2255,9 +2308,12 @@ es:
         deactivate_failed: "Ha habido un problema desactivando el usuario."
         unblock_failed: 'Ha habido un problema desbloqueando el usuario.'
         block_failed: 'Ha habido un problema bloqueando el usuario.'
+        block_confirm: '¿Seguro que quieres bloquear a este usuario? No podrá crear nuevos temas ni publicar posts.'
+        block_accept: 'Sí, bloquear este usuario'
         deactivate_explanation: "Un usuario desactivado debe rehabilitar su dirección de correo."
         suspended_explanation: "Un usuario suspendido no puede ingresar al sitio."
         block_explanation: "Un usuario bloqueado no puede publicar posts ni crear temas."
+        stage_explanation: "Un usuario provisional sólo puede publicar por email en temas específicos."
         trust_level_change_failed: "Ha habido un problema cambiando el nivel de confianza del usuario."
         suspend_modal_title: "Suspender Usuario"
         trust_level_2_users: "Usuarios del nivel de Confianza 2"
@@ -2536,6 +2592,10 @@ es:
         mark_tracking: '<b>m</b>, <b>t</b> Seguir tema'
         mark_watching: '<b>m</b>, <b>w</b> Vigilar Tema'
     badges:
+      earned_n_times:
+        one: "Ganó este distintivo 1 vez"
+        other: "Ganó este distintivo %{count} veces"
+      more_with_badge: "Otros con este distintivo"
       title: Distintivos
       allow_title: "puede ser utilizado como título"
       multiple_grant: "puede ser otorgado varias veces"
@@ -2647,7 +2707,7 @@ es:
           name: Enlace Popular
           description: Publicó un enlace externo con al menos 50 clicks
         hot_link:
-          name: Enlace Candente
+          name: Enlace popular
           description: Publicó un enlace externo con al menos 300 clicks
         famous_link:
           name: Enlace Famoso

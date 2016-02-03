@@ -462,6 +462,7 @@ ar:
       all_subcategories: "جميع"
       no_subcategory: "لا شيء"
       category: "تصنيف"
+      category_list: "أعرض قائمة الأقسام."
       reorder:
         title: "إعادة ترتيب الفئات"
         title_long: "إعادة تنظيم قائمة الفئة"
@@ -526,6 +527,7 @@ ar:
       invited_by: "مدعو بواسطة"
       trust_level: "مستوى الثقة"
       notifications: "الاشعارات"
+      statistics: "احصائيات"
       desktop_notifications:
         label: "إشعارات سطح المكتب"
         not_supported: "عذراً , الإشعارات غير مدعومة على هذا المتصفح "
@@ -579,7 +581,9 @@ ar:
         warnings_received: "تحذيرات"
       messages:
         all: "الكل"
+        inbox: "البريد الوارد"
         sent: "مرسلة"
+        archive: "الارشيف"
         groups: "مجموعاتي"
         bulk_select: "إختيار رسائل"
         move_to_inbox: "الذهاب إلى الرسائل الواردة"
@@ -791,7 +795,6 @@ ar:
     logout: "تم تسجيل خروجك"
     refresh: "تحديث"
     read_only_mode:
-      enabled: "وضع القراءة فقط مفعل. يمكنك إكمال تصفح الموقع لكن التفاعلات قد لا تعمل."
       login_disabled: "تسجيل الدخول معطل لأن الموقع في خالة القراءة  فقط"
     too_few_topics_and_posts_notice: "دعونا <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>الحصول على هذه المناقشة بدأت!</a> يوجد حاليا<strong>%{currentTopics} / %{requiredTopics}</strong> المواضيع و <strong>%{currentPosts} / %{requiredPosts}</strong> المشاركات. الزوار الجدد بحاجة إلى بعض الأحاديث لقراءة والرد على."
     too_few_topics_notice: "دعونا <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>الحصول على هذه المناقشة التي!</a> وهناك حاليا <strong>%{currentTopics} / %{requiredTopics}</strong> المواضيع. الزوار الجديدة بحاجة إلى بعض الأحاديث قراءة والرد عليها."
@@ -910,7 +913,6 @@ ar:
       ctrl: 'التحكم'
       alt: 'Alt'
     composer:
-      emoji: "تعبيرات: ابتسامة"
       more_emoji: "أكثر..."
       options: "خيارات"
       whisper: "همس"
@@ -1130,6 +1132,12 @@ ar:
       create: 'موضوع جديد'
       create_long: 'كتابة موضوع جديد'
       private_message: 'أرسل رسالة خاصة'
+      archive_message:
+        help: 'انقل الرسالة لارشيفك.'
+        title: 'الارشيف'
+      move_to_inbox:
+        title: 'انقل للبريد الوارد.'
+        help: 'انقل الرسالة مرة آخرى للبريد الوارد.'
       list: 'المواضيع'
       new: 'موضوع جديد'
       unread: 'غير مقروء'
@@ -1493,7 +1501,7 @@ ar:
       via_email: "وصلت هذه المشاركة من خلال الإيميل"
       whisper: "هذه المشاركة همسة خاصة للمشرفين"
       wiki:
-        about: "هذه المشاركة عبارة عن ويكي بمعنى أنها متاحة للمستخدمين العاديين لتحريرها ، "
+        about: "هذه المشاركة تعتبر ويكي."
       archetypes:
         save: 'حفظ الخيارات'
       controls:
@@ -1756,7 +1764,6 @@ ar:
       email_in_allow_strangers: "قبول بريد إلكتروني من مستخدمين لا يملكون حسابات"
       email_in_disabled: "إضافة مواضيع جديدة من خلال البريد الإلكتروني موقف في الوقت الحالي من خلال إعدادات الموقع. لتفعيل إضافة مواضيع جديدة من خلال البريد الإلكتروني,"
       email_in_disabled_click: 'قم بتفعيل خيار "email in" في الإعدادات'
-      contains_messages: "غير هذه الفئة لتحوي الرسائل فقط."
       suppress_from_homepage: "كتم هذه الفئة من الصفحة الرئيسية"
       allow_badges_label: "السماح بالحصول على الأوسمة في هذا التصنيف"
       edit_permissions: "تعديل الصلاحيات"
@@ -2292,6 +2299,7 @@ ar:
         email_templates:
           title: "قالب البريد الالكتروني "
           subject: "الموضوع"
+          multiple_subjects: "قالب البريد الإلكتروني هذا لديه موضوعات متعددة."
           body: "المحتوى"
           none_selected: "اختر قالب بريد الكتروني لتبدا بتعديله "
           revert: "اعاده التغيرات "
@@ -2344,9 +2352,8 @@ ar:
             name: 'ويكي'
             description: "اللون الأساسي المستخدم كخلفية لمشاركات الويكي."
       email:
-        title: "بريد الكتروني"
         settings: "اعدادات"
-        all: "الكل"
+        preview_digest: "ملخص المعاينة."
         sending_test: "إرسال بريد إلكتروني للتجربة..."
         error: "<b>خطأ</b> - %{server_error}"
         test_error: "حدث خطأ أثناء إرسال رسالة تجريبية. الرجاء فحص إعدادات البريد الإلكتروني و التأكد من أن الاستضافة لا تمنع مرور البريد الإلكتروني والمحاولة مرة أخرى."
@@ -2361,7 +2368,6 @@ ar:
         send_test: "ارسل رسالة تجربة"
         sent_test: "اٌرسلت!"
         delivery_method: "طريقة التسليم"
-        preview_digest: "ملخص المعاينة."
         preview_digest_desc: "معاينة محتوى رسائل البريد الإلكتروني الملخص المرسلة للأعضاء الغير متاحين."
         refresh: "تحديث"
         format: "التنسيق"
@@ -2419,6 +2425,7 @@ ar:
             change_site_setting: "تغيير اعدادات الموقع"
             change_site_customization: "تخصيص الموقع"
             delete_site_customization: "حذف هذا التخصيص؟"
+            change_site_text: "تغيير نص الموقع."
             suspend_user: "حظر المستخدم"
             unsuspend_user: "رفع الحظر "
             grant_badge: "منح شارة"
@@ -2638,6 +2645,7 @@ ar:
         unlock_trust_level: "فتح مستوى الثقة "
         tl3_requirements:
           title: "المتطلبات لمستوى الثقة 3."
+          table_title: "في أخر %{time_period} أيام:"
           value_heading: "تصويت"
           requirement_heading: "متطلبات"
           visits: "الزيارات"
@@ -2704,6 +2712,7 @@ ar:
         revert: "حفظ التعديلات"
         revert_confirm: "هل انت متاكد من انك تريد اعاده التغيرات؟ "
         go_back: "العودة إلى البحث"
+        recommended: "نوصيك بتخصيص النص التالي ليلائم احتياجاتك:"
         show_overriden: 'اظهر التجاوزات فقط'
       site_settings:
         show_overriden: 'تظهر فقط تجاوز'

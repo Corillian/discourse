@@ -169,8 +169,7 @@ class User < ActiveRecord::Base
 
   def self.suggest_name(email)
     return "" if email.blank?
-    name = email.split(/[@\+]/)[0].gsub(".", " ")
-    name.titleize
+    email[/\A[^@]+/].tr(".", " ").titleize
   end
 
   def self.find_by_username_or_email(username_or_email)
@@ -295,8 +294,13 @@ class User < ActiveRecord::Base
     User.where("id = ? and seen_notification_id < ?", id, notification_id)
         .update_all ["seen_notification_id = ?", notification_id]
 
-    # mark all "badge granted" and "invite accepted" notifications read
-    Notification.where('user_id = ? AND NOT read AND notification_type IN (?)', id, [Notification.types[:granted_badge], Notification.types[:invitee_accepted]])
+    # some notifications are considered read once seen
+    Notification.where('user_id = ? AND NOT read AND notification_type IN (?)', id, [
+                       Notification.types[:granted_badge],
+                       Notification.types[:invitee_accepted],
+                       Notification.types[:group_message_summary],
+                       Notification.types[:liked]
+    ])
         .update_all ["read = ?", true]
   end
 
@@ -620,7 +624,7 @@ class User < ActiveRecord::Base
     user_badges.select('distinct badge_id').count
   end
 
-  def featured_user_badges
+  def featured_user_badges(limit=3)
     user_badges
         .joins(:badge)
         .order("CASE WHEN badges.id = (SELECT MAX(ub2.badge_id) FROM user_badges ub2
@@ -630,7 +634,7 @@ class User < ActiveRecord::Base
         .includes(:user, :granted_by, badge: :badge_type)
         .where("user_badges.id in (select min(u2.id)
                   from user_badges u2 where u2.user_id = ? group by u2.badge_id)", id)
-        .limit(3)
+        .limit(limit)
   end
 
   def self.count_by_signup_date(start_date, end_date)
