@@ -419,6 +419,7 @@ PLATFORMS
 
 DEPENDENCIES
   active_model_serializers (~> 0.8.3)
+  addressable
   annotate
   azure
   aws-sdk
