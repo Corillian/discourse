@@ -38,6 +38,7 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
+    addressable (2.4.0)
     annotate (2.7.0)
       activerecord (>= 3.2, < 6.0)
       rake (~> 10.4)
@@ -161,12 +162,12 @@ GEM
       thor (~> 0.15)
     libv8 (3.16.14.13)
     listen (0.7.3)
-    macaddr (1.7.1)
-      systemu (~> 2.6.2)
     logster (1.0.1)
     loofah (2.0.3)
       nokogiri (>= 1.5.9)
     lru_redux (1.1.0)
+    macaddr (1.7.1)
+      systemu (~> 2.6.2)
     mail (2.6.3)
       mime-types (>= 1.16, < 3)
     memory_profiler (0.9.6)
@@ -420,8 +421,8 @@ PLATFORMS
 DEPENDENCIES
   active_model_serializers (~> 0.8.3)
   annotate
-  azure
   aws-sdk
+  azure
   babel-transpiler
   barber
   better_errors
