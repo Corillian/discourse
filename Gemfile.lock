@@ -48,7 +48,7 @@ GEM
       jmespath (~> 1.0)
     aws-sdk-resources (2.2.9)
       aws-sdk-core (= 2.2.9)
-    azure (0.7.0)
+    azure (0.7.1)
       addressable (~> 2.3)
       faraday (~> 0.9)
       faraday_middleware (~> 0.10)
@@ -419,7 +419,6 @@ PLATFORMS
 
 DEPENDENCIES
   active_model_serializers (~> 0.8.3)
-  addressable
   annotate
   azure
   aws-sdk

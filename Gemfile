@@ -58,7 +58,6 @@ gem 'fast_xs'
 
 gem 'fast_xor'
 
-gem 'addressable'
 gem 'azure', require: false
 
 # while we sort out https://github.com/sdsykes/fastimage/pull/46
