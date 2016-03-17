@@ -20,13 +20,15 @@ class Admin::EmailTemplatesController < Admin::AdminController
                      "system_messages.unblocked", "system_messages.user_automatically_blocked",
                      "system_messages.welcome_invite", "system_messages.welcome_user", "test_mailer",
                      "user_notifications.account_created", "user_notifications.admin_login",
-                     "user_notifications.authorize_email", "user_notifications.forgot_password",
+                     "user_notifications.confirm_new_email", "user_notifications.confirm_old_email",
+                     "user_notifications.notify_old_email", "user_notifications.forgot_password",
                      "user_notifications.set_password", "user_notifications.signup",
                      "user_notifications.signup_after_approval",
                      "user_notifications.user_invited_to_private_message_pm",
                      "user_notifications.user_invited_to_topic", "user_notifications.user_mentioned",
                      "user_notifications.user_posted", "user_notifications.user_posted_pm",
-                     "user_notifications.user_quoted", "user_notifications.user_replied"]
+                     "user_notifications.user_quoted", "user_notifications.user_replied",
+                     "user_notifications.user_linked"]
   end
 
   def show

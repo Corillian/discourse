@@ -37,7 +37,7 @@ class Backup
   end
 
   def after_remove_hook
-    remove_from_s3 if SiteSetting.enable_s3_backups?
+    remove_from_s3 if SiteSetting.enable_s3_backups? && !SiteSetting.s3_disable_cleanup?
     remove_from_azure if SiteSEttings.enable_azure_backups?
   end
 

@@ -380,7 +380,6 @@ tr_TR:
         not_supported: "Bildirimler bu tarayıcıda desteklenmiyor. Üzgünüz."
         perm_default: "Bildirimleri Etkinleştirin"
         perm_denied_btn: "Erişim İzni Reddedildi"
-        perm_denied_expl: "Bildirimler için gerekli izne sahip değilsiniz. Bildirimleri etkinleştirmek için tarayıcınızı kullanın, işlem tamamlandığında tuşa basın. (Masaüstü: Adres çubuğunda en soldaki simge. Mobil: 'Site Bilgisi'.)"
         disable: "Bildirimleri Devre Dışı Bırakın"
         currently_enabled: "(şu anda etkin)"
         enable: "Bildirimleri Etkinleştirin"
@@ -660,8 +659,8 @@ tr_TR:
       value_prop: "Bir hesap oluşturduğunuzda, tam olarak neyi okuyor olduğunuzu hatırlarız, böylece her zaman okumayı bırakmış olduğunuz yere geri gelirsiniz.  Ayrıca burada, yeni gönderiler yağıldığında email yoluyla bildirim alırsınız. Ve sevgiyi paylaşmak için gönderileri beğenebilirsiniz. :heartbeat:"
     summary:
       enabled_description: "Bu konunun özetini görüntülemektesiniz: topluluğun en çok ilgisini çeken gönderiler"
-      description: "<b>{{count}}</b> sayıda cevap var."
-      description_time: "Tahmini okunma süresi <b>{{readingTime}} dakika</b> olan <b>{{count}}</b> sayıda cevap var."
+      description: "<b>{{replyCount}}</b> sayıda cevap var."
+      description_time: "Tahmini okunma süresi <b>{{readingTime}} dakika</b> olan <b>{{replyCount}}</b> sayıda cevap var."
       enable: 'Bu Konuyu Özetle.'
       disable: 'Tüm Gönderileri Göster'
     deleted_filter:

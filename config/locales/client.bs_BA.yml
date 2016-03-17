@@ -94,12 +94,12 @@ bs_BA:
           few: "Prije par godina"
           other: "%{count} godine/a prije"
     share:
-      topic: 'podjeli link ka ovoj temi'
-      post: 'podjeli link ka ovom postu #%{postNumber}'
+      topic: 'podijeli link ka ovoj temi'
+      post: 'podijeli link ka ovom postu #%{postNumber}'
       close: 'zatvori'
-      twitter: 'podjeli link na Twitteru'
-      facebook: 'podjeli link na Facebooku'
-      google+: 'podjeli link na Google+'
+      twitter: 'podijeli link na Twitteru'
+      facebook: 'podijeli link na Facebook-u'
+      google+: 'podijeli link na Google+'
       email: 'pošalji ovaj link na email'
     topic_admin_menu: "topic admin actions"
     edit: 'izmjeni naslov i kategoriju ove teme'
@@ -515,8 +515,8 @@ bs_BA:
     last_post: Zadnji post
     summary:
       enabled_description: "You're viewing a summary of this topic: the most interesting posts as determined by the community."
-      description: "There are <b>{{count}}</b> replies."
-      description_time: "There are <b>{{count}}</b> replies with an estimated read time of <b>{{readingTime}} minutes</b>."
+      description: "There are <b>{{replyCount}}</b> replies."
+      description_time: "There are <b>{{replyCount}}</b> replies with an estimated read time of <b>{{readingTime}} minutes</b>."
       enable: 'Summarize This Topic'
       disable: 'Show All Posts'
     deleted_filter:

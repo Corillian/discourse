@@ -4,7 +4,7 @@
 **/
 Discourse.Dialect.inlineRegexp({
   start: '#',
-  matcher: /^#([\w-:]{1,50})/i,
+  matcher: /^#([\w-:]{1,101})/i,
   spaceOrTagBoundary: true,
 
   emitter: function(matches) {
@@ -15,7 +15,7 @@ Discourse.Dialect.inlineRegexp({
         result = categoryHashtagLookup && categoryHashtagLookup(slug);
 
     if (result) {
-      return ['a', { class: attributeClass, href: result }, '#', ["span", {}, slug]];
+      return ['a', { class: attributeClass, href: result[0] }, '#', ["span", {}, result[1]]];
     } else {
       return ['span', { class: attributeClass }, hashtag];
     }

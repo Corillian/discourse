@@ -11,37 +11,57 @@ class UserNotifications < ActionMailer::Base
   def signup(user, opts={})
     build_email(user.email,
                 template: "user_notifications.signup",
+                locale: user_locale(user),
                 email_token: opts[:email_token])
   end
 
   def signup_after_approval(user, opts={})
     build_email(user.email,
                 template: 'user_notifications.signup_after_approval',
+                locale: user_locale(user),
                 email_token: opts[:email_token],
-                new_user_tips: I18n.t('system_messages.usage_tips.text_body_template', base_url: Discourse.base_url))
+                new_user_tips: I18n.t('system_messages.usage_tips.text_body_template', base_url: Discourse.base_url, locale: locale))
   end
 
-  def authorize_email(user, opts={})
+  def notify_old_email(user, opts={})
     build_email(user.email,
-                template: "user_notifications.authorize_email",
+                template: "user_notifications.notify_old_email",
+                locale: user_locale(user),
+                new_email: opts[:new_email])
+  end
+
+  def confirm_old_email(user, opts={})
+    build_email(user.email,
+                template: "user_notifications.confirm_old_email",
+                locale: user_locale(user),
+                email_token: opts[:email_token])
+  end
+
+  def confirm_new_email(user, opts={})
+    build_email(user.email,
+                template: "user_notifications.confirm_new_email",
+                locale: user_locale(user),
                 email_token: opts[:email_token])
   end
 
   def forgot_password(user, opts={})
     build_email(user.email,
                 template: user.has_password? ? "user_notifications.forgot_password" : "user_notifications.set_password",
+                locale: user_locale(user),
                 email_token: opts[:email_token])
   end
 
   def admin_login(user, opts={})
     build_email(user.email,
                 template: "user_notifications.admin_login",
+                locale: user_locale(user),
                 email_token: opts[:email_token])
   end
 
   def account_created(user, opts={})
     build_email(user.email,
                 template: "user_notifications.account_created",
+                locale: user_locale(user),
                 email_token: opts[:email_token])
   end
 
@@ -62,6 +82,7 @@ class UserNotifications < ActionMailer::Base
     @site_name = SiteSetting.email_prefix.presence || SiteSetting.title
 
     @header_color = ColorScheme.hex_for_name('header_background')
+    @anchor_color = ColorScheme.hex_for_name('tertiary')
     @last_seen_at = short_date(@user.last_seen_at || @user.created_at)
 
     # A list of topics to show the user
@@ -104,6 +125,13 @@ class UserNotifications < ActionMailer::Base
   end
 
   def user_quoted(user, opts)
+    opts[:allow_reply_by_email] = true
+    opts[:use_site_subject] = true
+    opts[:show_category_in_subject] = true
+    notification_email(user, opts)
+  end
+
+  def user_linked(user, opts)
     opts[:allow_reply_by_email] = true
     opts[:use_site_subject] = true
     opts[:show_category_in_subject] = true
@@ -173,6 +201,10 @@ class UserNotifications < ActionMailer::Base
 
   protected
 
+  def user_locale(user)
+    (user.locale.present? && I18n.available_locales.include?(user.locale.to_sym)) ? user.locale : nil
+  end
+
   def email_post_markdown(post)
     result = "[email-indent]\n"
     result << "#{post.raw}\n\n"
@@ -185,16 +217,24 @@ class UserNotifications < ActionMailer::Base
     include UserNotificationsHelper
   end
 
-  def self.get_context_posts(post, topic_user)
+  def self.get_context_posts(post, topic_user, user)
+
+    if user.user_option.email_previous_replies == UserOption.previous_replies_type[:never]
+      return []
+    end
+
+    allowed_post_types = [Post.types[:regular]]
+    allowed_post_types << Post.types[:whisper] if topic_user.try(:user).try(:staff?)
+
     context_posts = Post.where(topic_id: post.topic_id)
                         .where("post_number < ?", post.post_number)
                         .where(user_deleted: false)
                         .where(hidden: false)
-                        .where(post_type: Topic.visible_post_types)
+                        .where(post_type: allowed_post_types)
                         .order('created_at desc')
                         .limit(SiteSetting.email_posts_context)
 
-    if topic_user && topic_user.last_emailed_post_number
+    if topic_user && topic_user.last_emailed_post_number && user.user_option.email_previous_replies == UserOption.previous_replies_type[:unless_emailed]
       context_posts = context_posts.where("post_number > ?", topic_user.last_emailed_post_number)
     end
 
@@ -220,25 +260,20 @@ class UserNotifications < ActionMailer::Base
       user_name = name unless name.blank?
     end
 
-    title = notification_data[:topic_title]
     allow_reply_by_email = opts[:allow_reply_by_email] unless user.suspended?
-    use_site_subject = opts[:use_site_subject]
-    add_re_to_subject = opts[:add_re_to_subject]
-    show_category_in_subject = opts[:show_category_in_subject]
-    use_template_html = opts[:use_template_html]
     original_username = notification_data[:original_username] || notification_data[:display_username]
 
     send_notification_email(
-      title: title,
+      title: notification_data[:topic_title],
       post: post,
       username: original_username,
       from_alias: user_name,
       allow_reply_by_email: allow_reply_by_email,
-      use_site_subject: use_site_subject,
-      add_re_to_subject: add_re_to_subject,
-      show_category_in_subject: show_category_in_subject,
+      use_site_subject: opts[:use_site_subject],
+      add_re_to_subject: opts[:add_re_to_subject],
+      show_category_in_subject: opts[:show_category_in_subject],
       notification_type: notification_type,
-      use_template_html: use_template_html,
+      use_template_html: opts[:use_template_html],
       user: user
     )
   end
@@ -253,6 +288,7 @@ class UserNotifications < ActionMailer::Base
     from_alias = opts[:from_alias]
     notification_type = opts[:notification_type]
     user = opts[:user]
+    locale = user_locale(user)
 
     # category name
     category = Topic.find_by(id: post.topic_id).category
@@ -269,13 +305,13 @@ class UserNotifications < ActionMailer::Base
 
     context = ""
     tu = TopicUser.get(post.topic_id, user)
-    context_posts = self.class.get_context_posts(post, tu)
+    context_posts = self.class.get_context_posts(post, tu, user)
 
     # make .present? cheaper
     context_posts = context_posts.to_a
 
     if context_posts.present?
-      context << "---\n*#{I18n.t('user_notifications.previous_discussion')}*\n"
+      context << "-- \n*#{I18n.t('user_notifications.previous_discussion')}*\n"
       context_posts.each do |cp|
         context << email_post_markdown(cp)
       end
@@ -285,11 +321,13 @@ class UserNotifications < ActionMailer::Base
     if opts[:use_template_html]
       topic_excerpt = post.excerpt.gsub("\n", " ") if post.is_first_post? && post.excerpt
     else
+      in_reply_to_post = post.reply_to_post if user.user_option.email_in_reply_to
       html = UserNotificationRenderer.new(Rails.configuration.paths["app/views"]).render(
         template: 'email/notification',
         format: :html,
         locals: { context_posts: context_posts,
                   post: post,
+                  in_reply_to_post: in_reply_to_post,
                   classes: RTL.new(user).css_class
         }
       )
@@ -311,9 +349,10 @@ class UserNotifications < ActionMailer::Base
       context: context,
       username: username,
       add_unsubscribe_link: !user.staged,
-      add_unsubscribe_via_email_link: user.mailing_list_mode,
+      add_unsubscribe_via_email_link: user.user_option.mailing_list_mode,
       unsubscribe_url: post.topic.unsubscribe_url,
       allow_reply_by_email: allow_reply_by_email,
+      only_reply_by_email: allow_reply_by_email && user.staged,
       use_site_subject: use_site_subject,
       add_re_to_subject: add_re_to_subject,
       show_category_in_subject: show_category_in_subject,
@@ -323,7 +362,8 @@ class UserNotifications < ActionMailer::Base
       html_override: html,
       site_description: SiteSetting.site_description,
       site_title: SiteSetting.title,
-      style: :notification
+      style: :notification,
+      locale: locale
     }
 
     # If we have a display name, change the from address

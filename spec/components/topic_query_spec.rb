@@ -232,6 +232,33 @@ describe TopicQuery do
 
           # returns the topics in reverse posters order if requested" do
           expect(ids_in_order('posters', false)).to eq([archived_topic, closed_topic, invisible_topic, future_topic, regular_topic, pinned_topic].map(&:id))
+    
+          # sets a custom field for each topic to emulate a plugin
+          regular_topic.custom_fields["sheep"] = 26
+          pinned_topic.custom_fields["sheep"] = 47
+          archived_topic.custom_fields["sheep"] = 69
+          invisible_topic.custom_fields["sheep"] = 12
+          closed_topic.custom_fields["sheep"] = 31
+          future_topic.custom_fields["sheep"] = 53
+          
+          regular_topic.save
+          pinned_topic.save
+          archived_topic.save
+          invisible_topic.save
+          closed_topic.save
+          future_topic.save
+
+          # adds the custom field as a viable sort option
+          class ::TopicQuery
+            SORTABLE_MAPPING["sheep"] = "custom_fields.sheep"
+          end
+          # returns the topics in the sheep order if requested" do
+          expect(ids_in_order('sheep')).to eq([archived_topic, future_topic, pinned_topic, closed_topic, regular_topic, invisible_topic].map(&:id))
+
+          # returns the topics in reverse sheep order if requested" do
+          expect(ids_in_order('sheep', false)).to eq([invisible_topic, regular_topic, closed_topic, pinned_topic, future_topic, archived_topic].map(&:id))
+    
+
         end
 
       end
@@ -294,8 +321,8 @@ describe TopicQuery do
 
       context 'user with auto_track_topics list_unread' do
         before do
-          user.auto_track_topics_after_msecs = 0
-          user.save
+          user.user_option.auto_track_topics_after_msecs = 0
+          user.user_option.save
         end
 
         it 'only contains the partially read topic' do
@@ -360,8 +387,8 @@ describe TopicQuery do
 
         expect(topic_query.list_new.topics).to eq([new_topic])
 
-        user.new_topic_duration_minutes = 5
-        user.save
+        user.user_option.new_topic_duration_minutes = 5
+        user.user_option.save
         new_topic.created_at = 10.minutes.ago
         new_topic.save
         expect(topic_query.list_new.topics).to eq([])
@@ -561,8 +588,8 @@ describe TopicQuery do
         let!(:fully_read_archived) { Fabricate(:post, user: creator).topic }
 
         before do
-          user.auto_track_topics_after_msecs = 0
-          user.save
+          user.user_option.auto_track_topics_after_msecs = 0
+          user.user_option.save
           TopicUser.update_last_read(user, partially_read.id, 0, 0)
           TopicUser.update_last_read(user, fully_read.id, 1, 0)
           TopicUser.update_last_read(user, fully_read_closed.id, 1, 0)
