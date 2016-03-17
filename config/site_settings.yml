@@ -64,6 +64,9 @@ basic:
   allow_user_locale:
     client: true
     default: false
+  set_locale_from_accept_language_header:
+    default: false
+    validator: "AllowUserLocaleEnabledValidator"
   suggested_topics:
     client: true
     default: 5
@@ -234,6 +237,15 @@ login:
   twitter_consumer_secret:
     default: ''
     regex: "^[a-zA-Z0-9_+-]+$"
+  enable_instagram_logins:
+    client: true
+    default: false
+  instagram_consumer_key:
+    default: ''
+    regex: "^[a-z0-9]+$"
+  instagram_consumer_secret:
+    default: ''
+    regex: "^[a-z0-9]+$"
   enable_facebook_logins:
     client: true
     default: false
@@ -292,7 +304,11 @@ users:
     default: "admin|moderator|administrator|mod|sys|system|community|info|you|name|username|user|nickname|discourse|discourseorg|discourseforum|support"
   min_password_length:
     client: true
-    default: 8
+    default: 10
+    min: 1
+  min_admin_password_length:
+    client: true
+    default: 15
     min: 1
   block_common_passwords: true
   enforce_global_nicknames:
@@ -430,9 +446,6 @@ posting:
   max_reply_history:
     default: 1
     client: true
-  experimental_reply_expansion:
-    default: false
-    client: true
   post_undo_action_window_mins: 10
   max_mentions_per_post: 10
   max_users_notified_per_group_mention: 100
@@ -496,19 +509,24 @@ email:
   email_time_window_mins:
     default: 10
     client: true
+  private_email_time_window_seconds: 20
   email_posts_context: 5
   digest_min_excerpt_length: 100
   digest_topics: 20
-  suppress_digest_email_after_days: 365
+  delete_digest_email_after_days: 365
   disable_digest_emails:
     default: false
     client: true
   email_custom_headers: 'Auto-Submitted: auto-generated'
   email_subject: '[%{site_name}] %{optional_pm}%{optional_cat}%{topic_title}'
-  reply_by_email_enabled: false
+  reply_by_email_enabled:
+    default: false
+    validator: "ReplyByEmailEnabledValidator"
   reply_by_email_address:
     default: ''
     validator: "ReplyByEmailAddressValidator"
+  manual_polling_enabled:
+    default: false
   pop3_polling_enabled:
     default: false
     validator: "POP3PollingEnabledSettingValidator"
@@ -538,6 +556,9 @@ email:
     default: true
   unsubscribe_via_email_footer:
     default: false
+  delete_email_logs_after_days:
+    default: 365
+    min: 0
 
 files:
   max_image_size_kb: 3072
@@ -618,8 +639,8 @@ files:
     client: true
     regex: '^((https?:)?\/)?\/.+[^\/]'
     shadowed_by_global: true
-
   default_opengraph_image_url: ''
+  allow_all_attachments_for_group_messages: false
 
 trust:
   default_trust_level:
@@ -762,6 +783,14 @@ rate_limits:
   tl2_additional_likes_per_day_multiplier: 1.5
   tl3_additional_likes_per_day_multiplier: 2
   tl4_additional_likes_per_day_multiplier: 3
+  alert_admins_if_errors_per_minute:
+    client: true
+    shadowed_by_global: true
+    default: 0
+  alert_admins_if_errors_per_hour:
+    client: true
+    shadowed_by_global: true
+    default: 0
 
 developer:
   force_hostname:
@@ -869,7 +898,7 @@ backups:
     default: false
   maximum_backups:
     client: true
-    default: 7
+    default: 5
     shadowed_by_global: true
   automatic_backups_enabled:
     default: true
@@ -886,6 +915,8 @@ backups:
     default: ''
     regex: "^[^A-Z_.]+$" # can't use '.' when using HTTPS
     shadowed_by_global: true
+  s3_disable_cleanup:
+    default: false
   enable_azure_backups:
     client: false
     default: false
@@ -1063,11 +1094,19 @@ uncategorized:
 user_preferences:
   default_email_digest_frequency:
     enum: 'DigestEmailSiteSetting'
-    default: 7
+    default: 10080
   default_email_private_messages: true
   default_email_direct: true
   default_email_mailing_list_mode: false
+  disable_mailing_list_mode:
+    default: false
+    client: true
   default_email_always: false
+  default_email_previous_replies:
+    enum: 'PreviousRepliesSiteSetting'
+    default: 2
+  default_email_in_reply_to:
+    default: true
 
   default_other_new_topic_duration_minutes:
     enum: 'NewTopicDurationSiteSetting'
@@ -1080,6 +1119,9 @@ user_preferences:
   default_other_dynamic_favicon: false
   default_other_disable_jump_reply: false
   default_other_edit_history_public: false
+  default_other_like_notification_frequency:
+    enum: 'LikeNotificationFrequencySiteSetting'
+    default: 1
 
   default_topics_automatic_unpin:
     default: true
