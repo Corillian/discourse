@@ -266,7 +266,10 @@ login:
     client: true
     default: false
   enable_sso_provider: false
-  sso_url: ''
+  verbose_sso_logging: false
+  sso_url:
+    default: ''
+    regex: '^https?:\/\/.+[^\/]$'
   sso_secret: ''
   sso_overrides_email: false
   sso_overrides_username: false
@@ -502,6 +505,8 @@ posting:
   notify_about_queued_posts_after:
     default: 24
     min: 0
+  auto_close_messages_post_count: 500
+  auto_close_topics_post_count: 10000
 
 email:
   email_time_window_mins:
@@ -562,10 +567,22 @@ email:
     min: 0
   max_emails_per_day_per_user: 100
   enable_staged_users: true
+  auto_generated_whitelist:
+    default: ''
+    type: list
+  block_auto_generated_emails: true
+  bounce_score_threshold:
+    default: 4
+    min: 1
+
 
 files:
-  max_image_size_kb: 3072
-  max_attachment_size_kb: 3072
+  max_image_size_kb:
+    client: true
+    default: 3072
+  max_attachment_size_kb:
+    client: true
+    default: 3072
   authorized_extensions:
     client: true
     default: 'jpg|jpeg|png|gif'
@@ -1086,6 +1103,17 @@ uncategorized:
     default: -1
     hidden: true
 
+  bootstrap_mode_min_users:
+    default: 50
+    client: true
+    min: 0
+    max: 5000
+
+  bootstrap_mode_enabled:
+    default: false
+    client: true
+    hidden: true
+
   automatically_unpin_topics:
     default: true
     client: true
@@ -1093,6 +1121,8 @@ uncategorized:
   read_time_word_count:
     default: 500
     client: true
+
+  topic_page_title_includes_category: true
 
 user_preferences:
   default_email_digest_frequency:
@@ -1140,3 +1170,57 @@ user_preferences:
   default_categories_muted:
     type: category_list
     default: ''
+
+tags:
+  tagging_enabled:
+    client: true
+    default: false
+    refresh: true
+  tag_style:
+    client: true
+    type: enum
+    default: 'simple'
+    choices:
+     - simple
+     - bullet
+     - box
+    preview: '<div class="discourse-tags"><span class="discourse-tag {{value}}">tag1</span><span class="discourse-tag {{value}}">tag2</span></div>'
+  max_tags_per_topic:
+    default: 5
+    client: true
+  max_tag_length:
+    default: 20
+    client: true
+  min_trust_to_create_tag:
+    default: 3
+    enum: 'TrustLevelSetting'
+  min_trust_level_to_tag_topics:
+    default: 0
+    enum: 'TrustLevelSetting'
+    client: true
+  max_tag_search_results:
+    client: true
+    default: 5
+    min: 1
+  show_filter_by_tag:
+    client: true
+    default: false
+    refresh: true
+  max_tags_in_filter_list:
+    default: 30
+    min: 1
+    refresh: true
+  tags_sort_alphabetically:
+    client: true
+    default: false
+    refresh: true
+  staff_tags:
+    type: list
+    client: true
+    default: ''
+  suppress_overlapping_tags_in_list:
+    default: false
+    client: true
+  remove_muted_tags_from_latest:
+    default: false
+

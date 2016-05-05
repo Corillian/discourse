@@ -114,10 +114,16 @@ module Jobs
       end
 
       if EmailLog.reached_max_emails?(user)
-        return skip_message(I18n.t('email_log.exceeded_limit'))
+        return skip_message(I18n.t('email_log.exceeded_emails_limit'))
       end
 
-      message = UserNotifications.send(type, user, email_args)
+      if (user.user_stat.try(:bounce_score) || 0) >= SiteSetting.bounce_score_threshold
+        return skip_message(I18n.t('email_log.exceeded_bounces_limit'))
+      end
+
+      message = EmailLog.unique_email_per_post(post, user) do
+        UserNotifications.send(type, user, email_args)
+      end
 
       # Update the to address if we have a custom one
       if message && to_address.present?

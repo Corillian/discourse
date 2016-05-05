@@ -81,8 +81,8 @@ createWidget('topic-map-summary', {
 
     if (attrs.topicLikeCount) {
       contents.push(h('li.secondary', [
-        numberNode(attrs.likeCount),
-        h('h4', I18n.t('likes_lowercase', { count: attrs.likeCount }))
+        numberNode(attrs.topicLikeCount),
+        h('h4', I18n.t('likes_lowercase', { count: attrs.topicLikeCount }))
       ]));
     }
 
@@ -125,6 +125,7 @@ createWidget('topic-map-link', {
 
 createWidget('topic-map-expanded', {
   tagName: 'section.topic-map-expanded',
+  buildKey: attrs => `topic-map-expanded-${attrs.id}`,
 
   defaultState() {
     return { allLinksShown: false };

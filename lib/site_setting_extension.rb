@@ -121,7 +121,8 @@ module SiteSettingExtension
       # exists it will be used instead of the setting and the setting will be hidden.
       # Useful for things like API keys on multisite.
       if opts[:shadowed_by_global] && GlobalSetting.respond_to?(name)
-        unless (val = GlobalSetting.send(name)) == ''.freeze
+        val = GlobalSetting.send(name)
+        unless val.nil? || (val == ''.freeze)
           hidden_settings << name
           shadowed_settings << name
           current_value = val
@@ -368,6 +369,12 @@ module SiteSettingExtension
     else
       raise ArgumentError.new("Either no setting named '#{name}' exists or value provided is invalid")
     end
+  end
+
+  def set_and_log(name, value, user=Discourse.system_user)
+    prev_value = send(name)
+    set(name, value)
+    StaffActionLogger.new(user).log_site_setting_change(name, prev_value, value) if has_setting?(name)
   end
 
   protected
