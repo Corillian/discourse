@@ -147,15 +147,24 @@ class PostCreator
       track_latest_on_category
       enqueue_jobs
       BadgeGranter.queue_badge_grant(Badge::Trigger::PostRevision, post: @post)
-      auto_notify_for_tags
 
       trigger_after_events(@post)
 
-      auto_close
+      auto_close unless @opts[:import_mode]
     end
 
     if @post || @spam
       handle_spam unless @opts[:import_mode]
+    end
+
+    @post
+  end
+
+  def create!
+    create
+
+    if !self.errors.full_messages.empty?
+      raise ActiveRecord::RecordNotSaved.new("Failed to create post", self)
     end
 
     @post
@@ -171,6 +180,10 @@ class PostCreator
 
   def self.create(user, opts)
     PostCreator.new(user, opts).create
+  end
+
+  def self.create!(user, opts)
+    PostCreator.new(user, opts).create!
   end
 
   def self.before_create_tasks(post)
@@ -376,6 +389,8 @@ class PostCreator
   end
 
   def update_user_counts
+    return if @opts[:import_mode]
+
     @user.create_user_stat if @user.user_stat.nil?
 
     if @user.user_stat.first_post_created_at.nil?
@@ -412,18 +427,20 @@ class PostCreator
   def track_topic
     return if @opts[:auto_track] == false
 
-    TopicUser.change(@post.user_id,
-                     @topic.id,
-                     posted: true,
-                     last_read_post_number: @post.post_number,
-                     highest_seen_post_number: @post.post_number)
+    unless @user.user_option.disable_jump_reply?
+      TopicUser.change(@post.user_id,
+                       @topic.id,
+                       posted: true,
+                       last_read_post_number: @post.post_number,
+                       highest_seen_post_number: @post.post_number)
 
 
-    # assume it took us 5 seconds of reading time to make a post
-    PostTiming.record_timing(topic_id: @post.topic_id,
-                             user_id: @post.user_id,
-                             post_number: @post.post_number,
-                             msecs: 5000)
+      # assume it took us 5 seconds of reading time to make a post
+      PostTiming.record_timing(topic_id: @post.topic_id,
+                               user_id: @post.user_id,
+                               post_number: @post.post_number,
+                               msecs: 5000)
+    end
 
     if @user.staged
       TopicUser.auto_watch(@user.id, @topic.id)
@@ -435,15 +452,6 @@ class PostCreator
   def enqueue_jobs
     return unless @post && !@post.errors.present?
     PostJobsEnqueuer.new(@post, @topic, new_topic?, {import_mode: @opts[:import_mode]}).enqueue_jobs
-  end
-
-  def auto_notify_for_tags
-    tags = DiscourseTagging.tags_for_saving(@opts[:tags], @guardian)
-    if tags.present?
-      @topic.custom_fields.update(DiscourseTagging::TAGS_FIELD_NAME => tags)
-      @topic.save
-      DiscourseTagging.auto_notify_for(tags, @topic)
-    end
   end
 
   def new_topic?

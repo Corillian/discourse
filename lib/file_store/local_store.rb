@@ -11,19 +11,16 @@ module FileStore
 
     def remove_file(url)
       return unless is_relative?(url)
-      path = public_dir + url
-      tombstone = public_dir + url.sub("/uploads/", "/tombstone/")
-      FileUtils.mkdir_p(Pathname.new(tombstone).dirname)
-      FileUtils.move(path, tombstone, :force => true)
-    rescue Errno::ENOENT
-      # don't care if the file isn't there
+      source = "#{public_dir}#{url}"
+      return unless File.exists?(source)
+      destination = "#{public_dir}#{url.sub("/uploads/", "/uploads/tombstone/")}"
+      dir = Pathname.new(destination).dirname
+      FileUtils.mkdir_p(dir) unless Dir.exists?(dir)
+      FileUtils.move(source, destination, force: true)
     end
 
     def has_been_uploaded?(url)
-      return false if url.blank?
-      return true if is_relative?(url)
-      return true if is_local?(url)
-      false
+      is_relative?(url) || is_local?(url)
     end
 
     def absolute_base_url
@@ -51,6 +48,11 @@ module FileStore
       "#{relative_base_url}/#{upload.sha1}"
     end
 
+    def cdn_url(url)
+      return url if Discourse.asset_host.blank?
+      url.sub(Discourse.base_url_no_prefix, Discourse.asset_host)
+    end
+
     def path_for(upload)
       url = upload.try(:url)
       "#{public_dir}#{upload.url}" if url && url[0] == "/" && url[1] != "/"
@@ -65,7 +67,8 @@ module FileStore
     end
 
     def copy_file(file, path)
-      FileUtils.mkdir_p(Pathname.new(path).dirname)
+      dir = Pathname.new(path).dirname
+      FileUtils.mkdir_p(dir) unless Dir.exists?(dir)
       # move the file to the right location
       # not using mv, cause permissions are no good on move
       File.open(path, "wb") { |f| f.write(file.read) }
@@ -86,7 +89,7 @@ module FileStore
     end
 
     def tombstone_dir
-      public_dir + relative_base_url.sub("/uploads/", "/tombstone/")
+      "#{public_dir}#{relative_base_url.sub("/uploads/", "/uploads/tombstone/")}"
     end
 
   end

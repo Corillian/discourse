@@ -18,6 +18,7 @@ class User < ActiveRecord::Base
   has_many :notifications, dependent: :destroy
   has_many :topic_users, dependent: :destroy
   has_many :category_users, dependent: :destroy
+  has_many :tag_users, dependent: :destroy
   has_many :topics
   has_many :user_open_ids, dependent: :destroy
   has_many :user_actions, dependent: :destroy
@@ -71,7 +72,7 @@ class User < ActiveRecord::Base
   validates_presence_of :username
   validate :username_validator, if: :username_changed?
   validates :email, presence: true, uniqueness: true
-  validates :email, email: true, if: :email_changed?
+  validates :email, email: true, if: Proc.new { |u| !u.staged && u.email_changed? }
   validate :password_validator
   validates :name, user_full_name: true, if: :name_changed?
   validates :ip_address, allowed_ip_address: {on: :create, message: :signup_not_allowed}
@@ -409,10 +410,10 @@ class User < ActiveRecord::Base
     self.password_hash == hash_password(password, salt)
   end
 
-  def first_day_user?
+  def new_user_posting_on_first_day?
     !staff? &&
     trust_level < TrustLevel[2] &&
-    created_at >= 24.hours.ago
+    (self.first_post_created_at.nil? || self.first_post_created_at >= 24.hours.ago)
   end
 
   def new_user?
@@ -476,6 +477,7 @@ class User < ActiveRecord::Base
     update_previous_visit(now)
     # using update_column to avoid the AR transaction
     update_column(:last_seen_at, now)
+    update_column(:first_seen_at, now) unless self.first_seen_at
   end
 
   def self.gravatar_template(email)
@@ -611,7 +613,10 @@ class User < ActiveRecord::Base
   # Use this helper to determine if the user has a particular trust level.
   # Takes into account admin, etc.
   def has_trust_level?(level)
-    raise "Invalid trust level #{level}" unless TrustLevel.valid?(level)
+    unless TrustLevel.valid?(level)
+      raise InvalidTrustLevel.new("Invalid trust level #{level}")
+    end
+
     admin? || moderator? || staged? || TrustLevel.compare(trust_level, level)
   end
 
@@ -773,10 +778,11 @@ class User < ActiveRecord::Base
   def associated_accounts
     result = []
 
-    result << "Twitter(#{twitter_user_info.screen_name})" if twitter_user_info
-    result << "Facebook(#{facebook_user_info.username})"  if facebook_user_info
-    result << "Google(#{google_user_info.email})"         if google_user_info
-    result << "Github(#{github_user_info.screen_name})"   if github_user_info
+    result << "Twitter(#{twitter_user_info.screen_name})"               if twitter_user_info
+    result << "Facebook(#{facebook_user_info.username})"                if facebook_user_info
+    result << "Google(#{google_user_info.email})"                       if google_user_info
+    result << "Github(#{github_user_info.screen_name})"                 if github_user_info
+    result << "#{oauth2_user_info.provider}(#{oauth2_user_info.email})" if oauth2_user_info
 
     user_open_ids.each do |oid|
       result << "OpenID #{oid.url[0..20]}...(#{oid.email})"
@@ -849,6 +855,11 @@ class User < ActiveRecord::Base
     User.where(admin: true).where.not(id: id).where.not(id: Discourse::SYSTEM_USER_ID).blank?
   end
 
+  def logged_out
+    MessageBus.publish "/logout", self.id, user_ids: [self.id]
+    DiscourseEvent.trigger(:user_logged_out, self)
+  end
+
   protected
 
   def badge_grant
@@ -905,7 +916,7 @@ class User < ActiveRecord::Base
   end
 
   def hash_password(password, salt)
-    raise "password is too long" if password.size > User.max_password_length
+    raise StandardError.new("password is too long") if password.size > User.max_password_length
     Pbkdf2.hash_password(password, salt, Rails.configuration.pbkdf2_iterations, Rails.configuration.pbkdf2_algorithm)
   end
 
@@ -947,6 +958,8 @@ class User < ActiveRecord::Base
   end
 
   def set_default_categories_preferences
+    return if self.staged?
+
     values = []
 
     %w{watching tracking muted}.each do |s|
@@ -967,7 +980,7 @@ class User < ActiveRecord::Base
                      .joins('INNER JOIN user_stats AS us ON us.user_id = users.id')
                      .where("created_at < ?", SiteSetting.purge_unactivated_users_grace_period_days.days.ago)
                      .where('NOT admin AND NOT moderator')
-                     .limit(100)
+                     .limit(200)
 
     destroyer = UserDestroyer.new(Discourse.system_user)
     to_destroy.each do |u|
@@ -991,7 +1004,6 @@ class User < ActiveRecord::Base
       update_column(:previous_visit_at, last_seen_at)
     end
   end
-
 
 end
 
@@ -1035,6 +1047,8 @@ end
 #  registration_ip_address :inet
 #  trust_level_locked      :boolean          default(FALSE), not null
 #  staged                  :boolean          default(FALSE), not null
+#  first_seen_at           :datetime
+#  auth_token_updated_at   :datetime
 #
 # Indexes
 #

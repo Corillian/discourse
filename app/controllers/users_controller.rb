@@ -211,7 +211,6 @@ class UsersController < ApplicationController
   def is_local_username
     usernames = params[:usernames]
     usernames = [params[:username]] if usernames.blank?
-    usernames.each(&:downcase!)
 
     groups = Group.where(name: usernames).pluck(:name)
     mentionable_groups =
@@ -223,6 +222,7 @@ class UsersController < ApplicationController
       end
 
     usernames -= groups
+    usernames.each(&:downcase!)
 
     result = User.where(staged: false)
                  .where(username_lower: usernames)
@@ -343,7 +343,7 @@ class UsersController < ApplicationController
         ),
         errors: user.errors.to_hash,
         values: user.attributes.slice('name', 'username', 'email'),
-        is_developer: UsernameCheckerService.new.is_developer?(user.email)
+        is_developer: UsernameCheckerService.is_developer?(user.email)
       }
     end
   rescue ActiveRecord::StatementInvalid
@@ -471,6 +471,7 @@ class UsersController < ApplicationController
   end
 
   def account_created
+    @custom_body_class = "static-account-created"
     @message = session['user_created_message'] || I18n.t('activation.missing_session')
     expires_now
     render layout: 'no_ember'
@@ -674,9 +675,21 @@ class UsersController < ApplicationController
     end
 
     def user_params
-      params.permit(:name, :email, :password, :username, :active)
-            .merge(ip_address: request.remote_ip, registration_ip_address: request.remote_ip,
-                   locale: user_locale)
+      result = params.permit(:name, :email, :password, :username)
+                     .merge(ip_address: request.remote_ip,
+                            registration_ip_address: request.remote_ip,
+                            locale: user_locale)
+
+      if !UsernameCheckerService.is_developer?(result['email']) &&
+          is_api? &&
+          current_user.present? &&
+          current_user.admin?
+
+        result.merge!(params.permit(:active, :staged))
+      end
+
+
+      result
     end
 
     def user_locale

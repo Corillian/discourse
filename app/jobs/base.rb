@@ -148,7 +148,7 @@ module Jobs
           t = Thread.new do
             begin
               RailsMultisite::ConnectionManagement.establish_connection(db: db)
-              I18n.locale = SiteSetting.default_locale
+              I18n.locale = SiteSetting.default_locale || "en"
               I18n.ensure_all_loaded!
               begin
                 execute(opts)
@@ -173,10 +173,9 @@ module Jobs
 
       if exceptions.length > 0
         exceptions.each do |exception_hash|
-          Discourse.handle_job_exception(exception_hash[:ex],
-                error_context(opts, exception_hash[:code], exception_hash[:other]))
+          Discourse.handle_job_exception(exception_hash[:ex], error_context(opts, exception_hash[:code], exception_hash[:other]))
         end
-        raise HandledExceptionWrapper.new exceptions[0][:ex]
+        raise HandledExceptionWrapper.new(exceptions[0][:ex])
       end
 
       nil

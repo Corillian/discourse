@@ -65,6 +65,14 @@ class Post < ActiveRecord::Base
   scope :with_topic_subtype, ->(subtype) { joins(:topic).where('topics.subtype = ?', subtype) }
   scope :visible, -> { joins(:topic).where('topics.visible = true').where(hidden: false) }
   scope :secured, lambda { |guardian| where('posts.post_type in (?)', Topic.visible_post_types(guardian && guardian.user))}
+  scope :for_mailing_list, ->(user, since) {
+     created_since(since)
+    .joins(:topic)
+    .where(topic: Topic.for_digest(user, 100.years.ago)) # we want all topics with new content, regardless when they were created
+    .order('posts.created_at ASC')
+  }
+  scope :mailing_list_new_topics, ->(user, since) { for_mailing_list(user, since).where('topics.created_at > ?', since) }
+  scope :mailing_list_updates,    ->(user, since) { for_mailing_list(user, since).where('topics.created_at <= ?', since) }
 
   delegate :username, to: :user
 
@@ -101,7 +109,7 @@ class Post < ActiveRecord::Base
   end
 
   def limit_posts_per_day
-    if user && user.first_day_user? && post_number && post_number > 1
+    if user && user.new_user_posting_on_first_day? && post_number && post_number > 1
       RateLimiter.new(user, "first-day-replies-per-day", SiteSetting.max_replies_in_first_day, 1.day.to_i)
     end
   end
@@ -189,12 +197,16 @@ class Post < ActiveRecord::Base
     if cook_method == Post.cook_methods[:email]
       cooked = EmailCook.new(raw).cook
     else
-      cooked = if !self.user || SiteSetting.tl3_links_no_follow || !self.user.has_trust_level?(TrustLevel[3])
+      cloned = args.dup
+      cloned[1] ||= {}
+
+      post_user = self.user
+      cloned[1][:user_id] = post_user.id if post_user
+
+      cooked = if !post_user || SiteSetting.tl3_links_no_follow || !post_user.has_trust_level?(TrustLevel[3])
                  post_analyzer.cook(*args)
                else
                  # At trust level 3, we don't apply nofollow to links
-                 cloned = args.dup
-                 cloned[1] ||= {}
                  cloned[1][:omit_nofollow] = true
                  post_analyzer.cook(*cloned)
                end
@@ -375,6 +387,10 @@ class Post < ActiveRecord::Base
     else
       "/404"
     end
+  end
+
+  def unsubscribe_url(user)
+    "#{Discourse.base_url}/email/unsubscribe/#{UnsubscribeKey.create_key_for(user, self)}"
   end
 
   def self.url(slug, topic_id, post_number)
@@ -692,6 +708,7 @@ end
 # Indexes
 #
 #  idx_posts_created_at_topic_id            (created_at,topic_id)
+#  idx_posts_deleted_posts                  (topic_id,post_number)
 #  idx_posts_user_id_deleted_at             (user_id)
 #  index_posts_on_reply_to_post_number      (reply_to_post_number)
 #  index_posts_on_topic_id_and_post_number  (topic_id,post_number) UNIQUE

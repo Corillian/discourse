@@ -1,5 +1,6 @@
 import DiscourseURL from 'discourse/lib/url';
 import Composer from 'discourse/models/composer';
+import { scrollTopFor } from 'discourse/lib/offset-calculator';
 
 const bindings = {
   '!':               {postAction: 'showFlags'},
@@ -15,6 +16,7 @@ const bindings = {
   'd':               {postAction: 'deletePost'},
   'e':               {postAction: 'editPost'},
   'end':             {handler: 'goToLastPost', anonymous: true},
+  'command+down':    {handler: 'goToLastPost', anonymous: true},
   'f':               {handler: 'toggleBookmarkTopic'},
   'g h':             {path: '/', anonymous: true},
   'g l':             {path: '/latest', anonymous: true},
@@ -26,13 +28,14 @@ const bindings = {
   'g p':             {path: '/my/activity'},
   'g m':             {path: '/my/messages'},
   'home':            {handler: 'goToFirstPost', anonymous: true},
+  'command+up':      {handler: 'goToFirstPost', anonymous: true},
   'j':               {handler: 'selectDown', anonymous: true},
   'k':               {handler: 'selectUp', anonymous: true},
   'l':               {click: '.topic-post.selected button.toggle-like'},
-  'm m':             {click: 'div.notification-options li[data-id="0"] a'}, // mark topic as muted
-  'm r':             {click: 'div.notification-options li[data-id="1"] a'}, // mark topic as regular
-  'm t':             {click: 'div.notification-options li[data-id="2"] a'}, // mark topic as tracking
-  'm w':             {click: 'div.notification-options li[data-id="3"] a'}, // mark topic as watching
+  'm m':             {handler: 'setTrackingToMuted'}, // mark topic as muted
+  'm r':             {handler: 'setTrackingToRegular'}, // mark topic as regular
+  'm t':             {handler: 'setTrackingToTracking'}, // mark topic as tracking
+  'm w':             {handler: 'setTrackingToWatching'}, // mark topic as watching
   'o,enter':         {click: '.topic-list tr.selected a.title', anonymous: true}, // open selected topic
   'p':               {handler: 'showCurrentUser'},
   'q':               {handler: 'quoteReply'},
@@ -114,7 +117,7 @@ export default {
 
   _jumpTo(direction) {
     if ($('.container.posts').length) {
-      this.container.lookup('controller:topic-progress').send(direction);
+      this.container.lookup('controller:topic').send(direction);
     }
   },
 
@@ -157,7 +160,7 @@ export default {
   },
 
   toggleProgress() {
-    this.container.lookup('controller:topic-progress').send('toggleExpansion', {highlight: true});
+    this.appEvents.trigger('topic-progress:keyboard-trigger', { type: 'jump' });
   },
 
   toggleSearch(event) {
@@ -174,6 +177,22 @@ export default {
 
   showHelpModal() {
     this.container.lookup('controller:application').send('showKeyboardShortcutsHelp');
+  },
+
+  setTrackingToMuted(event) {
+    this.appEvents.trigger('topic-notifications-button:keyboard-trigger', {type: 'notification', id: 0, event});
+  },
+
+  setTrackingToRegular(event) {
+    this.appEvents.trigger('topic-notifications-button:keyboard-trigger', {type: 'notification', id: 1, event});
+  },
+
+  setTrackingToTracking(event) {
+    this.appEvents.trigger('topic-notifications-button:keyboard-trigger', {type: 'notification', id: 2, event});
+  },
+
+  setTrackingToWatching(event) {
+    this.appEvents.trigger('topic-notifications-button:keyboard-trigger', {type: 'notification', id: 3, event});
   },
 
   sendToTopicListItemView(action) {
@@ -294,16 +313,19 @@ export default {
       $articles.removeClass('selected');
       $article.addClass('selected');
 
-      if ($article.is('.topic-list-item')) {
-        this.sendToTopicListItemView('select');
-      }
-
       if ($article.is('.topic-post')) {
         $('a.tabLoc', $article).focus();
-      }
+        this._scrollToPost($article);
 
-      this._scrollList($article, direction);
+      } else {
+        this._scrollList($article, direction);
+      }
     }
+  },
+
+  _scrollToPost($article) {
+    const pos = $article.offset();
+    $(window).scrollTop(Math.ceil(pos.top - scrollTopFor(pos.top)));
   },
 
   _scrollList($article) {

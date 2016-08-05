@@ -1,3 +1,5 @@
+import { defaultHomepage } from 'discourse/lib/utilities';
+
 export default function() {
   // Error page
   this.route('exception', { path: '/exception' });
@@ -45,13 +47,14 @@ export default function() {
     this.route('categoryWithID', { path: '/c/:parentSlug/:slug/:id' });
 
     // homepage
-    this.route(Discourse.Utilities.defaultHomepage(), { path: '/' });
+    this.route(defaultHomepage(), { path: '/' });
   });
 
   this.resource('group', { path: '/groups/:name' }, function() {
+    this.route('members');
+    this.route('posts');
     this.route('topics');
     this.route('mentions');
-    this.route('members');
     this.route('messages');
   });
 
@@ -129,5 +132,9 @@ export default function() {
       this.route('showCategory' + filter.capitalize(), {path: '/c/:category/:tag_id/l/' + filter});
       this.route('showParentCategory' + filter.capitalize(), {path: '/c/:parent_category/:category/:tag_id/l/' + filter});
     });
+  });
+
+  this.resource('tagGroups', {path: '/tag_groups'}, function() {
+    this.route('show', {path: '/:id'});
   });
 }

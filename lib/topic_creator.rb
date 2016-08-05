@@ -39,6 +39,8 @@ class TopicCreator
 
   def create
     topic = Topic.new(setup_topic_params)
+    setup_tags(topic)
+
     DiscourseEvent.trigger(:before_create_topic, topic, self)
 
     setup_auto_close_time(topic)
@@ -88,18 +90,16 @@ class TopicCreator
         topic.notifier.send(action, gu.user_id)
       end
     end
-
-    unless topic.private_message?
-      CategoryUser.auto_watch_new_topic(topic)
-      CategoryUser.auto_track_new_topic(topic)
-    end
   end
 
   def setup_topic_params
+    @opts[:visible] = true if @opts[:visible].nil?
+
     topic_params = {
       title: @opts[:title],
       user_id: @user.id,
-      last_post_user_id: @user.id
+      last_post_user_id: @user.id,
+      visible: @opts[:visible]
     }
 
     [:subtype, :archetype, :meta_data, :import_mode].each do |key|
@@ -139,6 +139,10 @@ class TopicCreator
     else
       Category.find_by(name_lower: @opts[:category].try(:downcase))
     end
+  end
+
+  def setup_tags(topic)
+    DiscourseTagging.tag_topic_by_names(topic, @guardian, @opts[:tags])
   end
 
   def setup_auto_close_time(topic)

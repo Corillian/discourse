@@ -9,10 +9,10 @@ describe PostCreator do
   end
 
   let(:user) { Fabricate(:user) }
+  let(:topic) { Fabricate(:topic, user: user) }
 
   context "new topic" do
     let(:category) { Fabricate(:category, user: user) }
-    let(:topic) { Fabricate(:topic, user: user) }
     let(:basic_topic_params) { {title: "hello world topic", raw: "my name is fred", archetype_id: 1} }
     let(:image_sizes) { {'http://an.image.host/image.jpg' => {"width" => 111, "height" => 222}} }
 
@@ -265,6 +265,59 @@ describe PostCreator do
 
       end
 
+      context "tags" do
+        let(:tag_names) { ['art', 'science', 'dance'] }
+        let(:creator_with_tags) { PostCreator.new(user, basic_topic_params.merge(tags: tag_names)) }
+
+        context "tagging disabled" do
+          before do
+            SiteSetting.tagging_enabled = false
+          end
+
+          it "doesn't create tags" do
+            expect { @post = creator_with_tags.create }.to change { Tag.count }.by(0)
+            expect(@post.topic.tags.size).to eq(0)
+          end
+        end
+
+        context "tagging enabled" do
+          before do
+            SiteSetting.tagging_enabled = true
+          end
+
+          context "can create tags" do
+            before do
+              SiteSetting.min_trust_to_create_tag = 0
+              SiteSetting.min_trust_level_to_tag_topics = 0
+            end
+
+            it "can create all tags if none exist" do
+              expect { @post = creator_with_tags.create }.to change { Tag.count }.by( tag_names.size )
+              expect(@post.topic.tags.map(&:name).sort).to eq(tag_names.sort)
+            end
+
+            it "creates missing tags if some exist" do
+              existing_tag1 = Fabricate(:tag, name: tag_names[0])
+              existing_tag1 = Fabricate(:tag, name: tag_names[1])
+              expect { @post = creator_with_tags.create }.to change { Tag.count }.by( tag_names.size - 2 )
+              expect(@post.topic.tags.map(&:name).sort).to eq(tag_names.sort)
+            end
+          end
+
+          context "cannot create tags" do
+            before do
+              SiteSetting.min_trust_to_create_tag = 4
+              SiteSetting.min_trust_level_to_tag_topics = 0
+            end
+
+            it "only uses existing tags" do
+              existing_tag1 = Fabricate(:tag, name: tag_names[1])
+              expect { @post = creator_with_tags.create }.to change { Tag.count }.by(0)
+              expect(@post.topic.tags.map(&:name)).to eq([existing_tag1.name])
+            end
+          end
+        end
+      end
     end
 
     context 'when auto-close param is given' do
@@ -391,7 +444,7 @@ describe PostCreator do
 
   # more integration testing ... maximise our testing
   context 'existing topic' do
-    let!(:topic) { Fabricate(:topic, user: user) }
+    let(:topic) { Fabricate(:topic, user: user) }
     let(:creator) { PostCreator.new(user, raw: 'test reply', topic_id: topic.id, reply_to_post_number: 4) }
 
     it 'ensures the user can create the post' do
@@ -699,8 +752,6 @@ describe PostCreator do
   end
 
   context "events" do
-    let(:topic) { Fabricate(:topic, user: user) }
-
     before do
       @posts_created = 0
       @topics_created = 0
@@ -743,7 +794,25 @@ describe PostCreator do
       expect(topic_user.notification_level).to eq(TopicUser.notification_levels[:watching])
       expect(topic_user.notifications_reason_id).to eq(TopicUser.notification_reasons[:auto_watch])
     end
+  end
 
+  describe '#create!' do
+    it "should return the post if it was successfully created" do
+      title = "This is a valid title"
+      raw = "This is a really awesome post"
+
+      post_creator = PostCreator.new(user, title: title, raw: raw)
+      post = post_creator.create
+
+      expect(post).to eq(Post.last)
+      expect(post.topic.title).to eq(title)
+      expect(post.raw).to eq(raw)
+    end
+
+    it "should raise an error when post fails to be created" do
+      post_creator = PostCreator.new(user, title: '', raw: '')
+      expect { post_creator.create! }.to raise_error(ActiveRecord::RecordNotSaved)
+    end
   end
 
 end

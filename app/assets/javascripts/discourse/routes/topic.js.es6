@@ -206,11 +206,12 @@ const TopicRoute = Discourse.Route.extend({
 
     this.searchService.set('searchContext', model.get('searchContext'));
 
+    // close the multi select when switching topics
+    controller.set('multiSelect', false);
+
     this.controllerFor('composer').set('topic', model);
     this.topicTrackingState.trackIncoming('all');
     controller.subscribe();
-
-    this.controllerFor('topic-progress').set('model', model);
 
     // We reset screen tracking every time a topic is entered
     this.screenTrack.start(model.get('id'), controller);

@@ -1,5 +1,5 @@
 <td>
-  {{~#unless topic.hasExcerpt}}
+  {{~#unless expandPinned}}
   <div class='pull-left'>
     <a href="{{topic.lastPostUrl}}">{{avatar topic.lastPoster imageSize="large"}}</a>
   </div>
@@ -13,15 +13,17 @@
       {{#if topic.unseen}}
         <span class="badge-notification new-topic"></span>
       {{/if}}
+      {{~#if expandPinned}}
       {{raw "list/topic-excerpt" topic=topic}}
+      {{/if~}}
     </div>
 
     <div class='pull-right'>
-      {{raw "list/post-count-or-badges" topic=topic postBadgesEnabled=controller.showTopicPostBadges}}
+      {{raw "list/post-count-or-badges" topic=topic postBadgesEnabled=showTopicPostBadges}}
     </div>
 
     <div class="topic-item-stats clearfix">
-      {{#unless controller.hideCategory}}
+      {{#unless hideCategory}}
         <div class='category'>
           {{category-link topic.category}}
         </div>

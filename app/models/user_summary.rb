@@ -53,7 +53,7 @@ class UserSummary
   def most_liked_by_users
     likers = {}
     UserAction.joins(:target_topic, :target_post)
-              .where('topics.archetype <> ?', Archetype.private_message)
+              .merge(Topic.listable_topics.visible.secured(@guardian))
               .where(user: @user)
               .where(action_type: UserAction::WAS_LIKED)
               .group(:acting_user_id)
@@ -78,7 +78,7 @@ class UserSummary
   def most_liked_users
     liked_users = {}
     UserAction.joins(:target_topic, :target_post)
-              .where('topics.archetype <> ?', Archetype.private_message)
+              .merge(Topic.listable_topics.visible.secured(@guardian))
               .where(action_type: UserAction::WAS_LIKED)
               .where(acting_user_id: @user.id)
               .group(:user_id)
@@ -134,6 +134,10 @@ class UserSummary
 
   def badges
     @user.featured_user_badges(MAX_BADGES)
+  end
+
+  def user_id
+    @user.id
   end
 
   def user_stat

@@ -257,6 +257,7 @@ testCase('link modal (link with description)', function(assert) {
 componentTest('advanced code', {
   template: '{{d-editor value=value}}',
   setup() {
+    this.siteSettings.code_formatting_style = '4-spaces-indent';
     this.set('value',
 `function xyz(x, y, z) {
   if (y === z) {
@@ -286,6 +287,7 @@ componentTest('advanced code', {
 componentTest('code button', {
   template: '{{d-editor value=value}}',
   setup() {
+    this.siteSettings.code_formatting_style = '4-spaces-indent';
     this.set('value', "first line\n\nsecond line\n\nthird line");
   },
 
@@ -593,4 +595,19 @@ componentTest('emoji', {
       assert.equal(this.get('value'), 'hello world.:grinning:');
     });
   }
+});
+
+testCase("replace-text event", function(assert, textarea) {
+
+  this.set('value', "red green blue");
+
+  andThen(() => {
+    this.container.lookup('app-events:main').trigger('composer:replace-text', 'green', 'yellow');
+  });
+
+  andThen(() => {
+    assert.equal(this.get('value'), 'red yellow blue');
+    assert.equal(textarea.selectionStart, 10);
+    assert.equal(textarea.selectionEnd, 10);
+  });
 });
