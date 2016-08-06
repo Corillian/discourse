@@ -60,8 +60,9 @@ module FileStore
     def has_been_uploaded?(url)
       return false if url.blank?
       
-      base_hostname = URI.parse(absolute_base_url).hostname
-      return true if url[base_hostname]
+      return true if url.start_with?(absolute_base_url) 
+      #base_hostname = URI.parse(absolute_base_url).hostname
+      #return true if url[base_hostname]
 
       #return false if SiteSetting.s3_cdn_url.blank?
       #cdn_hostname = URI.parse(SiteSetting.s3_cdn_url || "").hostname
@@ -81,6 +82,10 @@ module FileStore
     def path_for(upload)
       url = upload.try(:url)
       FileStore::LocalStore.new.path_for(upload) if url && url[/^\/[^\/]/]
+    end
+
+    def cdn_url(url)
+      url
     end
 
     private
@@ -135,6 +140,7 @@ module FileStore
         azure_blob_service = Azure::BlobService.new
         azure_blob_service.delete_blob(azure_container, unique_filename)
       rescue Exception => e
+        Rails.logger.error("Failed to remove file #{unique_filename}")
         Rails.logger.error(e.message)
       end
     end
