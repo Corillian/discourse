@@ -119,7 +119,7 @@ module FileStore
       rescue Exception => e
         # NOTE: If the container already exists an exception will be thrown
         # so eat it
-        Rails.logger.warn(e.message)
+        # Rails.logger.warn(e.message)
       end
 
       Azure::BlobService.new
