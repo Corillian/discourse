@@ -64,11 +64,12 @@ module PrettyText
     manifest = File.read("#{Rails.root}/app/assets/javascripts/pretty-text-bundle.js")
     root_path = "#{Rails.root}/app/assets/javascripts/"
     manifest.each_line do |l|
+      l = l.chomp
       if l =~ /\/\/= require (\.\/)?(.*)$/
         apply_es6_file(ctx, root_path, Regexp.last_match[2])
       elsif l =~ /\/\/= require_tree (\.\/)?(.*)$/
         path = Regexp.last_match[2]
-        Dir["#{root_path}/#{path}/**"].each do |f|
+        Dir["#{root_path}/#{path}/**"].sort.each do |f|
           apply_es6_file(ctx, root_path, f.sub(root_path, '')[1..-1].sub(/\.js.es6$/, ''))
         end
       end
@@ -156,7 +157,14 @@ module PrettyText
       Emoji.custom.map {|e| custom_emoji[e.name] = e.url}
       context.eval("__optInput.customEmoji = #{custom_emoji.to_json};")
 
-      opts = context.eval("__pt = new __PrettyText(__buildOptions(__optInput));")
+      context.eval('__textOptions = __buildOptions(__optInput);')
+
+      # Be careful disabling sanitization. We allow for custom emails
+      if opts[:sanitize] == false
+        context.eval('__textOptions.sanitize = false;')
+      end
+
+      opts = context.eval("__pt = new __PrettyText(__textOptions);")
 
       DiscourseEvent.trigger(:markdown_context, context)
       baked = context.eval("__pt.cook(#{text.inspect})")
@@ -284,6 +292,11 @@ module PrettyText
       end
 
       links << DetectedLink.new(url, true)
+    end
+
+    # Extract Youtube links
+    doc.css("div[data-youtube-id]").each do |d|
+      links << DetectedLink.new("https://www.youtube.com/watch?v=#{d['data-youtube-id']}", false)
     end
 
     links

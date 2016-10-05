@@ -78,6 +78,19 @@ export default function() {
 
     this.get('/clicks/track', success);
 
+    this.get('/search', request => {
+      if (request.queryParams.q === 'posts') {
+        return response({
+          posts: [{
+            id: 1234
+          }]
+        });
+      }
+
+      return response({});
+    });
+
+
     this.put('/users/eviltrout', () => response({ user: {} }));
 
     this.get("/t/280.json", () => response(fixturesByUrl['/t/280/1.json']));
@@ -119,6 +132,8 @@ export default function() {
     this.get('/category_hashtags/check', () => {
       return response({ valid: [{ slug: "bug", url: '/c/bugs' }] });
     });
+
+    this.get("/categories_and_latest", () => response(fixturesByUrl["/categories_and_latest.json"]));
 
     this.put('/categories/:category_id', request => {
 

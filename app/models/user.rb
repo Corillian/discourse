@@ -19,6 +19,7 @@ class User < ActiveRecord::Base
   has_many :topic_users, dependent: :destroy
   has_many :category_users, dependent: :destroy
   has_many :tag_users, dependent: :destroy
+  has_many :user_api_keys, dependent: :destroy
   has_many :topics
   has_many :user_open_ids, dependent: :destroy
   has_many :user_actions, dependent: :destroy
@@ -72,7 +73,7 @@ class User < ActiveRecord::Base
   validates_presence_of :username
   validate :username_validator, if: :username_changed?
   validates :email, presence: true, uniqueness: true
-  validates :email, email: true, if: Proc.new { |u| !u.staged && u.email_changed? }
+  validates :email, email: true, if: :should_validate_email?
   validate :password_validator
   validates :name, user_full_name: true, if: :name_changed?
   validates :ip_address, allowed_ip_address: {on: :create, message: :signup_not_allowed}
@@ -86,6 +87,7 @@ class User < ActiveRecord::Base
   after_create :ensure_in_trust_level_group
   after_create :automatic_group_membership
   after_create :set_default_categories_preferences
+  after_create :trigger_user_created_event
 
   before_save :update_username_lower
   before_save :ensure_password_is_hashed
@@ -100,6 +102,9 @@ class User < ActiveRecord::Base
     PostTiming.delete_all(user_id: self.id)
     TopicViewItem.delete_all(user_id: self.id)
   end
+
+  # Skip validating email, for example from a particular auth provider plugin
+  attr_accessor :skip_email_validation
 
   # Whether we need to be sending a system message after creation
   attr_accessor :send_welcome_message
@@ -146,7 +151,9 @@ class User < ActiveRecord::Base
 
   def self.username_available?(username)
     lower = username.downcase
-    User.where(username_lower: lower).blank? && !SiteSetting.reserved_usernames.split("|").include?(username)
+
+    User.where(username_lower: lower).blank? &&
+      !SiteSetting.reserved_usernames.split("|").any? { |reserved| reserved.casecmp(username) == 0 }
   end
 
   def self.plugin_staff_user_custom_fields
@@ -244,6 +251,10 @@ class User < ActiveRecord::Base
     used_invite.try(:invited_by)
   end
 
+  def should_validate_email?
+    return !skip_email_validation && !staged? && email_changed?
+  end
+
   # Approve this user
   def approve(approved_by, send_mail=true)
     self.approved = true
@@ -256,7 +267,12 @@ class User < ActiveRecord::Base
 
     self.approved_at = Time.now
 
-    send_approval_email if save and send_mail
+    if result = save
+      send_approval_email if send_mail
+      DiscourseEvent.trigger(:user_approved, self)
+    end
+
+    result
   end
 
   def self.email_hash(email)
@@ -319,8 +335,12 @@ class User < ActiveRecord::Base
   end
 
   def saw_notification_id(notification_id)
-    User.where("id = ? and seen_notification_id < ?", id, notification_id)
-        .update_all ["seen_notification_id = ?", notification_id]
+    if seen_notification_id.to_i < notification_id.to_i
+      update_columns(seen_notification_id: notification_id.to_i)
+      true
+    else
+      false
+    end
   end
 
   def publish_notifications_state
@@ -365,7 +385,8 @@ class User < ActiveRecord::Base
                         unread_private_messages: unread_private_messages,
                         total_unread_notifications: total_unread_notifications,
                         last_notification: json,
-                        recent: recent
+                        recent: recent,
+                        seen_notification_id: seen_notification_id
                        },
                        user_ids: [id] # only publish the notification to this user
     )
@@ -990,6 +1011,11 @@ class User < ActiveRecord::Base
         # if for some reason the user can't be deleted, continue on to the next one
       end
     end
+  end
+
+  def trigger_user_created_event
+    DiscourseEvent.trigger(:user_created, self)
+    true
   end
 
   private

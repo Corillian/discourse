@@ -172,10 +172,7 @@ class ApplicationController < ActionController::Base
 
       if notifications.present?
         notification_ids = notifications.split(",").map(&:to_i)
-        count = Notification.where(user_id: current_user.id, id: notification_ids, read: false).update_all(read: true)
-        if count > 0
-          current_user.publish_notifications_state
-        end
+        Notification.read(current_user, notification_ids)
         cookies.delete('cn')
       end
     end
@@ -332,6 +329,25 @@ class ApplicationController < ActionController::Base
     request.session_options[:skip] = true
   end
 
+  def permalink_redirect_or_not_found
+    url = request.fullpath
+    permalink = Permalink.find_by_url(url)
+
+    if permalink.present?
+      # permalink present, redirect to that URL
+      if permalink.external_url
+        redirect_to permalink.external_url, status: :moved_permanently
+      elsif permalink.target_url
+        redirect_to "#{Discourse::base_uri}#{permalink.target_url}", status: :moved_permanently
+      else
+        raise Discourse::NotFound
+      end
+    else
+      # redirect to 404
+      raise Discourse::NotFound
+    end
+  end
+
   private
 
     def locale_from_header
@@ -452,7 +468,7 @@ class ApplicationController < ActionController::Base
 
     def check_xhr
       # bypass xhr check on PUT / POST / DELETE provided api key is there, otherwise calling api is annoying
-      return if !request.get? && api_key_valid?
+      return if !request.get? && is_api?
       raise RenderEmpty.new unless ((request.format && request.format.json?) || request.xhr?)
     end
 
@@ -464,12 +480,20 @@ class ApplicationController < ActionController::Base
       raise Discourse::InvalidAccess.new unless current_user && current_user.staff?
     end
 
+    def ensure_admin
+      raise Discourse::InvalidAccess.new unless current_user && current_user.admin?
+    end
+
+    def ensure_wizard_enabled
+      raise Discourse::InvalidAccess.new unless SiteSetting.wizard_enabled?
+    end
+
     def destination_url
       request.original_url unless request.original_url =~ /uploads/
     end
 
     def redirect_to_login_if_required
-      return if current_user || (request.format.json? && api_key_valid?)
+      return if current_user || (request.format.json? && is_api?)
 
       # redirect user to the SSO page if we need to log in AND SSO is enabled
       if SiteSetting.login_required?
@@ -512,10 +536,6 @@ class ApplicationController < ActionController::Base
         post_serializer.post_actions = counts
       end
       render_json_dump(post_serializer)
-    end
-
-    def api_key_valid?
-      request["api_key"] && ApiKey.where(key: request["api_key"]).exists?
     end
 
     # returns an array of integers given a param key

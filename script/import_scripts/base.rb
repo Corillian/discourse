@@ -274,7 +274,7 @@ class ImportScripts::Base
     merge = opts.delete(:merge)
     post_create_action = opts.delete(:post_create_action)
 
-    existing = User.where(email: opts[:email].downcase, username: opts[:username]).first
+    existing = User.where("email = ? OR username = ?", opts[:email].downcase, opts[:username]).first
     return existing if existing && (merge || existing.custom_fields["import_id"].to_i == import_id.to_i)
 
     bio_raw = opts.delete(:bio_raw)
@@ -583,15 +583,21 @@ class ImportScripts::Base
 
   def update_user_stats
     puts "", "Updating topic reply counts..."
+
+    start_time = Time.now
+    progress_count = 0
+    total_count = User.real.count
+
     User.find_each do |u|
       u.create_user_stat if u.user_stat.nil?
       us = u.user_stat
       us.update_topic_reply_count
       us.save
-      print "."
+      progress_count += 1
+      print_status(progress_count, total_count, start_time)
     end
 
-    puts "Updating first_post_created_at..."
+    puts "." "Updating first_post_created_at..."
 
     sql = <<-SQL
       WITH sub AS (

@@ -55,9 +55,17 @@ required:
     client: true
     default: '/images/default-favicon.ico'
   apple_touch_icon_url: '/images/default-apple-touch-icon.png'
+  default_opengraph_image_url: ''
+  twitter_summary_large_image_url: ''
   exclude_rel_nofollow_domains:
     default: ''
     type: list
+  company_short_name:
+    default: ''
+  company_full_name:
+    default: ''
+  company_domain:
+    default: ''
 
 basic:
   default_locale:
@@ -71,6 +79,9 @@ basic:
   set_locale_from_accept_language_header:
     default: false
     validator: "AllowUserLocaleEnabledValidator"
+  categories_topics:
+    default: 20
+    min: 5
   suggested_topics:
     client: true
     default: 5
@@ -153,6 +164,10 @@ basic:
      - facebook
      - google+
      - email
+  desktop_category_page_style:
+    client: true
+    enum: 'CategoryPageStyle'
+    default: 'categories_and_latest_topics'
   category_colors:
     client: true
     type: list
@@ -215,9 +230,11 @@ basic:
 
 login:
   invite_only:
+    refresh: true
     client: true
     default: false
   login_required:
+    refresh: true
     client: true
     default: false
   must_approve_users:
@@ -267,6 +284,8 @@ login:
   facebook_app_secret:
     default: ''
     regex: "^[a-f0-9]+$"
+  facebook_request_extra_profile_details:
+    default: false
   enable_github_logins:
     client: true
     default: false
@@ -543,6 +562,8 @@ posting:
     choices:
      - 4-spaces-indent
      - code-fences
+  embed_truncate:
+    default: true
 
 email:
   email_time_window_mins:
@@ -690,7 +711,7 @@ files:
     enum: 'S3RegionSiteSetting'
   s3_upload_bucket:
     default: ''
-    regex: "^[a-z0-9-]+$" # can't use '.' when using HTTPS
+    regex: '^[a-z0-9\-\/]+$' # can't use '.' when using HTTPS
   s3_cdn_url:
     default: ''
     regex: '^https?:\/\/.+[^\/]$'
@@ -725,7 +746,6 @@ files:
     client: true
     regex: '^((https?:)?\/)?\/.+[^\/]'
     shadowed_by_global: true
-  default_opengraph_image_url: ''
   allow_all_attachments_for_group_messages: false
   convert_pasted_images_to_hq_jpg: true
   convert_pasted_images_quality:
@@ -745,6 +765,9 @@ trust:
     enum: 'TrustLevelSetting'
   min_trust_to_edit_wiki_post:
     default: 1
+    enum: 'TrustLevelSetting'
+  min_trust_to_edit_post:
+    default: 0
     enum: 'TrustLevelSetting'
   min_trust_to_allow_self_wiki:
     default: 3
@@ -946,12 +969,18 @@ developer:
   top_topics_formula_least_likes_per_post_multiplier:
     default: 3
     min: 0
+  rebake_old_posts_count:
+    default: 250
+    min: 1
   migrate_to_new_scheme:
     hidden: true
     default: false
   max_new_topics:
     default: 500
     client: true
+    hidden: true
+  wizard_enabled:
+    default: true
     hidden: true
 
 embedding:
@@ -971,8 +1000,8 @@ embedding:
   embed_post_limit:
     default: 100
     hidden: true
-  embed_truncate:
-    default: false
+  embed_title_scrubber:
+    default: ''
     hidden: true
   embed_whitelist_selector:
     default: ''
@@ -1017,7 +1046,7 @@ backups:
     shadowed_by_global: true
   s3_backup_bucket:
     default: ''
-    regex: "^[a-z0-9-]+$" # can't use '.' when using HTTPS
+    regex: '^[a-z0-9\-\/]+$' # can't use '.' when using HTTPS
     shadowed_by_global: true
   s3_disable_cleanup:
     default: false
@@ -1031,6 +1060,15 @@ backups:
     default: '3:30'
     regex: "^((0?(0|1|2|3|4|5|6|7|8|9)|(10|11|12|13|14|15|16|17|18|19|20|21|22|23))):\\d\\d$"
   backup_with_uploads: true
+
+search:
+  min_search_term_length:
+    client: true
+    default: 3
+
+  search_tokenize_chinese_japanese_korean: false
+  search_prefer_recent_posts: false
+  search_recent_posts_size: 100000
 
 uncategorized:
   version_checks:
@@ -1051,12 +1089,6 @@ uncategorized:
     default: ''
     type: list
 
-  # Search
-  min_search_term_length:
-    client: true
-    default: 3
-
-  search_tokenize_chinese_japanese_korean: false
   max_similar_results: 5
   minimum_topics_similar: 50
 
@@ -1249,6 +1281,31 @@ user_preferences:
   default_categories_muted:
     type: category_list
     default: ''
+
+user_api:
+  max_user_api_reqs_per_day:
+    default: 2880
+  max_user_api_reqs_per_minute:
+    default: 20
+  allow_read_user_api_keys:
+    default: true
+  allow_write_user_api_keys:
+    default: true
+  allow_push_user_api_keys:
+    default: true
+  max_api_keys_per_user:
+    default: 10
+  push_api_secret_key:
+    hidden: true
+  min_trust_level_for_user_api_key:
+    default: 1
+  allowed_user_api_push_urls:
+    default: ''
+    type: list
+    shadowed_by_global: true
+  allowed_user_api_auth_redirects:
+    default: 'https://api.discourse.org/api/auth_redirect|discourse://auth_redirect'
+    type: list
 
 tags:
   tagging_enabled:

@@ -1,4 +1,5 @@
 import StringBuffer from 'discourse/mixins/string-buffer';
+import computed from 'ember-addons/ember-computed-decorators';
 
 export function showEntrance(e) {
   let target = $(e.target);
@@ -29,9 +30,9 @@ export default Ember.Component.extend(StringBuffer, {
     }
   },
 
-  unboundClassNames: function() {
+  @computed('topic', 'lastVisitedTopic')
+  unboundClassNames(topic, lastVisitedTopic) {
     let classes = [];
-    const topic = this.get('topic');
 
     if (topic.get('category')) {
       classes.push("category-" + topic.get('category.fullSlug'));
@@ -47,8 +48,12 @@ export default Ember.Component.extend(StringBuffer, {
       }
     });
 
+    if (topic === lastVisitedTopic) {
+      classes.push('last-visit');
+    }
+
     return classes.join(' ');
-  }.property(),
+  },
 
   titleColSpan: function() {
     return (!this.get('hideCategory') &&
@@ -113,11 +118,12 @@ export default Ember.Component.extend(StringBuffer, {
     }
   },
 
-  highlight() {
+  highlight(opts = { isLastViewedTopic: false }) {
     const $topic = this.$();
     const originalCol = $topic.css('backgroundColor');
     $topic
       .addClass('highlighted')
+      .attr('data-islastviewedtopic', opts.isLastViewedTopic)
       .stop()
       .animate({ backgroundColor: originalCol }, 2500, 'swing', function() {
         $topic.removeClass('highlighted');
@@ -128,7 +134,7 @@ export default Ember.Component.extend(StringBuffer, {
     // highlight the last topic viewed
     if (this.session.get('lastTopicIdViewed') === this.get('topic.id')) {
       this.session.set('lastTopicIdViewed', null);
-      this.highlight();
+      this.highlight({ isLastViewedTopic: true });
     } else if (this.get('topic.highlight')) {
       // highlight new topics that have been loaded from the server or the one we just created
       this.set('topic.highlight', false);

@@ -20,6 +20,26 @@ describe CookedPostProcessor do
 
   end
 
+  context "cooking options" do
+    context "regular user" do
+      let(:post) { Fabricate(:post) } 
+
+      it "doesn't omit nofollow" do
+        cpp = CookedPostProcessor.new(post)
+        expect(cpp.cooking_options[:omit_nofollow]).to eq(nil)
+      end
+    end
+
+    context "admin user" do
+      let(:post) { Fabricate(:post, user: Fabricate(:admin) ) }
+
+      it "omits nofollow" do
+        cpp = CookedPostProcessor.new(post)
+        expect(cpp.cooking_options[:omit_nofollow]).to eq(true)
+      end
+    end
+  end
+
   context ".keep_reverse_index_up_to_date" do
 
     let(:post) { build(:post_with_uploads, id: 123) }
@@ -158,6 +178,14 @@ describe CookedPostProcessor do
 <span class=\"filename\">logo.png</span><span class=\"informations\">1750x2000 1.21 KB</span><span class=\"expand\"></span>
 </div></a></div></p>"
         expect(cpp).to be_dirty
+      end
+
+      it "should escape the filename" do
+        upload.update_attributes!(original_filename: "><img src=x onerror=alert('haha')>.png")
+        cpp.post_process_images
+        expect(cpp.html).to match_html "<p><div class=\"lightbox-wrapper\"><a data-download-href=\"/subfolder/uploads/default/#{upload.sha1}\" href=\"/subfolder/uploads/default/1/1234567890123456.jpg\" class=\"lightbox\" title=\"&amp;gt;&amp;lt;img src=x onerror=alert(&amp;#39;haha&amp;#39;)&amp;gt;.png\"><img src=\"/subfolder/uploads/default/optimized/1X/#{upload.sha1}_1_690x788.png\" width=\"690\" height=\"788\"><div class=\"meta\">
+<span class=\"filename\">&amp;gt;&amp;lt;img src=x onerror=alert(&amp;#39;haha&amp;#39;)&amp;gt;.png</span><span class=\"informations\">1750x2000 1.21 KB</span><span class=\"expand\"></span>
+</div></a></div></p>"
       end
 
     end
@@ -541,19 +569,20 @@ describe CookedPostProcessor do
   end
 
   context "extracts links" do
-      let(:post) { Fabricate(:post, raw: "sam has a blog at https://samsaffron.com") }
-      it "always re-extracts links on post process" do
-        TopicLink.destroy_all
-        CookedPostProcessor.new(post).post_process
-        expect(TopicLink.count).to eq(1)
-      end
+    let(:post) { Fabricate(:post, raw: "sam has a blog at https://samsaffron.com") }
+
+    it "always re-extracts links on post process" do
+      TopicLink.destroy_all
+      CookedPostProcessor.new(post).post_process
+      expect(TopicLink.count).to eq(1)
+    end
   end
 
   context "grant badges" do
+    let(:cpp) { CookedPostProcessor.new(post) }
 
     context "emoji inside a quote" do
       let(:post) { Fabricate(:post, raw: "time to eat some sweet [quote]:candy:[/quote] mmmm") }
-      let(:cpp) { CookedPostProcessor.new(post) }
 
       it "doesn't award a badge when the emoji is in a quote" do
         cpp.grant_badges
@@ -563,7 +592,6 @@ describe CookedPostProcessor do
 
     context "emoji in the text" do
       let(:post) { Fabricate(:post, raw: "time to eat some sweet :candy: mmmm") }
-      let(:cpp) { CookedPostProcessor.new(post) }
 
       it "awards a badge for using an emoji" do
         cpp.grant_badges
@@ -572,18 +600,30 @@ describe CookedPostProcessor do
     end
 
     context "onebox" do
-      let(:user) { Fabricate(:user) }
-      let(:post) { Fabricate.build(:post, user: user, raw: "onebox me:\n\nhttps://www.youtube.com/watch?v=Wji-BZ0oCwg\n") }
-      let(:cpp) { CookedPostProcessor.new(post) }
+      let(:post) { Fabricate(:post, raw: "onebox me:\n\nhttps://www.youtube.com/watch?v=Wji-BZ0oCwg\n") }
 
-      before do
-        Oneboxer.stubs(:onebox)
-      end
+      before { Oneboxer.stubs(:onebox) }
 
-      it "awards a badge for using an emoji" do
+      it "awards a badge for using an onebox" do
         cpp.post_process_oneboxes
         cpp.grant_badges
         expect(post.user.user_badges.where(badge_id: Badge::FirstOnebox).exists?).to eq(true)
+      end
+
+      it "doesn't award the badge when the badge is disabled" do
+        Badge.where(id: Badge::FirstOnebox).update_all(enabled: false)
+        cpp.post_process_oneboxes
+        cpp.grant_badges
+        expect(post.user.user_badges.where(badge_id: Badge::FirstOnebox).exists?).to eq(false)
+      end
+    end
+
+    context "reply_by_email" do
+      let(:post) { Fabricate(:post, raw: "This is a **reply** via email ;)", via_email: true, post_number: 2) }
+
+      it "awards a badge for replying via email" do
+        cpp.grant_badges
+        expect(post.user.user_badges.where(badge_id: Badge::FirstReplyByEmail).exists?).to eq(true)
       end
     end
 

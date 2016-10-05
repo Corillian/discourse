@@ -251,6 +251,7 @@ describe UsersController do
         user.reload
         expect(user.auth_token).to_not eq old_token
         expect(user.auth_token.length).to eq 32
+        expect(session["password-#{token}"]).to be_blank
       end
 
       it "doesn't invalidate the token when loading the page" do
@@ -1625,7 +1626,32 @@ describe UsersController do
 
   end
 
-  context '#summary' do
+  describe '.topic_tracking_state' do
+    let(:user){Fabricate(:user)}
+
+    context 'anon' do
+      it "raises an error on anon for topic_tracking_state" do
+        expect{
+          xhr :get, :topic_tracking_state, username: user.username, format: :json
+        }.to raise_error(Discourse::NotLoggedIn)
+      end
+    end
+
+    context 'logged on' do
+      it "detects new topic" do
+        log_in_user(user)
+
+        topic = Fabricate(:topic)
+        xhr :get, :topic_tracking_state, username: user.username, format: :json
+
+        states = JSON.parse(response.body)
+
+        expect(states[0]["topic_id"]).to eq(topic.id)
+      end
+    end
+  end
+
+  describe '.summary' do
 
     it "generates summary info" do
       user = Fabricate(:user)

@@ -1,7 +1,12 @@
 {{#if visible}}
 <div class="card-content">
 
-  <a href={{user.path}} {{action "showUser"}} class="card-huge-avatar">{{bound-avatar avatar "huge"}}</a>
+  <div class="user-card-avatar">
+    <a href={{user.path}} {{action "showUser"}} class="card-huge-avatar">{{bound-avatar avatar "huge"}}</a>
+    {{#if user.primary_group_name}}
+      {{mount-widget widget="avatar-flair" args=user}}
+    {{/if}}
+  </div>
 
   <div class="names">
     <span>
@@ -31,7 +36,7 @@
     {{/if}}
 
     {{#if showFilter}}
-      <li><a class='btn' href {{action "togglePosts" user}}>{{fa-icon "filter"}}{{i18n 'topic.filter_to' username=username post_count=topicPostCount}}</a></li>
+      <li><a class='btn' href {{action "togglePosts" user}}>{{fa-icon "filter"}}{{i18n 'topic.filter_to' username=username count=topicPostCount}}</a></li>
     {{/if}}
 
     {{#if hasUserFilters}}

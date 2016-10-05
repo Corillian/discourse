@@ -48,9 +48,6 @@ es:
         x_seconds:
           one: "1s"
           other: "%{count}s"
-        less_than_x_minutes:
-          one: "< 1m"
-          other: "< %{count}m"
         x_minutes:
           one: "1m"
           other: "%{count}m"
@@ -402,14 +399,12 @@ es:
       latest_by: "recientes por"
       toggle_ordering: "activar orden"
       subcategories: "Subcategorías"
-      topic_stats: "El número de temas nuevos."
+      topic_sentence:
+        one: "1 tema"
+        other: "%{count} temas"
       topic_stat_sentence:
         one: "%{count} tema nuevo en los últimos %{unit}."
         other: "%{count} temas nuevos en los últimos %{unit}."
-      post_stats: "El número de posts nuevos."
-      post_stat_sentence:
-        one: "%{count} nuevo comentario en los pasados %{unit}"
-        other: "%{count} nuevos comentarios en los pasados %{unit}"
     ip_lookup:
       title: Búsqueda de Direcciones IP
       hostname: Nombre del host
@@ -509,6 +504,13 @@ es:
       muted_topics_link: "Mostrar temas silenciados"
       watched_topics_link: "Mostrar temas vigilados"
       automatically_unpin_topics: "Dejar de destacar temas automáticamente cuando los leo por completo."
+      apps: "Apps"
+      revoke_access: "Revocar acceso"
+      undo_revoke_access: "Deshacer revocación de acceso"
+      api_permissions: "Permisos:"
+      api_approved: "Aprobado:"
+      api_read: "leer"
+      api_read_write: "leer y escribir"
       staff_counters:
         flags_given: "reportes útiles"
         flagged_posts: "posts reportados"
@@ -788,12 +790,14 @@ es:
     too_few_topics_notice: "¡Vamos a <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>dar por comenzada la comunidad!</a> Hay <strong>%{currentTopics} / %{requiredTopics}</strong> temas. Los nuevos visitantes necesitan algo que leer y a lo que responder."
     too_few_posts_notice: "¡Vamos a <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>dar por empezada la comunidad!</a> Hay <strong>%{currentPosts} / %{requiredPosts}</strong> mensajes. Los nuevos visitantes necesitan algo que leer y a lo que responder."
     logs_error_rate_notice:
-      reached: "<b>[%{relativeAge}]</b> La tasa actual <a href='%{url}' target='_blank'>%{rate}</a> ha alcanzado el límite establecido en las opciones del sitio en el %{siteSettingRate}."
-      exceeded: "<b>[%{relativeAge}]</b> La tasa actual <a href='%{url}' target='_blank'>%{rate}</a> ha excedido el límite establecido en las opciones del sitio en el %{siteSettingRate}."
+      reached: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> alcanzó el límite establecido en las opciones del sitio del %{siteSettingRate}."
+      exceeded: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> excedió el límite establecido en las opciones del sitio del %{siteSettingRate}."
       rate:
         one: "1 error/%{duration}"
         other: "%{count} errores/%{duration}"
     learn_more: "saber más..."
+    all_time: 'total'
+    all_time_desc: 'temas creados total'
     year: 'año'
     year_desc: 'temas creados en los últimos 365 días'
     month: 'mes'
@@ -904,6 +908,10 @@ es:
       twitter: "Twitter"
       emoji_one: "Emoji One"
       win10: "Win10"
+    category_page_style:
+      categories_only: "Sólo categorías"
+      categories_with_featured_topics: "Categorías y temas destacados"
+      categories_and_latest_topics: "Categorías y temas recientes"
     shortcut_modifier_key:
       shift: 'Shift'
       ctrl: 'Ctrl'
@@ -913,15 +921,19 @@ es:
       more_emoji: "más..."
       options: "Opciones"
       whisper: "susurrar"
+      unlist: "invisible"
       add_warning: "Ésta es una advertencia oficial."
       toggle_whisper: "Activar/desactivar Susurro"
+      toggle_unlisted: "Visible / Invisible"
       posting_not_on_topic: "¿A qué tema quieres responder?"
       saving_draft_tip: "guardando..."
       saved_draft_tip: "guardado"
       saved_local_draft_tip: "guardado localmente"
       similar_topics: "Tu tema es similar a..."
       drafts_offline: "borradores offline"
-      group_mentioned: "Al mencionar a {{group}}, estás a punto de notificar a <a href='{{group_link}}'>{{count}} personas</a> – ¿seguro que quieres hacerlo?"
+      group_mentioned:
+        one: "Al mencionar a {{group}}, estás a punto de notificar a <a href='{{group_link}}'>1 persona</a> – ¿seguro que quieres hacerlo?"
+        other: "Al mencionar a {{group}}, estás a punto de notificar a <a href='{{group_link}}'>{{count}} personas</a> – ¿seguro que quieres hacerlo?"
       duplicate_link: "Parece que tu enlace a <b>{{domain}}</b> ha sido ya publicado en el tema por <b>@{{username}}</b> en <a href='{{post_url}}'>un post {{ago}}</a> – ¿seguro que quieres publicarlo de nuevo?"
       error:
         title_missing: "Es necesario un título"
@@ -952,8 +964,10 @@ es:
       show_preview: 'mostrar vista previa &raquo;'
       hide_preview: '&laquo; ocultar vista previa'
       quote_post_title: "Citar todo el post"
+      bold_label: "B"
       bold_title: "Negrita"
       bold_text: "Texto en negrita"
+      italic_label: "I"
       italic_title: "Cursiva"
       italic_text: "Texto en cursiva"
       link_title: "Hipervínculo"
@@ -971,6 +985,7 @@ es:
       olist_title: "Lista numerada"
       ulist_title: "Lista con viñetas"
       list_item: "Lista de ítems"
+      heading_label: "H"
       heading_title: "Encabezado"
       heading_text: "Encabezado"
       hr_title: "Linea Horizontal"
@@ -979,6 +994,9 @@ es:
       modal_ok: "OK"
       modal_cancel: "Cancelar"
       cant_send_pm: "Lo sentimos, no puedes enviar un mensaje a %{username}."
+      yourself_confirm:
+        title: "¿Olvidaste añadir destinatarios?"
+        body: "¡Vas a enviarte este mensaje a ti mismo!"
       admin_options_title: "Opciones de moderación para este tema"
       auto_close:
         label: "Tiempo para cierre automático del tema"
@@ -1062,6 +1080,7 @@ es:
       most_liked: "Más \"Me gusta\" recibidos"
       select_all: "Seleccionar todo"
       clear_all: "Limpiar todo"
+      too_short: "El término de búsqueda es demasiado corto."
       result_count:
         one: "1 resultado para <span class='term'>\"{{term}}\"</span>"
         other: "{{count}} resultados para <span class='term'>\"{{term}}\"</span>"
@@ -1134,7 +1153,9 @@ es:
       unsubscribe:
         stop_notifications: "Ahora recibirás menos notificaciones desde <strong>{{title}}</strong>"
         change_notification_state: "El estado actual de notificación para ti es"
-      filter_to: "{{post_count}} posts en este tema"
+      filter_to:
+        one: "1 post en el tema"
+        other: "{{count}} posts en el tema"
       create: 'Crear tema'
       create_long: 'Crear un nuevo tema'
       private_message: 'Empezar un mensaje'
@@ -1194,11 +1215,12 @@ es:
       auto_close_title: 'Configuración de auto-cerrado'
       auto_close_save: "Guardar"
       auto_close_remove: "No Auto-Cerrar Este Tema"
-      auto_close_immediate: "El último mensaje tiene %{hours} horas de antigüedad, por lo que será cerrado inmediatamente."
+      auto_close_immediate:
+        one: "El último post se publicó hace 1 hora, por lo que el tema se cerrará inmediatamente."
+        other: "El último post se publicó hace %{count} horas, por lo que el tema se cerrará inmediatamente."
       timeline:
         back: "Volver"
         back_description: "Volver al último post sin leer"
-        replies: "%{current} / %{total} respuestas"
         replies_short: "%{current} / %{total}"
       progress:
         title: avances
@@ -1211,7 +1233,6 @@ es:
         jump_bottom_with_number: "saltar al post %{post_number}"
         total: posts totales
         current: post actual
-        position: "post %{current} de %{total}"
       notifications:
         title: cambiar con qué frecuencia se te notifica de este tema
         reasons:
@@ -1415,7 +1436,6 @@ es:
       gap:
         one: "ver 1 post oculto"
         other: "ver {{count}} posts ocultos"
-      more_links: "{{count}} más..."
       unread: "Post sin leer"
       has_replies:
         one: "{{count}} Respuesta"
@@ -1484,14 +1504,6 @@ es:
         defer_flags:
           one: "Aplazar reporte"
           other: "Aplazar reportes"
-        it_too:
-          off_topic: "Reportar de esto también"
-          spam: "Reportar de esto también"
-          inappropriate: "Reportar de esto también"
-          custom_flag: "Reportar de esto también"
-          bookmark: "Guardarlo también como favorito"
-          like: "Dale también un Me gusta"
-          vote: "Vota por esto también"
         undo:
           off_topic: "Deshacer reporte"
           spam: "Deshacer reporte"
@@ -1677,7 +1689,7 @@ es:
       notify_action: 'Mensaje'
       official_warning: 'Advertencia oficial'
       delete_spammer: "Borrar spammer"
-      delete_confirm: "Estás a punto de eliminar <b>%{posts}</b> publicaciones y <b>%{topics}</b> temas de este usuario, borrar su cuenta, bloquear sus inicios de sesión desde su dirección IP <b>%{ip_address}</b>, y añadir su dirección de email <b>%{email}</b> a una lista de bloqueo permanente. ¿Estás seguro de que este usuario es realmente un spammer?"
+      delete_confirm_MF: "Estás a punto de eliminar {POSTS, plural, one {<b>1</b> post} other {<b>#</b> posts}} y {TOPICS, plural, one {<b>1</b> topic} other {<b>#</b> topics}} de este usuario, eliminar su cuenta, bloquear registros desde su dirección IP <b>{ip_address}</b>, y añadir su dirección de email <b>{email}</b> a la lista de bloqueo permanente. ¿Seguro que este usuario es un spammer?"
       yes_delete_spammer: "Sí, borrar spammer"
       ip_address_missing: "(N/D)"
       hidden_email_address: "(oculto)"
@@ -1692,9 +1704,15 @@ es:
       custom_placeholder_notify_user: "Sé específico, constructivo y siempre amable."
       custom_placeholder_notify_moderators: "Haznos saber qué te preocupa específicamente y, siempre que sea posible, añade enlaces y ejemplos relevantes."
       custom_message:
-        at_least: "introduce al menos {{n}} caracteres"
-        more: "{{n}} para ir..."
-        left: "{{n}} restantes"
+        at_least:
+          one: "introduce al menos un carácter"
+          other: "introduce al menos {{count}} caracteres"
+        more:
+          one: "1 más..."
+          other: "{{count}} más..."
+        left:
+          one: "1 restante"
+          other: "{{count}} restantes"
     flagging_topic:
       title: "¡Gracias por ayudar a mantener una comunidad civilizada!"
       action: "Reportar tema"
@@ -1735,7 +1753,6 @@ es:
       invisible:
         help: "Este tema es invisible; no se mostrará en la lista de temas y solo puede acceder a él a través de su enlace directo."
     posts: "Posts"
-    posts_lowercase: "posts"
     posts_long: "{{number}} posts en este tema"
     posts_likes_MF: |
       Este tema tiene {count, plural, one {1 respuesta} other {# respuestas}} {ratio, select,
@@ -2164,11 +2181,19 @@ es:
         automatic_membership_email_domains: "Los usuarios que se registren con un dominio de e-mail que esté en esta lista serán automáticamente añadidos a este grupo:"
         automatic_membership_retroactive: "Aplicar la misma regla de dominio de email para usuarios registrados existentes "
         default_title: "Título por defecto para todos los miembros en este grupo"
-        primary_group: "Establecer como grupo primario automáticamente"
+        primary_group: "Establecer automáticamente como grupo principal"
         group_owners: Propietarios
         add_owners: Añadir propietarios
         incoming_email: "Correos electrónicos entrantes personalizados"
-        incoming_email_placeholder: "introducir dirección de emai"
+        incoming_email_placeholder: "introducir dirección de email"
+        flair_url: "Imagen distintiva"
+        flair_url_placeholder: "(Opcional) URL de imagen o clase de Font Awesome"
+        flair_bg_color: "Color de fondo de imagen distintiva"
+        flair_bg_color_placeholder: "(Optional) Valor hexadecimal del color"
+        flair_color: "Color de la imagen distintiva"
+        flair_color_placeholder: "(Opcional) Color en valor hexadecimal"
+        flair_preview: "Vista previa"
+        flair_note: "Nota: sólo se mostrará la imagen distintiva del grupo principal del usuario."
       api:
         generate_master: "Generar clave maestra de API"
         none: "No hay ninguna clave de API activa en este momento."
@@ -2183,6 +2208,76 @@ es:
         info_html: "Tu clave de API te permitirá crear y actualizar temas usando llamadas a JSON."
         all_users: "Todos los usuarios"
         note_html: "Mantén esta clave <strong>secreta</strong> a buen recaudo, cualquier usuario que disponga de ella podría crear posts de cualquier usuario."
+      web_hooks:
+        title: "Webhooks"
+        none: "Ahora mismo no hay webhooks."
+        instruction: "Los webhooks permiten a Discourse notificar a servicios externos cuando suceden ciertos eventos en tu sitio. Cuando se dispare el webhook, se enviará una petición POST a las URLs proporcionadas."
+        detailed_instruction: "Se enviará una petición POST a la URL proporcionada cuando suceda el evento elegido."
+        new: "Nuevo Webhook"
+        create: "Crear"
+        save: "Guardar"
+        destroy: "Eliminar"
+        description: "Descripción"
+        controls: "Controles"
+        go_back: "Volver a la lista"
+        payload_url: "Payload URL"
+        payload_url_placeholder: "https://example.com/postreceive"
+        warn_local_payload_url: "Parece que estás estableciendo el webhook a una url local. El evento enviado a una dirección local podría causar algún efecto secundario o comportamientos inesperados. ¿Continuar?"
+        secret_invalid: "Secret no debe tener espacios en blanco."
+        secret_too_short: "Secret debería tener al menos 12 caracteres."
+        secret_placeholder: "Una cadena opcional, para generar firma"
+        event_type_missing: "Necesitas establecer al menos un tipo de evento."
+        content_type: "Tipo de contenido"
+        secret: "Secret"
+        event_chooser: "¿Qué eventos te gustaría que dispararan este webhook?"
+        wildcard_event: "Envíame todo."
+        individual_event: "Seleccionar eventos individuales."
+        verify_certificate: "Comprobar certificado TLS de la payload url"
+        active: "Activo"
+        active_notice: "Enviaremos detalles del evento cuando suceda."
+        categories_filter_instructions: "Los webhooks sólo se dispararán si el evento está relacionado con las categorías especificadas. Déjalo en blanco para disparar webhooks con todas las categorías."
+        categories_filter: "Categorías que disparan"
+        groups_filter_instructions: "Los webhooks sólo se dispararán si el evento está relacionado con los grupos especificados. Déjalo en blanco para disparar webhooks con todos las grupos."
+        groups_filter: "Grupos que disparan"
+        delete_confirm: "¿Eliminar este webhook?"
+        topic_event:
+          name: "Evento de tema"
+          details: "Cuando se cree, revise, cambie o elimine un tema."
+        post_event:
+          name: "Evento de post"
+          details: "Cuando se publique, edite, elimine o recupere una respuesta."
+        user_event:
+          name: "Evento de usuario"
+          details: "Cuando se cree o apruebe un usuario."
+        delivery_status:
+          title: "Estado de entrega"
+          inactive: "Inactivo"
+          failed: "Fallado"
+          successful: "Exitoso"
+        events:
+          none: "No hay eventos relacionados."
+          redeliver: "Reenviar"
+          incoming:
+            one: "Hay un nuevo evento."
+            other: "Hay {{count}} nuevos eventos."
+          completed_in:
+            one: "Completado en 1 segundo."
+            other: "Completado en {{count}} segundos."
+          request: "Petición"
+          response: "Respuesta"
+          redeliver_confirm: "¿Seguro que quieres reenviar el mismo payload?"
+          headers: "Headers"
+          payload: "Payload"
+          body: "Body"
+          go_list: "Ir a la lista"
+          go_details: "Editar webhook"
+          go_events: "Ir a eventos"
+          ping: "Ping"
+          status: "Código de estado"
+          event_id: "ID"
+          timestamp: "Creado"
+          completion: "Tiempo de completado"
+          actions: "Acciones"
       plugins:
         title: "Plugins"
         installed: "Plugins instalados"
@@ -2566,7 +2661,7 @@ es:
         suspend_reason: "Causa"
         suspended_by: "Suspendido por"
         delete_all_posts: "Eliminar todos los posts"
-        delete_all_posts_confirm: "Estás a punto de borrar %{posts} posts y %{topics} temas. ¿Estás seguro?"
+        delete_all_posts_confirm_MF: "Estás a punto de eliminar {POSTS, plural, one {1 post} other {# posts}} y {TOPICS, plural, one {1 topic} other {# topics}}. ¿Seguro?"
         suspend: "Suspender"
         unsuspend: "Quitar suspensión"
         suspended: "¿Suspendido?"
@@ -2662,7 +2757,9 @@ es:
         unlock_trust_level: "Desbloquear Nivel de Confianza"
         tl3_requirements:
           title: "Requerimientos para el nivel de confianza 3"
-          table_title: "En los últimos %{time_period} días:"
+          table_title:
+            one: "En el último día:"
+            other: "En los últimos %{count} días:"
           value_heading: "Valor"
           requirement_heading: "Requerimiento"
           visits: "Visitas"
@@ -2762,12 +2859,14 @@ es:
           developer: 'Desarrollador'
           embedding: "Embebido"
           legal: "Legal"
+          user_api: 'API de usuario'
           uncategorized: 'Otros'
           backups: "Copias de seguridad"
           login: "Login"
           plugins: "Plugins"
           user_preferences: "Preferencias de los Usuarios"
           tags: "Etiquetas"
+          search: "Búsqueda"
       badges:
         title: Distintivos
         new_badge: Nuevo distintivo
@@ -2849,6 +2948,7 @@ es:
         sample: "Usa el siguiente código HTML en tu sitio para crear e insertar temas. Reempalza <b>REPLACE_ME</b> con la URL canónica de la página donde quieres insertar."
         title: "Insertado"
         host: "Hosts Permitidos"
+        path_whitelist: "Lista blanca de rutas"
         edit: "editar"
         category: "Publicar a Categoría"
         add_host: "Añadir Host"
@@ -2860,6 +2960,7 @@ es:
         embed_by_username: "Usuario para la creación de temas"
         embed_post_limit: "Máximo número de posts a incluir"
         embed_username_key_from_feed: "Clave para extraer usuario de discourse del feed"
+        embed_title_scrubber: "Expresión regular utilizada para depurar el título de los posts"
         embed_truncate: "Truncar los posts insertados"
         embed_whitelist_selector: "Selector CSS para permitir elementos a embeber"
         embed_blacklist_selector: "Selector CSS para restringir elementos a embeber"

@@ -60,6 +60,13 @@ class TopicsController < ApplicationController
     opts[:slow_platform] = true if slow_platform?
     opts[:username_filters] = username_filters.split(',') if username_filters.is_a?(String)
 
+    # Special case: a slug with a number in front should look by slug first before looking
+    # up that particular number
+    if params[:id] && params[:id] =~ /^\d+[^\d\\]+$/
+      topic = Topic.find_by(slug: params[:id].downcase)
+      return redirect_to_correct_topic(topic, opts[:post_number]) if topic && topic.visible
+    end
+
     begin
       @topic_view = TopicView.new(params[:id] || params[:topic_id], current_user, opts)
     rescue Discourse::NotFound
@@ -342,8 +349,6 @@ class TopicsController < ApplicationController
     first_post = topic.ordered_posts.first
     PostDestroyer.new(current_user, first_post, { context: params[:context] }).destroy
 
-    DiscourseEvent.trigger(:topic_destroyed, topic, current_user)
-
     render nothing: true
   end
 
@@ -353,8 +358,6 @@ class TopicsController < ApplicationController
 
     first_post = topic.posts.with_deleted.order(:post_number).first
     PostDestroyer.new(current_user, first_post).recover
-
-    DiscourseEvent.trigger(:topic_recovered, topic, current_user)
 
     render nothing: true
   end
@@ -620,6 +623,12 @@ class TopicsController < ApplicationController
   end
 
   def perform_show_response
+
+    if request.head?
+      head :ok
+      return
+    end
+
     topic_view_serializer = TopicViewSerializer.new(@topic_view, scope: guardian, root: false, include_raw: !!params[:include_raw])
 
     respond_to do |format|

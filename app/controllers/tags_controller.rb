@@ -44,6 +44,7 @@ class TagsController < ::ApplicationController
   Discourse.filters.each do |filter|
     define_method("show_#{filter}") do
       @tag_id = DiscourseTagging.clean_tag(params[:tag_id])
+      @additional_tags = params[:additional_tag_ids].to_s.split('/').map { |tag| DiscourseTagging.clean_tag(tag) }
 
       page = params[:page].to_i
       list_opts = build_topic_list_options
@@ -71,13 +72,13 @@ class TagsController < ::ApplicationController
       @list.more_topics_url = construct_url_with(:next, list_opts)
       @list.prev_topics_url = construct_url_with(:prev, list_opts)
       @rss = "tag"
-      @description_meta = I18n.t("rss_by_tag", tag: @tag_id)
+      @description_meta = I18n.t("rss_by_tag", tag: tag_params.join(' & '))
       @title = @description_meta
 
       canonical_url "#{Discourse.base_url_no_prefix}#{public_send(url_method(params.slice(:category, :parent_category)))}"
 
       if @list.topics.size == 0 && params[:tag_id] != 'none' && !Tag.where(name: @tag_id).exists?
-        raise Discourse::NotFound
+        permalink_redirect_or_not_found
       else
         respond_with_list(@list)
       end
@@ -219,13 +220,13 @@ class TagsController < ::ApplicationController
         parent_category_id = nil
         if parent_slug_or_id.present?
           parent_category_id = Category.query_parent_category(parent_slug_or_id)
-          redirect_or_not_found and return if parent_category_id.blank?
+          category_redirect_or_not_found and return if parent_category_id.blank?
         end
 
         @filter_on_category = Category.query_category(slug_or_id, parent_category_id)
       end
 
-      redirect_or_not_found and return if !@filter_on_category
+      category_redirect_or_not_found and return if !@filter_on_category
 
       guardian.ensure_can_see!(@filter_on_category)
     end
@@ -297,13 +298,14 @@ class TagsController < ::ApplicationController
       if params[:tag_id] == 'none'
         options[:no_tags] = true
       else
-        options[:tags] = [params[:tag_id]]
+        options[:tags] = tag_params
+        options[:match_all_tags] = true
       end
 
       options
     end
 
-    def redirect_or_not_found
+    def category_redirect_or_not_found
       # automatic redirects for renamed categories
       url = params[:parent_category] ? "c/#{params[:parent_category]}/#{params[:category]}" : "c/#{params[:category]}"
       permalink = Permalink.find_by_url(url)
@@ -314,5 +316,9 @@ class TagsController < ::ApplicationController
         # redirect to 404
         raise Discourse::NotFound
       end
+    end
+
+    def tag_params
+      [@tag_id].concat(Array(@additional_tags))
     end
 end

@@ -111,6 +111,7 @@ sv:
     operation_already_running: "En operation är redan igång. Kan inte starta ett nytt jobb just nu."
     backup_file_should_be_tar_gz: "Backup-filen ska vara ett .tar.gz arkiv."
     not_enough_space_on_disk: "Det finns inte tillräckligt mycket utrymme på disken för att ladda upp denna backup."
+    invalid_filename: "Backupfilnamnet innehåller ogiltiga tecken. Giltiga tecken är a-z 0-9 . - _."
   not_logged_in: "Du måste vara inloggad för att göra detta."
   not_found: "Den efterfrågade URL:en eller resursen kan inte hittas."
   invalid_access: "Du har inte behörighet att visa den efterfrågade resursen."
@@ -310,7 +311,7 @@ sv:
   assets_topic_body: "Detta är ett permanent ämne, endast synligt för personal, med syfte att lagra bilder och filer som ska användas till webbplatsens design. Radera ej detta ämne!\n\n\nSå här fungerar det:\n\n\n1. Svara på detta ämne.\n2. Ladda upp alla bilder du vill använda som logotyp, favicon och så vidare här. (Använd verktygfältets uppladdningsikon i inläggsredigeraren, eller dra-och-släpp eller klistra in bilder)\n3. Skicka ditt svar för att posta det.\n4. Högerklicka på bilderna i ditt nya inlägg för att få sökvägen till de uppladdade bilderna, eller klicka på redigera-ikonen för att redigera inlägget och på så sätt hämta sökvägen till bilderna. Kopiera bildernas sökväg. \n5. Klistra in bildernas sökvägar i de [grundläggande inställningarna](/admin/site_settings/category/required).\n\n\nOm du behöver möjliggöra uppladdning av flera olika filtyper, redigera `authorized_extensions` i [inställningarna för filer](/admin/site_settings/category/files)."
   lounge_welcome:
     title: "Välkommen till loungen"
-    body: |
+    body: |2
 
       Grattis! :confetti_ball:
 
@@ -566,6 +567,9 @@ sv:
     different_user_description: "Du är för tillfället inloggad som en annan användare än den vi skickade e-post till. Var vänlig och logga ut, eller aktivera anonymt läge, och försök igen."
     not_found_description: "Tyvärr, vi kunde inte hitta den här avprenumerationen. Är det möjligt att länken i din e-post har löpt ut?"
     log_out: "Logga ut"
+  user_api_key:
+    read: "läs"
+    read_write: "läs/skriv"
   reports:
     visits:
       title: "Användarbesök"
@@ -1036,7 +1040,6 @@ sv:
     auto_block_first_post_regex: "Skriftlägeskänsligt regex som om godkänt kommer att orsaka att första inlägget av en användare blockeras och skickas till kön för saker som behöver granskas. Exempel: raging|a[bc]a kommer att orsaka att alla inlägg som börjar med raging eller aba eller aca blockeras vid första försöket. Gäller endast användarens första inlägg. "
     reply_by_email_enabled: "Aktivera möjlighet att svara på ämnen via e-post."
     reply_by_email_address: "Mall för inkommande e-postadress för svar via e-post, till exempel: %{reply_key}@svar.exempel.se eller svar+%{reply_key}@exempel.se"
-    alternative_reply_by_email_addresses: "Lista av alternativa mallar för inkommande e-postadresser för svar via e-post."
     incoming_email_prefer_html: "Använd HTML istället för texten för inkommande e-post. Kan orsaka oväntade formatteringsproblem!"
     disable_emails: "Förhindra Discourse från att skicka någon form av e-post"
     strip_images_from_short_emails: "Rensa bilder från e-post som har mindre storlek än 2800 bytes."
@@ -1048,10 +1051,11 @@ sv:
     max_emails_per_day_per_user: "Högsta antal e-postmeddelanden att skicka till användare per dag. Ange 0 för att inaktivera gränsen"
     enable_staged_users: "Skapa automatiskt arrangerade användare vid bearbetning av inkommande e-post."
     maximum_staged_users_per_email: "Högsta antal arrangerade användare skapade vid bearbetning av inkommande e-post."
-    auto_generated_whitelist: "Lista av e-postadresser som inte undersöks för autogenererat innehåll."
     block_auto_generated_emails: "Blockera inkommande e-post som identifieras som autogenererat."
     ignore_by_title: "Ignorera inkommande e-post baserat på dess rubrik."
     mailgun_api_key: "Mailgun Secret API-nyckel att använda för att verifiera webhook-meddelanden."
+    attachment_content_type_blacklist: "lista av fraser som används till att svartlista bilagor baserade på innehållstyper"
+    attachment_filename_blacklist: "Lista över fraser som används till att svartlista bilagor baserade på filnamnet"
     pop3_polling_enabled: "Poll via POP3 för e-postsvar."
     pop3_polling_ssl: "Använd SSL vid anslutning till POP3-servern. (Rekommenderat)"
     pop3_polling_period_mins: "Tidsintervall i minuter mellan varje kontroll av POP3-kontot för e-post. OBS: kräver omstart."
@@ -1167,7 +1171,6 @@ sv:
     tag_style: "Visuell stil för tagg-utmärkelser."
     staff_tags: "En lista av taggar som endast kan användas av personalen"
     min_trust_level_to_tag_topics: "Lägsta förtroendenivå som krävs för att tagga ämnen"
-    suppress_overlapping_tags_in_list: "Dölj taggar från listvyer om de överlappar med titeln"
     remove_muted_tags_from_latest: "Visa inte ämnen som taggats med dolda taggar i listan med senaste ämnen."
     errors:
       invalid_email: "Felaktig e-postadress."
@@ -1403,34 +1406,8 @@ sv:
     subject_template: "[%{site_name}] E-postlevereringstest"
   new_version_mailer:
     subject_template: "[%{site_name}] Ny version av Discourse, uppdatering tillgänglig"
-    text_body_template: |
-      Hurra, en ny version av [Discourse](http://www.discourse.org) är tillgänglig!
-
-      Din version: %{installed_version}
-      Ny version: **%{new_version}**
-
-      - Uppgradera genom att använda den enkla **[uppgraderingsknappen](%{base_url}/admin/upgrade)** i din webbläsare.
-
-      - Se uppdateringarna i [GitHubs ändringslogg](https://github.com/discourse/discourse/commits/master)
-
-      - Besök [meta.discourse.org](http://meta.discourse.org) för att läsa de senaste nyheterna, diskutera och besöka kundtjänsten för Discourse
   new_version_mailer_with_notes:
     subject_template: "[%{site_name}] uppdatering tillgänglig"
-    text_body_template: |
-      Hurra, en ny version av [Discourse](http://www.discourse.org) är tillgänglig!
-
-      Din version: %{installed_version}
-      Ny version: **%{new_version}**
-
-      - Uppgradera genom att använda den enkla **[uppgraderingsknappen](%{base_url}/admin/upgrade)** i din webbläsare.
-
-      - Se uppdateringarna i [GitHubs ändringslogg](https://github.com/discourse/discourse/commits/master)
-
-      - Besök [meta.discourse.org](http://meta.discourse.org) för att läsa de senaste nyheterna, diskutera och få support för Discourse
-
-      ### Versionsinformation
-
-      %{notes}
   queued_posts_reminder:
     subject_template:
       one: "[%{site_name}] 1 användare väntar på att granskas"
@@ -1468,97 +1445,6 @@ sv:
         Om meddelandet flaggas av medlemmarna och döljs en andra gång så kommer det att fortsätta döljas tills det har hanterats av personal – och det är möjligt att det leder till andra åtgärder, bland annat avstängning av ditt konto.
 
         För ytterligare information, se våra [riktlinjer](%{base_url}/guidelines).
-    usage_tips:
-      text_body_template: |
-        Här är några snabba tips för att komma igång:
-
-        ## Att läsa
-
-        **Fortsätt bara bläddra** för att läsa mer!
-
-        När nya inlägg och ämnen skrivs så dyker de automatiskt upp - du behöver inte uppdatera sidan.
-
-        ## Navigering
-
-        - Använd **ikonerna i övre högra hörnet** för att söka, få tillgång till din användarsida eller <kbd>☰</kbd>-menyn.
-
-        - När du väljer ett ämne tas du alltid till ditt **senaste olästa inlägg** i ämnet. Välj antal svar-räknaren för att börja vid början eller slutet istället.
-
-        <img src="%{base_url}/images/welcome/topic-list-select-areas-2x.png" width="593" height="59">
-
-        - När du läser i ett ämne kan du använda tidslinjen på höger sida för att hoppa till början eller slutet, eller dit du senast läste. På mindre skärmar kan du välja förloppsmätaren i nedre högra hörnet för att utvidga den:
-
-        <img src="%{base_url}/images/welcome/progress-bar-2x.png" width="153" height="181">
-
-        Du kan också klicka på <kbd>?</kbd> på ditt tangentbord för att få en förteckning över alla snabbkommandon på tangentbordet.
-
-        För att lägga till ett citat, välj texten som du vill citera och klicka på någon <img src="%{base_url}/images/welcome/reply-post-2x.png" width="25" height="23"> Svarsknapp för att öpnna redigeraren. Upprepa för flera citeringar.
-
-        <img src="%{base_url}/images/welcome/quote-reply-2x.png" width="326" height="128">
-
-        Du kan alltid fortsätta läsa under tiden som du författar ditt svar och vi kommer automatiskt att spara utkast som du skriver.
-
-        För att notifiera någon om ditt svar, nämn deras namn. Skriv '@' för att börja välja användarnamn.
-
-        <img src="%{base_url}/images/welcome/username-completion-2x.png" width="191" height="125">
-
-        För att använda [standard Emojis](http://www.emoji.codes/), skriv bara `:` för att matcha med namn eller använd traditionella smileys `;)`.
-
-        <img src="%{base_url}/images/welcome/emoji-completion-2x.png" width="144" height="153">
-
-        För att generera en sammanfattning för en länk, klistra in den på en rad för sig själv:
-
-        <img src="%{base_url}/images/welcome/link-oneboxing-animation.gif" width="480" height="228">
-
-        Ditt svar kan formatteras med simpel HTML, BBCode eller [Markdown](http://commonmark.org/help/):
-
-        Det här är **fet stil**.
-        Det här är <b>fet stil</b>.
-        Det här är [b]fet stil[/b].
-
-        För fler tips om formattering, [testa vår roliga 10-minuters interaktiva tutorial!](http://commonmark.org/help/tutorial/)
-
-        ## Handlingar
-
-        Det finns handlingsknappar längst ned på varje inlägg:
-
-        <img src="%{base_url}/images/welcome/like-link-flag-bookmark-2x.png" width="162" height="42">
-
-        - Använd **gilla*-knappen för att visa för någon att du tyckte om och uppskattade deras inlägg. Sprid kärleken!
-
-        - Få en inklistringsbar länk till ett inlägg eller ett ämne via **länk**-knappen.
-
-        - Använd <kbd>&hellip;</kbd> knappen för att visa fler handlingar. **Flagga* för att på ett diskret sätt notifiera författaren eller [personalen](%{base_url}/about) om ett problem. **Bokmärk** för att hitta ett inlägg senare på din profilsida.
-
-        ## Notifieringar
-
-        När någon svarar dig, citerar ditt inlägg, nämner ditt `@användarnamn` eller länkar till ditt inlägg kommer ett nummer omedelbart dyka upp i övre högra hörnet av sidan. Välj den för att få tillgång till dina **notifieringar**.
-
-        <img src="%{base_url}/images/welcome/notification-panel-2x.png" width="160" height="54">
-
-        Oroa dig inte om att missa ett svar – du får e-post om alla notifieringar som kommer in när du är borta.
-
-        ## Preferenser
-
-        - Alla ämnen som är mindre än **två dagar gamla** anses nya.
-
-        - Alla ämnen som du **aktivt deltagit i** (genom att skapa det, svara i det eller läsa det en längre period) kommer automatiskt att bevakas å dina vägnar.
-
-        Du kommer att se notifieringar för nya och antal olästa bredvid sådana ämnen:
-
-        <img src="%{base_url}/images/welcome/topics-new-unread-2x.png" width="341" height="106">
-
-        Du kan ändra dina notifieringar för ämnen via notifieringskontrollen vid botten, och högra sidan, av varje ämne.
-
-        <img src="%{base_url}/images/welcome/topic-notification-control-2x.png" width="608" height="312">
-
-        Du kan också ställa in notifieringspreferenser per kategori, om du vill följa eller dölja varje nytt ämne i en specifik kategori.
-
-        För att ändra någon av dessa inställningar, se dina [användarinställningar](%{base_url}/my/preferences).
-
-        ## Gemenskapsförtroende
-
-        Det är fantastiskt att träffa dig! När du medverkar här kommer vi över tid att lära känna dig och dina temporära nya användarbegränsningar kommer att upphävas. Fortsätt delta så kommer du med tiden att förtjäna nya [förtroendenivåer](https://meta.discourse.org/t/what-do-user-trust-levels-do/4924) som inkluderar specialförmågor som hjälper oss att ta hand om forumet tillsammans.
     welcome_user:
       subject_template: "Välkommen till %{site_name}!"
       text_body_template: |
@@ -1595,29 +1481,12 @@ sv:
         [prefs]: %{user_preferences_url}
     backup_succeeded:
       subject_template: "Säkerhetskopia skapades utan problem"
-      text_body_template: "Säkerhetskopieringen lyckades.\nBesök [admin > säkerhetskopiering](%{base_url}/admin/backups) för att hämta den nya säkerhetskopian."
     backup_failed:
       subject_template: "Säkerhetskopiering misslyckades"
-      text_body_template: |
-        Säkerhetskopieringen misslyckades.
-
-        Här är loggen:
-
-        ```
-        %{logs}
-        ```
     restore_succeeded:
       subject_template: "Återställningen lyckades!"
-      text_body_template: "Återställningen lyckades."
     restore_failed:
       subject_template: "Återställningen misslyckades"
-      text_body_template: |
-        Återställningen misslyckades.
-
-        Här är loggen:
-        ```
-        %{logs}
-        ```
     bulk_invite_succeeded:
       subject_template: "Massinbjudning av användare behandlades utan fel "
       text_body_template: "Din massinbjudning av användare behandlades, %{sent} inbjudningar skickades."
@@ -1673,7 +1542,6 @@ sv:
 
         Kontot associerat till den här e-postadressen har blockerats.
     email_reject_reply_user_not_matching:
-      subject_template: "[%{site_name}] E-postfel -- Svar matchar inte användare"
       text_body_template: |
         Tyvärr har ditt e-postmeddelande till %{destination} (med ämnet %{former_title}) inte kunnat skickas.
 
@@ -1693,7 +1561,6 @@ sv:
 
         Om du har fått det här meddelandet och vet att du _har_ skrivit ett svar, försök igen med simplare formattering.
     email_reject_parsing:
-      subject_template: "[%{site_name}] E-postfel -- Innehåll oigenkänningsbart"
       text_body_template: |
         Tyvärr har ditt e-postmeddelande till %{destination} (med ämnet %{former_title}) inte kunnat skickas.
 
@@ -1726,12 +1593,6 @@ sv:
         %{post_error}
 
         Om du kan åtgärda problemet, var vänlig försök igen.
-    email_reject_rate_limit_specified:
-      subject_template: "[%{site_name}] E-postfel -- Begränsningsgrad"
-      text_body_template: |
-        Tyvärr har ditt e-postmeddelande till %{destination} (med ämnet %{former_title}) inte kunnat skickas.
-
-        Orsak: %{rate_limit_description}
     email_reject_invalid_post_action:
       subject_template: "[%{site_name}] E-postfel -- Ogiltig poståtgärd"
       text_body_template: |
@@ -1855,10 +1716,6 @@ sv:
     [Klicka här ](%{unsubscribe_url}) för att avprenumerera från de här e-postmeddelandena.
   unsubscribe_link_and_mail: |
     [Klicka här ](%{unsubscribe_url}) för att avprenumerera från de här e-postmeddelandena.
-  unsubscribe_mailing_list: |
-    Du mottar de här e-postmeddelandena för att du har aktiverat utskicksläge.
-
-    [Klicka här](%{unsubscribe_url}) för att avprenumerera från de här e-postmeddelandena.
   subject_re: "Sv:"
   subject_pm: "[PM]"
   user_notifications:
@@ -2012,7 +1869,7 @@ sv:
         %{respond_instructions}
     user_posted_pm_staged:
       subject_template: "%{optional_re}%{topic_title}"
-      text_body_template: |
+      text_body_template: |2
 
         %{message}
     digest:
@@ -2182,7 +2039,7 @@ sv:
     Redigera det första inlägget i det här ämnet för att ändra innehållet i %{page_name} sidan.
   guidelines_topic:
     title: "FAQ/Riktlinjer"
-    body: |
+    body: |+
       <a name="civilized"></a>
 
       ## [Det här är ett civiliserat forum för allmän diskussion](#civilized)
@@ -2464,6 +2321,8 @@ sv:
     famous_link:
       name: Berömd länk
       description: Lade upp en extern länk med 1000 klick
+      long_description: |
+        Den här utmärkelsen beviljas när en länk som du har delat får 1000 klick. Wow! Du delade en länk som förbättrade konversationen avsevärt genom att addera en väsentlig detalj, ett bra sammanhang och bättre informering. Bra jobbat!
     appreciated:
       name: Uppskattad
       description: Fick 1 gillning på 20 inlägg
