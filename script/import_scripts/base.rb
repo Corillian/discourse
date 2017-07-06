@@ -106,32 +106,16 @@ class ImportScripts::Base
     raise NotImplementedError
   end
 
-  def post_id_from_imported_post_id(import_id)
-    @lookup.post_id_from_imported_post_id(import_id)
-  end
-
-  def topic_lookup_from_imported_post_id(import_id)
-    @lookup.topic_lookup_from_imported_post_id(import_id)
-  end
-
-  def group_id_from_imported_group_id(import_id)
-    @lookup.group_id_from_imported_group_id(import_id)
-  end
-
-  def find_group_by_import_id(import_id)
-    @lookup.find_group_by_import_id(import_id)
-  end
-
-  def user_id_from_imported_user_id(import_id)
-    @lookup.user_id_from_imported_user_id(import_id)
-  end
-
-  def find_user_by_import_id(import_id)
-    @lookup.find_user_by_import_id(import_id)
-  end
-
-  def category_id_from_imported_category_id(import_id)
-    @lookup.category_id_from_imported_category_id(import_id)
+  %i{ post_id_from_imported_post_id
+      topic_lookup_from_imported_post_id
+      group_id_from_imported_group_id
+      find_group_by_import_id
+      user_id_from_imported_user_id
+      find_user_by_import_id
+      category_id_from_imported_category_id
+      add_group add_user add_category add_topic add_post
+  }.each do |method_name|
+    delegate method_name, to: :@lookup
   end
 
   def create_admin(opts={})
@@ -144,6 +128,10 @@ class ImportScripts::Base
     admin.change_trust_level!(TrustLevel[4])
     admin.email_tokens.update_all(confirmed: true)
     admin
+  end
+
+  def created_group(group)
+    # override if needed
   end
 
   # Iterate through a list of groups to be imported.
@@ -161,13 +149,14 @@ class ImportScripts::Base
     results.each do |result|
       g = yield(result)
 
-      if @lookup.group_id_from_imported_group_id(g[:id])
+      if group_id_from_imported_group_id(g[:id])
         skipped += 1
       else
         new_group = create_group(g, g[:id])
+        created_group(new_group)
 
         if new_group.valid?
-          @lookup.add_group(g[:id].to_s, new_group)
+          add_group(g[:id].to_s, new_group)
           created += 1
         else
           failed += 1
@@ -198,24 +187,27 @@ class ImportScripts::Base
   def all_records_exist?(type, import_ids)
     return false if import_ids.empty?
 
-    orig_conn = ActiveRecord::Base.connection
-    conn = orig_conn.raw_connection
-
-    conn.exec('CREATE TEMP TABLE import_ids(val varchar(200) PRIMARY KEY)')
+    connection = ActiveRecord::Base.connection.raw_connection
+    connection.exec('CREATE TEMP TABLE import_ids(val text PRIMARY KEY)')
 
     import_id_clause = import_ids.map { |id| "('#{PG::Connection.escape_string(id.to_s)}')" }.join(",")
 
-    conn.exec("INSERT INTO import_ids VALUES #{import_id_clause}")
+    connection.exec("INSERT INTO import_ids VALUES #{import_id_clause}")
 
-    existing = "#{type.to_s.classify}CustomField".constantize.where(name: 'import_id')
-    existing = existing.joins('JOIN import_ids ON val = value')
-
-    if existing.count == import_ids.length
+    existing = "#{type.to_s.classify}CustomField".constantize
+    existing = existing.where(name: 'import_id')
+                       .joins('JOIN import_ids ON val = value')
+                       .count
+    if existing == import_ids.length
       puts "Skipping #{import_ids.length} already imported #{type}"
       return true
     end
   ensure
-    conn.exec('DROP TABLE import_ids')
+    connection.exec('DROP TABLE import_ids')
+  end
+
+  def created_user(user)
+    # override if needed
   end
 
   # Iterate through a list of user records to be imported.
@@ -239,13 +231,14 @@ class ImportScripts::Base
       else
         import_id = u[:id]
 
-        if @lookup.user_id_from_imported_user_id(import_id)
+        if user_id_from_imported_user_id(import_id)
           skipped += 1
         elsif u[:email].present?
           new_user = create_user(u, import_id)
+          created_user(new_user)
 
           if new_user && new_user.valid? && new_user.user_profile && new_user.user_profile.valid?
-            @lookup.add_user(import_id.to_s, new_user)
+            add_user(import_id.to_s, new_user)
             created += 1
           else
             failed += 1
@@ -347,6 +340,10 @@ class ImportScripts::Base
     u # If there was an error creating the user, u.errors has the messages
   end
 
+  def created_category(category)
+    # override if needed
+  end
+
   # Iterates through a collection to create categories.
   # The block should return a hash with attributes for the new category.
   # Required fields are :id and :name, where :id is the id of the
@@ -362,7 +359,7 @@ class ImportScripts::Base
       params = yield(c)
 
       # block returns nil to skip
-      if params.nil? || @lookup.category_id_from_imported_category_id(params[:id])
+      if params.nil? || category_id_from_imported_category_id(params[:id])
         skipped += 1
       else
         # Basic massaging on the category name
@@ -377,7 +374,8 @@ class ImportScripts::Base
           params[:parent_category_id] = top.id if top
         end
 
-        create_category(params, params[:id])
+        new_category = create_category(params, params[:id])
+        created_category(new_category)
 
         created += 1
       end
@@ -408,7 +406,7 @@ class ImportScripts::Base
     new_category.custom_fields["import_id"] = import_id if import_id
     new_category.save!
 
-    @lookup.add_category(import_id, new_category)
+    add_category(import_id, new_category)
 
     post_create_action.try(:call, new_category)
 
@@ -439,14 +437,14 @@ class ImportScripts::Base
       else
         import_id = params.delete(:id).to_s
 
-        if @lookup.post_id_from_imported_post_id(import_id)
+        if post_id_from_imported_post_id(import_id)
           skipped += 1 # already imported this post
         else
           begin
             new_post = create_post(params, import_id)
             if new_post.is_a?(Post)
-              @lookup.add_post(import_id, new_post)
-              @lookup.add_topic(new_post)
+              add_post(import_id, new_post)
+              add_topic(new_post)
 
               created_post(new_post)
 
@@ -519,8 +517,8 @@ class ImportScripts::Base
       if params.nil?
         skipped += 1
       else
-        user.id = @lookup.user_id_from_imported_user_id(params[:user_id])
-        post.id = @lookup.post_id_from_imported_post_id(params[:post_id])
+        user.id = user_id_from_imported_user_id(params[:user_id])
+        post.id = post_id_from_imported_post_id(params[:post_id])
 
         if user.id.nil? || post.id.nil?
           skipped += 1

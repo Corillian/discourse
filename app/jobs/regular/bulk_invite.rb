@@ -14,21 +14,12 @@ module Jobs
     end
 
     def execute(args)
-      filename     = args[:filename]
-      identifier   = args[:identifier]
-      chunks       = args[:chunks].to_i
+      filename = args[:filename]
       @current_user = User.find_by(id: args[:current_user_id])
-
-      raise Discourse::InvalidParameters.new(:filename)   if filename.blank?
-      raise Discourse::InvalidParameters.new(:identifier) if identifier.blank?
-      raise Discourse::InvalidParameters.new(:chunks)     if chunks <= 0
-
-      # merge chunks, and get csv path
-      csv_path = get_csv_path(filename, identifier, chunks)
+      raise Discourse::InvalidParameters.new(:filename) if filename.blank?
 
       # read csv file, and send out invitations
-      read_csv_file(csv_path)
-
+      read_csv_file("#{Invite.base_directory}/#{filename}")
     ensure
       # send notification to user regarding progress
       notify_user
@@ -37,19 +28,8 @@ module Jobs
       FileUtils.rm_rf(csv_path) rescue nil
     end
 
-    def get_csv_path(filename, identifier, chunks)
-      csv_path = "#{Invite.base_directory}/#{filename}"
-      tmp_csv_path = "#{csv_path}.tmp"
-      # path to tmp directory
-      tmp_directory = File.dirname(Invite.chunk_path(identifier, filename, 0))
-      # merge all chunks
-      HandleChunkUpload.merge_chunks(chunks, upload_path: csv_path, tmp_upload_path: tmp_csv_path, model: Invite, identifier: identifier, filename: filename, tmp_directory: tmp_directory)
-
-      return csv_path
-    end
-
     def read_csv_file(csv_path)
-      CSV.foreach(csv_path, encoding: "iso-8859-1:UTF-8") do |csv_info|
+      CSV.foreach(csv_path, encoding: "bom|utf-8") do |csv_info|
         if csv_info[0]
           if (EmailValidator.email_regex =~ csv_info[0])
             # email is valid
@@ -105,7 +85,7 @@ module Jobs
       begin
         Invite.invite_by_email(email, @current_user, topic, group_ids)
       rescue => e
-        log "Error inviting '#{email}' -- #{e}"
+        log "Error inviting '#{email}' -- #{Rails::Html::FullSanitizer.new.sanitize(e.message)}"
         @sent -= 1
         @failed += 1
       end

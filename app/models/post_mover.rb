@@ -77,7 +77,7 @@ class PostMover
       post.is_first_post? ? create_first_post(post) : move(post)
     end
 
-    PostReply.where("reply_id in (:post_ids) OR post_id in (:post_ids)", post_ids: post_ids).each do |post_reply|
+    PostReply.where("reply_id IN (:post_ids) OR post_id IN (:post_ids)", post_ids: post_ids).each do |post_reply|
       if post_reply.post && post_reply.reply && post_reply.reply.topic_id != post_reply.post.topic_id
         PostReply.delete_all(reply_id: post_reply.reply.id, post_id: post_reply.post.id)
       end
@@ -85,33 +85,38 @@ class PostMover
   end
 
   def create_first_post(post)
-    p = PostCreator.create(
+    new_post = PostCreator.create(
       post.user,
       raw: post.raw,
       topic_id: destination_topic.id,
       acting_user: user,
-      skip_validations: true
+      skip_validations: true,
+      guardian: Guardian.new(user)
     )
-    p.update_column(:reply_count, @reply_count[1] || 0)
+
+    PostAction.copy(post, new_post)
+    new_post.update_column(:reply_count, @reply_count[1] || 0)
+    new_post.custom_fields = post.custom_fields
+    new_post.save_custom_fields
+    new_post
   end
 
   def move(post)
     @first_post_number_moved ||= post.post_number
 
-    Post.where(id: post.id, topic_id: original_topic.id).update_all(
-      [
-        ['post_number = :post_number',
-         'reply_to_post_number = :reply_to_post_number',
-         'topic_id    = :topic_id',
-         'sort_order  = :post_number',
-         'reply_count = :reply_count',
-        ].join(', '),
-        reply_count: @reply_count[post.post_number] || 0,
-        post_number: @move_map[post.post_number],
-        reply_to_post_number: @move_map[post.reply_to_post_number],
-        topic_id: destination_topic.id
-      ]
-    )
+    update = {
+      reply_count: @reply_count[post.post_number] || 0,
+      post_number: @move_map[post.post_number],
+      reply_to_post_number: @move_map[post.reply_to_post_number],
+      topic_id: destination_topic.id,
+      sort_order: @move_map[post.post_number]
+    }
+
+    unless @move_map[post.reply_to_post_number]
+      update[:reply_to_user_id] = nil
+    end
+
+    Post.where(id: post.id, topic_id: original_topic.id).update_all(update)
 
     # Move any links from the post to the new topic
     post.topic_links.update_all(topic_id: destination_topic.id)
@@ -157,7 +162,7 @@ class PostMover
 
   def posts
     @posts ||= begin
-      Post.where(id: post_ids).order(:created_at).tap do |posts|
+      Post.where(topic: @original_topic, id: post_ids).order(:created_at).tap do |posts|
         raise Discourse::InvalidParameters.new(:post_ids) if posts.empty?
       end
     end

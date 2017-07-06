@@ -50,19 +50,10 @@ module PrettyText
     end
   end
 
-  def self.create_es6_context
-    ctx = MiniRacer::Context.new(timeout: 15000)
-
-    ctx.eval("window = {}; window.devicePixelRatio = 2;") # hack to make code think stuff is retina
-
-    if Rails.env.development? || Rails.env.test?
-      ctx.attach("console.log", proc{|l| p l })
-    end
-
-    ctx_load(ctx, "vendor/assets/javascripts/loader.js")
-    ctx_load(ctx, "vendor/assets/javascripts/lodash.js")
-    manifest = File.read("#{Rails.root}/app/assets/javascripts/pretty-text-bundle.js")
+  def self.ctx_load_manifest(ctx, name)
+    manifest = File.read("#{Rails.root}/app/assets/javascripts/#{name}")
     root_path = "#{Rails.root}/app/assets/javascripts/"
+
     manifest.each_line do |l|
       l = l.chomp
       if l =~ /\/\/= require (\.\/)?(.*)$/
@@ -74,6 +65,23 @@ module PrettyText
         end
       end
     end
+  end
+
+  def self.create_es6_context
+    ctx = MiniRacer::Context.new(timeout: 15000)
+
+    ctx.eval("window = {}; window.devicePixelRatio = 2;") # hack to make code think stuff is retina
+
+    if Rails.env.development? || Rails.env.test?
+      ctx.attach("console.log", proc { |l| p l })
+      ctx.eval('window.console = console;')
+    end
+
+    ctx_load(ctx, "#{Rails.root}/app/assets/javascripts/discourse-loader.js")
+    ctx_load(ctx, "vendor/assets/javascripts/lodash.js")
+    ctx_load_manifest(ctx, "pretty-text-bundle.js")
+
+    root_path = "#{Rails.root}/app/assets/javascripts/"
 
     apply_es6_file(ctx, root_path, "discourse/lib/utilities")
 
@@ -92,6 +100,10 @@ module PrettyText
         root = Regexp.last_match[0]
         apply_es6_file(ctx, root, f.sub(root, '').sub(/\.js\.es6$/, ''))
       end
+    end
+
+    DiscoursePluginRegistry.vendored_pretty_text.each do |vpt|
+      ctx.eval(File.read(vpt))
     end
 
     ctx
@@ -136,52 +148,64 @@ module PrettyText
         paths[:S3BaseUrl] = Discourse.store.absolute_base_url
       end
 
-      context.eval("__optInput = {};")
-      context.eval("__optInput.siteSettings = #{SiteSetting.client_settings_json};")
-      context.eval("__paths = #{paths.to_json};")
-
-      if opts[:topicId]
-        context.eval("__optInput.topicId = #{opts[:topicId].to_i};")
+      if SiteSetting.enable_experimental_markdown_it
+        # defer load markdown it
+        unless context.eval("window.markdownit")
+          ctx_load_manifest(context, "markdown-it-bundle.js")
+        end
       end
 
-      context.eval("__optInput.userId = #{opts[:user_id].to_i};") if opts[:user_id]
-
-      context.eval("__optInput.getURL = __getURL;")
-      context.eval("__optInput.getCurrentUser = __getCurrentUser;")
-      context.eval("__optInput.lookupAvatar = __lookupAvatar;")
-      context.eval("__optInput.getTopicInfo = __getTopicInfo;")
-      context.eval("__optInput.categoryHashtagLookup = __categoryLookup;")
-      context.eval("__optInput.mentionLookup = __mentionLookup;")
-
       custom_emoji = {}
-      Emoji.custom.map {|e| custom_emoji[e.name] = e.url}
-      context.eval("__optInput.customEmoji = #{custom_emoji.to_json};")
+      Emoji.custom.map { |e| custom_emoji[e.name] = e.url }
 
-      context.eval('__textOptions = __buildOptions(__optInput);')
+      buffer = <<~JS
+        __optInput = {};
+        __optInput.siteSettings = #{SiteSetting.client_settings_json};
+        __paths = #{paths.to_json};
+        __optInput.getURL = __getURL;
+        __optInput.getCurrentUser = __getCurrentUser;
+        __optInput.lookupAvatar = __lookupAvatar;
+        __optInput.getTopicInfo = __getTopicInfo;
+        __optInput.categoryHashtagLookup = __categoryLookup;
+        __optInput.mentionLookup = __mentionLookup;
+        __optInput.customEmoji = #{custom_emoji.to_json};
+        __optInput.emojiUnicodeReplacer = __emojiUnicodeReplacer;
+      JS
+
+      if opts[:topicId]
+        buffer << "__optInput.topicId = #{opts[:topicId].to_i};\n"
+      end
+
+      if opts[:user_id]
+        buffer << "__optInput.userId = #{opts[:user_id].to_i};\n"
+      end
+
+      buffer << "__textOptions = __buildOptions(__optInput);\n"
 
       # Be careful disabling sanitization. We allow for custom emails
       if opts[:sanitize] == false
-        context.eval('__textOptions.sanitize = false;')
+        buffer << ('__textOptions.sanitize = false;')
       end
 
-      opts = context.eval("__pt = new __PrettyText(__textOptions);")
+      buffer << ("__pt = new __PrettyText(__textOptions);")
+      opts = context.eval(buffer)
 
       DiscourseEvent.trigger(:markdown_context, context)
       baked = context.eval("__pt.cook(#{text.inspect})")
     end
 
-    if baked.blank? && !(opts || {})[:skip_blank_test]
-      # we may have a js engine issue
-      test = markdown("a", skip_blank_test: true)
-      if test.blank?
-        Rails.logger.warn("Markdown engine appears to have crashed, resetting context")
-        reset_context
-        opts ||= {}
-        opts = opts.dup
-        opts[:skip_blank_test] = true
-        baked = markdown(text, opts)
-      end
-    end
+    # if baked.blank? && !(opts || {})[:skip_blank_test]
+    #   # we may have a js engine issue
+    #   test = markdown("a", skip_blank_test: true)
+    #   if test.blank?
+    #     Rails.logger.warn("Markdown engine appears to have crashed, resetting context")
+    #     reset_context
+    #     opts ||= {}
+    #     opts = opts.dup
+    #     opts[:skip_blank_test] = true
+    #     baked = markdown(text, opts)
+    #   end
+    # end
 
     baked
   end
@@ -209,7 +233,18 @@ module PrettyText
     options[:topicId] = opts[:topic_id]
 
     working_text = text.dup
-    sanitized = markdown(working_text, options)
+
+    begin
+      sanitized = markdown(working_text, options)
+    rescue MiniRacer::ScriptTerminatedError => e
+      if SiteSetting.censored_pattern.present?
+        Rails.logger.warn "Post cooking timed out. Clearing the censored_pattern setting and retrying."
+        SiteSetting.censored_pattern = nil
+        sanitized = markdown(working_text, options)
+      else
+        raise e
+      end
+    end
 
     doc = Nokogiri::HTML.fragment(sanitized)
 
@@ -250,53 +285,45 @@ module PrettyText
            whitelist.any?{|u| uri.host == u || uri.host.ends_with?("." << u)}
           # we are good no need for nofollow
         else
-          l["rel"] = "nofollow"
+          l["rel"] = "nofollow noopener"
         end
       rescue URI::InvalidURIError, URI::InvalidComponentError
         # add a nofollow anyway
-        l["rel"] = "nofollow"
+        l["rel"] = "nofollow noopener"
       end
     end
   end
 
-  class DetectedLink
-    attr_accessor :is_quote, :url
-
-    def initialize(url, is_quote=false)
-      @url = url
-      @is_quote = is_quote
-    end
-  end
-
+  class DetectedLink < Struct.new(:url, :is_quote); end
 
   def self.extract_links(html)
     links = []
     doc = Nokogiri::HTML.fragment(html)
+
     # remove href inside quotes & elided part
-    doc.css("aside.quote a, .elided a").each { |l| l["href"] = "" }
+    doc.css("aside.quote a, .elided a").each { |a| a["href"] = "" }
 
-    # extract all links from the post
-    doc.css("a").each { |l|
-      unless l["href"].blank? || "#".freeze == l["href"][0]
-        links << DetectedLink.new(l["href"])
+    # extract all links
+    doc.css("a").each do |a|
+      if a["href"].present? && a["href"][0] != "#".freeze
+        links << DetectedLink.new(a["href"], false)
       end
-    }
-
-    # extract links to quotes
-    doc.css("aside.quote[data-topic]").each do |a|
-      topic_id = a['data-topic']
-
-      url = "/t/topic/#{topic_id}"
-      if post_number = a['data-post']
-        url << "/#{post_number}"
-      end
-
-      links << DetectedLink.new(url, true)
     end
 
-    # Extract Youtube links
-    doc.css("div[data-youtube-id]").each do |d|
-      links << DetectedLink.new("https://www.youtube.com/watch?v=#{d['data-youtube-id']}", false)
+    # extract quotes
+    doc.css("aside.quote[data-topic]").each do |aside|
+      if aside["data-topic"].present?
+        url = "/t/topic/#{aside["data-topic"]}"
+        url << "/#{aside["data-post"]}" if aside["data-post"].present?
+        links << DetectedLink.new(url, true)
+      end
+    end
+
+    # extract Youtube links
+    doc.css("div[data-youtube-id]").each do |div|
+      if div["data-youtube-id"].present?
+        links << DetectedLink.new("https://www.youtube.com/watch?v=#{div['data-youtube-id']}", false)
+      end
     end
 
     links

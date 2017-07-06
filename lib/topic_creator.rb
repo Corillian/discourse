@@ -64,7 +64,7 @@ class TopicCreator
     rollback_with!(topic, :too_many_users) if @added_users.size != 1
 
     # Create a warning record
-    Warning.create(topic: topic, user: @added_users.first, created_by: @user)
+    UserWarning.create(topic: topic, user: @added_users.first, created_by: @user)
   end
 
   def watch_topic(topic)
@@ -123,6 +123,10 @@ class TopicCreator
 
     topic_params[:pinned_at] = Time.zone.parse(@opts[:pinned_at].to_s) if @opts[:pinned_at].present?
     topic_params[:pinned_globally] = @opts[:pinned_globally] if @opts[:pinned_globally].present?
+
+    if SiteSetting.topic_featured_link_enabled && @opts[:featured_link].present? && @guardian.can_edit_featured_link?(topic_params[:category_id])
+      topic_params[:featured_link] = @opts[:featured_link]
+    end
 
     topic_params
   end

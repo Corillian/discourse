@@ -22,7 +22,7 @@ class PostJobsEnqueuer
   private
 
   def enqueue_post_alerts
-    Jobs.enqueue(:post_alert, post_id: @post.id)
+    Jobs.enqueue(:post_alert, post_id: @post.id, options: @opts[:post_alert_options])
   end
 
   def feature_topic_users
@@ -35,7 +35,7 @@ class PostJobsEnqueuer
 
   def after_post_create
     TopicTrackingState.publish_unread(@post) if @post.post_number > 1
-    TopicTrackingState.publish_latest(@topic)
+    TopicTrackingState.publish_latest(@topic, @post.post_type == Post.types[:whisper])
 
     Jobs.enqueue_in(
         SiteSetting.email_time_window_mins.minutes,

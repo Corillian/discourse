@@ -1,4 +1,4 @@
-InviteRedeemer = Struct.new(:invite, :username, :name) do
+InviteRedeemer = Struct.new(:invite, :username, :name, :password, :user_custom_fields) do
 
   def redeem
     Invite.transaction do
@@ -18,7 +18,7 @@ InviteRedeemer = Struct.new(:invite, :username, :name) do
   end
 
   # extracted from User cause it is very specific to invites
-  def self.create_user_from_invite(invite, username, name)
+  def self.create_user_from_invite(invite, username, name, password=nil, user_custom_fields=nil)
     user_exists = User.find_by_email(invite.email)
     return user if user_exists
 
@@ -30,6 +30,29 @@ InviteRedeemer = Struct.new(:invite, :username, :name) do
     available_name = name || available_username
 
     user = User.new(email: invite.email, username: available_username, name: available_name, active: true, trust_level: SiteSetting.default_invitee_trust_level)
+
+    if password
+      user.password_required!
+      user.password = password
+    end
+
+    if !SiteSetting.must_approve_users? || (SiteSetting.must_approve_users? && invite.invited_by.staff?)
+      user.approved = true
+      user.approved_by_id = invite.invited_by_id
+      user.approved_at = Time.zone.now
+    end
+
+    user_fields = UserField.all
+    if user_custom_fields.present? && user_fields.present?
+      field_params = user_custom_fields || {}
+      fields = user.custom_fields
+
+      user_fields.each do |f|
+        field_val = field_params[f.id.to_s]
+        fields["user_field_#{f.id}"] = field_val[0...UserField.max_length] unless field_val.blank?
+      end
+      user.custom_fields = fields
+    end
 
     user.moderator = true if invite.moderator? && invite.invited_by.staff?
     user.save!
@@ -44,13 +67,12 @@ InviteRedeemer = Struct.new(:invite, :username, :name) do
   end
 
   def process_invitation
+    approve_account_if_needed
     add_to_private_topics_if_invited
     add_user_to_invited_topics
     add_user_to_groups
     send_welcome_message
-    approve_account_if_needed
     notify_invitee
-    send_password_instructions
     delete_duplicate_invites
   end
 
@@ -66,7 +88,7 @@ InviteRedeemer = Struct.new(:invite, :username, :name) do
 
   def get_invited_user
     result = get_existing_user
-    result ||= InviteRedeemer.create_user_from_invite(invite, username, name)
+    result ||= InviteRedeemer.create_user_from_invite(invite, username, name, password, user_custom_fields)
     result.send_welcome_message = false
     result
   end
@@ -104,12 +126,8 @@ InviteRedeemer = Struct.new(:invite, :username, :name) do
   end
 
   def approve_account_if_needed
-    invited_user.approve(invite.invited_by_id, false)
-  end
-
-  def send_password_instructions
-    if !SiteSetting.enable_sso && SiteSetting.enable_local_logins && !invited_user.has_password?
-      Jobs.enqueue(:invite_password_instructions_email, username: invited_user.username)
+    if get_existing_user
+      invited_user.approve(invite.invited_by_id, false)
     end
   end
 

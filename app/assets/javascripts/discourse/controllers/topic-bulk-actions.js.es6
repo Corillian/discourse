@@ -2,50 +2,64 @@ import ModalFunctionality from 'discourse/mixins/modal-functionality';
 
 const _buttons = [];
 
-function addBulkButton(action, key) {
-  _buttons.push({ action: action, label: "topics.bulk." + key });
+const alwaysTrue = () => true;
+
+function identity() {
+}
+
+function addBulkButton(action, key, opts) {
+  opts = opts || {};
+
+  const btn = {
+    action,
+    label: `topics.bulk.${key}`,
+    icon: opts.icon,
+    buttonVisible: opts.buttonVisible || alwaysTrue,
+    class: opts.class
+  };
+
+  _buttons.push(btn);
 }
 
 // Default buttons
-addBulkButton('showChangeCategory', 'change_category');
-addBulkButton('deleteTopics', 'delete');
-addBulkButton('closeTopics', 'close_topics');
-addBulkButton('archiveTopics', 'archive_topics');
-addBulkButton('showNotificationLevel', 'notification_level');
-addBulkButton('resetRead', 'reset_read');
-addBulkButton('unlistTopics', 'unlist_topics');
-addBulkButton('showTagTopics', 'change_tags');
+addBulkButton('showChangeCategory', 'change_category', {icon: 'pencil'});
+addBulkButton('closeTopics', 'close_topics', {icon: 'lock'});
+addBulkButton('archiveTopics', 'archive_topics', {icon: 'folder'});
+addBulkButton('showNotificationLevel', 'notification_level', {icon: 'circle-o'});
+addBulkButton('resetRead', 'reset_read', {icon: 'backward'});
+addBulkButton('unlistTopics', 'unlist_topics', {
+  icon: 'eye-slash',
+  buttonVisible: topics => topics.some(t => t.visible)
+});
+addBulkButton('relistTopics', 'relist_topics', {
+  icon: 'eye',
+  buttonVisible: topics => topics.some(t => !t.visible)
+});
+addBulkButton('showTagTopics', 'change_tags', {icon: 'tag'});
+addBulkButton('showAppendTagTopics', 'append_tags', {icon: 'tag'});
+addBulkButton('deleteTopics', 'delete', {icon: 'trash', class: 'btn-danger'});
 
 // Modal for performing bulk actions on topics
-export default Ember.ArrayController.extend(ModalFunctionality, {
+export default Ember.Controller.extend(ModalFunctionality, {
   tags: null,
-  buttonRows: null,
 
   emptyTags: Ember.computed.empty('tags'),
+  categoryId: Ember.computed.alias('model.category.id'),
 
   onShow() {
-    this.set('controllers.modal.modalClass', 'topic-bulk-actions-modal small');
+    const topics = this.get('model.topics');
+    // const relistButtonIndex = _buttons.findIndex(b => b.action === 'relistTopics');
 
-    const buttonRows = [];
-    let row = [];
-    _buttons.forEach(function(b) {
-      row.push(b);
-      if (row.length === 4) {
-        buttonRows.push(row);
-        row = [];
-      }
-    });
-    if (row.length) { buttonRows.push(row); }
-
-    this.set('buttonRows', buttonRows);
-    this.send('changeBulkTemplate', 'modal/bulk_actions_buttons');
+    this.set('buttons', _buttons.filter(b => b.buttonVisible(topics)));
+    this.set('modal.modalClass', 'topic-bulk-actions-modal small');
+    this.send('changeBulkTemplate', 'modal/bulk-actions-buttons');
   },
 
   perform(operation) {
     this.set('loading', true);
 
-    const topics = this.get('model');
-    return Discourse.Topic.bulkOperation(this.get('model'), operation).then(result => {
+    const topics = this.get('model.topics');
+    return Discourse.Topic.bulkOperation(topics, operation).then(result => {
       this.set('loading', false);
       if (result && result.topic_ids) {
         return result.topic_ids.map(t => topics.findBy('id', t));
@@ -61,7 +75,7 @@ export default Ember.ArrayController.extend(ModalFunctionality, {
     this.perform(operation).then(topics => {
       if (topics) {
         topics.forEach(cb);
-        (this.get('refreshClosure') || Ember.k)();
+        (this.get('refreshClosure') || identity)();
         this.send('closeModal');
       }
     });
@@ -69,7 +83,7 @@ export default Ember.ArrayController.extend(ModalFunctionality, {
 
   performAndRefresh(operation) {
     return this.perform(operation).then(() => {
-      (this.get('refreshClosure') || Ember.k)();
+      (this.get('refreshClosure') || identity)();
       this.send('closeModal');
     });
   },
@@ -77,6 +91,9 @@ export default Ember.ArrayController.extend(ModalFunctionality, {
   actions: {
     showTagTopics() {
       this.set('tags', '');
+      this.set('action', 'changeTags');
+      this.set('label', 'change_tags');
+      this.set('title', 'choose_new_tags');
       this.send('changeBulkTemplate', 'bulk-tag');
     },
 
@@ -84,13 +101,25 @@ export default Ember.ArrayController.extend(ModalFunctionality, {
       this.performAndRefresh({type: 'change_tags', tags: this.get('tags')});
     },
 
+    showAppendTagTopics() {
+      this.set('tags', '');
+      this.set('action', 'appendTags');
+      this.set('label', 'append_tags');
+      this.set('title', 'choose_append_tags');
+      this.send('changeBulkTemplate', 'bulk-tag');
+    },
+
+    appendTags() {
+      this.performAndRefresh({type: 'append_tags', tags: this.get('tags')});
+    },
+
     showChangeCategory() {
-      this.send('changeBulkTemplate', 'modal/bulk_change_category');
-      this.set('controllers.modal.modalClass', 'topic-bulk-actions-modal full');
+      this.send('changeBulkTemplate', 'modal/bulk-change-category');
+      this.set('modal.modalClass', 'topic-bulk-actions-modal full');
     },
 
     showNotificationLevel() {
-      this.send('changeBulkTemplate', 'modal/bulk_notification_level');
+      this.send('changeBulkTemplate', 'modal/bulk-notification-level');
     },
 
     deleteTopics() {
@@ -109,13 +138,17 @@ export default Ember.ArrayController.extend(ModalFunctionality, {
       this.forEachPerformed({type: 'unlist'}, t => t.set('visible', false));
     },
 
+    relistTopics() {
+      this.forEachPerformed({type: 'relist'}, t => t.set('visible', true));
+    },
+
     changeCategory() {
       const categoryId = parseInt(this.get('newCategoryId'), 10) || 0;
       const category = Discourse.Category.findById(categoryId);
 
       this.perform({type: 'change_category', category_id: categoryId}).then(topics => {
         topics.forEach(t => t.set('category', category));
-        (this.get('refreshClosure') || Ember.k)();
+        (this.get('refreshClosure') || identity)();
         this.send('closeModal');
       });
     },

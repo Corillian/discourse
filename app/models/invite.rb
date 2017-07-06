@@ -1,6 +1,7 @@
 require_dependency 'rate_limiter'
 
 class Invite < ActiveRecord::Base
+  class UserExists < StandardError; end
   include RateLimiter::OnCreateRecord
   include Trashable
 
@@ -51,23 +52,19 @@ class Invite < ActiveRecord::Base
     invalidated_at.nil?
   end
 
-  def redeem
-    InviteRedeemer.new(self).redeem unless expired? || destroyed? || !link_valid?
-  end
-
-
-  def add_groups_for_topic(topic)
-    if topic.category
-      (topic.category.groups - groups).each { |group| group.add(user) }
-    end
+  def redeem(username: nil, name: nil, password: nil, user_custom_fields: nil)
+    InviteRedeemer.new(self, username, name, password, user_custom_fields).redeem unless expired? || destroyed? || !link_valid?
   end
 
   def self.extend_permissions(topic, user, invited_by)
     if topic.private_message?
       topic.grant_permission_to_user(user.email)
     elsif topic.category && topic.category.groups.any?
-      if Guardian.new(invited_by).can_invite_to?(topic) && !SiteSetting.enable_sso
-        (topic.category.groups - user.groups).each { |group| group.add(user) }
+      if Guardian.new(invited_by).can_invite_via_email?(topic)
+        (topic.category.groups - user.groups).each do |group|
+          group.add(user)
+          GroupActionLogger.new(Discourse.system_user, group).log_add_user_to_group(user)
+        end
       end
     end
   end
@@ -107,7 +104,7 @@ class Invite < ActiveRecord::Base
 
     if user
       extend_permissions(topic, user, invited_by) if topic
-      return nil
+      raise UserExists.new I18n.t("invite.user_exists", email: lower_email, username: user.username)
     end
 
     invite = Invite.with_deleted
@@ -120,9 +117,12 @@ class Invite < ActiveRecord::Base
       invite = nil
     end
 
+    invite.update_columns(created_at: Time.zone.now, updated_at: Time.zone.now) if invite
+
     if !invite
       create_args = { invited_by: invited_by, email: lower_email }
       create_args[:moderator] = true if opts[:moderator]
+      create_args[:custom_message] = custom_message if custom_message
       invite = Invite.create!(create_args)
     end
 
@@ -144,7 +144,7 @@ class Invite < ActiveRecord::Base
       end
     end
 
-    Jobs.enqueue(:invite_email, invite_id: invite.id, custom_message: custom_message) if send_email
+    Jobs.enqueue(:invite_email, invite_id: invite.id) if send_email
 
     invite.reload
     invite
@@ -253,7 +253,13 @@ class Invite < ActiveRecord::Base
 
   def self.resend_all_invites_from(user_id)
     Invite.where('invites.user_id IS NULL AND invites.email IS NOT NULL AND invited_by_id = ?', user_id).find_each do |invite|
-      invite.resend_invite unless invite.blank?
+      invite.resend_invite
+    end
+  end
+
+  def self.rescind_all_invites_from(user)
+    Invite.where('invites.user_id IS NULL AND invites.email IS NOT NULL AND invited_by_id = ?', user.id).find_each do |invite|
+      invite.trash!(user)
     end
   end
 
@@ -265,8 +271,12 @@ class Invite < ActiveRecord::Base
     File.join(Rails.root, "public", "uploads", "csv", RailsMultisite::ConnectionManagement.current_db)
   end
 
-  def self.chunk_path(identifier, filename, chunk_number)
-    File.join(Invite.base_directory, "tmp", identifier, "#{filename}.part#{chunk_number}")
+  def self.create_csv(file, name)
+    extension = File.extname(file.original_filename)
+    path = "#{Invite.base_directory}/#{name}#{extension}"
+    FileUtils.mkdir_p(Pathname.new(path).dirname)
+    File.open(path, "wb") { |f| f << file.tempfile.read }
+    path
   end
 end
 
@@ -285,6 +295,8 @@ end
 #  deleted_at     :datetime
 #  deleted_by_id  :integer
 #  invalidated_at :datetime
+#  moderator      :boolean          default(FALSE), not null
+#  custom_message :text
 #
 # Indexes
 #

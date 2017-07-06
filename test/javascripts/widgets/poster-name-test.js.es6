@@ -4,17 +4,16 @@ moduleForWidget('poster-name');
 
 widgetTest('basic rendering', {
   template: '{{mount-widget widget="poster-name" args=args}}',
-  setup() {
+  beforeEach() {
     this.set('args', {
       username: 'eviltrout',
-      usernameUrl: '/users/eviltrout',
+      usernameUrl: '/u/eviltrout',
       name: 'Robin Ward',
       user_title: 'Trout Master' });
   },
   test(assert) {
     assert.ok(this.$('.names').length);
     assert.ok(this.$('span.username').length);
-    assert.ok(this.$('a[data-auto-route=true]').length);
     assert.ok(this.$('a[data-user-card=eviltrout]').length);
     assert.equal(this.$('.username a').text(), 'eviltrout');
     assert.equal(this.$('.full-name a').text(), 'Robin Ward');
@@ -24,10 +23,10 @@ widgetTest('basic rendering', {
 
 widgetTest('extra classes and glyphs', {
   template: '{{mount-widget widget="poster-name" args=args}}',
-  setup() {
+  beforeEach() {
     this.set('args', {
       username: 'eviltrout',
-      usernameUrl: '/users/eviltrout',
+      usernameUrl: '/u/eviltrout',
       staff: true,
       admin: true,
       moderator: true,
@@ -47,7 +46,7 @@ widgetTest('extra classes and glyphs', {
 
 widgetTest('disable display name on posts', {
   template: '{{mount-widget widget="poster-name" args=args}}',
-  setup() {
+  beforeEach() {
     this.siteSettings.display_name_on_posts = false;
     this.set('args', { username: 'eviltrout', name: 'Robin Ward' });
   },
@@ -58,7 +57,7 @@ widgetTest('disable display name on posts', {
 
 widgetTest("doesn't render a name if it's similar to the username", {
   template: '{{mount-widget widget="poster-name" args=args}}',
-  setup() {
+  beforeEach() {
     this.siteSettings.prioritize_username_in_ux = true;
     this.siteSettings.display_name_on_posts = true;
     this.set('args', { username: 'eviltrout', name: 'evil-trout' });

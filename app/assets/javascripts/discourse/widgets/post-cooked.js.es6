@@ -11,11 +11,11 @@ export function addDecorator(cb) {
 
 export default class PostCooked {
 
-  constructor(attrs, getModel) {
+  constructor(attrs, decoratorHelper) {
     this.attrs = attrs;
     this.expanding = false;
     this._highlighted = false;
-    this.getModel = getModel;
+    this.decoratorHelper = decoratorHelper;
   }
 
   update(prev) {
@@ -31,7 +31,7 @@ export default class PostCooked {
     this._fixImageSizes($html);
     this._applySearchHighlight($html);
 
-    _decorators.forEach(cb => cb($html, this.getModel));
+    _decorators.forEach(cb => cb($html, this.decoratorHelper));
     return $html[0];
   }
 
@@ -134,8 +134,14 @@ export default class PostCooked {
       ajax(`/posts/by_number/${topicId}/${postId}`).then(result => {
         const div = $("<div class='expanded-quote'></div>");
         div.html(result.cooked);
+        _decorators.forEach(cb => cb(div, this.decoratorHelper));
+
         div.highlight(originalText, {caseSensitive: true, element: 'span', className: 'highlighted'});
         $blockQuote.showHtml(div, 'fast', finished);
+      }).catch((e) => {
+        if (e.jqXHR.status === 404) {
+          $blockQuote.showHtml($("<div class='expanded-quote'><i class='fa fa-trash-o'></i></div>"), 'fast', finished);
+        }
       });
     } else {
       // Hide expanded quote

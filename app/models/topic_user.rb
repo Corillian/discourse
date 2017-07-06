@@ -38,16 +38,14 @@ class TopicUser < ActiveRecord::Base
     end
 
     def auto_notification(user_id, topic_id, reason, notification_level)
-      if TopicUser.where(user_id: user_id, topic_id: topic_id, notifications_reason_id: nil).exists?
+      if TopicUser.where("user_id = :user_id AND topic_id = :topic_id AND (notifications_reason_id IS NULL OR
+        (notification_level < :notification_level AND notification_level > :normal_notification_level))",
+                           user_id: user_id, topic_id: topic_id, notification_level: notification_level,
+                           normal_notification_level: notification_levels[:regular]).exists?
         change(user_id, topic_id,
           notification_level: notification_level,
           notifications_reason_id: reason
         )
-
-        MessageBus.publish("/topic/#{topic_id}", {
-          notification_level_change: notification_level,
-          notifications_reason_id: reason
-        }, user_ids: [user_id])
       end
     end
 
@@ -132,17 +130,28 @@ SQL
 
         if rows == 0
           create_missing_record(user_id, topic_id, attrs)
-        else
-          observe_after_save_callbacks_for topic_id, user_id
         end
       end
 
       if attrs[:notification_level]
-        MessageBus.publish("/topic/#{topic_id}", { notification_level_change: attrs[:notification_level] }, user_ids: [user_id])
+        notification_level_change(user_id, topic_id, attrs[:notification_level], attrs[:notifications_reason_id])
       end
 
     rescue ActiveRecord::RecordNotUnique
       # In case of a race condition to insert, do nothing
+    end
+
+    def notification_level_change(user_id, topic_id, notification_level, reason_id)
+      message = { notification_level_change: notification_level }
+      message[:notifications_reason_id] = reason_id if reason_id
+      MessageBus.publish("/topic/#{topic_id}", message, user_ids: [user_id])
+
+      DiscourseEvent.trigger(:topic_notification_level_changed,
+        notification_level,
+        user_id,
+        topic_id
+      )
+
     end
 
     def create_missing_record(user_id, topic_id, attrs)
@@ -203,8 +212,6 @@ SQL
 
       if rows == 0
         change(user_id, topic_id, last_visited_at: now, first_visited_at: now)
-      else
-        observe_after_save_callbacks_for(topic_id, user_id)
       end
     end
 
@@ -236,6 +243,8 @@ SQL
                                     topic_users.notification_level, tu.notification_level old_level, tu.last_read_post_number
                                 "
 
+    UPDATE_TOPIC_USER_SQL_STAFF = UPDATE_TOPIC_USER_SQL.gsub("highest_post_number", "highest_staff_post_number")
+
     INSERT_TOPIC_USER_SQL = "INSERT INTO topic_users (user_id, topic_id, last_read_post_number, highest_seen_post_number, last_visited_at, first_visited_at, notification_level)
                   SELECT :user_id, :topic_id, :post_number, ft.highest_post_number, :now, :now, :new_status
                   FROM topics AS ft
@@ -244,6 +253,8 @@ SQL
                     AND NOT EXISTS(SELECT 1
                                    FROM topic_users AS ftu
                                    WHERE ftu.user_id = :user_id and ftu.topic_id = :topic_id)"
+
+    INSERT_TOPIC_USER_SQL_STAFF = INSERT_TOPIC_USER_SQL.gsub("highest_post_number", "highest_staff_post_number")
 
     def update_last_read(user, topic_id, post_number, msecs, opts={})
       return if post_number.blank?
@@ -265,7 +276,11 @@ SQL
       # ... user visited the topic but did not read the posts
       #
       # 86400000 = 1 day
-      rows = exec_sql(UPDATE_TOPIC_USER_SQL,args).values
+      rows = if user.staff?
+               exec_sql(UPDATE_TOPIC_USER_SQL_STAFF,args).values
+             else
+               exec_sql(UPDATE_TOPIC_USER_SQL,args).values
+             end
 
       if rows.length == 1
         before = rows[0][1].to_i
@@ -280,7 +295,7 @@ SQL
         end
 
         if before != after
-          MessageBus.publish("/topic/#{topic_id}", { notification_level_change: after }, user_ids: [user.id])
+          notification_level_change(user.id, topic_id, after, nil)
         end
       end
 
@@ -295,7 +310,11 @@ SQL
         user.update_posts_read!(post_number, mobile: opts[:mobile])
 
         begin
-          exec_sql(INSERT_TOPIC_USER_SQL, args)
+          if user.staff?
+            exec_sql(INSERT_TOPIC_USER_SQL_STAFF, args)
+          else
+            exec_sql(INSERT_TOPIC_USER_SQL, args)
+          end
         rescue PG::UniqueViolation
           # if record is inserted between two statements this can happen
           # we retry once to avoid failing the req
@@ -307,15 +326,10 @@ SQL
           end
         end
 
-        MessageBus.publish("/topic/#{topic_id}", { notification_level_change: args[:new_status] }, user_ids: [user.id])
+        notification_level_change(user.id, topic_id, args[:new_status], nil)
       end
     end
 
-    def observe_after_save_callbacks_for(topic_id, user_id)
-      TopicUser.where(topic_id: topic_id, user_id: user_id).each do |topic_user|
-        UserActionObserver.instance.after_save topic_user
-      end
-    end
   end
 
   def self.update_post_action_cache(opts={})

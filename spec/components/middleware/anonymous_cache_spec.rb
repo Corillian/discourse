@@ -31,6 +31,21 @@ describe Middleware::AnonymousCache::Helper do
     end
   end
 
+  context "per theme cache" do
+    it "handles theme keys" do
+      theme = Theme.create(name: "test", user_id: -1, user_selectable: true)
+
+      with_bad_theme_key = new_helper("HTTP_COOKIE" => "theme_key=abc").cache_key
+      with_no_theme_key = new_helper().cache_key
+
+      expect(with_bad_theme_key).to eq(with_no_theme_key)
+
+      with_good_theme_key = new_helper("HTTP_COOKIE" => "theme_key=#{theme.key}").cache_key
+
+      expect(with_good_theme_key).not_to eq(with_no_theme_key)
+    end
+  end
+
   context "cached" do
     let!(:helper) do
       new_helper("ANON_CACHE_DURATION" => 10)
@@ -43,6 +58,16 @@ describe Middleware::AnonymousCache::Helper do
     after do
       helper.clear_cache
       crawler.clear_cache
+    end
+
+    it "handles brotli switching" do
+      helper.cache([200, {"HELLO" => "WORLD"}, ["hello ", "my world"]])
+
+      helper = new_helper("ANON_CACHE_DURATION" => 10)
+      expect(helper.cached).to eq([200, {"X-Discourse-Cached" => "true", "HELLO" => "WORLD"}, ["hello my world"]])
+
+      helper = new_helper("ANON_CACHE_DURATION" => 10, "HTTP_ACCEPT_ENCODING" => "gz, br")
+      expect(helper.cached).to eq(nil)
     end
 
     it "returns cached data for cached requests" do

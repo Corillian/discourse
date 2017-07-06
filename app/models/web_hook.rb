@@ -40,39 +40,12 @@ class WebHook < ActiveRecord::Base
     end
   end
 
-  def self.enqueue_topic_hooks(event, topic, user)
-    WebHook.enqueue_hooks(:topic, topic_id: topic.id, user_id: user&.id, category_id: topic&.category&.id, event_name: event.to_s)
+  def self.enqueue_topic_hooks(event, topic, user=nil)
+    WebHook.enqueue_hooks(:topic, topic_id: topic.id, category_id: topic&.category_id, event_name: event.to_s)
   end
 
-  %i(topic_destroyed topic_recovered).each do |event|
-    DiscourseEvent.on(event) do |topic, user|
-      WebHook.enqueue_topic_hooks(event, topic, user)
-    end
-  end
-
-  DiscourseEvent.on(:topic_created) do |topic, _, user|
-    WebHook.enqueue_topic_hooks(:topic_created, topic, user)
-  end
-
-  %i(post_created
-     post_destroyed
-     post_recovered).each do |event|
-
-    DiscourseEvent.on(event) do |post, _, user|
-      WebHook.enqueue_hooks(:post,
-        post_id: post.id,
-        topic_id: post&.topic&.id,
-        user_id: user&.id,
-        category_id: post.topic&.category&.id,
-        event_name: event.to_s
-      )
-    end
-  end
-
-  %i(user_created user_approved).each do |event|
-    DiscourseEvent.on(event) do |user|
-      WebHook.enqueue_hooks(:user, user_id: user.id, event_name: event.to_s)
-    end
+  def self.enqueue_post_hooks(event, post, user=nil)
+    WebHook.enqueue_hooks(:post, post_id: post.id, category_id: post&.topic&.category_id, event_name: event.to_s)
   end
 end
 
@@ -84,6 +57,7 @@ end
 #  payload_url          :string           not null
 #  content_type         :integer          default(1), not null
 #  last_delivery_status :integer          default(1), not null
+#  status               :integer          default(1), not null
 #  secret               :string           default("")
 #  wildcard_web_hook    :boolean          default(FALSE), not null
 #  verify_certificate   :boolean          default(TRUE), not null

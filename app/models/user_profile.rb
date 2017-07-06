@@ -12,13 +12,15 @@ class UserProfile < ActiveRecord::Base
   validates :profile_background, upload_url: true, if: :profile_background_changed?
   validates :card_background, upload_url: true, if: :card_background_changed?
 
+  validate :website_domain_validator, if: Proc.new { |c| c.new_record? || c.website_changed? }
+
   belongs_to :card_image_badge, class_name: 'Badge'
   has_many :user_profile_views, dependent: :destroy
 
   BAKED_VERSION = 1
 
   def bio_excerpt(length=350, opts={})
-    excerpt = PrettyText.excerpt(bio_cooked, length, opts)
+    excerpt = PrettyText.excerpt(bio_cooked, length, opts).sub(/<br>$/, '')
     return excerpt if excerpt.blank? || (user.has_trust_level?(TrustLevel[1]) && !user.suspended?)
     PrettyText.strip_links(excerpt)
   end
@@ -102,6 +104,14 @@ class UserProfile < ActiveRecord::Base
     end
   end
 
+  def website_domain_validator
+    allowed_domains = SiteSetting.user_website_domains_whitelist
+    return if (allowed_domains.blank? || self.website.blank?)
+
+    domain = URI.parse(self.website).host
+    self.errors.add :base, (I18n.t('user.website.domain_not_allowed', domains: allowed_domains.split('|').join(", "))) unless allowed_domains.split('|').include?(domain)
+  end
+
 end
 
 # == Schema Information
@@ -124,4 +134,6 @@ end
 # Indexes
 #
 #  index_user_profiles_on_bio_cooked_version  (bio_cooked_version)
+#  index_user_profiles_on_card_background     (card_background)
+#  index_user_profiles_on_profile_background  (profile_background)
 #

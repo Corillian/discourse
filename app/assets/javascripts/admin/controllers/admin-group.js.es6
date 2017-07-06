@@ -1,25 +1,10 @@
 import { popupAjaxError } from 'discourse/lib/ajax-error';
-import { propertyEqual } from 'discourse/lib/computed';
-import { escapeExpression } from 'discourse/lib/utilities';
 import computed from 'ember-addons/ember-computed-decorators';
 
 export default Ember.Controller.extend({
-  needs: ['adminGroupsType'],
+  adminGroupsType: Ember.inject.controller(),
   disableSave: false,
   savingStatus: '',
-
-  currentPage: function() {
-    if (this.get("model.user_count") === 0) { return 0; }
-    return Math.floor(this.get("model.offset") / this.get("model.limit")) + 1;
-  }.property("model.limit", "model.offset", "model.user_count"),
-
-  totalPages: function() {
-    if (this.get("model.user_count") === 0) { return 0; }
-    return Math.floor(this.get("model.user_count") / this.get("model.limit")) + 1;
-  }.property("model.limit", "model.user_count"),
-
-  showingFirst: Em.computed.lte("currentPage", 1),
-  showingLast: propertyEqual("currentPage", "totalPages"),
 
   aliasLevelOptions: function() {
     return [
@@ -30,6 +15,15 @@ export default Ember.Controller.extend({
     ];
   }.property(),
 
+  visibilityLevelOptions: function() {
+    return [
+      { name: I18n.t("groups.visibility_levels.public"), value: 0 },
+      { name: I18n.t("groups.visibility_levels.members"), value: 1 },
+      { name: I18n.t("groups.visibility_levels.staff"), value: 2 },
+      { name: I18n.t("groups.visibility_levels.owners"), value: 3 }
+    ];
+  }.property(),
+
   trustLevelOptions: function() {
     return [
       { name: I18n.t("groups.trust_levels.none"), value: 0 },
@@ -37,76 +31,19 @@ export default Ember.Controller.extend({
     ];
   }.property(),
 
-  @computed
-  demoAvatarUrl() {
-    return Discourse.getURL('/images/avatar.png');
+  @computed('model.visibility_level', 'model.public')
+  disableMembershipRequestSetting(visibility_level, publicGroup) {
+    visibility_level = parseInt(visibility_level);
+    return (visibility_level !== 0) || publicGroup;
   },
 
-  @computed('model.flair_url')
-  flairPreviewIcon() {
-    return this.get('model.flair_url') && this.get('model.flair_url').substr(0,3) === 'fa-';
-  },
-
-  @computed('flairPreviewIcon')
-  flairPreviewImage() {
-    return this.get('model.flair_url') && !this.get('flairPreviewIcon');
-  },
-
-  @computed('flairPreviewImage', 'model.flair_url', 'model.flairBackgroundHexColor', 'model.flairHexColor')
-  flairPreviewStyle() {
-    var style = '';
-    if (this.get('flairPreviewImage')) {
-      style += 'background-image: url(' + escapeExpression(this.get('model.flair_url')) + '); ';
-    }
-    if (this.get('model.flairBackgroundHexColor')) {
-      style += 'background-color: #' + this.get('model.flairBackgroundHexColor') + ';';
-    }
-    if (this.get('model.flairHexColor')) {
-      style += 'color: #' + this.get('model.flairHexColor') + ';';
-    }
-    return style;
-  },
-
-  @computed('model.flairBackgroundHexColor')
-  flairPreviewClasses() {
-    if (this.get('model.flairBackgroundHexColor')) {
-      return 'rounded';
-    }
+  @computed('model.visibility_level', 'model.allow_membership_requests')
+  disablePublicSetting(visibility_level, allowMembershipRequests) {
+    visibility_level = parseInt(visibility_level);
+    return (visibility_level !== 0) || allowMembershipRequests;
   },
 
   actions: {
-    next() {
-      if (this.get("showingLast")) { return; }
-
-      const group = this.get("model"),
-            offset = Math.min(group.get("offset") + group.get("limit"), group.get("user_count"));
-
-      group.set("offset", offset);
-
-      return group.findMembers();
-    },
-
-    previous() {
-      if (this.get("showingFirst")) { return; }
-
-      const group = this.get("model"),
-            offset = Math.max(group.get("offset") - group.get("limit"), 0);
-
-      group.set("offset", offset);
-
-      return group.findMembers();
-    },
-
-    removeMember(member) {
-      const self = this,
-            message = I18n.t("admin.groups.delete_member_confirm", { username: member.get("username"), group: this.get("model.name") });
-      return bootbox.confirm(message, I18n.t("no_value"), I18n.t("yes_value"), function(confirm) {
-        if (confirm) {
-          self.get("model").removeMember(member);
-        }
-      });
-    },
-
     removeOwner(member) {
       const self = this,
             message = I18n.t("admin.groups.delete_owner_confirm", { username: member.get("username"), group: this.get("model.name") });
@@ -123,21 +60,15 @@ export default Ember.Controller.extend({
       this.set("model.ownerUsernames", null);
     },
 
-    addMembers() {
-      if (Em.isEmpty(this.get("model.usernames"))) { return; }
-      this.get("model").addMembers(this.get("model.usernames")).catch(popupAjaxError);
-      this.set("model.usernames", null);
-    },
-
     save() {
       const group = this.get('model'),
-            groupsController = this.get("controllers.adminGroupsType"),
+            groupsController = this.get("adminGroupsType"),
             groupType = groupsController.get("type");
 
       this.set('disableSave', true);
       this.set('savingStatus', I18n.t('saving'));
 
-      let promise = group.get("id") ? group.save() : group.create().then(() => groupsController.addObject(group));
+      let promise = group.get("id") ? group.save() : group.create().then(() => groupsController.get('model').addObject(group));
 
       promise.then(() => {
         this.transitionToRoute("adminGroup", groupType, group.get('name'));
@@ -148,7 +79,7 @@ export default Ember.Controller.extend({
 
     destroy() {
       const group = this.get('model'),
-            groupsController = this.get('controllers.adminGroupsType'),
+            groupsController = this.get('adminGroupsType'),
             self = this;
 
       if (!group.get('id')) {

@@ -1,11 +1,11 @@
 require_dependency 'distributed_cache'
-require_dependency 'sass/discourse_stylesheets'
 
 class Category < ActiveRecord::Base
 
   include Positionable
   include HasCustomFields
   include CategoryHashtag
+  include AnonCacheInvalidator
 
   belongs_to :topic, dependent: :destroy
   belongs_to :topic_only_relative_url,
@@ -15,6 +15,8 @@ class Category < ActiveRecord::Base
 
   belongs_to :user
   belongs_to :latest_post, class_name: "Post"
+  belongs_to :uploaded_logo, class_name: "Upload"
+  belongs_to :uploaded_background, class_name: "Upload"
 
   has_many :topics
   has_many :category_users
@@ -34,28 +36,32 @@ class Category < ActiveRecord::Base
                    presence: true,
                    uniqueness: { scope: :parent_category_id, case_sensitive: false },
                    length: { in: 1..50 }
+  validates :num_featured_topics, numericality: { only_integer: true, greater_than: 0 }
   validate :parent_category_validator
 
   validate :email_in_validator
 
-  validates :logo_url, upload_url: true, if: :logo_url_changed?
-  validates :background_url, upload_url: true, if: :background_url_changed?
-
   validate :ensure_slug
+
+  after_create :create_category_definition
+
   before_save :apply_permissions
   before_save :downcase_email
   before_save :downcase_name
-  after_create :create_category_definition
-
-  after_save :publish_category
-  after_destroy :publish_category_deletion
-
-  after_update :rename_category_definition, if: :name_changed?
-
-  after_create :delete_category_permalink
-  after_update :create_category_permalink, if: :slug_changed?
 
   after_save :publish_discourse_stylesheet
+  after_save :publish_category
+  after_save :reset_topic_ids_cache
+  after_save :clear_url_cache
+  after_save :index_search
+
+  after_destroy :reset_topic_ids_cache
+  after_destroy :publish_category_deletion
+
+  after_create :delete_category_permalink
+
+  after_update :rename_category_definition, if: :name_changed?
+  after_update :create_category_permalink, if: :slug_changed?
 
   has_one :category_search_data
   belongs_to :parent_category, class_name: 'Category'
@@ -66,8 +72,6 @@ class Category < ActiveRecord::Base
   has_many :category_tag_groups, dependent: :destroy
   has_many :tag_groups, through: :category_tag_groups
 
-  after_save :reset_topic_ids_cache
-  after_destroy :reset_topic_ids_cache
 
   scope :latest, -> { order('topic_count DESC') }
 
@@ -198,7 +202,7 @@ SQL
     t = Topic.new(title: I18n.t("category.topic_prefix", category: name), user: user, pinned_at: Time.now, category_id: id)
     t.skip_callbacks = true
     t.ignore_category_auto_close = true
-    t.set_auto_close(nil)
+    t.set_or_create_timer(TopicTimer.types[:close], nil)
     t.save!(validate: false)
     update_column(:topic_id, t.id)
     t.posts.create(raw: post_template, user: user)
@@ -213,11 +217,11 @@ SQL
   end
 
   def description_text
-    return nil unless description
+    return nil unless self.description
 
     @@cache ||= LruRedux::ThreadSafeCache.new(1000)
     @@cache.getset(self.description) do
-      Nokogiri::HTML(self.description).text
+      Nokogiri::HTML.fragment(self.description).text.strip
     end
   end
 
@@ -384,8 +388,8 @@ SQL
       group = group.id if group.is_a?(Group)
 
       # subtle, using Group[] ensures the group exists in the DB
-      group = Group[group.to_sym].id unless group.is_a?(Fixnum)
-      permission = CategoryGroup.permission_types[permission] unless permission.is_a?(Fixnum)
+      group = Group[group.to_sym].id unless group.is_a?(Integer)
+      permission = CategoryGroup.permission_types[permission] unless permission.is_a?(Integer)
 
       [group, permission]
     end
@@ -426,9 +430,7 @@ SQL
 
   @@url_cache = DistributedCache.new('category_url')
 
-  after_save do
-    # parent takes part in url calculation
-    # any change could invalidate multiples
+  def clear_url_cache
     @@url_cache.clear
   end
 
@@ -460,16 +462,22 @@ SQL
     old_name = changed_attributes["name"]
     return unless topic.present?
     if topic.title == I18n.t("category.topic_prefix", category: old_name)
-      topic.update_column(:title, I18n.t("category.topic_prefix", category: name))
+      topic.update_attribute(:title, I18n.t("category.topic_prefix", category: name))
     end
   end
 
   def create_category_permalink
     old_slug = changed_attributes["slug"]
     if self.parent_category
-      Permalink.create(url: "c/#{self.parent_category.slug}/#{old_slug}", category_id: id)
+      url = "c/#{self.parent_category.slug}/#{old_slug}"
     else
-      Permalink.create(url: "c/#{old_slug}", category_id: id)
+      url = "c/#{old_slug}"
+    end
+
+    if Permalink.where(url: url).exists?
+      Permalink.where(url: url).update_all(category_id: id)
+    else
+      Permalink.create(url: url, category_id: id)
     end
   end
 
@@ -483,7 +491,11 @@ SQL
   end
 
   def publish_discourse_stylesheet
-    DiscourseStylesheets.cache.clear
+    Stylesheet::Manager.cache.clear
+  end
+
+  def index_search
+    SearchIndexer.index(self)
   end
 
   def self.find_by_slug(category_slug, parent_category_slug=nil)
@@ -493,6 +505,10 @@ SQL
     else
       self.where(slug: category_slug, parent_category_id: nil).first
     end
+  end
+
+  def subcategory_list_includes_topics?
+    subcategory_list_style.end_with?("with_featured_topics")
   end
 end
 
@@ -528,14 +544,23 @@ end
 #  email_in_allow_strangers      :boolean          default(FALSE)
 #  topics_day                    :integer          default(0)
 #  posts_day                     :integer          default(0)
-#  logo_url                      :string
-#  background_url                :string
 #  allow_badges                  :boolean          default(TRUE), not null
 #  name_lower                    :string(50)       not null
 #  auto_close_based_on_last_post :boolean          default(FALSE)
 #  topic_template                :text
 #  suppress_from_homepage        :boolean          default(FALSE)
 #  contains_messages             :boolean
+#  sort_order                    :string
+#  sort_ascending                :boolean
+#  uploaded_logo_id              :integer
+#  uploaded_background_id        :integer
+#  topic_featured_link_allowed   :boolean          default(TRUE)
+#  all_topics_wiki               :boolean          default(FALSE), not null
+#  show_subcategory_list         :boolean          default(FALSE)
+#  num_featured_topics           :integer          default(3)
+#  default_view                  :string(50)
+#  subcategory_list_style        :string(50)       default("rows_with_featured_topics")
+#  default_top_period            :string(20)       default("all")
 #
 # Indexes
 #

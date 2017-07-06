@@ -45,15 +45,17 @@ module ApplicationHelper
     end
   end
 
-  def script(*args)
-    if SiteSetting.enable_cdn_js_debugging && GlobalSetting.cdn_url
-      tags = javascript_include_tag(*args, "crossorigin" => "anonymous")
-      tags.gsub!("/assets/", "/cdn_asset/#{Discourse.current_hostname.tr(".","_")}/")
-      tags.gsub!(".js\"", ".js?v=1&origin=#{CGI.escape request.base_url}\"")
-      tags.html_safe
-    else
-      javascript_include_tag(*args)
+  def preload_script(script)
+    path = asset_path("#{script}.js")
+
+    if  GlobalSetting.cdn_url &&
+        GlobalSetting.cdn_url.start_with?("https") &&
+        ENV["COMPRESS_BROTLI"] == "1" &&
+        request.env["HTTP_ACCEPT_ENCODING"] =~ /br/
+        path.gsub!("#{GlobalSetting.cdn_url}/assets/", "#{GlobalSetting.cdn_url}/brotli_asset/")
     end
+"<link rel='preload' href='#{path}' as='script'/>
+<script src='#{path}'></script>".html_safe
   end
 
   def discourse_csrf_tags
@@ -70,9 +72,17 @@ module ApplicationHelper
   end
 
   def body_classes
+    result = []
+
     if @category && @category.url.present?
-      "category-#{@category.url.sub(/^\/c\//, '').gsub(/\//, '-')}"
+      result << "category-#{@category.url.sub(/^\/c\//, '').gsub(/\//, '-')}"
     end
+
+    if current_user.present? && primary_group_name = current_user.primary_group&.name
+      result << "primary-group-#{primary_group_name.downcase}"
+    end
+
+    result.join(' ')
   end
 
   def rtl_class
@@ -91,8 +101,7 @@ module ApplicationHelper
   end
 
   def format_topic_title(title)
-    PrettyText.unescape_emoji(title)
-    strip_tags(title)
+    PrettyText.unescape_emoji strip_tags(title)
   end
 
   def with_format(format, &block)
@@ -105,6 +114,14 @@ module ApplicationHelper
 
   def age_words(secs)
     AgeWords.age_words(secs)
+  end
+
+  def short_date(dt)
+    if dt.year == Time.now.year
+      I18n.l(dt, format: :short_no_year)
+    else
+      I18n.l(dt, format: :date_only)
+    end
   end
 
   def guardian
@@ -128,7 +145,7 @@ module ApplicationHelper
   end
 
   def rtl?
-    ["ar", "fa_IR", "he"].include? I18n.locale.to_s
+    ["ar", "ur", "fa_IR", "he"].include? I18n.locale.to_s
   end
 
   def user_locale
@@ -179,8 +196,9 @@ module ApplicationHelper
     [:url, :title, :description].each do |property|
       if opts[property].present?
         escape = (property != :image)
-        result << tag(:meta, { property: "og:#{property}", content: opts[property] }, nil, escape)
-        result << tag(:meta, { name: "twitter:#{property}", content: opts[property] }, nil, escape)
+        content = (property == :url ? opts[property] : gsub_emoji_to_unicode(opts[property]))
+        result << tag(:meta, { property: "og:#{property}", content: content }, nil, escape)
+        result << tag(:meta, { name: "twitter:#{property}", content: content }, nil, escape)
       end
     end
 
@@ -208,6 +226,12 @@ module ApplicationHelper
     content_tag(:script, MultiJson.dump(json).html_safe, type: 'application/ld+json'.freeze)
   end
 
+  def gsub_emoji_to_unicode(str)
+    if str
+      str.gsub(/:([\w\-+]*(?::t\d)?):/) { |name| Emoji.lookup_unicode($1) || name }
+    end
+  end
+
   def application_logo_url
     @application_logo_url ||= (mobile_view? && SiteSetting.mobile_logo_url) || SiteSetting.logo_url
   end
@@ -233,7 +257,25 @@ module ApplicationHelper
   end
 
   def customization_disabled?
-    session[:disable_customization]
+    request.env[ApplicationController::NO_CUSTOM]
+  end
+
+  def allow_plugins?
+    !request.env[ApplicationController::NO_PLUGINS]
+  end
+
+  def allow_third_party_plugins?
+    allow_plugins? && !request.env[ApplicationController::ONLY_OFFICIAL]
+  end
+
+  def normalized_safe_mode
+    safe_mode = nil
+    (safe_mode ||= []) << ApplicationController::NO_CUSTOM if customization_disabled?
+    (safe_mode ||= []) << ApplicationController::NO_PLUGINS if !allow_plugins?
+    (safe_mode ||= []) << ApplicationController::ONLY_OFFICIAL if !allow_third_party_plugins?
+    if safe_mode
+      safe_mode.join(",").html_safe
+    end
   end
 
   def loading_admin?
@@ -262,4 +304,43 @@ module ApplicationHelper
     result.html_safe
   end
 
+  def topic_featured_link_domain(link)
+    begin
+      uri = URI.encode(link)
+      uri = URI.parse(uri)
+      uri = URI.parse("http://#{uri}") if uri.scheme.nil?
+      host = uri.host.downcase
+      host.start_with?('www.') ? host[4..-1] : host
+    rescue
+      ''
+    end
+  end
+
+  def theme_key
+    if customization_disabled?
+      nil
+    else
+      request.env[:resolved_theme_key]
+    end
+  end
+
+  def build_plugin_html(name)
+    return "" unless allow_plugins?
+    DiscoursePluginRegistry.build_html(name, controller) || ""
+  end
+
+  def theme_lookup(name)
+    lookup = Theme.lookup_field(theme_key, mobile_view? ? :mobile : :desktop, name)
+    lookup.html_safe if lookup
+  end
+
+  def discourse_stylesheet_link_tag(name, opts={})
+    if opts.key?(:theme_key)
+      key = opts[:theme_key] unless customization_disabled?
+    else
+      key = theme_key
+    end
+
+    Stylesheet::Manager.stylesheet_link_tag(name, 'all', key)
+  end
 end

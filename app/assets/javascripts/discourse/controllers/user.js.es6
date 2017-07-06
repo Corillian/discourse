@@ -1,22 +1,31 @@
 import CanCheckEmails from 'discourse/mixins/can-check-emails';
 import computed from 'ember-addons/ember-computed-decorators';
-import UserAction from 'discourse/models/user-action';
 import User from 'discourse/models/user';
 
 export default Ember.Controller.extend(CanCheckEmails, {
   indexStream: false,
-  userActionType: null,
-  needs: ['application','user-notifications', 'user-topics-list'],
-  currentPath: Em.computed.alias('controllers.application.currentPath'),
+  application: Ember.inject.controller(),
+  userNotifications: Ember.inject.controller('user-notifications'),
+  currentPath: Ember.computed.alias('application.currentPath'),
 
   @computed("content.username")
   viewingSelf(username) {
     return username === User.currentProp('username');
   },
 
+  @computed('model.profileBackground')
+  hasProfileBackground(background) {
+    return !Ember.isEmpty(background.toString());
+  },
+
   @computed('indexStream', 'viewingSelf', 'forceExpand')
   collapsedInfo(indexStream, viewingSelf, forceExpand){
     return (!indexStream || viewingSelf) && !forceExpand;
+  },
+
+  @computed('model.isSuspended', 'currentUser.staff')
+  isNotSuspendedOrIsStaff(isSuspended, isStaff) {
+    return !isSuspended || isStaff;
   },
 
   linkWebsite: Em.computed.not('model.isBasic'),
@@ -51,18 +60,6 @@ export default Ember.Controller.extend(CanCheckEmails, {
     return Discourse.SiteSettings.enable_badges && badgeCount > 0;
   },
 
-  @computed("userActionType")
-  privateMessageView(userActionType) {
-    return (userActionType === UserAction.TYPES.messages_sent) ||
-           (userActionType === UserAction.TYPES.messages_received);
-  },
-
-  @computed("indexStream", "userActionType")
-  showActionTypeSummary(indexStream,userActionType, showPMs) {
-    return (indexStream || userActionType) && !showPMs;
-  },
-
-
   @computed()
   canInviteToForum() {
     return User.currentProp('can_invite_to_forum');
@@ -75,8 +72,8 @@ export default Ember.Controller.extend(CanCheckEmails, {
     const siteUserFields = this.site.get('user_fields');
     if (!Ember.isEmpty(siteUserFields)) {
       const userFields = this.get('model.user_fields');
-      return siteUserFields.filterProperty('show_on_profile', true).sortBy('position').map(field => {
-        field.dasherized_name = field.get('name').dasherize();
+      return siteUserFields.filterBy('show_on_profile', true).sortBy('position').map(field => {
+        Ember.set(field, 'dasherized_name', field.get('name').dasherize());
         const value = userFields ? userFields[field.get('id').toString()] : null;
         return Ember.isEmpty(value) ? null : Ember.Object.create({ value, field });
       }).compact();
@@ -90,7 +87,7 @@ export default Ember.Controller.extend(CanCheckEmails, {
 
     adminDelete() {
       // I really want this deferred, don't want to bring in all this code till used
-      const AdminUser = require('admin/models/admin-user').default;
+      const AdminUser = requirejs('admin/models/admin-user').default;
       AdminUser.find(this.get('model.id')).then(user => user.destroy({deletePosts: true}));
     },
 

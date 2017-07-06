@@ -10,7 +10,7 @@ class RandomTopicSelector
     user = category ? CategoryFeaturedTopic.fake_admin : nil
 
     options = {
-      per_page: SiteSetting.category_featured_topics,
+      per_page: category ? category.num_featured_topics : 3,
       visible: true,
       no_definitions: true
     }
@@ -75,10 +75,6 @@ class RandomTopicSelector
     end
 
     results
-  end
-
-  def self.clear_cache!
-    $redis.keys('random_topic_cache*').each{|k| $redis.del k}
   end
 
   def self.cache_key(category=nil)

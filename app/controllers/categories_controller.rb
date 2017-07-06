@@ -16,10 +16,12 @@ class CategoriesController < ApplicationController
 
     @description = SiteSetting.site_description
 
+    parent_category = Category.find_by(slug: params[:parent_category_id]) || Category.find_by(id: params[:parent_category_id].to_i)
+
     category_options = {
       is_homepage: current_homepage == "categories".freeze,
       parent_category_id: params[:parent_category_id],
-      include_topics: include_topics
+      include_topics: include_topics(parent_category)
     }
 
     @category_list = CategoryList.new(guardian, category_options)
@@ -27,7 +29,7 @@ class CategoriesController < ApplicationController
     @category_list.draft_sequence = DraftSequence.current(current_user, Draft::NEW_TOPIC)
     @category_list.draft = Draft.get(current_user, Draft::NEW_TOPIC, @category_list.draft_sequence) if current_user
 
-    @title = I18n.t('js.filters.categories.title') unless category_options[:is_homepage]
+    @title = "#{I18n.t('js.filters.categories.title')} - #{SiteSetting.title}" unless category_options[:is_homepage]
 
     respond_to do |format|
       format.html do
@@ -57,7 +59,8 @@ class CategoriesController < ApplicationController
 
     topic_options = {
       per_page: SiteSetting.categories_topics,
-      no_definitions: true
+      no_definitions: true,
+      exclude_category_ids: Category.where(suppress_from_homepage: true).pluck(:id)
     }
 
     result = CategoryAndTopicLists.new
@@ -230,14 +233,23 @@ class CategoriesController < ApplicationController
                         :email_in,
                         :email_in_allow_strangers,
                         :suppress_from_homepage,
+                        :all_topics_wiki,
                         :parent_category_id,
                         :auto_close_hours,
                         :auto_close_based_on_last_post,
-                        :logo_url,
-                        :background_url,
+                        :uploaded_logo_id,
+                        :uploaded_background_id,
                         :slug,
                         :allow_badges,
                         :topic_template,
+                        :sort_order,
+                        :sort_ascending,
+                        :topic_featured_link_allowed,
+                        :show_subcategory_list,
+                        :num_featured_topics,
+                        :default_view,
+                        :subcategory_list_style,
+                        :default_top_period,
                         :custom_fields => [params[:custom_fields].try(:keys)],
                         :permissions => [*p.try(:keys)],
                         :allowed_tags => [],
@@ -253,9 +265,10 @@ class CategoriesController < ApplicationController
       @staff_action_logger = StaffActionLogger.new(current_user)
     end
 
-    def include_topics
+    def include_topics(parent_category=nil)
       view_context.mobile_view? ||
       params[:include_topics] ||
+      (parent_category && parent_category.subcategory_list_includes_topics?) ||
       SiteSetting.desktop_category_page_style == "categories_with_featured_topics".freeze
     end
 end

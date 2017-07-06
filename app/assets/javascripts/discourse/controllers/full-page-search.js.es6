@@ -11,10 +11,12 @@ const SortOrders = [
   {name: I18n.t('search.latest_post'), id: 1, term: 'order:latest'},
   {name: I18n.t('search.most_liked'), id: 2, term: 'order:likes'},
   {name: I18n.t('search.most_viewed'), id: 3, term: 'order:views'},
+  {name: I18n.t('search.latest_topic'), id: 4, term: 'order:latest_topic'},
+
 ];
 
 export default Ember.Controller.extend({
-  needs: ["application"],
+  application: Ember.inject.controller(),
   bulkSelectEnabled: null,
 
   loading: Em.computed.not("model"),
@@ -42,6 +44,14 @@ export default Ember.Controller.extend({
   @computed('q')
   hasAutofocus(q) {
     return Em.isEmpty(q);
+  },
+
+
+  @computed('q')
+  highlightQuery(q) {
+    if (!q) { return; }
+    // remove l which can be used for sorting
+    return _.reject(q.split(/\s+/), t => t === 'l').join(' ');
   },
 
   @computed('skip_context', 'context')
@@ -73,14 +83,7 @@ export default Ember.Controller.extend({
 
   @computed('q')
   noSortQ(q) {
-    if (q) {
-      SortOrders.forEach((order) => {
-        if (q.indexOf(order.term) > -1){
-          q = q.replace(order.term, "");
-          q = q.trim();
-        }
-      });
-    }
+    q = this.cleanTerm(q);
     return escapeExpression(q);
   },
 
@@ -88,17 +91,23 @@ export default Ember.Controller.extend({
 
   setSearchTerm(term) {
     this._searchOnSortChange = false;
+    term = this.cleanTerm(term);
+    this._searchOnSortChange = true;
+    this.set('searchTerm', term);
+  },
+
+  cleanTerm(term) {
     if (term) {
       SortOrders.forEach(order => {
-        if (term.indexOf(order.term) > -1){
+        let matches = term.match(new RegExp(`${order.term}\\b`));
+        if (matches) {
           this.set('sortOrder', order.id);
-          term = term.replace(order.term, "");
+          term = term.replace(new RegExp(`${order.term}\\b`, 'g'), "");
           term = term.trim();
         }
       });
     }
-    this._searchOnSortChange = true;
-    this.set('searchTerm', term);
+    return term;
   },
 
   @observes('sortOrder')
@@ -131,7 +140,7 @@ export default Ember.Controller.extend({
 
   @observes('loading')
   _showFooter() {
-    this.set("controllers.application.showFooter", !this.get("loading"));
+    this.set("application.showFooter", !this.get("loading"));
   },
 
   @computed('hasResults')
@@ -185,6 +194,11 @@ export default Ember.Controller.extend({
 
     ajax("/search", { data: args }).then(results => {
       const model = translateResults(results) || {};
+
+      if (results.grouped_search_result) {
+        this.set('q', results.grouped_search_result.term);
+      }
+
       setTransient('lastSearch', { searchKey, model }, 5);
       this.set("model", model);
     }).finally(() => this.set("searching", false));

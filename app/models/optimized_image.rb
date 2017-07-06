@@ -65,12 +65,8 @@ class OptimizedImage < ActiveRecord::Base
             if url.present?
               thumbnail.url = url
               thumbnail.save
-            else
-              Rails.logger.error("Failed to store optimized image #{width}x#{height} for #{upload.url}")
             end
           end
-        else
-          Rails.logger.error("Failed to create optimized image #{width}x#{height} for #{upload.url}")
         end
 
         # close && remove temp file
@@ -97,17 +93,36 @@ class OptimizedImage < ActiveRecord::Base
    !(url =~ /^(https?:)?\/\//)
   end
 
+  def self.safe_path?(path)
+    # this matches instructions which call #to_s
+    path = path.to_s
+    return false if path != File.expand_path(path)
+    return false if path !~ /\A[\w\-\.\/]+\z/m
+    true
+  end
+
+  def self.ensure_safe_paths!(*paths)
+    paths.each do |path|
+      raise Discourse::InvalidAccess unless safe_path?(path)
+    end
+  end
+
+
   def self.resize_instructions(from, to, dimensions, opts={})
+    ensure_safe_paths!(from, to)
+
     # NOTE: ORDER is important!
     %W{
       convert
       #{from}[0]
+      -auto-orient
       -gravity center
       -background transparent
       -thumbnail #{dimensions}^
       -extent #{dimensions}
       -interpolate bicubic
       -unsharp 2x0.5+0.7+0
+      -interlace none
       -quality 98
       -profile #{File.join(Rails.root, 'vendor', 'data', 'RT_sRGB.icm')}
       #{to}
@@ -115,6 +130,8 @@ class OptimizedImage < ActiveRecord::Base
   end
 
   def self.resize_instructions_animated(from, to, dimensions, opts={})
+    ensure_safe_paths!(from, to)
+
     %W{
       gifsicle
       --colors=256
@@ -126,14 +143,18 @@ class OptimizedImage < ActiveRecord::Base
   end
 
   def self.crop_instructions(from, to, dimensions, opts={})
+    ensure_safe_paths!(from, to)
+
     %W{
       convert
       #{from}[0]
+      -auto-orient
       -gravity north
       -background transparent
       -thumbnail #{opts[:width]}
       -crop #{dimensions}+0+0
       -unsharp 2x0.5+0.7+0
+      -interlace none
       -quality 98
       -profile #{File.join(Rails.root, 'vendor', 'data', 'RT_sRGB.icm')}
       #{to}
@@ -141,6 +162,8 @@ class OptimizedImage < ActiveRecord::Base
   end
 
   def self.crop_instructions_animated(from, to, dimensions, opts={})
+    ensure_safe_paths!(from, to)
+
     %W{
       gifsicle
       --crop 0,0+#{dimensions}
@@ -152,12 +175,16 @@ class OptimizedImage < ActiveRecord::Base
   end
 
   def self.downsize_instructions(from, to, dimensions, opts={})
+    ensure_safe_paths!(from, to)
+
     %W{
       convert
       #{from}[0]
+      -auto-orient
       -gravity center
       -background transparent
-      -resize #{dimensions}#{!!opts[:force_aspect_ratio] ? "\\!" : "\\>"}
+      -interlace none
+      -resize #{dimensions}
       -profile #{File.join(Rails.root, 'vendor', 'data', 'RT_sRGB.icm')}
       #{to}
     }
@@ -190,8 +217,11 @@ class OptimizedImage < ActiveRecord::Base
   end
 
   def self.convert_with(instructions, to)
-    `#{instructions.join(" ")} &> /dev/null`
-    return false if $?.exitstatus != 0
+    begin
+      Discourse::Utils.execute_command(*instructions)
+    rescue
+      return false
+    end
 
     ImageOptim.new.optimize_image!(to)
     true
@@ -222,7 +252,12 @@ class OptimizedImage < ActiveRecord::Base
           # download if external
           if external
             url = SiteSetting.scheme + ":" + previous_url
-            file = FileHelper.download(url, max_file_size_kb, "discourse", true) rescue nil
+            file = FileHelper.download(
+              url,
+              max_file_size: max_file_size_kb,
+              tmp_file_name: "discourse",
+              follow_redirect: true
+            ) rescue nil
             path = file.path
           else
             path = local_store.path_for(optimized_image)

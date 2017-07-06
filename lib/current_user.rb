@@ -16,6 +16,7 @@ module CurrentUser
 
   def log_on_user(user)
     current_user_provider.log_on_user(user,session,cookies)
+    user.logged_in
   end
 
   def log_off_user
@@ -24,6 +25,10 @@ module CurrentUser
 
   def is_api?
     current_user_provider.is_api?
+  end
+
+  def is_user_api?
+    current_user_provider.is_user_api?
   end
 
   def current_user

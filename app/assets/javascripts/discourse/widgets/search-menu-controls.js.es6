@@ -5,6 +5,15 @@ import { createWidget } from 'discourse/widgets/widget';
 createWidget('search-term', {
   tagName: 'input',
   buildId: () => 'search-term',
+  buildKey: (attrs) => `search-term-${attrs.id}`,
+
+  defaultState() {
+    this.appEvents.on("search-autocomplete:after-complete", () => {
+      this.state.afterAutocomplete = true;
+    });
+
+    return { afterAutocomplete: false };
+  },
 
   buildAttributes(attrs) {
     return { type: 'text',
@@ -14,7 +23,11 @@ createWidget('search-term', {
 
   keyUp(e) {
     if (e.which === 13) {
-      return this.sendWidgetAction('fullSearch');
+      if (this.state.afterAutocomplete) {
+        this.state.afterAutocomplete = false;
+      } else {
+        return this.sendWidgetAction('fullSearch');
+      }
     }
 
     const val = this.attrs.value;
@@ -30,7 +43,7 @@ createWidget('search-context', {
   tagName: 'div.search-context',
 
   html(attrs) {
-    const service = this.container.lookup('search-service:main');
+    const service = this.register.lookup('search-service:main');
     const ctx = service.get('searchContext');
 
     const result = [];
@@ -44,9 +57,12 @@ createWidget('search-context', {
                   ]));
     }
 
-    result.push(this.attach('link', { href: Discourse.getURL('/search?expanded=true'),
-                                      label: 'show_help',
-                                      className: 'show-help' }));
+    if (!attrs.contextEnabled) {
+      result.push(this.attach('link', { href: attrs.url,
+                                        label: 'show_help',
+                                        className: 'show-help' }));
+    }
+
     result.push(h('div.clearfix'));
     return result;
   },

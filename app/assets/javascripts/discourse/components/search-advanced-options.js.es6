@@ -1,30 +1,35 @@
 import { observes } from 'ember-addons/ember-computed-decorators';
+import { escapeExpression } from 'discourse/lib/utilities';
+import Group from 'discourse/models/group';
+import Badge from 'discourse/models/badge';
 
-const REGEXP_BLOCKS            = /(([^" \t\n\x0B\f\r]+)?(("[^"]+")?))/g;
+const REGEXP_BLOCKS                = /(([^" \t\n\x0B\f\r]+)?(("[^"]+")?))/g;
 
-const REGEXP_USERNAME_PREFIX   = /(user:|@)/ig;
-const REGEXP_CATEGORY_PREFIX   = /(category:|#)/ig;
-const REGEXP_GROUP_PREFIX      = /group:/ig;
-const REGEXP_BADGE_PREFIX      = /badge:/ig;
-const REGEXP_TAGS_PREFIX       = /tags?:/ig;
-const REGEXP_IN_PREFIX         = /in:/ig;
-const REGEXP_STATUS_PREFIX     = /status:/ig;
-const REGEXP_POST_COUNT_PREFIX = /posts_count:/ig;
-const REGEXP_POST_TIME_PREFIX  = /(before|after):/ig;
+const REGEXP_USERNAME_PREFIX       = /^(user:|@)/ig;
+const REGEXP_CATEGORY_PREFIX       = /^(category:|#)/ig;
+const REGEXP_GROUP_PREFIX          = /^group:/ig;
+const REGEXP_BADGE_PREFIX          = /^badge:/ig;
+const REGEXP_TAGS_PREFIX           = /^(tags?:|#(?=[a-z0-9\-]+::tag))/ig;
+const REGEXP_IN_PREFIX             = /^in:/ig;
+const REGEXP_STATUS_PREFIX         = /^status:/ig;
+const REGEXP_MIN_POST_COUNT_PREFIX = /^min_post_count:/ig;
+const REGEXP_POST_TIME_PREFIX      = /^(before|after):/ig;
+const REGEXP_TAGS_REPLACE          = /(^(tags?:|#(?=[a-z0-9\-]+::tag))|::tag\s?$)/ig;
 
-const REGEXP_IN_MATCH                 = /in:(posted|watching|tracking|bookmarks|first|pinned|unpinned)/ig;
-const REGEXP_SPECIAL_IN_LIKES_MATCH   = /in:likes/ig;
-const REGEXP_SPECIAL_IN_PRIVATE_MATCH = /in:private/ig;
-const REGEXP_SPECIAL_IN_WIKI_MATCH    = /in:wiki/ig;
+const REGEXP_IN_MATCH                 = /^in:(posted|watching|tracking|bookmarks|first|pinned|unpinned|wiki|unseen)/ig;
+const REGEXP_SPECIAL_IN_LIKES_MATCH   = /^in:likes/ig;
+const REGEXP_SPECIAL_IN_PRIVATE_MATCH = /^in:private/ig;
+const REGEXP_SPECIAL_IN_SEEN_MATCH    = /^in:seen/ig;
 
-const REGEXP_CATEGORY_SLUG            = /(\#[a-zA-Z0-9\-:]+)/ig;
-const REGEXP_CATEGORY_ID              = /(category:[0-9]+)/ig;
-const REGEXP_POST_TIME_WHEN           = /(before|after)/ig;
+const REGEXP_CATEGORY_SLUG            = /^(\#[a-zA-Z0-9\-:]+)/ig;
+const REGEXP_CATEGORY_ID              = /^(category:[0-9]+)/ig;
+const REGEXP_POST_TIME_WHEN           = /^(before|after)/ig;
 
 export default Em.Component.extend({
   classNames: ['search-advanced-options'],
 
   inOptions: [
+    {name: I18n.t('search.advanced.filters.unseen'),  value: "unseen"},
     {name: I18n.t('search.advanced.filters.posted'),    value: "posted"},
     {name: I18n.t('search.advanced.filters.watching'),  value: "watching"},
     {name: I18n.t('search.advanced.filters.tracking'),  value: "tracking"},
@@ -32,6 +37,7 @@ export default Em.Component.extend({
     {name: I18n.t('search.advanced.filters.first'),     value: "first"},
     {name: I18n.t('search.advanced.filters.pinned'),    value: "pinned"},
     {name: I18n.t('search.advanced.filters.unpinned'),  value: "unpinned"},
+    {name: I18n.t('search.advanced.filters.wiki'),  value: "wiki"},
   ],
   statusOptions: [
     {name: I18n.t('search.advanced.statuses.open'),        value: "open"},
@@ -48,11 +54,14 @@ export default Em.Component.extend({
   init() {
     this._super();
     this._init();
-    this._update();
+    Ember.run.scheduleOnce('afterRender', () => {
+      this._update();
+    });
   },
 
   @observes('searchTerm')
   _updateOptions() {
+    this._update();
     Ember.run.debounce(this, this._update, 250);
   },
 
@@ -60,7 +69,7 @@ export default Em.Component.extend({
     this.setProperties({
       searchedTerms: {
         username: '',
-        category: null,
+        category: '',
         group: [],
         badge: [],
         tags: [],
@@ -69,11 +78,12 @@ export default Em.Component.extend({
           in: {
             likes: false,
             private: false,
-            wiki: false
-          }
+            seen: false
+          },
+          all_tags: false
         },
         status: '',
-        posts_count: '',
+        min_post_count: '',
         time: {
           when: 'before',
           days: ''
@@ -88,7 +98,6 @@ export default Em.Component.extend({
       return;
     }
 
-    this.findSearchTerms();
     this.setSearchedTermValue('searchedTerms.username', REGEXP_USERNAME_PREFIX);
     this.setSearchedTermValueForCategory();
     this.setSearchedTermValueForGroup();
@@ -97,14 +106,14 @@ export default Em.Component.extend({
     this.setSearchedTermValue('searchedTerms.in', REGEXP_IN_PREFIX, REGEXP_IN_MATCH);
     this.setSearchedTermSpecialInValue('searchedTerms.special.in.likes', REGEXP_SPECIAL_IN_LIKES_MATCH);
     this.setSearchedTermSpecialInValue('searchedTerms.special.in.private', REGEXP_SPECIAL_IN_PRIVATE_MATCH);
-    this.setSearchedTermSpecialInValue('searchedTerms.special.in.wiki', REGEXP_SPECIAL_IN_WIKI_MATCH);
+    this.setSearchedTermSpecialInValue('searchedTerms.special.in.seen', REGEXP_SPECIAL_IN_SEEN_MATCH);
     this.setSearchedTermValue('searchedTerms.status', REGEXP_STATUS_PREFIX);
     this.setSearchedTermValueForPostTime();
-    this.setSearchedTermValue('searchedTerms.posts_count', REGEXP_POST_COUNT_PREFIX);
+    this.setSearchedTermValue('searchedTerms.min_post_count', REGEXP_MIN_POST_COUNT_PREFIX);
   },
 
   findSearchTerms() {
-    const searchTerm = this.get('searchTerm');
+    const searchTerm = escapeExpression(this.get('searchTerm'));
     if (!searchTerm)
       return [];
 
@@ -117,11 +126,11 @@ export default Em.Component.extend({
         result.push(block);
     });
 
-    this.set('searchTermBlocks', result);
+    return result;
   },
 
   filterBlocks(regexPrefix) {
-    const blocks = this.get('searchTermBlocks');
+    const blocks = this.findSearchTerms();
     if (!blocks) return [];
 
     let result = [];
@@ -137,12 +146,14 @@ export default Em.Component.extend({
     matchRegEx = matchRegEx || replaceRegEx;
     const match = this.filterBlocks(matchRegEx);
 
+    let val = this.get(key);
+
     if (match.length !== 0) {
       const userInput = match[0].replace(replaceRegEx, '');
-      if (this.get(key) !== userInput) {
+      if (val !== userInput) {
         this.set(key, userInput);
       }
-    } else if(this.get(key).length !== 0) {
+    } else if(val && val.length !== 0) {
       this.set(key, '');
     }
   },
@@ -168,21 +179,21 @@ export default Em.Component.extend({
         const userInput = Discourse.Category.findBySlug(subcategories[1], subcategories[0]);
         if ((!existingInput && userInput)
           || (existingInput && userInput && existingInput.id !== userInput.id))
-          this.set('searchedTerms.category', userInput.id);
+          this.set('searchedTerms.category', [userInput]);
       } else
       if (isNaN(subcategories)) {
         const userInput = Discourse.Category.findSingleBySlug(subcategories[0]);
         if ((!existingInput && userInput)
           || (existingInput && userInput && existingInput.id !== userInput.id))
-          this.set('searchedTerms.category', userInput.id);
+          this.set('searchedTerms.category', [userInput]);
       } else {
         const userInput = Discourse.Category.findById(subcategories[0]);
         if ((!existingInput && userInput)
           || (existingInput && userInput && existingInput.id !== userInput.id))
-          this.set('searchedTerms.category', userInput.id);
+          this.set('searchedTerms.category', [userInput]);
       }
     } else
-      this.set('searchedTerms.category', null);
+      this.set('searchedTerms.category', '');
   },
 
   setSearchedTermValueForGroup() {
@@ -222,13 +233,15 @@ export default Em.Component.extend({
 
     const match = this.filterBlocks(REGEXP_TAGS_PREFIX);
     const tags = this.get('searchedTerms.tags');
+    const contain_all_tags = this.get('searchedTerms.special.all_tags');
 
     if (match.length !== 0) {
-      const existingInput = _.isArray(tags) ? tags.join(',') : tags;
-      const userInput = match[0].replace(REGEXP_TAGS_PREFIX, '');
+      const join_char = contain_all_tags ? '+' : ',';
+      const existingInput = _.isArray(tags) ? tags.join(join_char) : tags;
+      const userInput = match[0].replace(REGEXP_TAGS_REPLACE, '');
 
       if (existingInput !== userInput) {
-        this.set('searchedTerms.tags', (userInput.length !== 0) ? userInput.split(',') : []);
+        this.set('searchedTerms.tags', (userInput.length !== 0) ? userInput.split(join_char) : []);
       }
     } else if (tags.length !== 0) {
       this.set('searchedTerms.tags', []);
@@ -279,16 +292,16 @@ export default Em.Component.extend({
   @observes('searchedTerms.category')
   updateSearchTermForCategory() {
     const match = this.filterBlocks(REGEXP_CATEGORY_PREFIX);
-    const categoryFilter = Discourse.Category.findById(this.get('searchedTerms.category'));
+    const categoryFilter = this.get('searchedTerms.category');
     let searchTerm = this.get('searchTerm') || '';
 
     const slugCategoryMatches = (match.length !== 0) ? match[0].match(REGEXP_CATEGORY_SLUG) : null;
     const idCategoryMatches = (match.length !== 0) ? match[0].match(REGEXP_CATEGORY_ID) : null;
-    if (categoryFilter && categoryFilter.length !== 0) {
-      const id = categoryFilter.id;
-      const slug = categoryFilter.slug;
-      if (categoryFilter && categoryFilter.parentCategory) {
-        const parentSlug = categoryFilter.parentCategory.slug;
+    if (categoryFilter && categoryFilter[0]) {
+      const id = categoryFilter[0].id;
+      const slug = categoryFilter[0].slug;
+      if (categoryFilter[0].parentCategory) {
+        const parentSlug = categoryFilter[0].parentCategory.slug;
         if (slugCategoryMatches)
           searchTerm = searchTerm.replace(slugCategoryMatches[0], `#${parentSlug}:${slug}`);
         else if (idCategoryMatches)
@@ -297,7 +310,7 @@ export default Em.Component.extend({
           searchTerm += ` #${parentSlug}:${slug}`;
 
         this.set('searchTerm', searchTerm.trim());
-      } else if (categoryFilter) {
+      } else {
         if (slugCategoryMatches)
           searchTerm = searchTerm.replace(slugCategoryMatches[0], `#${slug}`);
         else if (idCategoryMatches)
@@ -357,14 +370,16 @@ export default Em.Component.extend({
     }
   },
 
-  @observes('searchedTerms.tags')
+  @observes('searchedTerms.tags', 'searchedTerms.special.all_tags')
   updateSearchTermForTags() {
     const match = this.filterBlocks(REGEXP_TAGS_PREFIX);
     const tagFilter = this.get('searchedTerms.tags');
     let searchTerm = this.get('searchTerm') || '';
+    const contain_all_tags = this.get('searchedTerms.special.all_tags');
 
     if (tagFilter && tagFilter.length !== 0) {
-      const tags = tagFilter.join(',');
+      const join_char = contain_all_tags ? '+' : ',';
+      const tags = tagFilter.join(join_char);
 
       if (match.length !== 0) {
         searchTerm = searchTerm.replace(match[0], `tags:${tags}`);
@@ -433,15 +448,15 @@ export default Em.Component.extend({
     }
   },
 
-  @observes('searchedTerms.special.in.wiki')
-  updateSearchTermForSpecialInWiki() {
-    const match = this.filterBlocks(REGEXP_SPECIAL_IN_WIKI_MATCH);
-    const inFilter = this.get('searchedTerms.special.in.wiki');
+  @observes('searchedTerms.special.in.seen')
+  updateSearchTermForSpecialInSeen() {
+    const match = this.filterBlocks(REGEXP_SPECIAL_IN_SEEN_MATCH);
+    const inFilter = this.get('searchedTerms.special.in.seen');
     let searchTerm = this.get('searchTerm') || '';
 
     if (inFilter) {
       if (match.length === 0) {
-        searchTerm += ` in:wiki`;
+        searchTerm += ` in:seen`;
         this.set('searchTerm', searchTerm.trim());
       }
     } else if (match.length !== 0) {
@@ -491,17 +506,17 @@ export default Em.Component.extend({
     }
   },
 
-  @observes('searchedTerms.posts_count')
-  updateSearchTermForPostsCount() {
-    const match = this.filterBlocks(REGEXP_POST_COUNT_PREFIX);
-    const postsCountFilter = this.get('searchedTerms.posts_count');
+  @observes('searchedTerms.min_post_count')
+  updateSearchTermForMinPostCount() {
+    const match = this.filterBlocks(REGEXP_MIN_POST_COUNT_PREFIX);
+    const postsCountFilter = this.get('searchedTerms.min_post_count');
     let searchTerm = this.get('searchTerm') || '';
 
     if (postsCountFilter) {
       if (match.length !== 0) {
-        searchTerm = searchTerm.replace(match[0], `posts_count:${postsCountFilter}`);
+        searchTerm = searchTerm.replace(match[0], `min_post_count:${postsCountFilter}`);
       } else {
-        searchTerm += ` posts_count:${postsCountFilter}`;
+        searchTerm += ` min_post_count:${postsCountFilter}`;
       }
 
       this.set('searchTerm', searchTerm.trim());
@@ -512,12 +527,10 @@ export default Em.Component.extend({
   },
 
   groupFinder(term) {
-    const Group = require('discourse/models/group').default;
     return Group.findAll({search: term, ignore_automatic: false});
   },
 
   badgeFinder(term) {
-    const Badge = require('discourse/models/badge').default;
     return Badge.findAll({search: term});
   }
 });

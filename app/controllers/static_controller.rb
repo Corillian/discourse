@@ -4,12 +4,13 @@ require_dependency 'file_helper'
 class StaticController < ApplicationController
 
   skip_before_filter :check_xhr, :redirect_to_login_if_required
-  skip_before_filter :verify_authenticity_token, only: [:cdn_asset, :enter, :favicon]
+  skip_before_filter :verify_authenticity_token, only: [:brotli_asset, :cdn_asset, :enter, :favicon]
 
   PAGES_WITH_EMAIL_PARAM = ['login', 'password_reset', 'signup']
 
   def show
     return redirect_to(path '/') if current_user && (params[:id] == 'login' || params[:id] == 'signup')
+    return redirect_to path('/login') if SiteSetting.login_required? && current_user.nil? && (params[:id] == 'faq' || params[:id] == 'guidelines')
 
     map = {
       "faq" => {redirect: "faq_url", topic_id: "guidelines_topic_id"},
@@ -34,7 +35,7 @@ class StaticController < ApplicationController
     if map.has_key?(@page)
       @topic = Topic.find_by_id(SiteSetting.send(map[@page][:topic_id]))
       raise Discourse::NotFound unless @topic
-      @title = @topic.title
+      @title = "#{@topic.title} - #{SiteSetting.title}"
       @body = @topic.posts.first.cooked
       @faq_overriden = !SiteSetting.faq_url.blank?
       render :show, layout: !request.xhr?, formats: [:html]
@@ -42,7 +43,7 @@ class StaticController < ApplicationController
     end
 
     if I18n.exists?("static.#{@page}")
-      render text: I18n.t("static.#{@page}"), layout: !request.xhr?, formats: [:html]
+      render html: I18n.t("static.#{@page}"), layout: !request.xhr?, formats: [:html]
       return
     end
 
@@ -101,7 +102,12 @@ class StaticController < ApplicationController
 
     data = DistributedMemoizer.memoize('favicon' + SiteSetting.favicon_url, 60*30) do
       begin
-        file = FileHelper.download(SiteSetting.favicon_url, 50.kilobytes, "favicon.png", true)
+        file = FileHelper.download(
+          SiteSetting.favicon_url,
+          max_file_size: 50.kilobytes,
+          tmp_file_name: "favicon.png",
+          follow_redirect: true
+        )
         data = file.read
         file.unlink
         data
@@ -117,42 +123,69 @@ class StaticController < ApplicationController
       response.headers["Content-Length"] = @@default_favicon.bytesize.to_s
       render text: @@default_favicon, content_type: "image/png"
     else
-      expires_in 1.year, public: true
+      immutable_for 1.year
       response.headers["Expires"] = 1.year.from_now.httpdate
       response.headers["Content-Length"] = data.bytesize.to_s
       response.headers["Last-Modified"] = Time.new('2000-01-01').httpdate
       render text: data, content_type: "image/png"
     end
+  end
 
+  def brotli_asset
+    serve_asset(".br") do
+      response.headers["Content-Encoding"] = 'br'
+    end
   end
 
 
   def cdn_asset
-    path = File.expand_path(Rails.root + "public/assets/" + params[:path])
+    serve_asset
+  end
+
+  protected
+
+  def serve_asset(suffix=nil)
+
+    path = File.expand_path(Rails.root + "public/assets/#{params[:path]}#{suffix}")
 
     # SECURITY what if path has /../
     raise Discourse::NotFound unless path.start_with?(Rails.root.to_s + "/public/assets")
 
-    expires_in 1.year, public: true
 
     response.headers["Expires"] = 1.year.from_now.httpdate
     response.headers["Access-Control-Allow-Origin"] = params[:origin] if params[:origin]
 
     begin
       response.headers["Last-Modified"] = File.ctime(path).httpdate
-      response.headers["Content-Length"] = File.size(path).to_s
     rescue Errno::ENOENT
-      raise Discourse::NotFound
+      begin
+        if GlobalSetting.fallback_assets_path.present?
+          path = File.expand_path("#{GlobalSetting.fallback_assets_path}/#{params[:path]}#{suffix}")
+          response.headers["Last-Modified"] = File.ctime(path).httpdate
+        else
+          raise
+        end
+      rescue Errno::ENOENT
+        expires_in 1.second, public: true, must_revalidate: false
+
+        render plain: "can not find #{params[:path]}", status: 404
+        return
+      end
     end
 
-    opts = { disposition: nil }
-    opts[:type] = "application/javascript" if path =~ /\.js$/
+    response.headers["Content-Length"] = File.size(path).to_s
 
-    # we must disable acceleration otherwise NGINX strips
-    # access control headers
+    yield if block_given?
+
+    immutable_for 1.year
+
+    # disable NGINX mucking with transfer
     request.env['sendfile.type'] = ''
-    # TODO send_file chunks which kills caching, need to render text here
+
+    opts = { disposition: nil }
+    opts[:type] = "application/javascript" if params[:path] =~ /\.js$/
     send_file(path, opts)
+
   end
 
 end

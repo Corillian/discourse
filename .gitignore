@@ -10,6 +10,8 @@ dump.rdb
 
 bin/*
 
+data/
+
 .sass-cache/*
 public/csv/*
 public/plugins/*
@@ -30,9 +32,9 @@ config/discourse.pill
 config/discourse.conf
 
 # Ignore the default SQLite database and db dumps
+*.sql
+*.sql.gz
 /db/*.sqlite3
-/dbs/*.sql
-/dbs/*.sql.gz
 /db/structure.sql
 
 # Ignore all logfiles and tempfiles.
@@ -40,6 +42,7 @@ config/discourse.conf
 /tmp
 /logfile
 log/
+bootsnap-load-path-cache
 
 # Ignore plugins except for the bundled ones.
 /plugins/*
@@ -48,6 +51,7 @@ log/
 !/plugins/poll/
 !/plugins/discourse-details/
 !/plugins/discourse-nginx-performance-report
+!/plugins/discourse-narrative-bot
 /plugins/*/auto_generated/
 
 /spec/fixtures/plugins/my_plugin/auto_generated

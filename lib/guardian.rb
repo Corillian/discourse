@@ -126,8 +126,11 @@ class Guardian
   end
   alias :can_move_posts? :can_moderate?
   alias :can_see_flags? :can_moderate?
-  alias :can_send_activation_email? :can_moderate?
   alias :can_close? :can_moderate?
+
+  def can_send_activation_email?(user)
+    user && is_staff? && !SiteSetting.must_approve_users?
+  end
 
   def can_grant_badges?(_user)
     SiteSetting.enable_badges && is_staff?
@@ -135,10 +138,21 @@ class Guardian
 
   def can_see_group?(group)
     return false if group.blank?
-    return true if is_admin? || group.visible?
+    return true if group.visibility_level == Group.visibility_levels[:public]
+    return true if is_admin?
+    return true if is_staff? && group.visibility_level == Group.visibility_levels[:staff]
     return false if user.blank?
 
-    group.group_users.where(user_id: user.id).exists?
+    membership = GroupUser.find_by(group_id: group.id, user_id: user.id)
+
+    return false unless membership
+
+    if !membership.owner
+      return false if group.visibility_level == Group.visibility_levels[:owners]
+      return false if group.visibility_level == Group.visibility_levels[:staff]
+    end
+
+    true
   end
 
 
@@ -156,6 +170,10 @@ class Guardian
     # Additionally, you may not impersonate yourself;
     # but the two tests for different admin statuses
     # make it impossible to be the same user.
+  end
+
+  def can_view_action_logs?(target)
+    target.present? && is_staff?
   end
 
   # Can we approve it?
@@ -177,7 +195,7 @@ class Guardian
   end
 
   def can_grant_admin?(user)
-    can_administer_user?(user) && not(user.admin?)
+    can_administer_user?(user) && !user.admin?
   end
 
   def can_revoke_moderation?(moderator)
@@ -185,7 +203,7 @@ class Guardian
   end
 
   def can_grant_moderation?(user)
-    can_administer?(user) && not(user.moderator?)
+    can_administer?(user) && !user.moderator?
   end
 
   def can_grant_title?(user)
@@ -228,11 +246,11 @@ class Guardian
   end
 
   def can_invite_to?(object, group_ids=nil)
-    return false if ! authenticated?
-    return false unless (!SiteSetting.must_approve_users? || is_staff?)
+    return false unless authenticated?
     return true if is_admin?
+    return false unless SiteSetting.enable_private_messages?
     return false if (SiteSetting.max_invites_per_day.to_i == 0 && !is_staff?)
-    return false if ! can_see?(object)
+    return false unless can_see?(object)
     return false if group_ids.present?
 
     if object.is_a?(Topic) && object.category
@@ -242,6 +260,11 @@ class Guardian
     end
 
     user.has_trust_level?(TrustLevel[2])
+  end
+
+  def can_invite_via_email?(object)
+    return false unless can_invite_to?(object)
+    !SiteSetting.enable_sso && SiteSetting.enable_local_logins && (!SiteSetting.must_approve_users? || is_staff?)
   end
 
   def can_bulk_invite_to_forum?(user)
@@ -260,6 +283,10 @@ class Guardian
     user.staff?
   end
 
+  def can_rescind_all_invites?(user)
+    user.staff?
+  end
+
   def can_see_private_messages?(user_id)
     is_admin? || (authenticated? && @user.id == user_id)
   end
@@ -271,9 +298,7 @@ class Guardian
     # Have to be a basic level at least
     @user.has_trust_level?(SiteSetting.min_trust_to_send_messages) &&
     # PMs are enabled
-    (SiteSetting.enable_private_messages ||
-      @user.username == SiteSetting.site_contact_username ||
-      @user == Discourse.system_user) &&
+    (is_staff? || SiteSetting.enable_private_messages) &&
     # Can't send PMs to suspended users
     (is_staff? || target.is_a?(Group) || !target.suspended?) &&
     # Blocked users can only send PM to staff
@@ -284,11 +309,21 @@ class Guardian
     @can_see_emails
   end
 
-  def can_export_entity?(entity_type)
+  def can_export_entity?(entity)
     return false unless @user
     return true if is_staff?
-    return false if entity_type == "admin"
+
+    # Regular users can only export their archives
+    return false unless entity == "user_archive"
     UserExport.where(user_id: @user.id, created_at: (Time.zone.now.beginning_of_day..Time.zone.now.end_of_day)).count == 0
+  end
+
+  def allow_theme?(theme_key)
+    if is_staff?
+      Theme.theme_keys.include?(theme_key)
+    else
+      Theme.user_theme_keys.include?(theme_key)
+    end
   end
 
 
@@ -313,7 +348,7 @@ class Guardian
   end
 
   def can_administer?(obj)
-    is_admin? && obj.present?
+    is_admin? && obj.present? && obj.id&.positive?
   end
 
   def can_administer_user?(other_user)

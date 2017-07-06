@@ -2,7 +2,7 @@
 
 //= require env
 //= require jquery.debug
-//= require loader
+//= require discourse-loader
 //= require jquery.debug
 //= require handlebars
 //= require ember.debug
@@ -22,6 +22,7 @@
 //= require pretender
 //= require ./wizard-pretender
 
+
 // Trick JSHint into allow document.write
 var d = document;
 d.write('<div id="ember-testing-container"><div id="ember-testing"></div></div>');
@@ -32,8 +33,9 @@ if (window.Logster) {
 } else {
   window.Logster = { enabled: false };
 }
+Ember.Test.adapter = window.QUnitAdapter.create();
 
-var createPretendServer = require('wizard/test/wizard-pretender', null, null, false).default;
+var createPretendServer = requirejs('wizard/test/wizard-pretender', null, null, false).default;
 
 var server;
 QUnit.testStart(function() {
@@ -44,13 +46,13 @@ QUnit.testDone(function() {
   server.shutdown();
 });
 
-require('wizard/test/helpers/start-app').default();
 
-var buildResolver = require('discourse-common/resolver').buildResolver;
-window.setResolver(buildResolver('wizard').create());
+var _testApp = requirejs('wizard/test/helpers/start-app').default();
+var _buildResolver = requirejs('discourse-common/resolver').buildResolver;
+window.setResolver(_buildResolver('wizard').create({ namespace: _testApp }));
 
 Object.keys(requirejs.entries).forEach(function(entry) {
   if ((/\-test/).test(entry)) {
-    require(entry, null, null, true);
+    requirejs(entry, null, null, true);
   }
 });

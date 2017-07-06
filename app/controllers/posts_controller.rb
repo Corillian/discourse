@@ -19,7 +19,7 @@ class PostsController < ApplicationController
   def markdown_num
     if params[:revision].present?
       post_revision = find_post_revision_from_topic_id
-      render text: post_revision.modifications[:raw].last, content_type: 'text/plain'
+      render plain: post_revision.modifications[:raw].last
     else
       markdown Post.find_by(topic_id: params[:topic_id].to_i, post_number: (params[:post_number] || 1).to_i)
     end
@@ -27,7 +27,7 @@ class PostsController < ApplicationController
 
   def markdown(post)
     if post && guardian.can_see?(post)
-      render text: post.raw, content_type: 'text/plain'
+      render plain: post.raw
     else
       raise Discourse::NotFound
     end
@@ -103,20 +103,21 @@ class PostsController < ApplicationController
 
     @posts = posts
     @title = "#{SiteSetting.title} - #{I18n.t("rss_description.user_posts", username: user.username)}"
-    @link = "#{Discourse.base_url}/users/#{user.username}/activity"
+    @link = "#{Discourse.base_url}/u/#{user.username}/activity"
     @description = I18n.t("rss_description.user_posts", username: user.username)
     render 'posts/latest', formats: [:rss]
   end
 
   def cooked
-    post = find_post_from_params
-    render json: {cooked: post.cooked}
+    render json: { cooked: find_post_from_params.cooked }
   end
 
   def raw_email
+    params.require(:id)
     post = Post.unscoped.find(params[:id].to_i)
     guardian.ensure_can_view_raw_email!(post)
-    render json: { raw_email: post.raw_email }
+    text, html = Email.extract_parts(post.raw_email)
+    render json: { raw_email: post.raw_email, text_part: text, html_part: html }
   end
 
   def short_link
@@ -128,7 +129,7 @@ class PostsController < ApplicationController
     end
 
     guardian.ensure_can_see!(post)
-    redirect_to post.url
+    redirect_to path(post.url)
   end
 
   def create
@@ -377,17 +378,21 @@ class PostsController < ApplicationController
   end
 
   def bookmark
-    post = find_post_from_params
-
     if params[:bookmarked] == "true"
+      post = find_post_from_params
       PostAction.act(current_user, post, PostActionType.types[:bookmark])
     else
+      post_action = PostAction.find_by(post_id: params[:post_id], user_id: current_user.id)
+      raise Discourse::NotFound unless post_action
+
+      post = Post.with_deleted.find_by(id: post_action&.post_id)
+      raise Discourse::NotFound unless post
+
       PostAction.remove_act(current_user, post, PostActionType.types[:bookmark])
     end
 
-    tu = TopicUser.get(post.topic, current_user)
-
-    render_json_dump(topic_bookmarked: tu.try(:bookmarked))
+    topic_user = TopicUser.get(post.topic, current_user)
+    render_json_dump(topic_bookmarked: topic_user.try(:bookmarked))
   end
 
   def wiki
@@ -440,7 +445,7 @@ class PostsController < ApplicationController
                                    .where(disagreed_at: nil)
                                    .select(:post_id))
 
-    render_serialized(posts, AdminPostSerializer)
+    render_serialized(posts, AdminUserActionSerializer)
   end
 
   def deleted_posts
@@ -453,7 +458,7 @@ class PostsController < ApplicationController
 
     posts = user_posts(guardian, user.id, offset: offset, limit: limit).where.not(deleted_at: nil)
 
-    render_serialized(posts, AdminPostSerializer)
+    render_serialized(posts, AdminUserActionSerializer)
   end
 
   protected
@@ -467,7 +472,7 @@ class PostsController < ApplicationController
       json_obj = json_obj[:post]
     end
 
-    if !success && GlobalSetting.try(:verbose_api_logging) && is_api?
+    if !success && GlobalSetting.try(:verbose_api_logging) && (is_api? || is_user_api?)
       Rails.logger.error "Error creating post via API:\n\n#{json_obj.inspect}"
     end
 
@@ -574,7 +579,6 @@ class PostsController < ApplicationController
 
     end
 
-    params.require(:raw)
     result = params.permit(*permitted).tap do |whitelisted|
       whitelisted[:image_sizes] = params[:image_sizes]
       # TODO this does not feel right, we should name what meta_data is allowed

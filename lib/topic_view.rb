@@ -5,7 +5,7 @@ require_dependency 'gaps'
 
 class TopicView
 
-  attr_reader :topic, :posts, :guardian, :filtered_posts, :chunk_size, :print
+  attr_reader :topic, :posts, :guardian, :filtered_posts, :chunk_size, :print, :message_bus_last_id
   attr_accessor :draft, :draft_key, :draft_sequence, :user_custom_fields, :post_custom_fields
 
   def self.slow_chunk_size
@@ -38,6 +38,7 @@ class TopicView
   end
 
   def initialize(topic_id, user=nil, options={})
+    @message_bus_last_id = MessageBus.last_id("/topic/#{topic_id}")
     @user = user
     @guardian = Guardian.new(@user)
     @topic = find_topic(topic_id)
@@ -142,8 +143,12 @@ class TopicView
 
   def page_title
     title = @topic.title
-    if SiteSetting.topic_page_title_includes_category && @topic.category_id != SiteSetting.uncategorized_category_id && @topic.category_id && @topic.category
-      title += " - #{topic.category.name}"
+    if SiteSetting.topic_page_title_includes_category
+      if @topic.category_id != SiteSetting.uncategorized_category_id && @topic.category_id && @topic.category
+        title += " - #{@topic.category.name}"
+      elsif SiteSetting.tagging_enabled && @topic.tags.exists?
+        title += " - #{@topic.tags.order('tags.topic_count DESC').first.name}"
+      end
     end
     title
   end
@@ -180,8 +185,12 @@ class TopicView
 
   def image_url
     if @post_number.present? && @post_number.to_i != 1 && @desired_post.present?
-      # show poster avatar
-      @desired_post.user.avatar_template_url.gsub("{size}", "100") if @desired_post.user
+      if @desired_post.image_url.present?
+        @desired_post.image_url
+      elsif @desired_post.user
+        # show poster avatar
+        @desired_post.user.avatar_template_url.gsub("{size}", "200")
+      end
     else
       @topic.image_url
     end
@@ -276,7 +285,7 @@ class TopicView
   def participants
     @participants ||= begin
       participants = {}
-      User.where(id: post_counts_by_user.map {|k,v| k}).each {|u| participants[u.id] = u}
+      User.where(id: post_counts_by_user.map {|k,v| k}).includes(:primary_group).each {|u| participants[u.id] = u}
       participants
     end
   end

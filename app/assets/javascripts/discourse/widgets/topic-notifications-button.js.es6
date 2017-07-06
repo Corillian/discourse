@@ -12,7 +12,7 @@ createWidget('notification-option', {
         h('span.icon', { className: `fa fa-${attrs.icon} ${attrs.key}`}),
         h('div', [
           h('span.title', I18n.t(`topic.notifications.${attrs.key}.title`)),
-          h('span', I18n.t(`topic.notifications.${attrs.key}.description`)),
+          h('span.desc', I18n.t(`topic.notifications.${attrs.key}.description`)),
         ])
     ]);
   },
@@ -88,10 +88,12 @@ export default createWidget('topic-notifications-button', {
     return this.attrs.topic.get('details').updateNotifications(id);
   },
 
-  topicNotificationsButtonKeyboardTrigger(msg) {
+  topicNotificationsButtonChanged(msg) {
     switch(msg.type) {
       case 'notification':
-        this.notificationLevelChanged(msg.id);
+        if (this.attrs.topic.get('details.notification_level') !== msg.id) {
+          this.notificationLevelChanged(msg.id);
+        }
         break;
     }
   }

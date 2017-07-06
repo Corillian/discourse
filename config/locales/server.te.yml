@@ -14,7 +14,6 @@ te:
   topics: "విషయాలు"
   posts: "టపాలు"
   loading: "లోడవుతోంది"
-  powered_by_html: ' <a href="http://www.discourse.org">డిస్కౌర్స్</a> చేత శక్తివంతం చేయబడింది, జావాస్క్రిప్ట్ చేతనం చేస్తే బాగా కనిపిస్తుంది. '
   log_in: "లాగిన్"
   disable_remote_images_download_reason: "సుదూర బొమ్మల దిగుమతి అచేతనమైంది ఎందుకంటే డిస్క్ జాగా తక్కువగా ఉంది."
   errors: &errors
@@ -61,8 +60,6 @@ te:
         other: '%{count} దోషాల వల్ల  %{model} భద్రపరుచుట వీలవలేదు'
     embed:
       load_from_remote: "ఈ టపా లోడింగులో దోషం"
-  bulk_invite:
-    file_should_be_csv: "ఎగుమతించే దస్త్రం కేవలం csv లేదా txt రూపంలో ఉండాలి"
   backup:
     operation_already_running: "ఒక పరిక్రియ ప్రస్తుతం జరుగుతోంది. కొత్త పని ఇప్పుడు మొదలుపెట్టవీలవదు."
     backup_file_should_be_tar_gz: "బ్యాకప్ దస్త్రం తప్పనిసరి .tar.gz కట్ట అయి ఉండాలి."
@@ -92,7 +89,6 @@ te:
   topic_not_found: "ఏదో తప్పు జరిగింది. బహుశా ఈ అంశం ముగిసింది లేదా మీరు చూస్తూ ఉండగా తొలగించబడింది?"
   just_posted_that: "ఇది ఇప్పుడే రాసిన విషయంలా ఉంది. డూప్లికేటు టపా?"
   invalid_characters: "చెల్లని  అక్షరాలు ఉన్నాయి."
-  is_invalid: "చెల్లనిది. మరింత వివరణాత్మకంగా ఉండేట్టు చూడండి."
   next_page: "తరువాతి పుట →"
   prev_page: "← గత పుట"
   page_num: "పుట %[num]"
@@ -164,7 +160,7 @@ te:
               invalid: "ఇది చెల్లని రంగు"
       <<: *errors
   user_profile:
-    no_info_other: "<div class='missing-profile'>%{పేరు} ఇంకా వారి ప్రొఫైల్ లో ఎబౌట్ మీ స్థానంలో ఏమీ చేర్చలేదు</div>"
+    no_info_other: "<div class='missing-profile'>%{name} ఇంకా వారి ప్రొఫైల్ లో ఎబౌట్ మీ స్థానంలో ఏమీ చేర్చలేదు</div>"
   vip_category_name: "అడ్డా"
   vip_category_description: "నమ్మకం స్థాయి మూడు లేదా ఆపై ఉన్న సభ్యులకు మాత్రమే పరిమితమైన వర్గం"
   meta_category_description: "ఈ సైటు గురించి చర్చ. ఎలా మొదలైంది. ఎలా పని చేస్తుంది. ఇంకా ఎలా మెరుగు పరచవచ్చు."
@@ -273,14 +269,11 @@ te:
         one: "అటో ఇటో ఒక సంవత్సరం వెనుక"
         other: "అటోఇటో %{count} సంవత్సరాల ముందు"
   password_reset:
-    choose_new: "దయచేసి కొత్త సంకేతపదం ఎన్నుకోండి"
-    choose: "దయచేసి ఒక సంకేతపదం ఎన్నుకోండి"
     update: 'సంకేతపదం ఉన్నతీకరించండి'
     save: 'సంకేతపదం అమర్చండి'
     title: 'సంకేతపదం రీసెట్ చెయ్యండి'
     success: "మీరు విజయవంతంగా మీ సంకేతపదం మార్చారు ఇంకా ఇప్పుడు లాగిన్ అయ్యారు కూడా."
     success_unapproved: "మీరు విజయవంతంగా సంకేతపదం మార్చారు."
-    continue: "%{site_name} కు కొనసాగండి"
   change_email:
     confirmed: "మీ ఈమెయిల్ చిరునామా మారింది."
     please_continue: "%{site_name} కు కొనసాగండి"
@@ -298,7 +291,6 @@ te:
       long_form: 'దీన్ని విషయాంతరంగా కేతనించాము'
     spam:
       title: 'స్పాము'
-      description: 'ఈ టపా వాణిజ్య ప్రకటన. ప్రస్తుత విషయానికి ఉపయోగకరమైనది కాదు, సంబందించినదీ కాదు. కానీ మార్కెటింగు స్వభావితమైనది.'
       long_form: 'దీన్ని స్పాముగా కేతనించాము'
       email_title: '"%{title}" ప్పాముగా కేతనించాము'
       email_body: "%{link}\n\n%{message}"
@@ -477,7 +469,6 @@ te:
     post_edit_time_limit: "రచయిత వారు చేసిన టపా (n) నిమిషాల తర్వాత సవరించవచ్చు లేదా తొలగించవచ్చు. ఎప్పటికీ 0 అమర్చుము."
     max_image_width: "ఒక టపాలో థంబ్నైల్ గరిష్ట వెడల్పు"
     max_image_height: "ఒక టపాలో థంబ్నైల్ గరిష్ట ఎత్తు"
-    show_subcategory_list: "ఒక అంశం జాబితా వర్గంలో నమోదు చేసేటప్పుడు బదులుగా ఉపవర్గం జాబితా చూపించు."
     post_excerpt_maxlength: "ఒక టపా సంగ్రహం/సారాంశం గరిష్ట పొడవు."
     allow_moderators_to_create_categories: "మధ్యవర్తులు కొత్త వర్గాలు సృష్టించడానికి అనుమతించు"
     topics_per_period_in_top_summary: "అప్రమేయ అగ్ర విషయాల సారాంశంలో చూపే అగ్ర విషయాల సంఖ్య."
@@ -548,17 +539,8 @@ te:
       subject_template: "%{site_name} కు సుస్వాగతం!"
   user_notifications:
     previous_discussion: "గత జవాబులు"
-    user_replied:
-      subject_template: "[%{site_name}] %{topic_title}"
     digest:
-      new_activity: "మీ విషయాలు మరియు టపాల మీద కొత్త కార్యక్రమం మొదలైంది:"
-      top_topics: "ప్రముఖ టపాలు"
-      other_new_topics: "ప్రముఖ విషయాలు"
       click_here: "ఇక్కడ క్లిక్ చేయండి"
-      read_more: "ఇంకా చదువు"
-      more_topics_category: "మరిన్ని కొత్త విషయాలు:"
-    account_created:
-      subject_template: "[%{site_name}] మీ కొత్త ఖాతా"
   page_not_found:
     popular_topics: "ప్రముఖ"
     recent_topics: "తాజా"

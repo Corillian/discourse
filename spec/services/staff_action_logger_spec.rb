@@ -120,9 +120,8 @@ describe StaffActionLogger do
 
   describe "log_site_setting_change" do
     it "raises an error when params are invalid" do
-      SiteSetting.stubs(:respond_to?).with('abc').returns(false)
       expect { logger.log_site_setting_change(nil, '1', '2') }.to raise_error(Discourse::InvalidParameters)
-      expect { logger.log_site_setting_change('abc', '1', '2') }.to raise_error(Discourse::InvalidParameters)
+      expect { logger.log_site_setting_change('i_am_a_site_setting_that_will_never_exist', '1', '2') }.to raise_error(Discourse::InvalidParameters)
     end
 
     it "creates a new UserHistory record" do
@@ -130,46 +129,56 @@ describe StaffActionLogger do
     end
   end
 
-  describe "log_site_customization_change" do
-    let(:valid_params) { {name: 'Cool Theme', stylesheet: "body {\n  background-color: blue;\n}\n", header: "h1 {color: white;}"} }
+  describe "log_theme_change" do
 
     it "raises an error when params are invalid" do
-      expect { logger.log_site_customization_change(nil, nil) }.to raise_error(Discourse::InvalidParameters)
+      expect { logger.log_theme_change(nil, nil) }.to raise_error(Discourse::InvalidParameters)
+    end
+
+    let :theme do
+      Theme.new(name: 'bob', user_id: -1)
     end
 
     it "logs new site customizations" do
-      log_record = logger.log_site_customization_change(nil, valid_params)
-      expect(log_record.subject).to eq(valid_params[:name])
+
+      log_record = logger.log_theme_change(nil, theme)
+      expect(log_record.subject).to eq(theme.name)
       expect(log_record.previous_value).to eq(nil)
       expect(log_record.new_value).to be_present
+
       json = ::JSON.parse(log_record.new_value)
-      expect(json['stylesheet']).to be_present
-      expect(json['header']).to be_present
+      expect(json['name']).to eq(theme.name)
     end
 
     it "logs updated site customizations" do
-      existing = SiteCustomization.new(name: 'Banana', stylesheet: "body {color: yellow;}", header: "h1 {color: brown;}")
-      log_record = logger.log_site_customization_change(existing, valid_params)
+      old_json = ThemeSerializer.new(theme, root:false).to_json
+
+      theme.set_field(target: :common, name: :scss, value: "body{margin: 10px;}")
+
+      log_record = logger.log_theme_change(old_json, theme)
+
       expect(log_record.previous_value).to be_present
-      json = ::JSON.parse(log_record.previous_value)
-      expect(json['stylesheet']).to eq(existing.stylesheet)
-      expect(json['header']).to eq(existing.header)
+
+      json = ::JSON.parse(log_record.new_value)
+      expect(json['theme_fields']).to eq([{"name" => "scss", "target" => "common", "value" => "body{margin: 10px;}", "type_id" => 1}])
     end
   end
 
-  describe "log_site_customization_destroy" do
+  describe "log_theme_destroy" do
     it "raises an error when params are invalid" do
-      expect { logger.log_site_customization_destroy(nil) }.to raise_error(Discourse::InvalidParameters)
+      expect { logger.log_theme_destroy(nil) }.to raise_error(Discourse::InvalidParameters)
     end
 
     it "creates a new UserHistory record" do
-      site_customization = SiteCustomization.new(name: 'Banana', stylesheet: "body {color: yellow;}", header: "h1 {color: brown;}")
-      log_record = logger.log_site_customization_destroy(site_customization)
+      theme = Theme.new(name: 'Banana')
+      theme.set_field(target: :common, name: :scss, value: "body{margin: 10px;}")
+
+      log_record = logger.log_theme_destroy(theme)
       expect(log_record.previous_value).to be_present
       expect(log_record.new_value).to eq(nil)
       json = ::JSON.parse(log_record.previous_value)
-      expect(json['stylesheet']).to eq(site_customization.stylesheet)
-      expect(json['header']).to eq(site_customization.header)
+
+      expect(json['theme_fields']).to eq([{"name" => "scss", "target" => "common", "value" => "body{margin: 10px;}", "type_id" => 1}])
     end
   end
 
@@ -367,6 +376,64 @@ describe StaffActionLogger do
       expect(user_history.category).to eq(category)
       expect(user_history.context).to eq(category.url)
       expect(user_history.action).to eq(UserHistory.actions[:create_category])
+    end
+  end
+
+  describe 'log_lock_trust_level' do
+    let(:user) { Fabricate(:user) }
+
+    it "raises an error when argument is missing" do
+      expect { logger.log_lock_trust_level(nil) }.to raise_error(Discourse::InvalidParameters)
+    end
+
+    it "creates a new UserHistory record" do
+      user.trust_level_locked = true
+      expect { logger.log_lock_trust_level(user) }.to change { UserHistory.count }.by(1)
+      user_history = UserHistory.last
+      expect(user_history.action).to eq(UserHistory.actions[:lock_trust_level])
+
+      user.trust_level_locked = false
+      expect { logger.log_lock_trust_level(user) }.to change { UserHistory.count }.by(1)
+      user_history = UserHistory.last
+      expect(user_history.action).to eq(UserHistory.actions[:unlock_trust_level])
+    end
+  end
+
+  describe 'log_user_activate' do
+    let(:user) { Fabricate(:user) }
+
+    it "raises an error when argument is missing" do
+      expect { logger.log_user_activate(nil, nil) }.to raise_error(Discourse::InvalidParameters)
+    end
+
+    it "creates a new UserHistory record" do
+      reason = "Staff activated from admin"
+      expect {
+        logger.log_user_activate(user, reason)
+      }.to change { UserHistory.count }.by(1)
+      user_history = UserHistory.last
+      expect(user_history.action).to eq(UserHistory.actions[:activate_user])
+      expect(user_history.details).to eq(reason)
+    end
+  end
+
+  describe '#log_readonly_mode' do
+    it "creates a new record" do
+      expect { logger.log_change_readonly_mode(true) }.to change { UserHistory.count }.by(1)
+
+      user_history = UserHistory.last
+
+      expect(user_history.action).to eq(UserHistory.actions[:change_readonly_mode])
+      expect(user_history.new_value).to eq('t')
+      expect(user_history.previous_value).to eq('f')
+
+      expect { logger.log_change_readonly_mode(false) }.to change { UserHistory.count }.by(1)
+
+      user_history = UserHistory.last
+
+      expect(user_history.action).to eq(UserHistory.actions[:change_readonly_mode])
+      expect(user_history.new_value).to eq('f')
+      expect(user_history.previous_value).to eq('t')
     end
   end
 end

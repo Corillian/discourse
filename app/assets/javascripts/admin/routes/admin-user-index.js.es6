@@ -26,8 +26,16 @@ export default Discourse.Route.extend({
 
   actions: {
     showSuspendModal(model) {
-      showModal('modals/admin-suspend-user', { model });
+      showModal('admin-suspend-user', { model, admin: true });
       this.controllerFor('modal').set('modalClass', 'suspend-user-modal');
+    },
+
+    viewActionLogs(username) {
+      const controller = this.controllerFor('adminLogs.staffActionLogs');
+      this.transitionTo('adminLogs.staffActionLogs').then(() => {
+        controller.set('filters', Ember.Object.create());
+        controller._changeFilters({ target_user: username });
+      });
     }
   }
 });

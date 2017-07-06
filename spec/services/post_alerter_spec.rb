@@ -63,8 +63,7 @@ describe PostAlerter do
 
   context 'edits' do
     it 'notifies correctly on edits' do
-
-      ActiveRecord::Base.observers.enable :all
+      PostActionNotifier.enable
 
       post = Fabricate(:post, raw: 'I love waffles')
 
@@ -89,7 +88,7 @@ describe PostAlerter do
   context 'likes' do
 
     it 'notifies on likes after an undo' do
-      ActiveRecord::Base.observers.enable :all
+      PostActionNotifier.enable
 
       post = Fabricate(:post, raw: 'I love waffles')
 
@@ -101,7 +100,7 @@ describe PostAlerter do
     end
 
     it 'notifies on does not notify when never is selected' do
-      ActiveRecord::Base.observers.enable :all
+      PostActionNotifier.enable
 
       post = Fabricate(:post, raw: 'I love waffles')
 
@@ -110,12 +109,11 @@ describe PostAlerter do
 
       PostAction.act(evil_trout, post, PostActionType.types[:like])
 
-
       expect(Notification.where(post_number: 1, topic_id: post.topic_id).count).to eq(0)
     end
 
     it 'notifies on likes correctly' do
-      ActiveRecord::Base.observers.enable :all
+      PostActionNotifier.enable
 
       post = Fabricate(:post, raw: 'I love waffles')
 
@@ -330,6 +328,24 @@ describe PostAlerter do
     let(:mention_post) { create_post_with_alerts(user: user, raw: 'Hello @eviltrout :heart:')}
     let(:topic) { mention_post.topic }
 
+    it "pushes nothing to suspended users" do
+      SiteSetting.queue_jobs = true
+      SiteSetting.allowed_user_api_push_urls = "https://site.com/push|https://site2.com/push"
+
+      evil_trout.update_columns(suspended_till: 1.year.from_now)
+
+      2.times do |i|
+        UserApiKey.create!(user_id: evil_trout.id,
+                           client_id: "xxx#{i}",
+                           key: "yyy#{i}",
+                           application_name: "iPhone#{i}",
+                           scopes: ['notifications'],
+                           push_url: "https://site2.com/push")
+      end
+
+      expect { mention_post }.to_not change { Jobs::PushNotification.jobs.count }
+    end
+
     it "correctly pushes notifications if configured correctly" do
       SiteSetting.allowed_user_api_push_urls = "https://site.com/push|https://site2.com/push"
 
@@ -345,13 +361,10 @@ describe PostAlerter do
       body = nil
       headers = nil
 
-      # should only happen once even though we are using 2 keys
-      RestClient.expects(:post).with{|_req,_body,_headers|
-        headers = _headers
-        body = _body
+      Excon.expects(:post).with{|_req, _body|
+        headers = _body[:headers]
+        body = _body[:body]
       }.returns("OK")
-
-      mention_post
 
       payload = {
         "secret_key" => SiteSetting.push_api_secret_key,
@@ -382,8 +395,10 @@ describe PostAlerter do
         ]
       }
 
+      mention_post
+
       expect(JSON.parse(body)).to eq(payload)
-      expect(headers[:content_type]).to eq(:json)
+      expect(headers["Content-Type"]).to eq('application/json')
     end
   end
 

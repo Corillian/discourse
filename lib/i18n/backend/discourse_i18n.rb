@@ -7,9 +7,6 @@ module I18n
       include I18n::Backend::Pluralization
 
       def available_locales
-        # in case you are wondering this is:
-        # Dir.glob( File.join(Rails.root, 'config', 'locales', 'client.*.yml') )
-        #    .map {|x| x.split('.')[-2]}.sort
         LocaleSiteSetting.supported_locales.map(&:to_sym)
       end
 
@@ -53,6 +50,7 @@ module I18n
       end
 
       protected
+
         def find_results(regexp, results, translations, path=nil)
           return results if translations.blank?
 
@@ -74,8 +72,9 @@ module I18n
         # the original translations before applying our overrides.
         def lookup(locale, key, scope = [], options = {})
           existing_translations = super(locale, key, scope, options)
+          overrides = options.dig(:overrides, locale)
 
-          if options[:overrides] && existing_translations
+          if overrides && existing_translations
             if options[:count]
 
               remapped_translations =
@@ -87,13 +86,13 @@ module I18n
 
               result = {}
 
-              remapped_translations.merge(options[:overrides]).each do |k, v|
+              remapped_translations.merge(overrides).each do |k, v|
                 result[k.split('.').last.to_sym] = v if k != key && k.start_with?(key.to_s)
               end
               return result if result.size > 0
             end
 
-            return options[:overrides][key] if options[:overrides][key]
+            return overrides[key] if overrides[key]
           end
 
           existing_translations

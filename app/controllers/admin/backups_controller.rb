@@ -1,4 +1,5 @@
 require "backup_restore/backup_restore"
+require "email_backup_token"
 
 class Admin::BackupsController < Admin::AdminController
 
@@ -32,7 +33,7 @@ class Admin::BackupsController < Admin::AdminController
   rescue BackupRestore::OperationRunningError
     render json: failed_json.merge(message: I18n.t("backup.operation_already_running"))
   else
-    StaffActionLogger.new(current_user).log_backup_operation
+    StaffActionLogger.new(current_user).log_backup_create
     render json: success_json
   end
 
@@ -44,20 +45,39 @@ class Admin::BackupsController < Admin::AdminController
     render json: success_json
   end
 
-  # download
-  def show
-    filename = params.fetch(:id)
-    if backup = Backup[filename]
-      headers['Content-Length'] = File.size(backup.path)
-      send_file backup.path
+  def email
+    if backup = Backup[params.fetch(:id)]
+      token = EmailBackupToken.set(current_user.id)
+      download_url = "#{url_for(controller: 'backups', action: 'show')}?token=#{token}"
+      Jobs.enqueue(:download_backup_email, to_address: current_user.email, backup_file_path: download_url)
+      render nothing: true
     else
       render nothing: true, status: 404
     end
   end
 
+  def show
+
+    if !EmailBackupToken.compare(current_user.id, params.fetch(:token))
+      @error = I18n.t('download_backup_mailer.no_token')
+    end
+    if !@error && backup = Backup[params.fetch(:id)]
+      EmailBackupToken.del(current_user.id)
+      StaffActionLogger.new(current_user).log_backup_download(backup)
+      headers['Content-Length'] = File.size(backup.path).to_s
+      send_file backup.path
+    else
+      if @error
+        render layout: 'no_ember', status: 422
+      else
+        render nothing: true, status: 404
+      end
+    end
+  end
+
   def destroy
-    backup = Backup[params.fetch(:id)]
-    if backup
+    if backup = Backup[params.fetch(:id)]
+      StaffActionLogger.new(current_user).log_backup_destroy(backup)
       backup.remove
       render nothing: true
     else
@@ -95,7 +115,16 @@ class Admin::BackupsController < Admin::AdminController
 
   def readonly
     enable = params.fetch(:enable).to_s == "true"
-    enable ? Discourse.enable_readonly_mode(user_enabled: true) : Discourse.disable_readonly_mode(user_enabled: true)
+    readonly_mode_key = Discourse::USER_READONLY_MODE_KEY
+
+    if enable
+      Discourse.enable_readonly_mode(readonly_mode_key)
+    else
+      Discourse.disable_readonly_mode(readonly_mode_key)
+    end
+
+    StaffActionLogger.new(current_user).log_change_readonly_mode(enable)
+
     render nothing: true
   end
 

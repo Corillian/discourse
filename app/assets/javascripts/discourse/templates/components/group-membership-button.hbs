@@ -1,0 +1,37 @@
+{{#if canJoinGroup}}
+  {{#if userIsGroupUser}}
+    {{d-button action="leaveGroup"
+        class="btn-danger group-index-leave"
+        icon="minus"
+        label="groups.leave"
+        disabled=updatingMembership}}
+  {{else}}
+    {{d-button action="joinGroup"
+        class="group-index-join"
+        icon="plus"
+        label="groups.join"
+        disabled=updatingMembership}}
+  {{/if}}
+{{else if model.allow_membership_requests}}
+  {{#if userIsGroupUser}}
+    {{#if showMembershipStatus}}
+      {{d-button
+          class="btn-primary"
+          icon="user"
+          label="groups.is_group_user"
+          disabled=true}}
+    {{/if}}
+  {{else}}
+    {{d-button action="requestMembership"
+        class="group-index-request"
+        disabled=loading
+        icon="envelope"
+        label="groups.request"}}
+
+    {{#if loading}}
+      {{loading-spinner size="small"}}
+    {{/if}}
+  {{/if}}
+{{else}}
+  {{yield}}
+{{/if}}

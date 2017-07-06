@@ -10,16 +10,16 @@ export default createWidget('link', {
   href(attrs) {
     const route = attrs.route;
     if (route) {
-      const router = this.container.lookup('router:main');
-      if (router && router.router) {
+      const router = this.register.lookup('router:main');
+      if (router && router._routerMicrolib) {
         const params = [route];
         if (attrs.model) {
           params.push(attrs.model);
         }
-        return Discourse.getURL(router.router.generate.apply(router.router, params));
+        return Discourse.getURL(router._routerMicrolib.generate.apply(router._routerMicrolib, params));
       }
     } else {
-      return attrs.href;
+      return Discourse.getURL(attrs.href);
     }
   },
 
@@ -79,7 +79,7 @@ export default createWidget('link', {
       e.preventDefault();
       return this.sendWidgetAction(this.attrs.action, this.attrs.actionParam);
     } else {
-      this.sendWidgetEvent('linkClicked');
+      this.sendWidgetEvent('linkClicked', this.attrs);
     }
 
     return DiscourseURL.routeToTag($(e.target).closest('a')[0]);

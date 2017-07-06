@@ -13,10 +13,10 @@ describe UsersController do
         expect(response).to be_success
       end
 
-      it "raises an error for anon when profiles are hidden" do
-        SiteSetting.stubs(:hide_user_profiles_from_public).returns(true)
+      it "should redirect to login page for anonymous user when profiles are hidden" do
+        SiteSetting.hide_user_profiles_from_public = true
         xhr :get, :show, username: user.username, format: :json
-        expect(response).not_to be_success
+        expect(response).to redirect_to '/login'
       end
 
     end
@@ -100,7 +100,7 @@ describe UsersController do
     it "redirects to their profile when logged in" do
       user = log_in
       get :user_preferences_redirect
-      expect(response).to redirect_to("/users/#{user.username_lower}/preferences")
+      expect(response).to redirect_to("/u/#{user.username_lower}/preferences")
     end
   end
 
@@ -152,24 +152,23 @@ describe UsersController do
         before do
           Guardian.any_instance.expects(:can_access_forum?).returns(true)
           EmailToken.expects(:confirm).with('asdfasdf').returns(user)
-          put :perform_account_activation, token: 'asdfasdf'
         end
 
-        it 'returns success' do
+        it 'correctly logs on user' do
+          events = DiscourseEvent.track_events do
+            put :perform_account_activation, token: 'asdfasdf'
+          end
+
+          expect(events.map { |event| event[:event_name] }).to include(
+            :user_logged_in, :user_first_logged_in
+          )
+
           expect(response).to be_success
-        end
-
-        it "doesn't set an error" do
           expect(flash[:error]).to be_blank
-        end
-
-        it 'logs in as the user' do
           expect(session[:current_user_id]).to be_present
-        end
-
-        it "doesn't set @needs_approval" do
           expect(assigns[:needs_approval]).to be_blank
         end
+
       end
 
       context 'user is not approved' do
@@ -199,6 +198,27 @@ describe UsersController do
     end
   end
 
+  describe '#perform_account_activation' do
+    describe 'when cookies contains a destination URL' do
+      let(:token) { 'asdadwewq' }
+      let(:user) { Fabricate(:user) }
+
+      before do
+        UsersController.any_instance.stubs(:honeypot_or_challenge_fails?).returns(false)
+        EmailToken.expects(:confirm).with(token).returns(user)
+      end
+
+      it 'should redirect to the URL' do
+        destination_url = 'http://thisisasite.com/somepath'
+        request.cookies[:destination_url] = destination_url
+
+        put :perform_account_activation, token: token
+
+        expect(response).to redirect_to(destination_url)
+      end
+    end
+  end
+
   describe '.password_reset' do
     let(:user) { Fabricate(:user) }
 
@@ -218,8 +238,8 @@ describe UsersController do
       it 'disallows login' do
         expect(assigns[:error]).to be_present
         expect(session[:current_user_id]).to be_blank
-        expect(assigns[:invalid_token]).to eq(nil)
         expect(response).to be_success
+        expect(response).to render_template(layout: 'no_ember')
       end
     end
 
@@ -231,45 +251,93 @@ describe UsersController do
       it 'disallows login' do
         expect(assigns[:error]).to be_present
         expect(session[:current_user_id]).to be_blank
-        expect(assigns[:invalid_token]).to eq(true)
         expect(response).to be_success
+        expect(response).to render_template(layout: 'no_ember')
       end
     end
 
     context 'valid token' do
+      context 'when rendered' do
+        render_views
+
+        it 'renders referrer never on get requests' do
+          user = Fabricate(:user)
+          token = user.email_tokens.create(email: user.email).token
+          get :password_reset, token: token
+
+          expect(response.body).to include('<meta name="referrer" content="never">')
+        end
+      end
+
       it 'returns success' do
-        user = Fabricate(:user, auth_token: SecureRandom.hex(16))
+        user = Fabricate(:user)
+        user_auth_token = UserAuthToken.generate!(user_id: user.id)
         token = user.email_tokens.create(email: user.email).token
-
-        old_token = user.auth_token
-
         get :password_reset, token: token
-        put :password_reset, token: token, password: 'hg9ow8yhg98o'
+
+        events = DiscourseEvent.track_events do
+          put :password_reset, token: token, password: 'hg9ow8yhg98o'
+        end
+
+        expect(events.map { |event| event[:event_name] }).to include(
+          :user_logged_in, :user_first_logged_in
+        )
+
         expect(response).to be_success
         expect(assigns[:error]).to be_blank
 
         user.reload
-        expect(user.auth_token).to_not eq old_token
-        expect(user.auth_token.length).to eq 32
+
         expect(session["password-#{token}"]).to be_blank
+        expect(UserAuthToken.where(id: user_auth_token.id).count).to eq(0)
+      end
+
+      it 'disallows double password reset' do
+        user = Fabricate(:user)
+        token = user.email_tokens.create(email: user.email).token
+
+        get :password_reset, token: token
+        put :password_reset, token: token, password: 'hg9ow8yHG32O'
+        put :password_reset, token: token, password: 'test123987AsdfXYZ'
+
+        user.reload
+        expect(user.confirm_password?('hg9ow8yHG32O')).to eq(true)
+
+        # logged in now
+        expect(user.user_auth_tokens.count).to eq(1)
+      end
+
+      it "doesn't redirect to wizard on get" do
+        user = Fabricate(:admin)
+        UserAuthToken.generate!(user_id: user.id)
+
+        token = user.email_tokens.create(email: user.email).token
+        get :password_reset, token: token
+        expect(response).not_to redirect_to(wizard_path)
       end
 
       it "redirects to the wizard if you're the first admin" do
-        user = Fabricate(:admin, auth_token: SecureRandom.hex(16), auth_token_updated_at: Time.now)
+        user = Fabricate(:admin)
+        UserAuthToken.generate!(user_id: user.id)
+
         token = user.email_tokens.create(email: user.email).token
         get :password_reset, token: token
         put :password_reset, token: token, password: 'hg9ow8yhg98oadminlonger'
-        expect(response).to be_redirect
+        expect(response).to redirect_to(wizard_path)
       end
 
       it "doesn't invalidate the token when loading the page" do
-        user = Fabricate(:user, auth_token: SecureRandom.hex(16))
+        user = Fabricate(:user)
+        user_token = UserAuthToken.generate!(user_id: user.id)
+
         email_token = user.email_tokens.create(email: user.email)
 
         get :password_reset, token: email_token.token
 
         email_token.reload
+
         expect(email_token.confirmed).to eq(false)
+        expect(UserAuthToken.where(id: user_token.id).count).to eq(1)
       end
     end
 
@@ -298,7 +366,7 @@ describe UsersController do
       end
 
       it "doesn't log in the user when not approved" do
-        SiteSetting.expects(:must_approve_users?).returns(true)
+        SiteSetting.must_approve_users = true
         put :password_reset, token: token, password: 'ksjafh928r'
         expect(assigns(:user).errors).to be_blank
         expect(session[:current_user_id]).to be_blank
@@ -342,22 +410,24 @@ describe UsersController do
         expect(session[:current_user_id]).to be_blank
       end
 
-      it 'does log in admin with valid token and SSO disabled' do
-        SiteSetting.enable_sso = false
-        token = admin.email_tokens.create(email: admin.email).token
+      context 'valid token' do
+        it 'does log in admin with SSO disabled' do
+          SiteSetting.enable_sso = false
+          token = admin.email_tokens.create(email: admin.email).token
 
-        get :admin_login, token: token
-        expect(response).to redirect_to('/')
-        expect(session[:current_user_id]).to eq(admin.id)
-      end
+          get :admin_login, token: token
+          expect(response).to redirect_to('/')
+          expect(session[:current_user_id]).to eq(admin.id)
+        end
 
-      it 'logs in admin with valid token and SSO enabled' do
-        SiteSetting.enable_sso = true
-        token = admin.email_tokens.create(email: admin.email).token
+        it 'logs in admin with SSO enabled' do
+          SiteSetting.enable_sso = true
+          token = admin.email_tokens.create(email: admin.email).token
 
-        get :admin_login, token: token
-        expect(response).to redirect_to('/')
-        expect(session[:current_user_id]).to eq(admin.id)
+          get :admin_login, token: token
+          expect(response).to redirect_to('/')
+          expect(session[:current_user_id]).to eq(admin.id)
+        end
       end
     end
   end
@@ -386,7 +456,7 @@ describe UsersController do
     before do
       UsersController.any_instance.stubs(:honeypot_value).returns(nil)
       UsersController.any_instance.stubs(:challenge_value).returns(nil)
-      SiteSetting.stubs(:allow_new_registrations).returns(true)
+      SiteSetting.allow_new_registrations = true
       @user = Fabricate.build(:user)
       @user.password = "strongpassword"
     end
@@ -402,9 +472,20 @@ describe UsersController do
       xhr :post, :create, post_user_params
     end
 
+    context 'when email params is missing' do
+      it 'should raise the right error' do
+        expect do
+          xhr :post, :create,
+            name: @user.name,
+            username: @user.username,
+            passsword: 'tesing12352343'
+        end.to raise_error(ActionController::ParameterMissing)
+      end
+    end
+
     context 'when creating a user' do
       it 'sets the user locale to I18n.locale' do
-        SiteSetting.stubs(:default_locale).returns('en')
+        SiteSetting.default_locale = 'en'
         I18n.stubs(:locale).returns(:fr)
         post_user
         expect(User.find_by(username: @user.username).locale).to eq('fr')
@@ -414,14 +495,14 @@ describe UsersController do
     context 'when creating a non active user (unconfirmed email)' do
 
       it 'returns a 500 when local logins are disabled' do
-        SiteSetting.expects(:enable_local_logins).returns(false)
+        SiteSetting.enable_local_logins = false
         post_user
 
         expect(response.status).to eq(500)
       end
 
       it 'returns an error when new registrations are disabled' do
-        SiteSetting.stubs(:allow_new_registrations).returns(false)
+        SiteSetting.allow_new_registrations = false
         post_user
         json = JSON.parse(response.body)
         expect(json['success']).to eq(false)
@@ -438,10 +519,11 @@ describe UsersController do
 
         # should save user_created_message in session
         expect(session["user_created_message"]).to be_present
+        expect(session[SessionController::ACTIVATE_USER_KEY]).to be_present
       end
 
       context "and 'must approve users' site setting is enabled" do
-        before { SiteSetting.expects(:must_approve_users).returns(true) }
+        before { SiteSetting.must_approve_users = true }
 
         it 'does not enqueue an email' do
           Jobs.expects(:enqueue).never
@@ -547,6 +629,7 @@ describe UsersController do
 
         # should save user_created_message in session
         expect(session["user_created_message"]).to be_present
+        expect(session[SessionController::ACTIVATE_USER_KEY]).to be_present
       end
 
       it "shows the 'active' message" do
@@ -570,8 +653,10 @@ describe UsersController do
       end
 
       it 'returns 500 status when new registrations are disabled' do
-        SiteSetting.stubs(:allow_new_registrations).returns(false)
+        SiteSetting.allow_new_registrations = false
+
         post_user
+
         json = JSON.parse(response.body)
         expect(json['success']).to eq(false)
         expect(json['message']).to be_present
@@ -579,19 +664,17 @@ describe UsersController do
 
       context 'authentication records for' do
 
-        before do
-          SiteSetting.expects(:must_approve_users).returns(true)
-        end
-
         it 'should create twitter user info if required' do
-          SiteSetting.stubs(:enable_twitter_logins?).returns(true)
+          SiteSetting.must_approve_users = true
+          SiteSetting.enable_twitter_logins = true
           twitter_auth = { twitter_user_id: 42, twitter_screen_name: "bruce" }
           auth = session[:authentication] = {}
           auth[:authenticator_name] = 'twitter'
           auth[:extra_data] = twitter_auth
-          TwitterUserInfo.expects(:create)
 
           post_user
+
+          expect(TwitterUserInfo.count).to eq(1)
         end
       end
     end
@@ -632,6 +715,7 @@ describe UsersController do
 
         # should not change the session
         expect(session["user_created_message"]).to be_blank
+        expect(session[SessionController::ACTIVATE_USER_KEY]).to be_blank
       end
     end
 
@@ -652,7 +736,7 @@ describe UsersController do
     end
 
     context "when 'invite only' setting is enabled" do
-      before { SiteSetting.expects(:invite_only?).returns(true) }
+      before { SiteSetting.invite_only = true }
 
       let(:create_params) {{
         name: @user.name,
@@ -676,6 +760,7 @@ describe UsersController do
 
         # should not change the session
         expect(session["user_created_message"]).to be_blank
+        expect(session[SessionController::ACTIVATE_USER_KEY]).to be_blank
       end
     end
 
@@ -702,17 +787,14 @@ describe UsersController do
     end
 
     context 'when an Exception is raised' do
-      [ ActiveRecord::StatementInvalid,
-        RestClient::Forbidden ].each do |exception|
-        before { User.any_instance.stubs(:save).raises(exception) }
+      before { User.any_instance.stubs(:save).raises(ActiveRecord::StatementInvalid.new('Oh no')) }
 
-        let(:create_params) {
-          { name: @user.name, username: @user.username,
-            password: "strongpassword", email: @user.email}
-        }
+      let(:create_params) {
+        { name: @user.name, username: @user.username,
+          password: "strongpassword", email: @user.email}
+      }
 
-        include_examples 'failed signup'
-      end
+      include_examples 'failed signup'
     end
 
     context "with custom fields" do
@@ -728,7 +810,7 @@ describe UsersController do
       context "with values for the fields" do
         let(:create_params) { {
           name: @user.name,
-          password: 'watwatwatwat',
+          password: 'suChS3cuRi7y',
           username: @user.username,
           email: @user.email,
           user_fields: {
@@ -778,7 +860,7 @@ describe UsersController do
       context "without values for the fields" do
         let(:create_params) { {
           name: @user.name,
-          password: 'watwatwatwat',
+          password: 'suChS3cuRi7y',
           username: @user.username,
           email: @user.email,
         } }
@@ -807,7 +889,7 @@ describe UsersController do
 
   end
 
-  context '.username' do
+  context '#username' do
     it 'raises an error when not logged in' do
       expect { xhr :put, :username, username: 'somename' }.to raise_error(Discourse::NotLoggedIn)
     end
@@ -834,10 +916,17 @@ describe UsersController do
         expect(user.reload.username).to eq(old_username)
       end
 
-      # Bad behavior, this should give a real JSON error, not an InvalidParameters
       it 'raises an error when change_username fails' do
-        User.any_instance.expects(:save).returns(false)
-        expect { xhr :put, :username, username: user.username, new_username: new_username }.to raise_error(Discourse::InvalidParameters)
+        xhr :put, :username, username: user.username, new_username: '@'
+
+        expect(response).to_not be_success
+
+        body = JSON.parse(response.body)
+
+        expect(body['errors'].first).to include(I18n.t(
+          'user.username.short', min: User.username_length.begin
+        ))
+
         expect(user.reload.username).to eq(old_username)
       end
 
@@ -1176,13 +1265,17 @@ describe UsersController do
           expect(user.custom_fields['test']).to eq 'it'
           expect(user.muted_users.pluck(:username).sort).to eq [user2.username,user3.username].sort
 
+          theme = Theme.create(name: "test", user_selectable: true, user_id: -1)
+
           put :update,
                 username: user.username,
-                muted_usernames: ""
+                muted_usernames: "",
+                theme_key: theme.key
 
           user.reload
 
           expect(user.muted_users.pluck(:username).sort).to be_empty
+          expect(user.user_option.theme_key).to eq(theme.key)
 
         end
 
@@ -1306,7 +1399,7 @@ describe UsersController do
     let(:user)  { Fabricate :user, username: "joecabot", name: "Lawrence Tierney" }
 
     before do
-      ActiveRecord::Base.observers.enable :all
+      SearchIndexer.enable
       Fabricate :post, user: user, topic: topic
     end
 
@@ -1364,7 +1457,7 @@ describe UsersController do
 
     context "when `enable_names` is false" do
       before do
-        SiteSetting.stubs(:enable_names?).returns(false)
+        SiteSetting.enable_names = false
       end
 
       it "returns names" do
@@ -1380,10 +1473,74 @@ describe UsersController do
     context 'for an existing user' do
       let(:user) { Fabricate(:user, active: false) }
 
+      context 'for an activated account with email confirmed' do
+        it 'fails' do
+          active_user = Fabricate(:user, active: true)
+          email_token = active_user.email_tokens.create(email: active_user.email).token
+          EmailToken.confirm(email_token)
+          session[SessionController::ACTIVATE_USER_KEY] = active_user.id
+          xhr :post, :send_activation_email, username: active_user.username
+
+          expect(response.status).to eq(409)
+
+          expect(JSON.parse(response.body)['errors']).to include(I18n.t(
+            'activation.activated'
+          ))
+
+          expect(session[SessionController::ACTIVATE_USER_KEY]).to eq(nil)
+        end
+      end
+
+      context 'for an activated account with unconfirmed email' do
+        it 'should send an email' do
+          unconfirmed_email_user = Fabricate(:user, active: true)
+          unconfirmed_email_user.email_tokens.create(email: unconfirmed_email_user.email)
+          session[SessionController::ACTIVATE_USER_KEY] = unconfirmed_email_user.id
+          Jobs.expects(:enqueue).with(:critical_user_email, has_entries(type: :signup))
+          xhr :post, :send_activation_email, username: unconfirmed_email_user.username
+
+          expect(response.status).to eq(200)
+
+          expect(session[SessionController::ACTIVATE_USER_KEY]).to eq(nil)
+        end
+      end
+
+      context "approval is enabled" do
+        before do
+          SiteSetting.must_approve_users = true
+        end
+
+        it "should raise an error" do
+          unconfirmed_email_user = Fabricate(:user, active: true)
+          unconfirmed_email_user.email_tokens.create(email: unconfirmed_email_user.email)
+          session[SessionController::ACTIVATE_USER_KEY] = unconfirmed_email_user.id
+          xhr :post, :send_activation_email, username: unconfirmed_email_user.username
+          expect(response.status).to eq(403)
+        end
+      end
+
+      describe 'when user does not have a valid session' do
+        it 'should not be valid' do
+          user = Fabricate(:user)
+          xhr :post, :send_activation_email, username: user.username
+          expect(response.status).to eq(403)
+        end
+
+        it 'should allow staff regardless' do
+          log_in :admin
+          user = Fabricate(:user, active: false)
+          xhr :post, :send_activation_email, username: user.username
+          expect(response.status).to eq(200)
+        end
+      end
+
       context 'with a valid email_token' do
         it 'should send the activation email' do
+          session[SessionController::ACTIVATE_USER_KEY] = user.id
           Jobs.expects(:enqueue).with(:critical_user_email, has_entries(type: :signup))
           xhr :post, :send_activation_email, username: user.username
+
+          expect(session[SessionController::ACTIVATE_USER_KEY]).to eq(nil)
         end
       end
 
@@ -1395,13 +1552,17 @@ describe UsersController do
 
         it 'should generate a new token' do
           expect {
+            session[SessionController::ACTIVATE_USER_KEY] = user.id
             xhr :post, :send_activation_email, username: user.username
           }.to change{ user.email_tokens(true).count }.by(1)
         end
 
         it 'should send an email' do
+          session[SessionController::ACTIVATE_USER_KEY] = user.id
           Jobs.expects(:enqueue).with(:critical_user_email, has_entries(type: :signup))
           xhr :post, :send_activation_email, username: user.username
+
+          expect(session[SessionController::ACTIVATE_USER_KEY]).to eq(nil)
         end
       end
     end
@@ -1434,13 +1595,13 @@ describe UsersController do
       end
 
       it "raises an error when sso_overrides_avatar is disabled" do
-        SiteSetting.stubs(:sso_overrides_avatar).returns(true)
+        SiteSetting.sso_overrides_avatar = true
         xhr :put, :pick_avatar, username: user.username, upload_id: upload.id, type: "custom"
         expect(response).to_not be_success
       end
 
       it "raises an error when selecting the custom/uploaded avatar and allow_uploaded_avatars is disabled" do
-        SiteSetting.stubs(:allow_uploaded_avatars).returns(false)
+        SiteSetting.allow_uploaded_avatars = false
         xhr :put, :pick_avatar, username: user.username, upload_id: upload.id, type: "custom"
         expect(response).to_not be_success
       end
@@ -1602,6 +1763,9 @@ describe UsersController do
 
     let(:user) { Fabricate(:user) }
     let(:group) { Fabricate(:group, name: "Discourse") }
+    let(:topic) { Fabricate(:topic) }
+    let(:allowed_user) { Fabricate(:user) }
+    let(:private_topic) { Fabricate(:private_message_topic, user: allowed_user) }
 
     it "finds the user" do
       xhr :get, :is_local_username, username: user.username
@@ -1630,6 +1794,38 @@ describe UsersController do
       expect(response).to be_success
       json = JSON.parse(response.body)
       expect(json["valid"].size).to eq(0)
+    end
+
+    it "returns user who cannot see topic" do
+      Guardian.any_instance.expects(:can_see?).with(topic).returns(false)
+      xhr :get, :is_local_username, usernames: [user.username], topic_id: topic.id
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json["cannot_see"].size).to eq(1)
+    end
+
+    it "never returns a user who can see the topic" do
+      Guardian.any_instance.expects(:can_see?).with(topic).returns(true)
+      xhr :get, :is_local_username, usernames: [user.username], topic_id: topic.id
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json["cannot_see"].size).to eq(0)
+    end
+
+    it "returns user who cannot see a private topic" do
+      Guardian.any_instance.expects(:can_see?).with(private_topic).returns(false)
+      xhr :get, :is_local_username, usernames: [user.username], topic_id: private_topic.id
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json["cannot_see"].size).to eq(1)
+    end
+
+    it "never returns a user who can see the topic" do
+      Guardian.any_instance.expects(:can_see?).with(private_topic).returns(true)
+      xhr :get, :is_local_username, usernames: [allowed_user.username], topic_id: private_topic.id
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json["cannot_see"].size).to eq(0)
     end
 
   end
@@ -1672,6 +1868,241 @@ describe UsersController do
       expect(json["user_summary"]["topic_count"]).to eq(1)
       expect(json["user_summary"]["post_count"]).to eq(1)
     end
+  end
+
+
+  describe ".confirm_admin" do
+    it "fails without a valid token" do
+      expect {
+        get :confirm_admin, token: 'invalid-token'
+      }.to raise_error(ActionController::UrlGenerationError)
+    end
+
+    it "fails with a missing token" do
+      get :confirm_admin, token: 'a0a0a0a0a0'
+      expect(response).to_not be_success
+    end
+
+    it "succeeds with a valid code as anonymous" do
+      user = Fabricate(:user)
+      ac = AdminConfirmation.new(user, Fabricate(:admin))
+      ac.create_confirmation
+      get :confirm_admin, token: ac.token
+      expect(response).to be_success
+
+      user.reload
+      expect(user.admin?).to eq(false)
+    end
+
+    it "succeeds with a valid code when logged in as that user" do
+      admin = log_in(:admin)
+      user = Fabricate(:user)
+
+      ac = AdminConfirmation.new(user, admin)
+      ac.create_confirmation
+      get :confirm_admin, token: ac.token
+      expect(response).to be_success
+
+      user.reload
+      expect(user.admin?).to eq(false)
+    end
+
+    it "fails if you're logged in as a different account" do
+      log_in(:admin)
+      user = Fabricate(:user)
+
+      ac = AdminConfirmation.new(user, Fabricate(:admin))
+      ac.create_confirmation
+      get :confirm_admin, token: ac.token
+      expect(response).to_not be_success
+
+      user.reload
+      expect(user.admin?).to eq(false)
+    end
+
+    describe "post" do
+      it "gives the user admin access when POSTed" do
+        user = Fabricate(:user)
+        ac = AdminConfirmation.new(user, Fabricate(:admin))
+        ac.create_confirmation
+        post :confirm_admin, token: ac.token
+        expect(response).to be_success
+
+        user.reload
+        expect(user.admin?).to eq(true)
+      end
+    end
+
+  end
+
+
+  describe '.update_activation_email' do
+
+    context "with a session variable" do
+
+      it "raises an error with an invalid session value" do
+        session[SessionController::ACTIVATE_USER_KEY] = 1234
+        xhr :put, :update_activation_email, { email: 'updatedemail@example.com' }
+        expect(response).to_not be_success
+      end
+
+      it "raises an error for an active user" do
+        user = Fabricate(:walter_white)
+        session[SessionController::ACTIVATE_USER_KEY] = user.id
+        xhr :put, :update_activation_email, { email: 'updatedemail@example.com' }
+        expect(response).to_not be_success
+      end
+
+      it "raises an error when logged in" do
+        moderator = log_in(:moderator)
+        session[SessionController::ACTIVATE_USER_KEY] = moderator.id
+        xhr :put, :update_activation_email, { email: 'updatedemail@example.com' }
+        expect(response).to_not be_success
+      end
+
+      it "raises an error when the new email is taken" do
+        active_user = Fabricate(:user)
+        user = Fabricate(:inactive_user)
+        session[SessionController::ACTIVATE_USER_KEY] = user.id
+        xhr :put, :update_activation_email, { email: active_user.email }
+        expect(response).to_not be_success
+      end
+
+      it "can be updated" do
+        user = Fabricate(:inactive_user)
+        token = user.email_tokens.first
+
+        session[SessionController::ACTIVATE_USER_KEY] = user.id
+        xhr :put, :update_activation_email, { email: 'updatedemail@example.com' }
+
+        expect(response).to be_success
+
+        user.reload
+        expect(user.email).to eq('updatedemail@example.com')
+        expect(user.email_tokens.where(email: 'updatedemail@example.com', expired: false)).to be_present
+
+        token.reload
+        expect(token.expired?).to eq(true)
+      end
+    end
+
+    context "with a username and password" do
+      it "raises an error with an invalid username" do
+        xhr :put, :update_activation_email, {
+          username: 'eviltrout',
+          password: 'invalid-password',
+          email: 'updatedemail@example.com'
+        }
+        expect(response).to_not be_success
+      end
+
+      it "raises an error with an invalid password" do
+        xhr :put, :update_activation_email, {
+          username: Fabricate(:inactive_user).username,
+          password: 'invalid-password',
+          email: 'updatedemail@example.com'
+        }
+        expect(response).to_not be_success
+      end
+
+      it "raises an error for an active user" do
+        xhr :put, :update_activation_email, {
+          username: Fabricate(:walter_white).username,
+          password: 'letscook',
+          email: 'updatedemail@example.com'
+        }
+        expect(response).to_not be_success
+      end
+
+      it "raises an error when logged in" do
+        log_in(:moderator)
+
+        xhr :put, :update_activation_email, {
+          username: Fabricate(:inactive_user).username,
+          password: 'qwerqwer123',
+          email: 'updatedemail@example.com'
+        }
+        expect(response).to_not be_success
+      end
+
+      it "raises an error when the new email is taken" do
+        user = Fabricate(:user)
+
+        xhr :put, :update_activation_email, {
+          username: Fabricate(:inactive_user).username,
+          password: 'qwerqwer123',
+          email: user.email
+        }
+        expect(response).to_not be_success
+      end
+
+      it "can be updated" do
+        user = Fabricate(:inactive_user)
+        token = user.email_tokens.first
+
+        xhr :put, :update_activation_email, {
+          username: user.username,
+          password: 'qwerqwer123',
+          email: 'updatedemail@example.com'
+        }
+
+        expect(response).to be_success
+
+        user.reload
+        expect(user.email).to eq('updatedemail@example.com')
+        expect(user.email_tokens.where(email: 'updatedemail@example.com', expired: false)).to be_present
+
+        token.reload
+        expect(token.expired?).to eq(true)
+      end
+    end
+
+  end
+
+  context "account_created" do
+
+    it "returns a message when no session is present" do
+      get :account_created
+      created = assigns(:account_created)
+      expect(created).to be_present
+      expect(created[:message]).to eq(I18n.t('activation.missing_session'))
+      expect(created[:email]).to be_blank
+      expect(created[:username]).to be_blank
+    end
+
+    it "redirects when the user is logged in" do
+      log_in(:user)
+      get :account_created
+      expect(response).to be_redirect
+    end
+
+    context "when the user account is created" do
+      before do
+        session['user_created_message'] = "Donuts"
+      end
+
+      it "returns the message when set in the session" do
+        get :account_created
+        created = assigns(:account_created)
+        expect(created).to be_present
+        expect(created[:message]).to eq('Donuts')
+        expect(created[:email]).to be_blank
+        expect(created[:username]).to be_blank
+      end
+
+      it "includes user information when the session variable is present " do
+        user = Fabricate(:user, active: false)
+        session[SessionController::ACTIVATE_USER_KEY] = user.id
+
+        get :account_created
+        created = assigns(:account_created)
+        expect(created).to be_present
+        expect(created[:message]).to eq('Donuts')
+        expect(created[:email]).to eq(user.email)
+        expect(created[:username]).to eq(user.username)
+      end
+    end
+
   end
 
 end

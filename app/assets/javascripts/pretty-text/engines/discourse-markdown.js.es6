@@ -358,7 +358,7 @@ class DialectHelper {
 
     Object.keys(require._eak_seen).forEach(entry => {
       if (entry.indexOf('discourse-markdown') !== -1) {
-        const module = require(entry);
+        const module = requirejs(entry);
         if (module && module.setup) {
           const featureName = entry.split('/').reverse()[0];
           helper.whiteList = info => whiteListFeature(featureName, info);
@@ -385,14 +385,25 @@ export function cook(raw, opts) {
   currentOpts = opts;
 
   hoisted = {};
-  raw = hoistCodeBlocksAndSpans(raw);
 
-  preProcessors.forEach(p => raw = p(raw));
+  if (!currentOpts.enableExperimentalMarkdownIt) {
+    raw = hoistCodeBlocksAndSpans(raw);
+    preProcessors.forEach(p => raw = p(raw));
+  }
 
-  const whiteLister = new WhiteLister(opts.features);
+  const whiteLister = new WhiteLister(opts);
 
-  const tree = parser.toHTMLTree(raw, 'Discourse');
-  let result = opts.sanitizer(parser.renderJsonML(parseTree(tree, opts)), whiteLister);
+  let result;
+
+  if (currentOpts.enableExperimentalMarkdownIt) {
+    result = opts.sanitizer(
+        requirejs('pretty-text/engines/markdown-it/instance').default(opts).render(raw),
+        whiteLister
+    );
+  } else {
+    const tree = parser.toHTMLTree(raw, 'Discourse');
+    result = opts.sanitizer(parser.renderJsonML(parseTree(tree, opts)), whiteLister);
+  }
 
   // If we hoisted out anything, put it back
   const keys = Object.keys(hoisted);
@@ -500,7 +511,7 @@ function invalidBoundary(args, prev) {
 
   if (args.wordBoundary && (!last.match(/\W$/))) { return true; }
   if (args.spaceBoundary && (!last.match(/\s$/))) { return true; }
-  if (args.spaceOrTagBoundary && (!last.match(/(\s|\>)$/))) { return true; }
+  if (args.spaceOrTagBoundary && (!last.match(/(\s|\>|\()$/))) { return true; }
 }
 
 function countLines(str) {

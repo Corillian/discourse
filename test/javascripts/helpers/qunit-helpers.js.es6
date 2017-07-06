@@ -1,9 +1,15 @@
-/* global asyncTest, fixtures */
+/* global QUnit, fixtures */
 
 import sessionFixtures from 'fixtures/session-fixtures';
 import siteFixtures from 'fixtures/site-fixtures';
 import HeaderComponent from 'discourse/components/site-header';
 import { forceMobile, resetMobile } from 'discourse/lib/mobile';
+import { resetPluginApi } from 'discourse/lib/plugin-api';
+import { clearCache as clearOutletCache, resetExtraClasses } from 'discourse/lib/plugin-connectors';
+import { clearHTMLCache } from 'discourse/helpers/custom-html';
+import { flushMap } from 'discourse/models/store';
+import { clearRewrites } from 'discourse/lib/url';
+
 
 function currentUser() {
   return Discourse.User.create(sessionFixtures['/session/current.json'].current_user);
@@ -34,17 +40,18 @@ window.bootbox.$body = $('#ember-testing');
 $.fn.modal = AcceptanceModal;
 
 function acceptance(name, options) {
-  module("Acceptance: " + name, {
-    setup() {
+  QUnit.module("Acceptance: " + name, {
+    beforeEach() {
       resetMobile();
 
       // For now don't do scrolling stuff in Test Mode
-      HeaderComponent.reopen({examineDockHeader: Ember.K});
+      HeaderComponent.reopen({examineDockHeader: function() { }});
 
+      resetExtraClasses();
       const siteJson = siteFixtures['site.json'].site;
       if (options) {
-        if (options.setup) {
-          options.setup.call(this);
+        if (options.beforeEach) {
+          options.beforeEach.call(this);
         }
 
         if (options.mobileView) {
@@ -64,16 +71,25 @@ function acceptance(name, options) {
         }
       }
 
+      clearOutletCache();
+      clearHTMLCache();
+      resetPluginApi();
       Discourse.reset();
     },
 
-    teardown() {
-      if (options && options.teardown) {
-        options.teardown.call(this);
+    afterEach() {
+      if (options && options.afterEach) {
+        options.afterEach.call(this);
       }
+      flushMap();
       Discourse.User.resetCurrent();
       Discourse.Site.resetCurrent(Discourse.Site.create(jQuery.extend(true, {}, fixtures['site.json'].site)));
 
+      resetExtraClasses();
+      clearOutletCache();
+      clearHTMLCache();
+      resetPluginApi();
+      clearRewrites();
       Discourse.reset();
     }
   });
@@ -86,10 +102,11 @@ function controllerFor(controller, model) {
 }
 
 function asyncTestDiscourse(text, func) {
-  asyncTest(text, function () {
-    var self = this;
-    Ember.run(function () {
-      func.call(self);
+  QUnit.test(text, function(assert) {
+    const done = assert.async();
+    Ember.run(() => {
+      func.call(this, assert);
+      done();
     });
   });
 }
@@ -101,20 +118,46 @@ function fixture(selector) {
   return $("#qunit-fixture");
 }
 
-function present(obj, text) {
-  ok(!Ember.isEmpty(obj), text);
-}
+QUnit.assert.not = function(actual, message) {
+  this.pushResult({
+    result: !actual,
+    actual,
+    expected: !actual,
+    message
+  });
+};
 
-function blank(obj, text) {
-  ok(Ember.isEmpty(obj), text);
-}
+QUnit.assert.blank = function(actual, message) {
+  this.pushResult({
+    result: Ember.isEmpty(actual),
+    actual,
+    message
+  });
+};
 
-function waitFor(callback, timeout) {
+QUnit.assert.present = function(actual, message) {
+  this.pushResult({
+    result: !Ember.isEmpty(actual),
+    actual,
+    message
+  });
+};
+
+QUnit.assert.containsInstance = function(collection, klass, message) {
+  const result = klass.detectInstance(_.first(collection));
+  this.pushResult({
+    result,
+    message
+  });
+};
+
+function waitFor(assert, callback, timeout) {
   timeout = timeout || 500;
-  stop();
+
+  const done = assert.async();
   Ember.run.later(() => {
     callback();
-    start();
+    done();
   }, timeout);
 }
 
@@ -124,6 +167,4 @@ export { acceptance,
          fixture,
          logIn,
          currentUser,
-         blank,
-         present,
          waitFor };

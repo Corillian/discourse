@@ -23,7 +23,7 @@ module SiteSettingExtension
   def types
     @types ||= Enum.new(string: 1,
                         time: 2,
-                        fixnum: 3,
+                        integer: 3,
                         float: 4,
                         bool: 5,
                         null: 6,
@@ -32,7 +32,8 @@ module SiteSettingExtension
                         url_list: 9,
                         host_list: 10,
                         category_list: 11,
-                        value_list: 12)
+                        value_list: 12,
+                        regex: 13)
   end
 
   def mutex
@@ -285,7 +286,7 @@ module SiteSettingExtension
       val = (val == "t" || val == "true") ? 't' : 'f'
     end
 
-    if type == types[:fixnum] && !val.is_a?(Fixnum)
+    if type == types[:integer] && !val.is_a?(Integer)
       val = val.to_i
     end
 
@@ -294,7 +295,7 @@ module SiteSettingExtension
     end
 
     if type == types[:enum]
-      val = val.to_i if defaults[name.to_sym].is_a?(Fixnum)
+      val = val.to_i if defaults[name.to_sym].is_a?(Integer)
       if enum_class(name)
         raise Discourse::InvalidParameters.new(:value) unless enum_class(name).valid_value?(val)
       else
@@ -339,21 +340,18 @@ module SiteSettingExtension
     valid = true
     type = get_data_type(name, defaults[name.to_sym])
 
-    if type == types[:fixnum]
-      # validate fixnum
-      valid = false unless value.to_i.is_a?(Fixnum)
+    if type == types[:integer]
+      # validate integer
+      valid = false unless value.to_i.is_a?(Integer)
     end
 
     valid
   end
 
   def filter_value(name, value)
-    # filter domain name
-    if %w[disabled_image_download_domains onebox_domains_whitelist exclude_rel_nofollow_domains email_domains_blacklist email_domains_whitelist white_listed_spam_host_domains].include? name
+    if %w[disabled_image_download_domains onebox_domains_blacklist exclude_rel_nofollow_domains email_domains_blacklist email_domains_whitelist white_listed_spam_host_domains].include? name
       domain_array = []
-      value.split('|').each { |url|
-        domain_array.push(get_hostname(url))
-      }
+      value.split('|').each { |url| domain_array << get_hostname(url) }
       value = domain_array.join("|")
     end
     value
@@ -409,8 +407,8 @@ module SiteSettingExtension
     case val
     when String
       types[:string]
-    when Fixnum
-      types[:fixnum]
+    when Integer
+      types[:integer]
     when Float
       types[:float]
     when TrueClass, FalseClass
@@ -424,14 +422,14 @@ module SiteSettingExtension
     case type
     when types[:float]
       value.to_f
-    when types[:fixnum]
+    when types[:integer]
       value.to_i
     when types[:bool]
       value == true || value == "t" || value == "true"
     when types[:null]
       nil
     when types[:enum]
-      defaults[name.to_sym].is_a?(Fixnum) ? value.to_i : value
+      defaults[name.to_sym].is_a?(Integer) ? value.to_i : value
     else
       return value if types[type]
       # Otherwise it's a type error
@@ -443,10 +441,11 @@ module SiteSettingExtension
     @validator_mapping ||= {
       'email'        => EmailSettingValidator,
       'username'     => UsernameSettingValidator,
-      types[:fixnum] => IntegerSettingValidator,
+      types[:integer] => IntegerSettingValidator,
       types[:string] => StringSettingValidator,
       'list' => StringSettingValidator,
-      'enum' => StringSettingValidator
+      'enum' => StringSettingValidator,
+      'regex' => RegexSettingValidator
     }
     @validator_mapping[type_name]
   end

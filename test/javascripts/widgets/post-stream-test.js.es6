@@ -6,8 +6,8 @@ moduleForWidget('post-stream');
 
 function postStreamTest(name, attrs) {
   widgetTest(name, {
-    template: `{{mount-widget widget="post-stream" args=(as-hash posts=posts)}}`,
-    setup() {
+    template: `{{mount-widget widget="post-stream" args=(hash posts=posts)}}`,
+    beforeEach() {
       this.set('posts', attrs.posts.call(this));
     },
     test: attrs.test

@@ -8,6 +8,7 @@ export default Ember.Controller.extend(ModalFunctionality, {
   saving: false,
   deleting: false,
   panels: null,
+  hiddenTooltip: true,
 
   _initPanels: function() {
     this.set('panels', []);
@@ -16,13 +17,14 @@ export default Ember.Controller.extend(ModalFunctionality, {
   onShow() {
     this.changeSize();
     this.titleChanged();
+    this.set('hiddenTooltip', true);
   },
 
   changeSize: function() {
     if (!Ember.isEmpty(this.get('model.description'))) {
-      this.set('controllers.modal.modalClass', 'edit-category-modal full');
+      this.set('modal.modalClass', 'edit-category-modal full');
     } else {
-      this.set('controllers.modal.modalClass', 'edit-category-modal small');
+      this.set('modal.modalClass', 'edit-category-modal small');
     }
   }.observes('model.description'),
 
@@ -34,7 +36,7 @@ export default Ember.Controller.extend(ModalFunctionality, {
   }.property('model.id', 'model.name'),
 
   titleChanged: function() {
-    this.set('controllers.modal.title', this.get('title'));
+    this.set('modal.title', this.get('title'));
   }.observes('title'),
 
   disabled: function() {
@@ -101,6 +103,10 @@ export default Ember.Controller.extend(ModalFunctionality, {
           self.set('deleting', false);
         }
       });
+    },
+
+    toggleDeleteTooltip() {
+      this.toggleProperty('hiddenTooltip');
     }
   }
 

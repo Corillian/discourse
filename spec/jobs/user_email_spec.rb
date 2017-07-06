@@ -35,6 +35,20 @@ describe Jobs::UserEmail do
     Jobs::UserEmail.new.execute(type: :digest, user_id: staged.id)
   end
 
+  context "bounce score" do
+
+    it "always sends critical emails when bounce score threshold has been reached" do
+      email_token = Fabricate(:email_token)
+      user.user_stat.update(bounce_score: SiteSetting.bounce_score_threshold + 1)
+
+      Jobs::CriticalUserEmail.new.execute(type: "signup", user_id: user.id, email_token: email_token.token)
+
+      email_log = EmailLog.where(user_id: user.id).last
+      expect(email_log.email_type).to eq("signup")
+      expect(email_log.skipped).to eq(false)
+    end
+
+  end
 
   context 'to_address' do
     it 'overwrites a to_address when present' do
@@ -110,21 +124,21 @@ describe Jobs::UserEmail do
       let(:post) { Fabricate(:post, user: user) }
 
       it 'passes a post as an argument when a post_id is present' do
-        UserNotifications.expects(:private_message).with(user, {post: post}).returns(mailer)
+        UserNotifications.expects(:user_private_message).with(user, {post: post}).returns(mailer)
         Email::Sender.any_instance.expects(:send)
-        Jobs::UserEmail.new.execute(type: :private_message, user_id: user.id, post_id: post.id)
+        Jobs::UserEmail.new.execute(type: :user_private_message, user_id: user.id, post_id: post.id)
       end
 
       it "doesn't send the email if you've seen the post" do
         Email::Sender.any_instance.expects(:send).never
         PostTiming.record_timing(topic_id: post.topic_id, user_id: user.id, post_number: post.post_number, msecs: 6666)
-        Jobs::UserEmail.new.execute(type: :private_message, user_id: user.id, post_id: post.id)
+        Jobs::UserEmail.new.execute(type: :user_private_message, user_id: user.id, post_id: post.id)
       end
 
       it "doesn't send the email if the user deleted the post" do
         Email::Sender.any_instance.expects(:send).never
         post.update_column(:user_deleted, true)
-        Jobs::UserEmail.new.execute(type: :private_message, user_id: user.id, post_id: post.id)
+        Jobs::UserEmail.new.execute(type: :user_private_message, user_id: user.id, post_id: post.id)
       end
 
       it "doesn't send the email if user of the post has been deleted" do
@@ -136,14 +150,14 @@ describe Jobs::UserEmail do
       context 'user is suspended' do
         it "doesn't send email for a pm from a regular user" do
           Email::Sender.any_instance.expects(:send).never
-          Jobs::UserEmail.new.execute(type: :private_message, user_id: suspended.id, post_id: post.id)
+          Jobs::UserEmail.new.execute(type: :user_private_message, user_id: suspended.id, post_id: post.id)
         end
 
-        it "doesn't send email for a pm from a staff user" do
+        it "does send an email for a pm from a staff user" do
           pm_from_staff = Fabricate(:post, user: Fabricate(:moderator))
           pm_from_staff.topic.topic_allowed_users.create!(user_id: suspended.id)
-          Email::Sender.any_instance.expects(:send).never
-          Jobs::UserEmail.new.execute(type: :private_message, user_id: suspended.id, post_id: pm_from_staff.id)
+          Email::Sender.any_instance.expects(:send)
+          Jobs::UserEmail.new.execute(type: :user_private_message, user_id: suspended.id, post_id: pm_from_staff.id)
         end
       end
 
@@ -152,14 +166,14 @@ describe Jobs::UserEmail do
 
         it "doesn't send email for a pm from a regular user" do
           Email::Sender.any_instance.expects(:send).never
-          Jobs::UserEmail.new.execute(type: :private_message, user_id: anonymous.id, post_id: post.id)
+          Jobs::UserEmail.new.execute(type: :user_private_message, user_id: anonymous.id, post_id: post.id)
         end
 
         it "doesn't send email for a pm from a staff user" do
           pm_from_staff = Fabricate(:post, user: Fabricate(:moderator))
           pm_from_staff.topic.topic_allowed_users.create!(user_id: anonymous.id)
           Email::Sender.any_instance.expects(:send).never
-          Jobs::UserEmail.new.execute(type: :private_message, user_id: anonymous.id, post_id: pm_from_staff.id)
+          Jobs::UserEmail.new.execute(type: :user_private_message, user_id: anonymous.id, post_id: pm_from_staff.id)
         end
       end
     end
@@ -208,15 +222,21 @@ describe Jobs::UserEmail do
         Jobs::UserEmail.new.execute(type: :user_mentioned, user_id: user.id, notification_id: notification.id)
       end
 
-      it "does not send notification if limit is reached" do
-        SiteSetting.max_emails_per_day_per_user = 2
+      context 'max_emails_per_day_per_user limit is reached' do
+        before do
+          SiteSetting.max_emails_per_day_per_user = 2
+          2.times { Fabricate(:email_log, user: user, email_type: 'blah', to_address: user.email) }
+        end
 
-        user.email_logs.create(email_type: 'blah', to_address: user.email, user_id: user.id)
-        user.email_logs.create(email_type: 'blah', to_address: user.email, user_id: user.id)
+        it "does not send notification if limit is reached" do
+          Jobs::UserEmail.new.execute(type: :user_mentioned, user_id: user.id, notification_id: notification.id, post_id: post.id)
+          expect(EmailLog.where(user_id: user.id, skipped: true).count).to eq(1)
+        end
 
-        Jobs::UserEmail.new.execute(type: :user_mentioned, user_id: user.id, notification_id: notification.id, post_id: post.id)
-
-        expect(EmailLog.where(user_id: user.id, skipped: true).count).to eq(1)
+        it "sends critical email" do
+          Jobs::UserEmail.new.execute(type: :forgot_password, user_id: user.id, notification_id: notification.id, post_id: post.id)
+          expect(EmailLog.where(user_id: user.id, skipped: true).count).to eq(0)
+        end
       end
 
       it "does not send notification if bounce threshold is reached" do
@@ -228,6 +248,21 @@ describe Jobs::UserEmail do
       it "doesn't send the mail if the user is using individual mailing list mode" do
         Email::Sender.any_instance.expects(:send).never
         user.user_option.update(mailing_list_mode: true, mailing_list_mode_frequency: 1)
+        # sometimes, we pass the notification_id
+        Jobs::UserEmail.new.execute(type: :user_mentioned, user_id: user.id, notification_id: notification.id, post_id: post.id)
+        # other times, we only pass the type of notification
+        Jobs::UserEmail.new.execute(type: :user_mentioned, user_id: user.id, notification_type: "posted", post_id: post.id)
+        # When post is nil
+        Jobs::UserEmail.new.execute(type: :user_mentioned, user_id: user.id, notification_type: "posted")
+        # When post does not have a topic
+        post = Fabricate(:post)
+        post.topic.destroy
+        Jobs::UserEmail.new.execute(type: :user_mentioned, user_id: user.id, notification_type: "posted", post_id: post.id)
+      end
+
+      it "doesn't send the mail if the user is using individual mailing list mode with no echo" do
+        Email::Sender.any_instance.expects(:send).never
+        user.user_option.update(mailing_list_mode: true, mailing_list_mode_frequency: 2)
         # sometimes, we pass the notification_id
         Jobs::UserEmail.new.execute(type: :user_mentioned, user_id: user.id, notification_id: notification.id, post_id: post.id)
         # other times, we only pass the type of notification

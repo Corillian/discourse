@@ -23,14 +23,12 @@ id:
   topics: "Topik"
   posts: "post"
   loading: "Memuat"
-  powered_by_html: 'Didayakan oleh <a href="http://www.discourse.org">Discourse</a>, aktifkan JavaScript untuk tampilan terbaik'
   log_in: "Log In"
   purge_reason: "Secara otomatis dihapus sebagai akun yang ditinggalkan, dinon-aktifkan."
   disable_remote_images_download_reason: "Unduh gambar jarak jauh dimatikan karena ruang penyimpanan di server tidak cukup."
   anonymous: "Anonim"
   emails:
     incoming:
-      default_subject: "Email masuk dari %{email}"
       show_trimmed_content: "Tampilkan konten yang dipersingkat"
       errors:
         empty_email_error: "Terjadi bila surel mentah yang kami terima tidak berisi apapun (kosong)."
@@ -53,7 +51,6 @@ id:
       has_already_been_used: "telah digunakan"
       inclusion: tidak dimasukkan kedalam daftar
       invalid: tidak benar
-      is_invalid: "tidak valid; cobalah untuk lebih deskriptif"
       less_than: harus kurang dari %{count}
       less_than_or_equal_to: harus sama dengan atau kurang dari %{count}
       not_a_number: bukan numerik
@@ -82,8 +79,6 @@ id:
       max_username_length_exists: "Anda tidak boleh menentukan jumlah karakter maksimum username dibawah username terpendek. "
       max_username_length_range: "Anda tidak bisa menentukan jumlah maksimum dibawah jumlah minimum."
       default_categories_already_selected: "Anda tidak boleh memilih kategori yang digunakan di daftar lainnya."
-  bulk_invite:
-    file_should_be_csv: "File yang diunggah harus dalam format csv atau txt."
   backup:
     operation_already_running: "Proses lain sedang berjalan. Tidak dapat menjalankan proses baru saat ini."
     backup_file_should_be_tar_gz: "File backup harus berupa arsip .tar.gz."
@@ -126,7 +121,6 @@ id:
   topic_not_found: "Ada yang salah. Mungkin topik ini ditutup atau dihapus ketika Anda sedang menjelajahinya?"
   just_posted_that: "tingkat kemiripan dengan post sebelumnya sangat tinggi"
   invalid_characters: "memuat karakter yang tidak valid"
-  is_invalid: "tidak valid; cobalah dengan sesuatu yang lebih deskriptif"
   next_page: "halaman berikutnya →"
   prev_page: "← halaman sebelumnya"
   page_num: "Halaman %{num}"
@@ -203,7 +197,6 @@ id:
               invalid: "bukan warna yang valid."
       <<: *errors
   user_profile:
-    no_info_me: "<div class='missing-profile'>kolom Tentang Saya dari profil Anda masih kosong, <a href='/users/%{username_lower}/preferences/about-me'>apakah Anda mau mengisinya?</a></div>"
     no_info_other: "<div class='missing-profile'>%{name} belum mengisi kolom Tentang Saya untuk profilnya</div>"
   vip_category_name: "Lounge / Santai"
   staff_category_name: "Staf"
@@ -262,12 +255,9 @@ id:
       almost_x_years:
         other: "hampir %{count} tahun yang lalu"
   password_reset:
-    choose_new: "Silahkan memilih password baru"
-    choose: "Mohon pilih kata sandi"
     update: 'Perbaharui Kata Sandi'
     success: "Anda telah mengubah kata sandi dengan sukses dan sekarang telah login."
     success_unapproved: "Anda telah mengubah kata sandi dengan sukses."
-    continue: "Lanjut ke %{site_name}"
   change_email:
     confirmed: "Surel anda telah diperbaharui."
     please_continue: "Lanjut ke %{site_name}"
@@ -464,29 +454,6 @@ id:
   user_notifications:
     previous_discussion: "Balasan Sebelumnya"
     posted_by: "Dipost oleh %{username} pada %{post_date}"
-    digest:
-      new_activity: "Aktifitas baru di topik dan posting Anda:"
-      more_topics: "Ada %{new_topics_since_seen} topik baru lainnya."
-      more_topics_category: "Topik baru lebih banyak:"
-    account_created:
-      subject_template: "[%{site_name}] Akun Baru Anda"
-      text_body_template: |+
-        Anda mendapatkan akun baru di %{site_name}
-
-
-        Silahkan sentuh tautan dibawah ini untuk menentukan sandi dari akun baru Anda:
-
-        %{base_url}/users/password-reset/%{email_token}
-
-    confirm_new_email:
-      subject_template: "[%{site_name}] Konfirmasi email baru Anda"
-      text_body_template: |
-        Silahkan mengkonfirmasi email baru Anda di %{site_name} dengan mengunjungi tautan dibawah:
-
-
-        %{base_url}/users/authorize-email/%{email_token}
-    signup:
-      subject_template: "[%{site_name}] Konfirmasi akun baru Anda"
   page_not_found:
     see_more: "Selengkapnya"
   terms_of_service:

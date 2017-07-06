@@ -13,6 +13,8 @@ class PostDestroyer
   end
 
   def self.destroy_stubs
+    context = I18n.t('remove_posts_deleted_by_author')
+
     # exclude deleted topics and posts that are actively flagged
     Post.where(deleted_at: nil, user_deleted: true)
         .where("NOT EXISTS (
@@ -28,8 +30,9 @@ class PostDestroyer
                         pa.deleted_at IS NULL AND
                         pa.post_action_type_id IN (?)
               )", PostActionType.notify_flag_type_ids)
-        .each do |post|
-      PostDestroyer.new(Discourse.system_user, post).destroy
+        .find_each do |post|
+
+      PostDestroyer.new(Discourse.system_user, post, context: context).destroy
     end
   end
 
@@ -41,10 +44,12 @@ class PostDestroyer
   end
 
   def destroy
-    if @user.staff? || SiteSetting.delete_removed_posts_after < 1
+    delete_removed_posts_after = @opts[:delete_removed_posts_after] || SiteSetting.delete_removed_posts_after
+
+    if @user.staff? || delete_removed_posts_after < 1
       perform_delete
     elsif @user.id == @post.user_id
-      mark_for_deletion
+      mark_for_deletion(delete_removed_posts_after)
     end
     DiscourseEvent.trigger(:post_destroyed, @post, @opts, @user)
 
@@ -112,11 +117,14 @@ class PostDestroyer
   end
 
   # When a user 'deletes' their own post. We just change the text.
-  def mark_for_deletion
+  def mark_for_deletion(delete_removed_posts_after = SiteSetting.delete_removed_posts_after)
     I18n.with_locale(SiteSetting.default_locale) do
 
       # don't call revise from within transaction, high risk of deadlock
-      @post.revise(@user, { raw: I18n.t('js.post.deleted_by_author', count: SiteSetting.delete_removed_posts_after) }, force_new_version: true)
+      @post.revise(@user,
+        { raw: I18n.t('js.post.deleted_by_author', count: delete_removed_posts_after) },
+        force_new_version: true
+      )
 
       Post.transaction do
         @post.update_column(:user_deleted, true)
@@ -187,7 +195,7 @@ class PostDestroyer
 
   def recover_user_actions
     # TODO: Use a trash concept for `user_actions` to avoid churn and simplify this?
-    UserActionObserver.log_post(@post)
+    UserActionCreator.log_post(@post)
   end
 
   def remove_associated_replies

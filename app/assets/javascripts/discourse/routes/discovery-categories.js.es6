@@ -92,14 +92,15 @@ const DiscoveryCategoriesRoute = Discourse.Route.extend(OpenComposer, {
 
     refresh() {
       const controller = this.controllerFor("discovery/categories");
+      const discController = this.controllerFor("discovery");
 
       // Don't refresh if we're still loading
-      if (!controller || controller.get("loading")) { return; }
+      if (!discController || discController.get("loading")) { return; }
 
       // If we `send('loading')` here, due to returning true it bubbles up to the
       // router and ember throws an error due to missing `handlerInfos`.
       // Lesson learned: Don't call `loading` yourself.
-      controller.set("loading", true);
+      discController.set("loading", true);
 
       this.model().then(model => {
         this.setupController(controller, model);
@@ -114,11 +115,12 @@ const DiscoveryCategoriesRoute = Discourse.Route.extend(OpenComposer, {
       const model = this.store.createRecord('category', {
         color: "AB9364", text_color: "FFFFFF", group_permissions: [{group_name: everyoneName, permission_type: 1}],
         available_groups: groups.map(g => g.name),
-        allow_badges: true
+        allow_badges: true,
+        topic_featured_link_allowed: true
       });
 
-      showModal("editCategory", { model });
-      this.controllerFor("editCategory").set("selectedTab", "general");
+      showModal("edit-category", { model });
+      this.controllerFor("edit-category").set("selectedTab", "general");
     },
 
     reorderCategories() {

@@ -8,26 +8,27 @@
     list-style: none;
     padding: 0;
     margin: 0;
+
     li {
       .fa-users {
         color: lighten($primary, 40%);
         padding: 0 2px;
       }
+
       border-bottom: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
-      a[href] {
+
+      a {
         padding: 5px;
         display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
         span.username {
           color: darken($primary, 40%);
-          display: inline-block;
         }
         span.name {
           font-size: 11px;
-          display: inline-block;
-          width: 90px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
           vertical-align: middle;
         }
         &.selected {
@@ -132,46 +133,9 @@ div.ac-wrap {
   }
 }
 
-.auto-close-fields {
-  div:not(:first-child) {
-    margin-top: 10px;
-  }
-  label {
-    font-size: 1em;
-  }
-  input {
-    width: 150px;
-  }
+.auto-update-input {
   .examples {
     color: lighten($primary, 40%);
-  }
-}
-
-.edit-auto-close-modal {
-  .btn.pull-right {
-    margin-right: 10px;
-  }
-  form {
-    margin: 0;
-  }
-  .auto-close-fields {
-    i.fa-clock-o {
-      font-size: 1.143em;
-    }
-    input {
-      margin: 0;
-    }
-  }
-}
-
-.edit-category-modal {
-  .auto-close-fields {
-    input[type=text] {
-      width: 50px;
-    }
-    label {
-      font-size: .929em;
-    }
   }
 }
 
@@ -185,6 +149,10 @@ div.ac-wrap {
     margin-left: 1em;
     font-style: italic;
   }
+}
+
+#reply-control.topic-featured-link-only.open {
+  .wmd-controls { display: none; }
 }
 
 #cancel-file-upload {
@@ -210,5 +178,3 @@ div.ac-wrap {
 .cooked > *:first-child {
   margin-top: 0;
 }
-
-

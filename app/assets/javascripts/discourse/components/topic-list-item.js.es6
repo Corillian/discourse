@@ -1,5 +1,8 @@
-import StringBuffer from 'discourse/mixins/string-buffer';
+import DiscourseURL from 'discourse/lib/url';
 import computed from 'ember-addons/ember-computed-decorators';
+import { bufferedRender } from 'discourse-common/lib/buffered-render';
+import { findRawTemplate } from 'discourse/lib/raw-templates';
+import { wantsNewWindow } from 'discourse/lib/intercept-click';
 
 export function showEntrance(e) {
   let target = $(e.target);
@@ -11,22 +14,29 @@ export function showEntrance(e) {
         target = target.end();
       }
     }
-    this.container.lookup('controller:application').send("showTopicEntrance", {topic: this.get('topic'), position: target.offset()});
+
+    this.appEvents.trigger('topic-entrance:show', { topic: this.get('topic'), position: target.offset() });
     return false;
   }
 }
 
-export default Ember.Component.extend(StringBuffer, {
+export default Ember.Component.extend(bufferedRender({
   rerenderTriggers: ['bulkSelectEnabled', 'topic.pinned'],
   tagName: 'tr',
-  rawTemplate: 'list/topic-list-item.raw',
   classNameBindings: [':topic-list-item', 'unboundClassNames'],
   attributeBindings: ['data-topic-id'],
   'data-topic-id': Em.computed.alias('topic.id'),
 
   actions: {
     toggleBookmark() {
-      this.get('topic').toggleBookmark().finally(() => this.rerender());
+      this.get('topic').toggleBookmark().finally(() => this.rerenderBuffer());
+    }
+  },
+
+  buildBuffer(buffer) {
+    const template = findRawTemplate('list/topic-list-item');
+    if (template) {
+      buffer.push(template(this));
     }
   },
 
@@ -100,16 +110,24 @@ export default Ember.Component.extend(StringBuffer, {
     const result = showEntrance.call(this, e);
     if (result === false) { return result; }
 
+    const topic = this.get('topic');
     const target = $(e.target);
     if (target.hasClass('bulk-select')) {
       const selected = this.get('selected');
-      const topic = this.get('topic');
 
       if (target.is(':checked')) {
         selected.addObject(topic);
       } else {
         selected.removeObject(topic);
       }
+    }
+
+    if (target.hasClass('raw-topic-link')) {
+       if (wantsNewWindow(e)) { return true; }
+
+      this.appEvents.trigger('header:update-topic', topic);
+      DiscourseURL.routeTo(target.attr('href'));
+      return false;
     }
 
     if (target.closest('a.topic-status').length === 1) {
@@ -120,14 +138,11 @@ export default Ember.Component.extend(StringBuffer, {
 
   highlight(opts = { isLastViewedTopic: false }) {
     const $topic = this.$();
-    const originalCol = $topic.css('backgroundColor');
     $topic
       .addClass('highlighted')
-      .attr('data-islastviewedtopic', opts.isLastViewedTopic)
-      .stop()
-      .animate({ backgroundColor: originalCol }, 2500, 'swing', function() {
-        $topic.removeClass('highlighted');
-      });
+      .attr('data-islastviewedtopic', opts.isLastViewedTopic);
+
+    $topic.on('animationend', () => $topic.removeClass('highlighted'));
   },
 
   _highlightIfNeeded: function() {
@@ -142,4 +157,4 @@ export default Ember.Component.extend(StringBuffer, {
     }
   }.on('didInsertElement')
 
-});
+}));

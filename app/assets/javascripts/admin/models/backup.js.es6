@@ -2,7 +2,6 @@ import { ajax } from 'discourse/lib/ajax';
 import PreloadStore from 'preload-store';
 
 const Backup = Discourse.Model.extend({
-
   destroy() {
     return ajax("/admin/backups/" + this.get("filename"), { type: "DELETE" });
   },
@@ -13,11 +12,9 @@ const Backup = Discourse.Model.extend({
       data: { client_id: window.MessageBus.clientId }
     });
   }
-
 });
 
 Backup.reopenClass({
-
   find() {
     return PreloadStore.getAndRemove("backups", () => ajax("/admin/backups.json"))
                        .then(backups => backups.map(backup => Backup.create(backup)));
@@ -37,15 +34,17 @@ Backup.reopenClass({
   },
 
   cancel() {
-    return ajax("/admin/backups/cancel.json")
-                    .then(result => {
-                      if (!result.success) { bootbox.alert(result.message); }
-                    });
+    return ajax("/admin/backups/cancel.json", {
+      type: 'DELETE'
+    }).then(result => {
+      if (!result.success) { bootbox.alert(result.message); }
+    });
   },
 
   rollback() {
-    return ajax("/admin/backups/rollback.json")
-                    .then(result => {
+    return ajax("/admin/backups/rollback.json", {
+      type: 'POST'
+    }).then(result => {
       if (!result.success) {
         bootbox.alert(result.message);
       } else {

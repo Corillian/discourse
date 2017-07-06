@@ -6,14 +6,10 @@ class ForumsController < ApplicationController
 
   def status
     if $shutdown
-      render text: 'shutting down', status: 500, content_type: 'text/plain'
+      render plain: 'shutting down', status: 500
     else
-      render text: 'ok', content_type: 'text/plain'
+      render plain: 'ok'
     end
-  end
-
-  def home_redirect
-    redirect_to path('/')
   end
 
 end

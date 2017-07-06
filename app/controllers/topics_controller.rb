@@ -21,7 +21,8 @@ class TopicsController < ApplicationController
                                           :merge_topic,
                                           :clear_pin,
                                           :re_pin,
-                                          :autoclose,
+                                          :status_update,
+                                          :timer,
                                           :bulk,
                                           :reset_new,
                                           :change_post_owners,
@@ -186,6 +187,40 @@ class TopicsController < ApplicationController
     render_json_dump(TopicViewPostsSerializer.new(@topic_view, scope: guardian, root: false, include_raw: !!params[:include_raw]))
   end
 
+  def excerpts
+    params.require(:topic_id)
+    params.require(:post_ids)
+
+    post_ids = params[:post_ids].map(&:to_i)
+    unless Array === post_ids
+      render_json_error("Expecting post_ids to contain a list of posts ids")
+      return
+    end
+
+    if post_ids.length > 100
+      render_json_error("Requested a chunk that is too big")
+      return
+    end
+
+    @topic = Topic.with_deleted.where(id: params[:topic_id]).first
+    guardian.ensure_can_see!(@topic)
+
+    @posts = Post.where(hidden: false, deleted_at: nil, topic_id: @topic.id)
+        .where('posts.id in (?)', post_ids)
+        .joins("LEFT JOIN users u on u.id = posts.user_id")
+        .pluck(:id, :cooked, :username)
+        .map do |post_id, cooked, username|
+          {
+            post_id: post_id,
+            username: username,
+            excerpt: PrettyText.excerpt(cooked, 800, keep_emoji_images: true)
+          }
+         end
+
+
+    render json: @posts.to_json
+  end
+
   def destroy_timings
     PostTiming.destroy_for(current_user.id, [params[:topic_id].to_i])
     render nothing: true
@@ -239,7 +274,12 @@ class TopicsController < ApplicationController
     @topic = Topic.find_by(id: topic_id)
     guardian.ensure_can_moderate!(@topic)
     @topic.update_status(status, enabled, current_user, until: params[:until])
-    render nothing: true
+
+    render json: success_json.merge!(
+      topic_status_update: TopicTimerSerializer.new(
+        TopicTimer.find_by(topic: @topic), root: false
+      )
+    )
   end
 
   def mute
@@ -250,20 +290,41 @@ class TopicsController < ApplicationController
     toggle_mute
   end
 
-  def autoclose
-    params.permit(:auto_close_time, :timezone_offset)
-    params.require(:auto_close_based_on_last_post)
+  def timer
+    params.permit(:time, :timezone_offset, :based_on_last_post, :category_id)
+    params.require(:status_type)
 
-    topic = Topic.find_by(id: params[:topic_id].to_i)
+    status_type =
+      begin
+        TopicTimer.types.fetch(params[:status_type].to_sym)
+      rescue
+        invalid_param(:status_type)
+      end
+
+    topic = Topic.find_by(id: params[:topic_id])
     guardian.ensure_can_moderate!(topic)
 
-    topic.auto_close_based_on_last_post = params[:auto_close_based_on_last_post]
-    topic.set_auto_close(params[:auto_close_time], {by_user: current_user, timezone_offset: params[:timezone_offset] ? params[:timezone_offset].to_i : nil})
+    options = {
+      by_user: current_user,
+      timezone_offset: params[:timezone_offset]&.to_i,
+      based_on_last_post: params[:based_on_last_post]
+    }
+
+    options.merge!(category_id: params[:category_id]) if !params[:category_id].blank?
+
+    topic_status_update = topic.set_or_create_timer(
+      status_type,
+      params[:time],
+      options
+    )
 
     if topic.save
       render json: success_json.merge!({
-        auto_close_at: topic.auto_close_at,
-        auto_close_hours: topic.auto_close_hours
+        execute_at: topic_status_update&.execute_at,
+        duration: topic_status_update&.duration,
+        based_on_last_post: topic_status_update&.based_on_last_post,
+        closed: topic.closed,
+        category_id: topic_status_update&.category_id
       })
     else
       render_json_error(topic)
@@ -347,6 +408,8 @@ class TopicsController < ApplicationController
   def bookmark
     topic = Topic.find(params[:topic_id].to_i)
     first_post = topic.ordered_posts.first
+
+    guardian.ensure_can_see!(first_post)
 
     PostAction.act(current_user, first_post, PostActionType.types[:bookmark])
 
@@ -435,7 +498,7 @@ class TopicsController < ApplicationController
       else
         render json: failed_json, status: 422
       end
-    rescue => e
+    rescue Topic::UserExists => e
       render json: {errors: [e.message]}, status: 422
     end
   end
@@ -461,7 +524,7 @@ class TopicsController < ApplicationController
     params.require(:topic_id)
     params.permit(:category_id)
 
-    topic = Topic.find_by(id: params[:topic_id])
+    topic = Topic.with_deleted.find_by(id: params[:topic_id])
     guardian.ensure_can_move_posts!(topic)
 
     dest_topic = move_posts_to_destination(topic)
@@ -492,14 +555,16 @@ class TopicsController < ApplicationController
     params.require(:topic_id)
     params.require(:timestamp)
 
-    guardian.ensure_can_change_post_owner!
+    guardian.ensure_can_change_post_timestamps!
 
     begin
-      PostTimestampChanger.new( topic_id: params[:topic_id].to_i,
-                                timestamp: params[:timestamp].to_i ).change!
+      TopicTimestampChanger.new(
+        topic_id: params[:topic_id].to_i,
+        timestamp: params[:timestamp].to_f
+      ).change!
 
       render json: success_json
-    rescue ActiveRecord::RecordInvalid
+    rescue ActiveRecord::RecordInvalid, TopicTimestampChanger::InvalidTimestampError
       render json: failed_json, status: 422
     end
   end
@@ -540,7 +605,7 @@ class TopicsController < ApplicationController
       topic_ids = params[:topic_ids].map {|t| t.to_i}
     elsif params[:filter] == 'unread'
       tq = TopicQuery.new(current_user)
-      topics = TopicQuery.unread_filter(tq.joined_topic_user).listable_topics
+      topics = TopicQuery.unread_filter(tq.joined_topic_user, current_user.id, staff: guardian.is_staff?).listable_topics
       topics = topics.where('category_id = ?', params[:category_id]) if params[:category_id]
       topic_ids = topics.pluck(:id)
     else

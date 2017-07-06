@@ -6,6 +6,8 @@ class SessionController < ApplicationController
   skip_before_filter :redirect_to_login_if_required
   skip_before_filter :preload_json, :check_xhr, only: ['sso', 'sso_login', 'become', 'sso_provider', 'destroy']
 
+  ACTIVATE_USER_KEY = "activate_user"
+
   def csrf
     render json: {csrf: form_authenticity_token }
   end
@@ -44,6 +46,12 @@ class SessionController < ApplicationController
         sso.external_id = current_user.id.to_s
         sso.admin = current_user.admin?
         sso.moderator = current_user.moderator?
+
+        if sso.return_sso_url.blank?
+          render plain: "return_sso_url is blank, it must be provided", status: 400
+          return
+        end
+
         if request.xhr?
           cookies[:sso_destination_url] = sso.to_url(sso.return_sso_url)
         else
@@ -70,23 +78,21 @@ class SessionController < ApplicationController
   end
 
   def sso_login
-    unless SiteSetting.enable_sso
-      return render(nothing: true, status: 404)
-    end
+    raise Discourse::NotFound.new unless SiteSetting.enable_sso
 
     sso = DiscourseSingleSignOn.parse(request.query_string)
     if !sso.nonce_valid?
       if SiteSetting.verbose_sso_logging
         Rails.logger.warn("Verbose SSO log: Nonce has already expired\n\n#{sso.diagnostics}")
       end
-      return render(text: I18n.t("sso.timeout_expired"), status: 419)
+      return render_sso_error(text: I18n.t("sso.timeout_expired"), status: 419)
     end
 
     if ScreenedIpAddress.should_block?(request.remote_ip)
       if SiteSetting.verbose_sso_logging
         Rails.logger.warn("Verbose SSO log: IP address is blocked #{request.remote_ip}\n\n#{sso.diagnostics}")
       end
-      return render(text: I18n.t("sso.unknown_error"), status: 500)
+      return render_sso_error(text: I18n.t("sso.unknown_error"), status: 500)
     end
 
     return_path = sso.return_path
@@ -99,7 +105,7 @@ class SessionController < ApplicationController
           if SiteSetting.sso_not_approved_url.present?
             redirect_to SiteSetting.sso_not_approved_url
           else
-            render text: I18n.t("sso.account_not_approved"), status: 403
+            render_sso_error(text: I18n.t("sso.account_not_approved"), status: 403)
           end
           return
         elsif !user.active?
@@ -118,7 +124,7 @@ class SessionController < ApplicationController
         if return_path !~ /^\/[^\/]/
           begin
             uri = URI(return_path)
-            return_path = path("/") unless uri.host == Discourse.current_hostname
+            return_path = path("/") unless SiteSetting.sso_allows_all_return_paths || uri.host == Discourse.current_hostname
           rescue
             return_path = path("/")
           end
@@ -126,18 +132,36 @@ class SessionController < ApplicationController
 
         redirect_to return_path
       else
-        render text: I18n.t("sso.not_found"), status: 500
+        render_sso_error(text: I18n.t("sso.not_found"), status: 500)
       end
     rescue ActiveRecord::RecordInvalid => e
+
       if SiteSetting.verbose_sso_logging
-        Rails.logger.warn(<<-EOF)
-          Verbose SSO log: Record was invalid: #{e.record.class.name} #{e.record.id}\n
-          #{e.record.errors.to_h}\n
-          \n
-          #{sso.diagnostics}
+        Rails.logger.warn(<<~EOF)
+        Verbose SSO log: Record was invalid: #{e.record.class.name} #{e.record.id}
+        #{e.record.errors.to_h}
+
+        Attributes:
+        #{e.record.attributes.slice(*SingleSignOn::ACCESSORS.map(&:to_s))}
+
+        SSO Diagnostics:
+        #{sso.diagnostics}
         EOF
       end
-      render text: I18n.t("sso.unknown_error"), status: 500
+
+      text = nil
+
+      # If there's a problem with the email we can explain that
+      if (e.record.is_a?(User) && e.record.errors[:email].present?)
+        if e.record.email.blank?
+          text = I18n.t("sso.no_email")
+        else
+          text = I18n.t("sso.email_error", email: ERB::Util.html_escape(e.record.email))
+        end
+      end
+
+      render_sso_error(text: text || I18n.t("sso.unknown_error"), status: 500)
+
     rescue => e
       message = "Failed to create or lookup user: #{e}."
       message << "\n\n" << "-" * 100 << "\n\n"
@@ -147,7 +171,7 @@ class SessionController < ApplicationController
 
       Rails.logger.error(message)
 
-      render text: I18n.t("sso.unknown_error"), status: 500
+      render_sso_error(text: I18n.t("sso.unknown_error"), status: 500)
     end
   end
 
@@ -158,8 +182,8 @@ class SessionController < ApplicationController
       return
     end
 
-    RateLimiter.new(nil, "login-hr-#{request.remote_ip}", 30, 1.hour).performed!
-    RateLimiter.new(nil, "login-min-#{request.remote_ip}", 6, 1.minute).performed!
+    RateLimiter.new(nil, "login-hr-#{request.remote_ip}", SiteSetting.max_logins_per_ip_per_hour, 1.hour).performed!
+    RateLimiter.new(nil, "login-min-#{request.remote_ip}", SiteSetting.max_logins_per_ip_per_minute, 1.minute).performed!
 
     params.require(:login)
     params.require(:password)
@@ -168,7 +192,6 @@ class SessionController < ApplicationController
 
     login = params[:login].strip
     login = login[1..-1] if login[0] == "@"
-
 
     if user = User.find_by_username_or_email(login)
 
@@ -219,8 +242,11 @@ class SessionController < ApplicationController
     RateLimiter.new(nil, "forgot-password-hr-#{request.remote_ip}", 6, 1.hour).performed!
     RateLimiter.new(nil, "forgot-password-min-#{request.remote_ip}", 3, 1.minute).performed!
 
+    RateLimiter.new(nil, "forgot-password-login-hour-#{params[:login].to_s[0..100]}", 12, 1.hour).performed!
+    RateLimiter.new(nil, "forgot-password-login-min-#{params[:login].to_s[0..100]}", 3, 1.minute).performed!
+
     user = User.find_by_username_or_email(params[:login])
-    user_presence = user.present? && user.id != Discourse::SYSTEM_USER_ID && !user.staged
+    user_presence = user.present? && user.id > 0 && !user.staged
     if user_presence
       email_token = user.email_tokens.create(email: user.email)
       Jobs.enqueue(:critical_user_email, type: :forgot_password, user_id: user.id, email_token: email_token.token)
@@ -274,6 +300,7 @@ class SessionController < ApplicationController
   end
 
   def not_activated(user)
+    session[ACTIVATE_USER_KEY] = user.id
     render json: {
       error: I18n.t("login.not_activated"),
       reason: 'not_activated',
@@ -301,6 +328,7 @@ class SessionController < ApplicationController
   end
 
   def login(user)
+    session.delete(ACTIVATE_USER_KEY)
     log_on_user(user)
 
     if payload = session.delete(:sso_payload)
@@ -309,4 +337,9 @@ class SessionController < ApplicationController
     render_serialized(user, UserSerializer)
   end
 
+
+  def render_sso_error(status:, text:)
+    @sso_error = text
+    render status: status, layout: 'no_ember'
+  end
 end

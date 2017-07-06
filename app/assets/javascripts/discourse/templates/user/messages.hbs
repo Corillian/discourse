@@ -1,4 +1,4 @@
-<section class='user-navigation'>
+{{#d-section class="user-navigation" pageClass="user-messages"}}
   {{#unless site.mobileView}}
     {{#if showNewPM}}
       {{d-button class="btn-primary new-private-message" action="composePrivateMessage" icon="envelope" label="user.new_private_message"}}
@@ -21,6 +21,7 @@
         {{i18n 'user.messages.archive'}}
       {{/link-to}}
     </li>
+    {{plugin-outlet name="user-messages-nav" connectorTagName='li' args=(hash model=model)}}
     {{#each model.groups as |group|}}
     {{#if group.has_messages}}
     <li>
@@ -37,8 +38,7 @@
     {{/if}}
     {{/each}}
   {{/mobile-nav}}
-
-</section>
+{{/d-section}}
 
 <section class='user-right messages'>
 
@@ -73,7 +73,7 @@
     {{/if}}
 
     {{#if isGroup}}
-      {{group-notifications-button group=group}}
+      {{group-notifications-button group=group user=model}}
     {{/if}}
 </div>
 

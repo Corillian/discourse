@@ -1,39 +1,32 @@
-/* global requirejs, require */
+import { findHelper } from 'discourse-common/lib/helpers';
 
+/* global requirejs, require */
 var classify = Ember.String.classify;
 var get = Ember.get;
 
-var LOADING_WHITELIST = ['badges', 'userActivity', 'userPrivateMessages', 'admin', 'adminFlags',
-                         'user', 'preferences', 'adminEmail', 'adminUsersList'];
-var _dummyRoute;
-var _loadingView;
+const _options = {};
 
-function loadingResolver(cb) {
-  return function(parsedName) {
-    var fullNameWithoutType = parsedName.fullNameWithoutType;
+export function setResolverOption(name, value) {
+  _options[name] = value;
+}
 
-    if (fullNameWithoutType.indexOf('Loading') >= 0) {
-      fullNameWithoutType = fullNameWithoutType.replace('Loading', '');
-      if (LOADING_WHITELIST.indexOf(fullNameWithoutType) !== -1) {
-        return cb(fullNameWithoutType);
-      }
-    }
-  };
+export function getResolverOption(name) {
+  return _options[name];
 }
 
 function parseName(fullName) {
-  const nameParts = fullName.split(":"),
-        type = nameParts[0], fullNameWithoutType = nameParts[1],
-        name = fullNameWithoutType,
-        namespace = get(this, 'namespace'),
-        root = namespace;
+  const nameParts = fullName.split(":");
+  const type = nameParts[0];
+  let fullNameWithoutType = nameParts[1];
+  const namespace = get(this, 'namespace');
+  const root = namespace;
 
   return {
-    fullName: fullName,
-    type: type,
-    fullNameWithoutType: fullNameWithoutType,
-    name: name,
-    root: root,
+    fullName,
+    type,
+    fullNameWithoutType,
+    name: fullNameWithoutType,
+    root,
     resolveMethodName: "resolve" + classify(type)
   };
 }
@@ -45,7 +38,7 @@ export function buildResolver(baseName) {
     resolveRouter(parsedName) {
       const routerPath = `${baseName}/router`;
       if (requirejs.entries[routerPath]) {
-        const module = require(routerPath, null, null, true);
+        const module = requirejs(routerPath, null, null, true);
         return module.default;
       }
       return this._super(parsedName);
@@ -86,7 +79,7 @@ export function buildResolver(baseName) {
 
       var module;
       if (moduleName) {
-        module = require(moduleName, null, null, true /* force sync */);
+        module = requirejs(moduleName, null, null, true /* force sync */);
         if (module && module['default']) { module = module['default']; }
       }
       return module;
@@ -105,11 +98,13 @@ export function buildResolver(baseName) {
     },
 
     resolveView(parsedName) {
-      return this.findLoadingView(parsedName) || this.customResolve(parsedName) || this._super(parsedName);
+      return this.customResolve(parsedName) || this._super(parsedName);
     },
 
     resolveHelper(parsedName) {
-      return this.customResolve(parsedName) || this._super(parsedName);
+      return findHelper(parsedName.fullNameWithoutType) ||
+             this.customResolve(parsedName) ||
+             this._super(parsedName);
     },
 
     resolveController(parsedName) {
@@ -125,7 +120,20 @@ export function buildResolver(baseName) {
     },
 
     resolveRoute(parsedName) {
-      return this.findLoadingRoute(parsedName) || this.customResolve(parsedName) || this._super(parsedName);
+      return this.customResolve(parsedName) || this._super(parsedName);
+    },
+
+    findLoadingTemplate(parsedName) {
+      if (parsedName.fullNameWithoutType.match(/loading$/)) {
+        return Ember.TEMPLATES.loading;
+      }
+    },
+
+    findConnectorTemplate(parsedName) {
+      const full = parsedName.fullNameWithoutType.replace('components/', '');
+      if (full.indexOf('connectors') === 0) {
+        return Ember.TEMPLATES[`javascripts/${full}`];
+      }
     },
 
     resolveTemplate(parsedName) {
@@ -133,36 +141,25 @@ export function buildResolver(baseName) {
              this.findPluginTemplate(parsedName) ||
              this.findMobileTemplate(parsedName) ||
              this.findTemplate(parsedName) ||
+             this.findLoadingTemplate(parsedName) ||
+             this.findConnectorTemplate(parsedName) ||
              Ember.TEMPLATES.not_found;
     },
 
-    findLoadingRoute: loadingResolver(function() {
-      _dummyRoute = _dummyRoute || Ember.Route.extend();
-      return _dummyRoute;
-    }),
-
-    findLoadingView: loadingResolver(function() {
-      if (!_loadingView) {
-        _loadingView = require('discourse/views/loading', null, null, true /* force sync */);
-        if (_loadingView && _loadingView['default']) { _loadingView = _loadingView['default']; }
-      }
-      return _loadingView;
-    }),
-
     findPluginTemplate(parsedName) {
-      var pluginParsedName = this.parseName(parsedName.fullName.replace("template:", "template:javascripts/"));
+      const pluginParsedName = this.parseName(parsedName.fullName.replace("template:", "template:javascripts/"));
       return this.findTemplate(pluginParsedName);
     },
 
     findPluginMobileTemplate(parsedName) {
-      if (this.mobileView) {
+      if (_options.mobileView) {
         var pluginParsedName = this.parseName(parsedName.fullName.replace("template:", "template:javascripts/mobile/"));
         return this.findTemplate(pluginParsedName);
       }
     },
 
     findMobileTemplate(parsedName) {
-      if (this.mobileView) {
+      if (_options.mobileView) {
         var mobileParsedName = this.parseName(parsedName.fullName.replace("template:", "template:mobile/"));
         return this.findTemplate(mobileParsedName);
       }
@@ -178,6 +175,7 @@ export function buildResolver(baseName) {
       return this._super(parsedName) ||
              templates[slashedType] ||
              templates[withoutType] ||
+             templates[withoutType.replace(/\.raw$/, '')] ||
              templates[dashed] ||
              templates[decamelized.replace(/\./, '/')] ||
              templates[decamelized.replace(/\_/, '/')] ||

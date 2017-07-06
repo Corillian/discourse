@@ -1,9 +1,9 @@
 import RestModel from 'discourse/models/rest';
-import { url } from 'discourse/lib/computed';
 import { on } from 'ember-addons/ember-computed-decorators';
 import computed from 'ember-addons/ember-computed-decorators';
 import UserActionGroup from 'discourse/models/user-action-group';
 import { postUrl } from 'discourse/lib/utilities';
+import { userPath } from 'discourse/lib/url';
 
 const UserActionTypes = {
   likes_given: 1,
@@ -76,17 +76,24 @@ const UserAction = RestModel.extend({
     return targetUsername === Discourse.User.currentProp('username');
   },
 
-  presentName: Em.computed.any('name', 'username'),
-  targetDisplayName: Em.computed.any('target_name', 'target_username'),
-  actingDisplayName: Em.computed.any('acting_name', 'acting_username'),
-  targetUserUrl: url('target_username', '/users/%@'),
+  presentName: Ember.computed.or('name', 'username'),
+  targetDisplayName: Ember.computed.or('target_name', 'target_username'),
+  actingDisplayName: Ember.computed.or('acting_name', 'acting_username'),
+
+  @computed('target_username')
+  targetUserUrl(username) {
+    return userPath(username);
+  },
 
   @computed("username")
   usernameLower(username) {
     return username.toLowerCase();
   },
 
-  userUrl: url('usernameLower', '/users/%@'),
+  @computed('usernameLower')
+  userUrl(usernameLower) {
+    return userPath(usernameLower);
+  },
 
   @computed()
   postUrl() {

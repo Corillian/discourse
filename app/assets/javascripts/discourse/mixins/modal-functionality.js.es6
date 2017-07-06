@@ -1,9 +1,17 @@
-export default Em.Mixin.create({
-  flashMessage: null,
+import showModal from 'discourse/lib/show-modal';
 
-  needs: ['modal'],
+export default Ember.Mixin.create({
+  flash(text, messageClass) {
+    this.appEvents.trigger('modal-body:flash', { text, messageClass });
+  },
 
-  flash(message, messageClass) {
-    this.set('flashMessage', Em.Object.create({ message, messageClass }));
+  showModal(...args) {
+    return showModal(...args);
+  },
+
+  actions: {
+    closeModal() {
+      this.get('modal').send('closeModal');
+    }
   }
 });

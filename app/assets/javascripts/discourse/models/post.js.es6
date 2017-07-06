@@ -2,11 +2,13 @@ import { ajax } from 'discourse/lib/ajax';
 import RestModel from 'discourse/models/rest';
 import { popupAjaxError } from 'discourse/lib/ajax-error';
 import ActionSummary from 'discourse/models/action-summary';
-import { url, propertyEqual } from 'discourse/lib/computed';
+import { propertyEqual } from 'discourse/lib/computed';
 import Quote from 'discourse/lib/quote';
 import computed from 'ember-addons/ember-computed-decorators';
 import { postUrl } from 'discourse/lib/utilities';
 import { cook } from 'discourse/lib/text';
+import { userPath } from 'discourse/lib/url';
+import Composer from 'discourse/models/composer';
 
 const Post = RestModel.extend({
 
@@ -60,7 +62,10 @@ const Post = RestModel.extend({
     return postNumber === 1 ? baseUrl + "/1" : baseUrl;
   },
 
-  usernameUrl: url('username', '/users/%@'),
+  @computed('username')
+  usernameUrl(username) {
+    return userPath(username);
+  },
 
   topicOwner: propertyEqual('topic.details.created_by.id', 'user_id'),
 
@@ -70,13 +75,12 @@ const Post = RestModel.extend({
 
     return ajax(`/posts/${this.get('id')}/${field}`, { type: 'PUT', data }).then(() => {
       this.set(field, value);
-      this.incrementProperty("version");
     }).catch(popupAjaxError);
   },
 
   internalLinks: function() {
     if (Ember.isEmpty(this.get('link_counts'))) return null;
-    return this.get('link_counts').filterProperty('internal').filterProperty('title');
+    return this.get('link_counts').filterBy('internal').filterBy('title');
   }.property('link_counts.@each.internal'),
 
   flagsAvailable: function() {
@@ -101,7 +105,6 @@ const Post = RestModel.extend({
 
   createProperties() {
     // composer only used once, defer the dependency
-    const Composer = require('discourse/models/composer').default;
     const data = this.getProperties(Composer.serializedFieldsForCreate());
     data.reply_to_post_number = this.get('reply_to_post_number');
     data.image_sizes = this.get('imageSizes');

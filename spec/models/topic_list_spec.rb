@@ -1,7 +1,12 @@
 require 'rails_helper'
 
 describe TopicList do
-  let!(:topic) { Fabricate(:topic) }
+  let!(:topic) {
+    t = Fabricate(:topic)
+    t.allowed_user_ids = [t.user.id]
+    t
+  }
+
   let(:user) { topic.user }
   let(:topic_list) { TopicList.new("liked", user, [topic]) }
 
@@ -23,17 +28,21 @@ describe TopicList do
     end
   end
 
-  context "DiscourseTagging enabled" do
-    before do
-      SiteSetting.tagging_enabled = true
-    end
+  context "preload" do
+    it "allows preloading of data" do
+      preloaded_topic = false
+      preloader = lambda do |topics, topic_list|
+        expect(TopicList === topic_list).to eq(true)
+        expect(topics.length).to eq(1)
+        preloaded_topic = true
+      end
 
-    after do
-      SiteSetting.tagging_enabled = false
-    end
+      TopicList.on_preload(&preloader)
 
-    it "should add tags to preloaded custom fields" do
-      expect(topic_list.preloaded_custom_fields).to eq(Set.new([DiscourseTagging::TAGS_FIELD_NAME]))
+      topic_list.topics
+      expect(preloaded_topic).to eq(true)
+
+      TopicList.cancel_preload(&preloader)
     end
   end
 

@@ -166,9 +166,9 @@ describe Admin::UsersController do
       end
 
       it 'updates the admin flag' do
+        expect(AdminConfirmation.exists_for?(@another_user.id)).to eq(false)
         xhr :put, :grant_admin, user_id: @another_user.id
-        @another_user.reload
-        expect(@another_user).to be_admin
+        expect(AdminConfirmation.exists_for?(@another_user.id)).to eq(true)
       end
     end
 
@@ -178,9 +178,15 @@ describe Admin::UsersController do
 
       it 'adds the user to the group' do
         xhr :post, :add_group, group_id: group.id, user_id: user.id
-        expect(response).to be_success
 
+        expect(response).to be_success
         expect(GroupUser.where(user_id: user.id, group_id: group.id).exists?).to eq(true)
+
+        group_history = GroupHistory.last
+
+        expect(group_history.action).to eq(GroupHistory.actions[:add_user_to_group])
+        expect(group_history.acting_user).to eq(@user)
+        expect(group_history.target_user).to eq(user)
 
         # Doing it again doesn't raise an error
         xhr :post, :add_group, group_id: group.id, user_id: user.id
@@ -189,6 +195,8 @@ describe Admin::UsersController do
     end
 
     context '.primary_group' do
+      let(:group) { Fabricate(:group) }
+
       before do
         @another_user = Fabricate(:coding_horror)
       end
@@ -205,9 +213,16 @@ describe Admin::UsersController do
       end
 
       it "changes the user's primary group" do
-        xhr :put, :primary_group, user_id: @another_user.id, primary_group_id: 2
+        group.add(@another_user)
+        xhr :put, :primary_group, user_id: @another_user.id, primary_group_id: group.id
         @another_user.reload
-        expect(@another_user.primary_group_id).to eq(2)
+        expect(@another_user.primary_group_id).to eq(group.id)
+      end
+
+      it "doesn't change primary group if they aren't a member of the group" do
+        xhr :put, :primary_group, user_id: @another_user.id, primary_group_id: group.id
+        @another_user.reload
+        expect(@another_user.primary_group_id).to be_nil
       end
     end
 
@@ -485,7 +500,14 @@ describe Admin::UsersController do
     end
 
     context ".invite_admin" do
+      it "doesn't work when not via API" do
+        controller.stubs(:is_api?).returns(false)
+        xhr :post, :invite_admin, name: 'Bill', username: 'bill22', email: 'bill@bill.com'
+        expect(response).not_to be_success
+      end
+
       it 'should invite admin' do
+        controller.stubs(:is_api?).returns(true)
         Jobs.expects(:enqueue).with(:critical_user_email, anything).returns(true)
         xhr :post, :invite_admin, name: 'Bill', username: 'bill22', email: 'bill@bill.com'
         expect(response).to be_success
@@ -497,11 +519,21 @@ describe Admin::UsersController do
       end
 
       it "doesn't send the email with send_email falsy" do
+        controller.stubs(:is_api?).returns(true)
         Jobs.expects(:enqueue).with(:user_email, anything).never
         xhr :post, :invite_admin, name: 'Bill', username: 'bill22', email: 'bill@bill.com', send_email: '0'
         expect(response).to be_success
         json = ::JSON.parse(response.body)
         expect(json["password_url"]).to be_present
+      end
+    end
+
+    context 'remove_group' do
+      it "also clears the user's primary group" do
+        g = Fabricate(:group)
+        u = Fabricate(:user, primary_group: g)
+        xhr :delete, :remove_group, group_id: g.id, user_id: u.id
+        expect(u.reload.primary_group).to be_nil
       end
     end
 

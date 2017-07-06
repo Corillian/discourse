@@ -33,12 +33,14 @@ class UserUpdater
     :email_previous_replies,
     :email_in_reply_to,
     :like_notification_frequency,
-    :include_tl0_in_digests
+    :include_tl0_in_digests,
+    :theme_key
   ]
 
   def initialize(actor, user)
     @user = user
     @guardian = Guardian.new(actor)
+    @actor = actor
   end
 
   def update(attributes = {})
@@ -52,8 +54,11 @@ class UserUpdater
     user_profile.profile_background = attributes.fetch(:profile_background) { user_profile.profile_background }
     user_profile.card_background = attributes.fetch(:card_background) { user_profile.card_background }
 
+    old_user_name = user.name.present? ? user.name : ""
     user.name = attributes.fetch(:name) { user.name }
+
     user.locale = attributes.fetch(:locale) { user.locale }
+    user.date_of_birth = attributes.fetch(:date_of_birth) { user.date_of_birth }
 
     if guardian.can_grant_title?(user)
       user.title = attributes.fetch(:title) { user.title }
@@ -69,14 +74,18 @@ class UserUpdater
       TagUser.batch_set(user, level, attributes[attribute])
     end
 
-
     save_options = false
+
+    # special handling for theme_key cause we need to bump a sequence number
+    if attributes.key?(:theme_key) && user.user_option.theme_key != attributes[:theme_key]
+      user.user_option.theme_key_seq += 1
+    end
 
     OPTION_ATTR.each do |attribute|
       if attributes.key?(attribute)
         save_options = true
 
-        if [true,false].include?(user.user_option.send(attribute))
+        if [true, false].include?(user.user_option.send(attribute))
           val = attributes[attribute].to_s == 'true'
           user.user_option.send("#{attribute}=", val)
         else
@@ -85,18 +94,35 @@ class UserUpdater
       end
     end
 
+    # automatically disable digests when mailing_list_mode is enabled
+    user.user_option.email_digests = false if user.user_option.mailing_list_mode
+
     fields = attributes[:custom_fields]
     if fields.present?
       user.custom_fields = user.custom_fields.merge(fields)
     end
+
+    saved = nil
 
     User.transaction do
       if attributes.key?(:muted_usernames)
         update_muted_users(attributes[:muted_usernames])
       end
 
-      (!save_options || user.user_option.save) && user_profile.save && user.save
+      saved = (!save_options || user.user_option.save) && user_profile.save && user.save
+
+      if saved
+        # log name changes
+        if attributes[:name].present? && old_user_name.downcase != attributes.fetch(:name).downcase
+          StaffActionLogger.new(@actor).log_name_change(user.id, old_user_name, attributes.fetch(:name))
+        elsif attributes[:name].blank? && old_user_name.present?
+          StaffActionLogger.new(@actor).log_name_change(user.id, old_user_name, "")
+        end
+      end
     end
+
+    DiscourseEvent.trigger(:user_updated, user) if saved
+    saved
   end
 
   def update_muted_users(usernames)

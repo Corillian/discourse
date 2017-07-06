@@ -4,7 +4,7 @@ moduleForWidget('actions-summary');
 
 widgetTest('listing actions', {
   template: '{{mount-widget widget="actions-summary" args=args}}',
-  setup() {
+  beforeEach() {
     this.set('args', {
       actionsSummary: [
         {id: 1, action: 'off_topic', description: 'very off topic'},
@@ -23,15 +23,15 @@ widgetTest('listing actions', {
 });
 
 widgetTest('undo', {
-  template: '{{mount-widget widget="actions-summary" args=args undoPostAction="undoPostAction"}}',
-  setup() {
+  template: '{{mount-widget widget="actions-summary" args=args undoPostAction=undoPostAction}}',
+  beforeEach() {
     this.set('args', {
       actionsSummary: [
         {action: 'off_topic', description: 'very off topic', canUndo: true},
       ]
     });
 
-    this.on('undoPostAction', () => this.undid = true);
+    this.set('undoPostAction', () => this.undid = true);
   },
   test(assert) {
     assert.equal(this.$('.post-actions .post-action').length, 1);
@@ -45,7 +45,7 @@ widgetTest('undo', {
 
 widgetTest('deferFlags', {
   template: '{{mount-widget widget="actions-summary" args=args deferPostActionFlags="deferPostActionFlags"}}',
-  setup() {
+  beforeEach() {
     this.set('args', {
       actionsSummary: [
         {action: 'off_topic', description: 'very off topic', canDeferFlags: true, count: 1},
@@ -66,7 +66,7 @@ widgetTest('deferFlags', {
 
 widgetTest('post deleted', {
   template: '{{mount-widget widget="actions-summary" args=args}}',
-  setup() {
+  beforeEach() {
     this.set('args', {
       deleted_at: "2016-01-01",
       deletedByUsername: 'eviltrout',

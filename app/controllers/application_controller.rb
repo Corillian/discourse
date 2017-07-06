@@ -9,12 +9,16 @@ require_dependency 'json_error'
 require_dependency 'letter_avatar'
 require_dependency 'distributed_cache'
 require_dependency 'global_path'
+require_dependency 'secure_session'
+require_dependency 'topic_query'
 
 class ApplicationController < ActionController::Base
   include CurrentUser
   include CanonicalURL::ControllerExtensions
   include JsonError
   include GlobalPath
+
+  attr_reader :theme_key
 
   serialization_scope :guardian
 
@@ -25,19 +29,18 @@ class ApplicationController < ActionController::Base
   #  and then raising a CSRF exception
   def handle_unverified_request
     # NOTE: API key is secret, having it invalidates the need for a CSRF token
-    unless is_api?
+    unless is_api? || is_user_api?
       super
       clear_current_user
-      render text: "['BAD CSRF']", status: 403
+      render plain: "[\"BAD CSRF\"]", status: 403
     end
   end
 
+  before_filter :handle_theme
   before_filter :set_current_user_for_logs
   before_filter :clear_notifications
   before_filter :set_locale
   before_filter :set_mobile_view
-  before_filter :inject_preview_style
-  before_filter :disable_customization
   before_filter :block_if_readonly_mode
   before_filter :authorize_mini_profiler
   before_filter :preload_json
@@ -45,6 +48,7 @@ class ApplicationController < ActionController::Base
   before_filter :check_xhr
   after_filter  :add_readonly_header
   after_filter  :perform_refresh_session
+  after_filter  :dont_cache_page
 
   layout :set_layout
 
@@ -62,6 +66,18 @@ class ApplicationController < ActionController::Base
 
   def perform_refresh_session
     refresh_session(current_user)
+  end
+
+  def immutable_for(duration)
+    response.cache_control[:max_age] = duration.to_i
+    response.cache_control[:public] = true
+    response.cache_control[:extras] = ["immutable"]
+  end
+
+  def dont_cache_page
+    if !response.headers["Cache-Control"] && response.cache_control.blank?
+      response.headers["Cache-Control"] = "no-store, must-revalidate, no-cache, private"
+    end
   end
 
   def slow_platform?
@@ -103,6 +119,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  rescue_from ActiveRecord::StatementInvalid do |e|
+    Discourse.reset_active_record_cache_if_needed(e)
+    raise e
+  end
+
   class PluginDisabled < StandardError; end
 
   # Handles requests for giant IDs that throw pg exceptions
@@ -123,12 +144,16 @@ class ApplicationController < ActionController::Base
   end
 
   rescue_from Discourse::ReadOnly do
-    render_json_error I18n.t('read_only_mode_enabled'), type: :read_only, status: 405
+    render_json_error I18n.t('read_only_mode_enabled'), type: :read_only, status: 503
   end
 
   def rescue_discourse_actions(type, status_code, include_ember=false)
 
-    if (request.format && request.format.json?) || (request.xhr?)
+    show_json_errors = (request.format && request.format.json?) ||
+                       (request.xhr?) ||
+                       ((params[:external_id] || '').ends_with? '.json')
+
+    if show_json_errors
       # HACK: do not use render_json_error for topics#show
       if request.params[:controller] == 'topics' && request.params[:action] == 'show'
         return render status: status_code, layout: false, text: (status_code == 404 || status_code == 410) ? build_not_found_page(status_code) : I18n.t(type)
@@ -136,7 +161,7 @@ class ApplicationController < ActionController::Base
 
       render_json_error I18n.t(type), type: type, status: status_code
     else
-      render text: build_not_found_page(status_code, include_ember ? 'application' : 'no_ember')
+      render html: build_not_found_page(status_code, include_ember ? 'application' : 'no_ember')
     end
   end
 
@@ -211,8 +236,8 @@ class ApplicationController < ActionController::Base
     preload_anonymous_data
 
     if current_user
-      preload_current_user_data
       current_user.sync_notification_channel_position
+      preload_current_user_data
     end
   end
 
@@ -220,28 +245,49 @@ class ApplicationController < ActionController::Base
     session[:mobile_view] = params[:mobile_view] if params.has_key?(:mobile_view)
   end
 
-  def inject_preview_style
-    style = request['preview-style']
+  NO_CUSTOM = "no_custom".freeze
+  NO_PLUGINS = "no_plugins".freeze
+  ONLY_OFFICIAL = "only_official".freeze
+  SAFE_MODE = "safe_mode".freeze
 
-    if style.nil?
-      session[:preview_style] = cookies[:preview_style]
-    else
-      cookies.delete(:preview_style)
+  def resolve_safe_mode
+    safe_mode = params[SAFE_MODE]
+    if safe_mode
+      request.env[NO_CUSTOM] = !!safe_mode.include?(NO_CUSTOM)
+      request.env[NO_PLUGINS] = !!safe_mode.include?(NO_PLUGINS)
+      request.env[ONLY_OFFICIAL] = !!safe_mode.include?(ONLY_OFFICIAL)
+    end
+  end
 
-      if style.blank? || style == 'default'
-        session[:preview_style] = nil
-      else
-        session[:preview_style] = style
-        if request['sticky']
-          cookies[:preview_style] = style
-        end
+  def handle_theme
+
+    return if request.xhr? || request.format.json?
+    return if request.method != "GET"
+
+    resolve_safe_mode
+    return if request.env[NO_CUSTOM]
+
+    theme_key = flash[:preview_theme_key]
+
+    user_option = current_user&.user_option
+
+    unless theme_key
+      key, seq = cookies[:theme_key]&.split(",")
+      if key && seq && seq.to_i == user_option&.theme_key_seq.to_i
+        theme_key = key
       end
     end
 
-  end
+    theme_key ||= user_option&.theme_key
 
-  def disable_customization
-    session[:disable_customization] = params[:customization] == "0" if params.has_key?(:customization)
+    if theme_key && !guardian.allow_theme?(theme_key)
+      theme_key = nil
+    end
+
+    theme_key ||= SiteSetting.default_theme_key
+    theme_key = nil if theme_key.blank?
+
+    @theme_key = request.env[:resolved_theme_key] = theme_key
   end
 
   def guardian
@@ -348,6 +394,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
+
+  def secure_session
+    SecureSession.new(session["secure_session_id"] ||= SecureRandom.hex)
+  end
+
   private
 
     def locale_from_header
@@ -375,20 +426,28 @@ class ApplicationController < ActionController::Base
 
     def preload_current_user_data
       store_preloaded("currentUser", MultiJson.dump(CurrentUserSerializer.new(current_user, scope: guardian, root: false)))
-      report = TopicTrackingState.report(current_user.id)
+      report = TopicTrackingState.report(current_user)
       serializer = ActiveModel::ArraySerializer.new(report, each_serializer: TopicTrackingStateSerializer)
       store_preloaded("topicTrackingStates", MultiJson.dump(serializer))
     end
 
     def custom_html_json
       target = view_context.mobile_view? ? :mobile : :desktop
-      data = {
-        top: SiteCustomization.custom_top(session[:preview_style], target),
-        footer: SiteCustomization.custom_footer(session[:preview_style], target)
-      }
+      data = if @theme_key
+               {
+                top: Theme.lookup_field(@theme_key, target, "after_header"),
+                footer: Theme.lookup_field(@theme_key, target, "footer")
+               }
+             else
+                {}
+             end
 
       if DiscoursePluginRegistry.custom_html
         data.merge! DiscoursePluginRegistry.custom_html
+      end
+
+      DiscoursePluginRegistry.html_builders.each do |name, blk|
+        data[name] = blk.call(self)
       end
 
       MultiJson.dump(data)
@@ -402,7 +461,7 @@ class ApplicationController < ActionController::Base
       json = ApplicationController.banner_json_cache["json"]
 
       unless json
-        topic = Topic.where(archetype: Archetype.banner).limit(1).first
+        topic = Topic.where(archetype: Archetype.banner).first
         banner = topic.present? ? topic.banner : {}
         ApplicationController.banner_json_cache["json"] = json = MultiJson.dump(banner)
       end
@@ -422,7 +481,7 @@ class ApplicationController < ActionController::Base
     #   type   - a machine-readable description of the error
     #   status - HTTP status code to return
     def render_json_error(obj, opts={})
-      opts = { status: opts } if opts.is_a?(Fixnum)
+      opts = { status: opts } if opts.is_a?(Integer)
       render json: MultiJson.dump(create_errors_json(obj, opts[:type])), status: opts[:status] || 422
     end
 
@@ -458,7 +517,7 @@ class ApplicationController < ActionController::Base
     end
 
     def mini_profiler_enabled?
-      defined?(Rack::MiniProfiler) && guardian.is_developer?
+      defined?(Rack::MiniProfiler) && (guardian.is_developer? || Rails.env.development?)
     end
 
     def authorize_mini_profiler
@@ -468,7 +527,7 @@ class ApplicationController < ActionController::Base
 
     def check_xhr
       # bypass xhr check on PUT / POST / DELETE provided api key is there, otherwise calling api is annoying
-      return if !request.get? && is_api?
+      return if !request.get? && (is_api? || is_user_api?)
       raise RenderEmpty.new unless ((request.format && request.format.json?) || request.xhr?)
     end
 
@@ -495,8 +554,9 @@ class ApplicationController < ActionController::Base
     def redirect_to_login_if_required
       return if current_user || (request.format.json? && is_api?)
 
-      # redirect user to the SSO page if we need to log in AND SSO is enabled
       if SiteSetting.login_required?
+        flash.keep
+
         if SiteSetting.enable_sso?
           # save original URL in a session so we can redirect after login
           session[:destination_url] = destination_url
@@ -524,6 +584,7 @@ class ApplicationController < ActionController::Base
       @slug.tr!('-',' ')
       render_to_string status: status, layout: layout, formats: [:html], template: '/exceptions/not_found'
     end
+
 
   protected
 

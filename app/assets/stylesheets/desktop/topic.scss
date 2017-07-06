@@ -38,7 +38,6 @@
   }
   h1 {
     font-size: 1.8em;
-    margin: 0;
     line-height: 1.2em;
     overflow: hidden;
     a {color: $primary;}
@@ -80,11 +79,11 @@
   }
 }
 
-#topic-closing-info {
+.topic-status-info {
   border-top: 1px solid dark-light-diff($primary, $secondary, 90%, -75%);
   padding-top: 10px;
   height: 20px;
-  width: 757px;
+  max-width: 757px;
 }
 
 #topic-progress-wrapper {
@@ -210,12 +209,12 @@
 }
 
 @media all
-and (max-width : 1000px) {
+and (min-width: 400px) {
 
   #topic-progress, #topic-progress-expanded {
-      right: 0;
-      left: 0;
-    }
+    right: 0;
+    left: 0;
+  }
 
   #topic-progress-wrapper {
     right: 160px;
@@ -230,7 +229,6 @@ and (max-width : 1000px) {
   }
 }
 
-
 @media all
 and (max-width : 485px) {
 
@@ -243,4 +241,3 @@ and (max-width : 485px) {
     max-width: 100%;
   }
 }
-

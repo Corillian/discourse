@@ -2,6 +2,21 @@ require 'rails_helper'
 
 describe InvitesController do
 
+  context '.show' do
+    it "shows error if invite not found" do
+      get :show, id: 'nopeNOPEnope'
+      expect(response).to render_template(layout: 'no_ember')
+      expect(flash[:error]).to be_present
+    end
+
+    it "renders the accept invite page if invite exists" do
+      i = Fabricate(:invite)
+      get :show, id: i.invite_key
+      expect(response).to render_template(layout: 'application')
+      expect(flash[:error]).to be_nil
+    end
+  end
+
   context '.destroy' do
 
     it 'requires you to be logged in' do
@@ -59,6 +74,8 @@ describe InvitesController do
         invite.reload
         post :create, email: invite.email
         expect(response).not_to be_success
+        json = JSON.parse(response.body)
+        expect(json["failed"]).to be_present
       end
 
       it "allows admins to invite to groups" do
@@ -75,6 +92,14 @@ describe InvitesController do
         invite.reload
         post :create, email: invite.email
         expect(response).to be_success
+      end
+
+      it "responds with error message in case of validation failure" do
+        log_in(:admin)
+        post :create, email: "test@mailinator.com"
+        expect(response).not_to be_success
+        json = JSON.parse(response.body)
+        expect(json["errors"]).to be_present
       end
     end
 
@@ -123,15 +148,18 @@ describe InvitesController do
     end
   end
 
-  context '.show' do
+  context '.perform_accept_invitation' do
 
     context 'with an invalid invite id' do
       before do
-        get :show, id: "doesn't exist"
+        xhr :put, :perform_accept_invitation, id: "doesn't exist", format: :json
       end
 
       it "redirects to the root" do
-        expect(response).to redirect_to("/")
+        expect(response).to be_success
+        json = JSON.parse(response.body)
+        expect(json["success"]).to eq(false)
+        expect(json["message"]).to eq(I18n.t('invite.not_found'))
       end
 
       it "should not change the session" do
@@ -144,11 +172,14 @@ describe InvitesController do
       let(:invite) { topic.invite_by_email(topic.user, "iceking@adventuretime.ooo") }
       let(:deleted_invite) { invite.destroy; invite }
       before do
-        get :show, id: deleted_invite.invite_key
+        xhr :put, :perform_accept_invitation, id: deleted_invite.invite_key, format: :json
       end
 
       it "redirects to the root" do
-        expect(response).to redirect_to("/")
+        expect(response).to be_success
+        json = JSON.parse(response.body)
+        expect(json["success"]).to eq(false)
+        expect(json["message"]).to eq(I18n.t('invite.not_found'))
       end
 
       it "should not change the session" do
@@ -160,51 +191,93 @@ describe InvitesController do
       let(:topic) { Fabricate(:topic) }
       let(:invite) { topic.invite_by_email(topic.user, "iceking@adventuretime.ooo") }
 
-
       it 'redeems the invite' do
         Invite.any_instance.expects(:redeem)
-        get :show, id: invite.invite_key
+        xhr :put, :perform_accept_invitation, id: invite.invite_key, format: :json
       end
 
       context 'when redeem returns a user' do
         let(:user) { Fabricate(:coding_horror) }
 
         context 'success' do
+          subject { xhr :put, :perform_accept_invitation, id: invite.invite_key, format: :json }
+
           before do
             Invite.any_instance.expects(:redeem).returns(user)
-            get :show, id: invite.invite_key
           end
 
           it 'logs in the user' do
+            events = DiscourseEvent.track_events { subject }
+
+            expect(events.map { |event| event[:event_name] }).to include(
+              :user_logged_in, :user_first_logged_in
+            )
+
             expect(session[:current_user_id]).to eq(user.id)
           end
 
           it 'redirects to the first topic the user was invited to' do
-            expect(response).to redirect_to(topic.relative_url)
+            subject
+            json = JSON.parse(response.body)
+            expect(json["success"]).to eq(true)
+            expect(json["redirect_to"]).to eq(topic.relative_url)
           end
         end
 
-        context 'welcome message' do
+        context 'failure' do
+          subject { xhr :put, :perform_accept_invitation, id: invite.invite_key, format: :json }
+
+          it "doesn't log in the user if there's a validation error" do
+            user.errors.add(:password, :common)
+            Invite.any_instance.expects(:redeem).raises(ActiveRecord::RecordInvalid.new(user))
+            subject
+            expect(response).to be_success
+            json = JSON.parse(response.body)
+            expect(json["success"]).to eq(false)
+            expect(json["errors"]["password"]).to be_present
+          end
+        end
+
+        context '.post_process_invite' do
           before do
             Invite.any_instance.stubs(:redeem).returns(user)
             Jobs.expects(:enqueue).with(:invite_email, has_key(:invite_id))
+            user.password_hash = nil
           end
 
           it 'sends a welcome message if set' do
             user.send_welcome_message = true
             user.expects(:enqueue_welcome_message).with('welcome_invite')
-            get :show, id: invite.invite_key
+            Jobs.expects(:enqueue).with(:invite_password_instructions_email, has_entries(username: user.username))
+            xhr :put, :perform_accept_invitation, id: invite.invite_key, format: :json
           end
 
-          it "doesn't send a welcome message if not set" do
+          it "sends password reset email if password is not set" do
             user.expects(:enqueue_welcome_message).with('welcome_invite').never
-            get :show, id: invite.invite_key
+            Jobs.expects(:enqueue).with(:invite_password_instructions_email, has_entries(username: user.username))
+            xhr :put, :perform_accept_invitation, id: invite.invite_key, format: :json
           end
 
+          it "does not send password reset email if sso is enabled" do
+            SiteSetting.enable_sso = true
+            Jobs.expects(:enqueue).with(:invite_password_instructions_email, has_key(:username)).never
+            xhr :put, :perform_accept_invitation, id: invite.invite_key, format: :json
+          end
+
+          it "does not send password reset email if local login is disabled" do
+            SiteSetting.enable_local_logins = false
+            Jobs.expects(:enqueue).with(:invite_password_instructions_email, has_key(:username)).never
+            xhr :put, :perform_accept_invitation, id: invite.invite_key, format: :json
+          end
+
+          it 'sends an activation email if password is set' do
+            user.password_hash = 'qaw3ni3h2wyr63lakw7pea1nrtr44pls'
+            Jobs.expects(:enqueue).with(:invite_password_instructions_email, has_key(:username)).never
+            Jobs.expects(:enqueue).with(:critical_user_email, has_entries(type: :signup, user_id: user.id))
+            xhr :put, :perform_accept_invitation, id: invite.invite_key, format: :json
+          end
         end
-
       end
-
     end
 
     context 'new registrations are disabled' do
@@ -214,7 +287,7 @@ describe InvitesController do
 
       it "doesn't redeem the invite" do
         Invite.any_instance.stubs(:redeem).never
-        get :show, id: invite.invite_key
+        put :perform_accept_invitation, id: invite.invite_key
       end
     end
 
@@ -225,7 +298,7 @@ describe InvitesController do
 
       it "doesn't redeem the invite" do
         Invite.any_instance.stubs(:redeem).never
-        get :show, id: invite.invite_key
+        put :perform_accept_invitation, id: invite.invite_key
       end
     end
   end
@@ -320,10 +393,20 @@ describe InvitesController do
 
         before do
           Invite.expects(:redeem_from_token).with(invite.invite_key, user.email, nil, nil, topic.id).returns(user)
-          get :redeem_disposable_invite, email: user.email, token: invite.invite_key, topic: topic.id
         end
 
         it 'logs in user' do
+          events = DiscourseEvent.track_events do
+            get :redeem_disposable_invite,
+              email: user.email,
+              token: invite.invite_key,
+              topic: topic.id
+          end
+
+          expect(events.map { |event| event[:event_name] }).to include(
+            :user_logged_in, :user_first_logged_in
+          )
+
           expect(session[:current_user_id]).to eq(user.id)
         end
 
@@ -367,33 +450,10 @@ describe InvitesController do
 
   end
 
-  context '.check_csv_chunk' do
+  context '.upload_csv' do
     it 'requires you to be logged in' do
       expect {
-        post :check_csv_chunk
-      }.to raise_error(Discourse::NotLoggedIn)
-    end
-
-    context 'while logged in' do
-      let(:resumableChunkNumber) { 1 }
-      let(:resumableCurrentChunkSize) { 46 }
-      let(:resumableIdentifier) { '46-discoursecsv' }
-      let(:resumableFilename) { 'discourse.csv' }
-
-      it "fails if you can't bulk invite to the forum" do
-        log_in
-        post :check_csv_chunk, resumableChunkNumber: resumableChunkNumber, resumableCurrentChunkSize: resumableCurrentChunkSize.to_i, resumableIdentifier: resumableIdentifier, resumableFilename: resumableFilename
-        expect(response).not_to be_success
-      end
-
-    end
-
-  end
-
-  context '.upload_csv_chunk' do
-    it 'requires you to be logged in' do
-      expect {
-        post :upload_csv_chunk
+        xhr :post, :upload_csv
       }.to raise_error(Discourse::NotLoggedIn)
     end
 
@@ -402,27 +462,19 @@ describe InvitesController do
       let(:file) do
         ActionDispatch::Http::UploadedFile.new({ filename: 'discourse.csv', tempfile: csv_file })
       end
-      let(:resumableChunkNumber) { 1 }
-      let(:resumableChunkSize) { 1048576 }
-      let(:resumableCurrentChunkSize) { 46 }
-      let(:resumableTotalSize) { 46 }
-      let(:resumableType) { 'text/csv' }
-      let(:resumableIdentifier) { '46-discoursecsv' }
-      let(:resumableFilename) { 'discourse.csv' }
-      let(:resumableRelativePath) { 'discourse.csv' }
+      let(:filename) { 'discourse.csv' }
 
       it "fails if you can't bulk invite to the forum" do
         log_in
-        post :upload_csv_chunk, file: file, resumableChunkNumber: resumableChunkNumber.to_i, resumableChunkSize: resumableChunkSize.to_i, resumableCurrentChunkSize: resumableCurrentChunkSize.to_i, resumableTotalSize: resumableTotalSize.to_i, resumableType: resumableType, resumableIdentifier: resumableIdentifier, resumableFilename: resumableFilename
+        xhr :post, :upload_csv, file: file, name: filename
         expect(response).not_to be_success
       end
 
-      it "allows admins to bulk invite" do
+      it "allows admin to bulk invite" do
         log_in(:admin)
-        post :upload_csv_chunk, file: file, resumableChunkNumber: resumableChunkNumber.to_i, resumableChunkSize: resumableChunkSize.to_i, resumableCurrentChunkSize: resumableCurrentChunkSize.to_i, resumableTotalSize: resumableTotalSize.to_i, resumableType: resumableType, resumableIdentifier: resumableIdentifier, resumableFilename: resumableFilename
+        xhr :post, :upload_csv, file: file, name: filename
         expect(response).to be_success
       end
-
     end
 
   end

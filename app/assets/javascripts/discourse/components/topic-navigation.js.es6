@@ -1,10 +1,18 @@
 import { observes } from 'ember-addons/ember-computed-decorators';
+import showModal from 'discourse/lib/show-modal';
 
 export default Ember.Component.extend({
   composerOpen: null,
-  info: Em.Object.create(),
+  info: null,
 
-  _checkSize() {
+  init() {
+    this._super();
+    this.set('info', Ember.Object.create());
+  },
+
+  _performCheckSize() {
+    if (!this.element || this.isDestroying || this.isDestroyed) { return; }
+
     let info = this.get('info');
 
     if (info.get('topicProgressExpanded')) {
@@ -37,6 +45,10 @@ export default Ember.Component.extend({
     }
   },
 
+  _checkSize() {
+    Ember.run.scheduleOnce('afterRender', this, this._performCheckSize);
+  },
+
   // we need to store this so topic progress has something to init with
   _topicScrolled(event) {
     this.set('info.prevEvent', event);
@@ -46,8 +58,16 @@ export default Ember.Component.extend({
   _expanded() {
     if (this.get('info.topicProgressExpanded')) {
       $(window).on('click.hide-fullscreen', (e) => {
-        if ( $(e.target).is('.topic-timeline') ||
-             !$(e.target).parents().is('.timeline-container, #topic-progress-wrapper')) {
+        let $target = $(e.target);
+        let $parents = $target.parents();
+        if ( !$target.is('.widget-button') &&
+             !$parents.is('.widget-button') &&
+             !$parents.is('.dropdown-menu') &&
+             (
+              $target.is('.topic-timeline') ||
+             !$parents.is('#topic-progress-wrapper')
+             )
+          ) {
           this._collapseFullscreen();
         }
       });
@@ -60,7 +80,7 @@ export default Ember.Component.extend({
   composerOpened() {
     this.set('composerOpen', true);
     // we need to do the check after animation is done
-    setTimeout(()=>this._checkSize(), 500);
+    Ember.run.later(() => this._checkSize(), 500);
   },
 
   composerClosed() {
@@ -79,19 +99,13 @@ export default Ember.Component.extend({
   },
 
   keyboardTrigger(e) {
-    if(e.type === "jump") {
-      bootbox.prompt(I18n.t('topic.progress.jump_prompt_long'), postIndex => {
-        if (postIndex === null) { return; }
-        this.sendAction('jumpToIndex', postIndex);
+    if (e.type === "jump") {
+      const controller = showModal('jump-to-post');
+      controller.setProperties({
+        topic: this.get('topic'),
+        postNumber: 1,
+        jumpToIndex: this.attrs.jumpToIndex
       });
-
-      // this is insanely hacky, for some reason shown event never fires,
-      // something is bust in bootbox
-      // TODO upgrade bootbox to see if this hack can be removed
-      setTimeout(()=>{
-        $('.bootbox.modal').trigger('shown');
-      },50);
-
     }
   },
 

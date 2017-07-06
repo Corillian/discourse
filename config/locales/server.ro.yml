@@ -27,14 +27,14 @@ ro:
   topics: "Subiecte"
   posts: "Postări"
   loading: "Se încarcă"
-  powered_by_html: 'Propulsat <a href="http://www.discourse.org">de Discourse</a>, Vizualizare optimă cu JavaScript activat'
   log_in: "Autentificare"
   purge_reason: "Cont șters automat, ca fiind abandonat, dezactivat."
   disable_remote_images_download_reason: "Descărcarea de imagini la distanță a fost dezactivată deoarece nu mai era spațiu suficient pe disc."
   anonymous: "Anonime"
+  remove_posts_deleted_by_author: "Șters de către autor"
   emails:
     incoming:
-      default_subject: "Email primit de la %{email}"
+      default_subject: "Acest subiect are nevoie de un titlu"
       show_trimmed_content: "Arată conținut restrâns."
       maximum_staged_user_per_email_reached: "Număr maxim de utilizatori în așteptare, pe email."
       errors:
@@ -71,7 +71,7 @@ ro:
       has_already_been_used: "a fost deja folosit"
       inclusion: nu este inclus in listă
       invalid: nu este valid
-      is_invalid: "este invalid; încearcă o descriere mai detaliată"
+      is_invalid: "pare neclar, e completă propoziția?"
       less_than: trebuie să fie mai mic decât %{count}
       less_than_or_equal_to: trebuie să fie mai mic sau egal cu %{count}
       not_a_number: nu este un număr
@@ -110,7 +110,10 @@ ro:
       default_categories_already_selected: "Nu poți selecta o categorie folosită într-o altă listă."
       s3_upload_bucket_is_required: "Nu poți activa încărcările pe S3 dacă nu ai introdus 's3_upload_bucket'."
   bulk_invite:
-    file_should_be_csv: "Fișierul încărcat ar trebui să fie în format csv sau txt."
+    file_should_be_csv: "Fișierul de încărcat trebuie să fie în format csv."
+    error: "A apărut o eroare la încărcarea acestui fișier. Te rugăm să încerci din nou, mai târziu."
+  topic_invite:
+    user_exists: "Ne pare rău, acest utilizator a fost deja invitat. Nu poți să inviți un utilizator la un subiect decât o singură dată."
   backup:
     operation_already_running: "O operație este în desfășurare. Nu poți începe alta nouă."
     backup_file_should_be_tar_gz: "Fișierul backup ar trebui să fie arhivat cu extensia .tar.gz."
@@ -129,6 +132,11 @@ ro:
   embed:
     start_discussion: "Pornește discuție"
     continue: "Continuă discuție"
+    error: "Eroare la încorporare"
+    referer: "Referent:"
+    mismatch: "Referentul nu corespunde nici uneia dintre următoarele gazde:"
+    no_hosts: "Nu s-a setat nicio gazdă pentru încorporare."
+    configure: "Configurează încorporarea"
     more_replies:
       one: "Încă un răspuns"
       few: "Încă %{count} răspunsuri"
@@ -169,9 +177,10 @@ ro:
   spamming_host: "Nu poți adăuga un link pentru acest domeniu."
   user_is_suspended: "Utilizatorii suspendați nu au dreptul de a posta."
   topic_not_found: "Ceva n-a mers bine. Poate că acest subiect a fost închis sau șters în timp ce te uitai la el?"
+  not_accepting_pms: "%{username} nu acceptă mesaje în acest moment."
   just_posted_that: "este prea asemănător cu ceea ce ați postat recent"
   invalid_characters: "conține caractere invalide"
-  is_invalid: "este invalid; încearcă o descriere mai detaliată"
+  is_invalid: "pare neclar, e completă propoziția?"
   next_page: "pagina următoare →"
   prev_page: "← pagina precedentă"
   page_num: "Pagina %{num}"
@@ -244,45 +253,26 @@ ro:
 
       Pentru detalii, [verifică regulile comune](/reguli). Acest panel va apărea doar pentru prima %{education_posts_text}.
     avatar: |
-      ### Ce-ai zice să adaugi o poză contului tău?
+      ### Ce zici de o poză atașată contului tău?
 
-      Ai postat câteva subiecte și răspunsuri, dar poza ta de profil nu este tot atât de unică pe cât ești tu - e doar o simplă literă.
+      Ai adăugat câteva comentarii și subiecte, dar poza ta de profil nu este unică, cum ești tu - este doar o literă.
 
-      Te-ai gândit să îți **[vizitezi profilul utilizator](%{profile_path})** și să încarci o poză care să te reprezinte?
+      Ai luat în considerare să **[îți actualizezi profilul](%{profile_path})** cu o imagine care te reprezintă?
 
-      Subiectele sunt mai ușor de urmărit și oamenii interesanți sunt mai ușor de găsit atunci când fiecare are o poză unică de profil,  în conversații!
-    sequential_replies: |
-      ### Ia în considerare ideea de a răspunde la câteva postări simultan
-
-      În loc să răspunzi secvențial la un subiect, poți să dai un singur răspuns care include citate din postări precedente sau referințe la @nume.
-
-      Îți poți edita răspunsul precedent pentru a adăuga un citat, după cum urmează: selectează textul și - când apare - apasă butonul <b>citează răspuns</b>.
-
-      E mai ușor pentru toată lumea să citească subiecte care au răspunsuri mai puține și de substanță, decât subiecte formate dintr-o grămadă de răspunsuri individuale, micuțe.
-    dominating_topic: |
-      ### Permite și altora să se alăture la conversație
-
-      Acest subiect este important pentru tine și &ndash; Ai postat mai mult de %{percent}% din răspunsuri aici.
-
-      Ești sigur că acorzi destul timp și altora ca să-și exprime punctul de vedere?
-    too_many_replies: |
-      ### Ai atins limita maximă de răspunsuri pentru acest subiect
-
-      Ne pare rău, dar utilizatorii noi au un număr limitat de %{newuser_max_replies_per_topic} răspunsuri într-un subiect.
-
-      Nu adăuga un nou răspuns, încearcă mai bine să editezi un răspuns precedent, sau să vizitează o altă discuție.
+      Este mai ușor să urmărești o discuție și să găsești oameni interesanți într-o conversație atunci când fiecare are o imagine unică!
     reviving_old_topic: |
-      ### Reînvii acest subiect?
+      ### Reînvii această discuție?
 
-      Ultimul răspuns la acest subiect a fost dat acum %{days} (de) zile. Răspunsul tău va promova subiectul în vârful listei și va notifica pe toată lumea ce a fost implicată anterior în conversație.
+      Ultimul răspuns în această discuție a fost în urmă cu **%{days}** zile. Răspunsul tău va pune discuția pe prima pagină și îi va notifica pe toți cei ce au fost implicați în discuție.
 
-      Ești sigur că dorești să continui această conversație?
+      Ești sigur că vrei să continui această discuție veche?
   activerecord:
     attributes:
       category:
         name: "Numele categoriei"
       topic:
         title: 'Titlu'
+        featured_link: 'Link promovat'
       post:
         raw: "Corp"
       user_profile:
@@ -296,6 +286,9 @@ ro:
               too_many_users: "Poți trimite avertizări la un singur utilizator odată."
               cant_send_pm: "Ne pare rău, nu poți trimite un mesaj privat acestui utilizator."
               no_user_selected: "Trebuie selectat un nume de utilizator valid."
+            featured_link:
+              invalid: "e invalid. URL-ul trebuie să includă http:// sau https://."
+              invalid_category: "nu poate fi editat în această categorie."
         user:
           attributes:
             password:
@@ -303,22 +296,23 @@ ro:
               same_as_username: "este identică cu nume utilizator. Te rugăm să folosești o parolă mai sigură."
               same_as_email: "este identică cu emailul. Te rugăm să folosești o parolă mai sigură."
               same_as_current: "este identică cu parola curentă."
+              unique_characters: "are prea multe caractere repetate. Te rugăm să folosești o parolă mai sigură."
             ip_address:
               signup_not_allowed: "Înscrierea de pe acest cont nu este permisă."
         color_scheme_color:
           attributes:
             hex:
               invalid: "nu este o culoare validă"
-        post_reply:
-          base:
-            different_topic: "Postarea și răspunsul trebuie să aparțină aceluiași subiect."
         web_hook:
           attributes:
             payload_url:
               invalid: "URL-ul este invalid. URL-ul trebuie să includă http:// sau https:// , iar caracterul spațiu nu este permis."
+        custom_emoji:
+          attributes:
+            name:
+              taken: este deja folosit de un alt emoji
       <<: *errors
   user_profile:
-    no_info_me: "<div class='missing-profile'>câmpul Despre mine din profilul tău este momentan gol.  <a href='/users/%{username_lower}/preferences/about-me'>Dorești să-l completezi?</a></div>"
     no_info_other: "<div class='missing-profile'>%{name} încă nu a introdus nimic în câmpul Despre mine din profilul său</div>"
   vip_category_name: "Sufragerie"
   vip_category_description: "O categorie dedicată exclusiv celor cu nivelul de încredere 3 sau mai mare"
@@ -326,7 +320,6 @@ ro:
   meta_category_description: "Discuții despre acest forum, organizare, funcționare și cum îl putem îmbunătăți."
   staff_category_name: "Echipa"
   staff_category_description: "Categorie privată pentru discuțiile personalului. Subiectele sunt vizibile numai pentru admini și moderatori."
-  assets_topic_body: "Acesta este un subiect permanent, vizibil doar pentru admini și echipă, care are ca scop stocarea imaginilor și fișierelor folosite la designul forumului. Nu îl șterge!\n\n\nIată cum se lucrează:\n\n\n1. Răspunde la acest subiect.\n2. Încarcă aici toate imaginile dorite pentru logouri, iconițe și așa mai departe. (Folosește iconița de încărcare din bara editorului de discuție, folosește drag-and-drop sau lipește imaginile.)\n3. Aprobă răspunsul pentru a-l posta.\n4. Click dreapta pe imaginile din noua postare pentru a obține calea spre imaginile încărcate, sau click pe icoana de editare pentru a edita postarea și a obține calea către imagini. Copiază calea imaginii.\n5. Lipește calea imaginii în [Setări principale](/admin/site_settings/category/required).\n\n\nDacă dorești să activezi încărcarea unor tipuri multiple de fișiere, editează `extensii_autorizate` în secțiunea [setări fișiere](/admin/site_settings/category/files)."
   lounge_welcome:
     title: "Bine ai venit în sufragerie"
     body: |2
@@ -391,11 +384,11 @@ ro:
       create_topic: "Ai atins numărul maxim de subiecte. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
       create_post: "Răspunzi prea rapid. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
       delete_post: "ștergi postările prea rapid. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
+      public_group_membership: "Ieși/intri din/în grupuri prea frecvent. Te rugăm așteaptă %{time_left} până să încerci din nou."
       topics_per_day: "Ai atins numărul maxim de subiecte noi pe ziua de azi. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
       pms_per_day: "Ai atins numărul maxim de mesaje pe ziua de azi. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
       create_like: "Ai atins numărul maxim de aprecieri pe ziua de azi. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
       create_bookmark: "Ai atins numărul maxim de semne de carte pe ziua de azi. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
-      edit_post: "Ai atins numărul maxim de editări pe ziua de azi. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
       live_post_counts: "Ceri prea rapid contorizarea live a numărului de postări. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
       unsubscribe_via_email: "Ai atins numărul maxim de dezabonări prin email pe ziua de azi. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
       topic_invitations_per_day: "Ai atins numărul maxim de invitații la subiecte pe ziua de azi. Te rugăm să aștepți %{time_left} înainte să încerci din nou."
@@ -513,7 +506,6 @@ ro:
     title: 'Resetează parola'
     success: "Ți-ai schimbat cu succes parola și acum ești autentificat."
     success_unapproved: "Ți-ai schimbat cu succes parola."
-    continue: "Continuă spre %{site_name}"
   change_email:
     confirmed: "Emailul tău a fost actualizat."
     please_continue: "Continuă la %{site_name}"
@@ -531,6 +523,13 @@ ro:
     welcome_to: "Bine ai venit pe %{site_name}!"
     approval_required: "Un moderator trebuie să aprobe manual contul înainte să poți accesa forumul. Vei primi un email imediat ce contul ți-a fost aprobat!"
     missing_session: "Nu putem detecta dacă contul tău a fost deja creat. Te rugăm să verifici că ai cookie-urile activate. "
+    activated: "Acest cont a fost deja activat."
+    admin_confirm:
+      title: "Confirmă contul de Administrator"
+      description: "Eșți sigur că vrei ca <b>%{target_username}</b> să fie administrator?"
+      grant: "Acordă titlu de admin"
+      complete: "<b>%{target_username}</b> este administrator."
+      back_to: "Întoarce-te la %{title}"
   post_action_types:
     off_topic:
       title: 'În afara subiectului'
@@ -538,7 +537,6 @@ ro:
       long_form: 'marcat cu marcaj de avertizare ca fiind în afara subiectului'
     spam:
       title: 'Spam'
-      description: 'Această postare este o reclamă. Nu este folositoare sau relevantă în subiectul curent, ci are o natură promoțională.'
       long_form: 'marchează ca spam'
       email_title: '"%{title}" a fost marcat cu marcaj de avertizare spam'
       email_body: "%{link}\n\n%{message}"
@@ -570,6 +568,13 @@ ro:
       title: 'Votează'
       description: 'Votează pentru această postare'
       long_form: 'a votat pentru această postare'
+  user_activity:
+    no_bookmarks:
+      self: "Nu ai nicio postare cu semn de carte. Folosirea semnelor de carte pentru postări permite accesarea lor ulterioară într-un mod facil. "
+      others: "Nu există semne de carte."
+    no_likes_given:
+      self: "Nu ai apreciat nicio postare."
+      others: "Nu există postări apreciate."
   topic_flag_types:
     spam:
       title: 'Spam'
@@ -598,7 +603,6 @@ ro:
         remove: "Acest subiect nu mai este un banner. Nu va mai apărea în susul fiecărei pagini."
   unsubscribed:
     title: "Te-ai dezabonat!"
-    description: "Te-ai dezabonat. Pentru a-ți schimba adresa de email <a href='%{url}'>vizitează preferințe utilizator</a>."
     topic_description: "Pentru a te abona din nou la %{link}, folosește controlul de notificări din partea dreaptă-jos a subiectului"
   unsubscribe:
     title: "Dezabonare"
@@ -616,9 +620,16 @@ ro:
     authorize: "Autorizează"
     read: "citire"
     read_write: "citire/scriere"
-    description: "Dorești să îi acorzi aplicației \"%{application_name}\" %{access} acces la contul tău?"
+    description: "„%{application_name}” cere accesul la contul tău de:"
     no_trust_level: "Ne pare rău, nu ai nivelul de încredere necesar pentru a accesa API utilizator"
     generic_error: "Ne pare rău, nu putem să emitem chei API utilizator: această funcționalitate este probabil dezactivată din administrarea site-ului"
+    scopes:
+      message_bus: "Actualizări directe (live)"
+      notifications: "Citește și șterge notificările"
+      push: "Trimite notificările către servicii externe"
+      session_info: "Citește informațiile despre sesiunea utilizatorului"
+      read: "Citește tot"
+      write: "Scrie tot"
   reports:
     visits:
       title: "Vizite ale utilizatorilor"
@@ -770,11 +781,8 @@ ro:
     facebook_config_warning: 'Serverul e configurat să permită înscrierea și autentificarea cu Facebook (enable_facebook_logins), dar app id și valoarea app secret nu sunt setate. Mergi la <a href="/admin/site_settings">Setările site-ului</a> și modifică setările. <a href="https://meta.discourse.org/t/configuring-facebook-login-for-discourse/13394" target="_blank">Vizualizează ghidul pentru mai multe informații</a>.'
     twitter_config_warning: 'Serverul e configurat să permită înscrierea și autentificarea cu Twitter (enable_twitter_logins),dar cheia și valoarea secretă nu sunt setate. Mergi la <a href="/admin/site_settings">Setările site-ului</a> și modifică setarea. <a href="https://meta.discourse.org/t/configuring-twitter-login-for-discourse/13395" target="_blank">Vizualizează ghidul pentru mai multe informații</a>.'
     github_config_warning: 'Serverul e configurat să permită înscrierea și autentificarea cu GitHub (enable_github_logins), dar id-ul de client și valorile secrete nu sunt setate. Mergi la <a href="/admin/site_settings">Setările site-ului</a> și modifică setarea. <a href="https://meta.discourse.org/t/configuring-github-login-for-discourse/13745" target="_blank">Vizualizează ghidul pentru mai multe informații</a>.'
-    s3_config_warning: 'Serverul este configurat să încarce fișierele către s3, dar cel puțin una din următoarele setări nu este potrivită: id_cheie_acces_s3, cheia_acces_secret_s3 sau loc_încărcare_s3. Mergi la <a href="/admin/site_settings">Setările site-ului</a> și actualizează setările. <a href="http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank">Vezi "Cum se fac încărcările de imagine pe S3?" pentru a afla mai multe</a>.'
-    s3_backup_config_warning: 'Serverul este configurat să încarce backup-urile pe opțiunea s3, dar cel puțin una dintre setările următoare nu este completată: s3_access_key_id, s3_secret_access_key sau s3_backup_bucket. Mergi la <a href="/admin/site_settings">Setările site-ului</a> și actualizează setările. <a href="http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank">Pentru mai multe informații, vizualizează "Cum să setezi încărcările de imagini pe opțiunea S3"</a>.'
     image_magick_warning: 'Serverul este configurat să creeze thumbnail-uri din imagini mari, dar ImageMagick nu e instalat. Instalează ImageMagick <a href="http://www.imagemagick.org/script/binary-releases.php" ținta="_blank">descarcă ultima versiune</a>.'
     failing_emails_warning: 'Există %{num_failed_jobs} (de) sarcini email care au eșuat. Verifică app.yml și asigură-te că setările serverului de mail sunt corecte. <a href="/sidekiq/retries" target="_blank">Vizualizează sarcini eșuate în Sidekiq</a>.'
-    consumer_email_warning: "Site-ul tău e configurat să folosească Gmail (sau alt serviciu de email) pentru a trimite emailuri. <a href='http://support.google.com/a/bin/answer.py?hl=en&answer=166852' tinta='_blank'>Gmail limitează numărul de email-uri trimise</a>. Folosește un provider de mailuri ca mandrill.com pentru a asigura trimiterea mail-urilor."
     subfolder_ends_in_slash: "Setările subfolderului sunt incorecte; DISCOURSE_RELATIVE_URL_ROOT se termină cu slash."
     email_polling_errored_recently:
       one: "Email polling a generat o eroare în ultimele 24 de ore. Vizualizează <a href='/logs' target='_blank'>rapoartele</a> pentru mai multe detalii."
@@ -786,6 +794,7 @@ ro:
     poll_pop3_auth_error: "Conexiunea la serverul POP3 a eșuat cu o eroare de autentificare. Te rugăm să verifici <a href='/admin/site_settings/category/email'>setările POP3</a>."
   site_settings:
     censored_words: "Cuvintele vor fi înlocuite automat cu &#9632;&#9632;&#9632;&#9632;"
+    censored_pattern: "Modelul Regex va fi înlocuit automat cu  &#9632;&#9632;&#9632;&#9632;"
     delete_old_hidden_posts: "șterge automat toate postările ascunse care stau ascunse mai mult de 30 de zile."
     default_locale: "Limba implicită a acestei instanțe de Discourse (ISO 639-1 Code)"
     allow_user_locale: "Permite utilizatorilor să-și aleagă singuri limba pentru interfață"
@@ -794,6 +803,8 @@ ro:
     min_first_post_length: "Numărul minim de caractere permis pentru prima postare (în corpul mesajului)"
     min_private_message_post_length: "Numărul minim de caractere permis pentru mesaje, per postare"
     max_post_length: "Lungimea maximă permisă a postării, în caractere"
+    topic_featured_link_enabled: "Activează postarea unui link cu subiecte."
+    show_topic_featured_link_in_digest: "Arată link-ul promovat al subiectului în rezumatul pe email."
     min_topic_title_length: "Minimul de caractere permis în titlul unui subiect"
     max_topic_title_length: "Maximul de caractere permis în titlul unui subiect"
     min_private_message_title_length: "Numărul minim de caractere permis în titlul unui mesaj"
@@ -821,8 +832,6 @@ ro:
     delete_removed_posts_after: "Postările șterse de către autor vor fi automat șterse după (n) de ore. Dacă este setat la 0, postările vor fi șterse imediat."
     max_image_width: "Maximul lățimii unui thumbnail într-o postare"
     max_image_height: "Maximul înălțimii unui thumbnail într-o postare"
-    category_featured_topics: "Numărul subiectelor afișate după categorie pe /pagina de categorii. După schimbarea valorii, e nevoie de până la 15 minute până ce pagina de categorii se va actualiza."
-    show_subcategory_list: "Arată lista de sub-categorii în loc de lista de subiecte când se introduce o categorie."
     fixed_category_positions: "Dacă e bifat, veți putea aranja categoriile într-o ordine fixă. Dacă e nebifat, categoriile sunt listate în ordinea activității."
     fixed_category_positions_on_create: "Dacă este bifat, ordonarea categoriilor va fi menținută în dialogul de creare a subiectelor (presupune fixed_category_positions)."
     add_rel_nofollow_to_user_content: "Adaugă atributul rel nofollow la toate conținuturile transmise de către utilizator, cu excepția link-urilor interne (includiv domeniile părinte). Dacă schimbi această setare, postările trebuie refăcute cu: \"rake posts:rebake\""
@@ -831,7 +840,8 @@ ro:
     show_pinned_excerpt_mobile: "Arată fragmente din subiectele fixate în vizualizarea de mobil."
     show_pinned_excerpt_desktop: "Arată fragmente din subiectele fixate în vizualizarea de desktop."
     post_onebox_maxlength: "Lungimea maximă a unei postări afișate în Onebox (în caractere)"
-    onebox_domains_whitelist: "O listă de domenii permise pentru oneboxing; aceste domenii ar trebui să suporte OpenGraph sau oEmbed. Testează-le la http://iframely.com/debug"
+    onebox_domains_blacklist: "O listă cu domenii care nu vor putea fi utilizate cu onebox."
+    max_oneboxes_per_post: "Numărul maxim de utilizări onebox per post."
     logo_url: "Imaginea logo din partea din dreapta sus a site-ului tău trebuie să aibă o formă dreptunghiulară. Dacă este lăsată goală, va fi afișat în locul ei un titlu al site-ului în formă text."
     digest_logo_url: "Imaginea logo alternativă folosită în partea de sus a emailurilor-rezumat de pe site-ul tău. Trebuie să aibă o forma de dreptunghi lat. Nu trebuie să  fie o imagine SVG. Dacă e lăsată goală, va fi folosit în locul ei - `logo_url` ."
     logo_small_url: "Imaginea logo mică din partea de sus-stânga a site-ului tău va trebui să aibă o formă dreptunghiulară, vizibilă când se derulează pagina. Dacă e lăsată goală, va fi afișat un pictograf."
@@ -879,7 +889,6 @@ ro:
     ga_universal_domain_name: "Numele de domeniu Google Universal Analytics (analytics.js), ex: mysite.com; vezi http://google.com/analytics"
     gtm_container_id: "ID-ul containerului Google Tag Manager. De ex: GTM-ABCDEF"
     enable_escaped_fragments: "Întoarce-te la Google's Ajax-Crawling API dacă nu e detectat webcrawler-ul. Vezi https://developers.google.com/webmasters/ajax-crawling/docs/learn-more"
-    enable_noscript_support: "Activează suportul pentru roboții de căutare web prin tag-ul noscript"
     allow_moderators_to_create_categories: "Permite moderatorilor să creeze noi categorii"
     cors_origins: "Origini permise pentru interogările inter-origini (CORS). Fiecare origine trebuie să includă http:// sau https://. Variabila env DISCOURSE_ENABLE_CORS trebuie setată pe true pentru a activa CORS."
     use_admin_ip_whitelist: "Adminii se pot autentifica numai dacă au o adresă IP definită în lista de IP-uri verificate (Admin > Rapoarte > IP-uri verificate) "
@@ -901,9 +910,8 @@ ro:
     show_email_on_profile: "Afișează adresa de email a unui utilizator în pagina sa de utilizator (vizibilă numai pentru el și pentru membrii echipei)"
     prioritize_username_in_ux: "Afișează întâi nume utilizator pe pagina utilizator, pe cardul utilizator și în postări (dacă e dezactivat, se afișează întâi numele)"
     email_token_valid_hours: "Tokenul uitat parolă / activează cont sunt valabili pentru (n) ore."
-    email_token_grace_period_hours: "Tokenul Parola uitată / activează cont sunt încă valabili pe o perioadă de grație de (n) ore după ce au fost acceptați."
     enable_badges: "Activează sistemul de ecusoane"
-    enable_whispers: "Permite membrilor echipei să comunice privat în cadrul unui subiect. (experimental)"
+    enable_whispers: "Permite membrilor echipei să comunice privat în cadrul subiectelor."
     allow_index_in_robots_txt: "Specifică în robots.txt că acest site poate fi indexat de motoarele de căutare web."
     email_domains_blacklist: "O listă de domenii de email separate cu simbolul | (pipe) ale căror utilizatori nu au permisiunea să înregistreze conturi. Exemplu: mailinator.com|trashmail.net"
     email_domains_whitelist: "O listă de domenii de email (separate cu simbolul | (pipe)) cu care utilizatorii TREBUIE să se înregistreze. ATENȚIE: utilizatorii cu alte domenii de email decât cele listate nu vor avea permisiunea să se înregistreze."
@@ -915,11 +923,7 @@ ro:
     force_hostname: "PENTRU DEVELOPER! ATENȚIE! Specifică un nume de gazdă în URL. Lasă liber pentru cel implicit."
     invite_expiry_days: "Cât timp sunt valabile cheile de invitație ale utilizatorilor, în zile"
     invite_passthrough_hours: "Cât timp un utilizator poate folosi o cheie de invitație acceptată anterior pentru autentificare, în ore"
-    invite_only: "Înregistrarea publică este dezactivată, toți utilizatorii noi trebuie să fie exclusiv invitați de un alt membru sau de personalul site-ului."
     login_required: "Cere autentificare pentru a citi conținutul acestui site, blochează accesul anonim."
-    min_username_length: "Numărul minim de caractere pe care poate să îl aibă un nume de utilizator."
-    max_username_length: "Numărul maxim de caractere pe care poate să îl aibă un nume de utilizator."
-    reserved_usernames: "Nume de utilizator pentru care înregistrarea nu este permisă."
     min_password_length: "Lungimea minimă a parolei."
     min_admin_password_length: "Lungimea maximă a parolei pentru Admin."
     block_common_passwords: "Nu permite parole ce sunt printre cele 10,000 cele mai cunoscute parole."
@@ -934,6 +938,7 @@ ro:
     sso_overrides_name: "Suprascrie numele întreg de pe local cu numele întreg din datele SSO la fiecare autentificare și împiedică schimbările locale."
     sso_overrides_avatar: "Suprascrie avatarul utilizatorului cu avatarul din datele SSO. Dacă este activat, se recomandă călduros dezactivarea allow_uploaded_avatars"
     sso_not_approved_url: "Redirecționează conturile neaprobate SSO către acest URL"
+    sso_allows_all_return_paths: "Nu restricționa domeniul pentru return_paths furnizate de SSO (implicit, calea de întoarcere trebuie să fie pe site-ul curent)"
     enable_local_logins: "Activează numele de utilizator local și conturile bazate pe autentificare cu parolă. (Notă: Pentru ca invitațiile să funcționeze, această opțiune trebuie să fie activată)"
     allow_new_registrations: "Permite înregistrarea noilor utilizatori. Debifați pentru a restricționa pe oricine să creeze un cont nou."
     enable_signup_cta: "Arată o notificare către utilizatorii anonimi care revin prin care să le ceri să se înscrie pentru a avea un cont pe site."
@@ -1006,8 +1011,6 @@ ro:
     default_opengraph_image_url: "URL-ul pentru imaginea implicită pentru Open Graph"
     twitter_summary_large_image_url: "URL-ul pentru imaginea implicită pentru imaginea card cu rezumatul Twitter (trebuie să aibă minim 280px lățime și 150px înălțime)."
     allow_all_attachments_for_group_messages: "Permite toate atașamentele de email pentru mesajele de grup."
-    convert_pasted_images_to_hq_jpg: "Convertiți imaginile lipite în fișiere JPG de înaltă calitate."
-    convert_pasted_images_quality: "Calitatea fișierului JPG convertit (1 este cea mai slabă calitate, 100 este cea mai bună calitate)."
     enable_flash_video_onebox: "Activează încastrarea adreselor swf și flv (Adobe Flash) în onebox. ATENȚIE: poate aduce riscuri de securitate."
     default_invitee_trust_level: "Nivelul de încredere implicit (0-4) pentru utilizatorii invitați."
     default_trust_level: "Nivelul de încredere implicit (0-4) pentru toți noii utilizatori. ATENȚIE! Schimbarea acestui parametru crește serios riscul de spam."
@@ -1102,7 +1105,6 @@ ro:
     reply_by_email_enabled: "Activează răspunsurile către subiecte prin email."
     reply_by_email_address: "șablon pentru răspuns prin email de intrare, de exemplu: %{reply_key}@reply.example.com sau răspunsuri+%{reply_key}@example.com"
     alternative_reply_by_email_addresses: "Listă de șabloane alternative pentru adresele de email primite cu răspunsuri prin email. Exemplu: %{reply_key}@reply.example.com|replies+%{reply_key}@example.com"
-    incoming_email_prefer_html: "Folosește HTML în loc de text pentru emailurile primite. Poate provoca probleme neașteptate de formatare!"
     disable_emails: "Oprește Discourse să trimite absolut orice fel de emailuri"
     strip_images_from_short_emails: "Scoate imaginile din emailurile care au mai puțin de 2800 de Bytes"
     short_email_length: "Lungime de email scurt în Bytes"
@@ -1124,9 +1126,12 @@ ro:
     reset_bounce_score_after_days: "Resetează automat rata de ricoșeu după X zile."
     attachment_content_type_blacklist: "Lista cuvintelor cheie folosite pentru filtrarea atașamentelor în funcție de tipul de conținut."
     attachment_filename_blacklist: "Lista cuvintelor cheie folosite la filtrarea atașamentelor în funcție de numele fișierului."
+    enable_forwarded_emails: "[BETA] Permite utilizatorilor să creeze un subiect prin forward-area unui email."
+    always_show_trimmed_content: "Arată întotdeauna partea trunchiată a emailurilor sosite. ATENȚIE: s-ar putea dezvălui adresele de email."
     manual_polling_enabled: "Trimite emailuri folosind API-ul pentru răspunsuri prin email."
     pop3_polling_enabled: "Folosește POP3 pentru răspunsuri prin email."
     pop3_polling_ssl: "Folosește SSL pentru conexiunile cu serverul POP3. (Recomandat)"
+    pop3_polling_openssl_verify: "Verifică certificatul server TLS (Implicit: activat)"
     pop3_polling_period_mins: "Prioada în minute între fiecare verificare a contului POP3 pentru emailuri. NOTA: necesită restart."
     pop3_polling_port: "Portul pentru retragerea emailurilor din contul POP3."
     pop3_polling_host: "Gazda pentru retragerea emailurilor prin POP3."
@@ -1149,11 +1154,15 @@ ro:
     allow_animated_thumbnails: "Generează thumbnails animate pentru gif-uri animate."
     default_avatars: "URL-urile avatarelor care vor fi folosite implicit pentru noii utilizatori până ce aceștia le vor schimba."
     automatically_download_gravatars: "Descarcă Gravatare pentru utilizatori după crearea contului sau schimbarea email-ului."
-    digest_topics: "Numărul maxim de subiecte care să fie afișat în emailul-rezumat."
+    digest_topics: "Numărul maxim de subiecte notorii care să fie afișate în rezumatul pe email."
+    digest_posts: "Numărul maxim de postări notorii care să se afișeze în rezumatul-email."
+    digest_other_topics: "Numărul maxim de subiecte care să fie afișate în secțiunea „Noutăți în subiectele și categoriile pe care le urmărești” din rezumatul pe email."
     digest_min_excerpt_length: "Lungimea minimă (în caractere) a extraselor de postări, ce vor fi incluse în emailul-rezumat."
-    delete_digest_email_after_days: "Nu trimite emailuri-rezumat utilizatorilor care nu au fost văzuți pe site de mai mult de (n) zile."
     digest_suppress_categories: "Nu include aceste categorii în emailurile-rezumat."
     disable_digest_emails: "Dezactivează emailurile-rezumat pentru toți utilizatorii."
+    email_accent_bg_color: "Culoarea accent care să fie folosită ca fundal pentru unele elemente din emailurile HTML. Introdu numele culorii („roșu”) sau valoarea hex ('#FF000')."
+    email_accent_fg_color: "Culoarea textului redat pe culoarea de fundal a emailurilor HTML. Introdu un nume de culoare („alb”) sau o valoare hex ('#FFFFFF')."
+    email_link_color: "Culoarea link-urilor din emailurile HTML. Introdu un nume de culoare („albastru”) sau o valoare hex ('#0000FF')."
     detect_custom_avatars: "Dacă sau nu să verifice dacă utilizatorii și-au încărcat poze de profil personalizate."
     max_daily_gravatar_crawls: "Numărul maxim zilnic de verificări pe care Discourse le va face pe Gravatar pentru a vedea dacă există avatare personalizate."
     public_user_custom_fields: "O listă albă cu câmpuri personalizate pentru utilizator, ce se pot afișa public."
@@ -1180,7 +1189,6 @@ ro:
     enable_names: "Afișează numele întreg al utilizatorului în profilul său, în cardul utilizator și în emailuri. Dezactivează pentru ascunde numele peste tot."
     display_name_on_posts: "Arată atât numele complet cât și numele de utilizator în postări."
     show_time_gap_days: "Dacă două postări sunt create la acest număr de zile distantă una de alta, afișează decalajul în subiect."
-    invites_per_page: "Invitațiile implicite sunt afișate pe pagina utilizatorului."
     short_progress_text_threshold: "După ce numărul de postări într-un subiect devine mai mare decât acest număr, bara de progres va afișa doar numărul postării curente. Dacă schiimbi lățimea barei de progres, va trebui să schimbi această valoare."
     default_code_lang: "Evidențierea de sintaxa de limbaj de programare aplicată implicit blocurilor de cod GitHub (lang-auto, Ruby, Python etc.)"
     warn_reviving_old_topic_age: "Când cineva răspunde la un subiect unde ultimul răspuns e mai vechi decât atâtea zile, va fi afișată o avertizare. Dezactivează prin alegerea cifrei 0."
@@ -1192,16 +1200,14 @@ ro:
     embed_username_key_from_feed: "Cheie pentru extragerea numelui utilizator din flux."
     embed_title_scrubber: "Expresie regulată pentru curățarea titlurile integrabile."
     embed_truncate: "Retează postările încorporate."
+    allowed_href_schemes: "Alte tipuri de linkuri permise, în afară de http și https."
     embed_post_limit: "Numărul maxim de postări care să fie încorporate."
     embed_username_required: "Numele utilizator pentru acest subiect este obligatoriu."
     embed_whitelist_selector: "Selector CSS pentru elementele ce sunt permise în încorporări."
     embed_blacklist_selector: "Selector CSS pentru elementele ce sunt șterse din încorporări"
-    notify_about_flags_after: "Dacă sunt marcaje ce nu au fost aranjate după atâtea ore, trimite un email către email-ul de contact . Setează la 0 pentru a dezactiva."
-    enable_cdn_js_debugging: "Permite /logs să afișeze corect erorile adăugând permisiuni crossorigin pe toate js includes."
     show_create_topics_notice: "Dacă site-ul are mai puțin de 5 subiecte publice, afișează o notificare prin care se cere adminilor să creeze subiecte."
     delete_drafts_older_than_n_days: șterge drafturile mai vechi de (n) zile.
     bootstrap_mode_min_users: "Numărul minim de utilizatori necesar pentru dezactivarea modului bootstrap (0 pentru dezactivare)"
-    vacuum_db_days: "Rulează VACUUM ANALYZE pentru a recupera spațiul din baza de date după o migrare (0 pentru dezactivare)"
     prevent_anons_from_downloading_files: "Blochează utilizatorii anonimi de la descărcarea de atașamente. ATENȚIE: aceasta va face ca toate resursele site-ului care sunt postate ca atașamente să nu mai meargă."
     slug_generation_method: "Alege o metodă de generare de identificator. 'encodat' va genera șir de caractere encodate cu procentaje. 'nimic' va dezactiva complet identificatorii."
     enable_emoji: "Activează emoji"
@@ -1236,11 +1242,11 @@ ro:
     default_categories_watching: "Implicit, listează categoriile care sunt urmărite în  mod activ."
     default_categories_tracking: "Implicit, listează categoriile care sunt urmărite."
     default_categories_muted: "Implicit, listează categoriile care sunt setate pe silențios."
+    default_categories_watching_first_post: "Lista categoriilor în care prima postare din fiecare topic va fi urmărită activ în mod implicit."
     max_user_api_reqs_per_day: "Numărul maxim de interogări API utilizator pe cheie, pe zi. "
     max_user_api_reqs_per_minute: "Numărul maxim de interogări API utilizator pe cheie, pe minut. "
-    allow_read_user_api_keys: "Permite generarea de chei API utilizator în mod exclusiv-citire."
-    allow_write_user_api_keys: "Permite generarea de chei API utilizator în mod scriere."
-    allow_push_user_api_keys: "Permite generarea de chei API utilizator pentru utilizarea serviciului push."
+    allow_user_api_keys: "Permite generarea de chei API pentru utilizator"
+    allow_user_api_key_scopes: "Lista domeniilor pentru care se permit chei API pentru utilizatori"
     max_api_keys_per_user: "Numărul maxim de chei API utilizator pe utilizator"
     min_trust_level_for_user_api_key: "Nivelul de încredere necesar pentru generarea de chei API utilizator"
     allowed_user_api_auth_redirects: "URL permis pentru redirecționarea autentificării pentru cheile API utilizator "
@@ -1283,6 +1289,7 @@ ro:
       reply_by_email_address_is_empty: "Trebuie să setezi o adresă pentru „răspunde prin email” înainte să poți activa răspunsul prin email."
       email_polling_disabled: "Trebuie să setezi fie retragerea manuala fie cea prin POP3 înainte să activezi răspunsul prin email."
       user_locale_not_enabled: "Trebuie să activezi întâi „permite locale utilizator” înainte de activa această setare."
+      invalid_regex: "Regex invalid sau nepermis."
   search:
     within_post: "#%{post_number} de %{username}:"
     types:
@@ -1321,10 +1328,6 @@ ro:
   change_owner:
     post_revision_text: "Autor schimbat din %{old_user} în %{new_user}"
     deleted_user: "un utilizator șters"
-  emoji:
-    errors:
-      name_already_exists: "Ne pare rău, numele '%{name}' este deja folosit de un alt emoji."
-      error_while_storing_emoji: "Ne pare rău, a apărut o eroare la stocarea acestui emoji."
   topic_statuses:
     archived_enabled: "Acest subiect este acum arhivat. Este înghețat și nu mai poate fi schimbat în nici un fel."
     archived_disabled: "Acest subiect este acum dezarhivat. Nu mai este înghețat și poate fi modificat."
@@ -1375,7 +1378,6 @@ ro:
     incorrect_username_email_or_password: "Nume de utilizator, email sau parolă incorecte"
     wait_approval: "Îți mulțumim pentru autentificare. Te vom anunța când contul dumneavoastră a fost aprobat."
     active: "Contul tău a fost activat și e gata să fie folosit."
-    activate_email: "Ești aproape gata! Am trimis un email de activare către <b>%{email}</b>. Te rugăm să urmezi instrucțiunile din email pentru a-ți activa contul."
     not_activated: "Nu te poți încă autentifica. Ți-am trimis un email de autentificare. Te rugăm să urmezi instrucțiunile din email pentru a-ți activa contul."
     not_allowed_from_ip_address: "Nu te poți conecta ca %{username} de la această adresa de IP."
     admin_not_allowed_from_ip_address: "Nu te poți conecta ca administrator de la această adresa de IP."
@@ -1415,104 +1417,23 @@ ro:
       blocked: "Nu sunt permise noi înregistrări de la adresa ta de IP."
       max_new_accounts_per_registration_ip: "Nu sunt permise noi înregistrări de la adresa ta de IP (limita maximă a fost atinsă). Contactează un membru al echipei."
   flags_reminder:
-    flags_were_submitted:
-      one: "Au fost trimise marcaje de avertizare acum mai bine de o oră. Te rugăm, trece-le în revistă. "
-      few: "Au fost trimise marcaje de avertizare acum mai bine de %{count}  ore. Te rugăm, trece-le în revistă. "
-      other: "Au fost trimise marcaje de avertizare acum mai bine de %{count} de ore. Te rugăm, trece-le în revistă. "
     subject_template:
       one: "un marcaj de avertizare așteptând să fie gestionat"
       few: "%{count}  marcaje de avertizare așteptând să fie gestionate"
       other: "%{count} de marcaje de avertizare așteptând să fie gestionate"
   unsubscribe_mailer:
     subject_template: "Confirmă că nu mai vrei să primești actualizări pe email de la %{site_title}"
-    text_body_template: |
-      Cineva (posibil tu?) a cerut să nu mai fie trimise actualizări pe email de la %{site_domain_name} către această adresă.
-      Dacă dorești să confirmi, te rugăm dă click pe acest link:
-      %{confirm_unsubscribe_link}
-
-      Dacă dorești să primești în continuare actualizări pe email, poți ignora acest mesaj.
   invite_mailer:
     subject_template: "%{invitee_name} te-a invitat la subiectul '%{topic_title}' pe %{site_domain_name}"
-    text_body_template: |
-      %{invitee_name} te-a invitat la o discuție
-
-      > **%{topic_title}**
-      >
-      > %{topic_excerpt}
-
-      la
-
-      > %{site_title} -- %{descriere_site}
-
-      Dacă ești interesat, click pe adresa dedesubt:
-
-      %{invite_link}
-
-      Aceasta invitație este de la un utilizator de încredere, deci poți răspunde discuției de îndată ce dorești.
   custom_invite_mailer:
     subject_template: "%{invitee_name} te-a invitat la subiectul '%{topic_title}' pe  %{site_domain_name}"
-    text_body_template: |
-      %{invitee_name} te-a invitat la o discuție
-
-      > **%{topic_title}**
-      >
-      > %{topic_excerpt}
-
-      pe
-
-      > %{site_title} -- %{descriere_site}
-
-      Mesaj de la %{invitee_name}:
-
-      %{user_custom_message}
-
-      Dacă te interesează, dă click pe link-ul de mai jos:
-      %{invite_link}
-
-      Această invitație este de la un utilizator verificat, deci poți răspunde de îndată ce dorești.
   invite_forum_mailer:
     subject_template: "%{invitee_name} te-a invitat să te alături pe %{site_domain_name}"
-    text_body_template: |
-      %{invitee_name} te-a invitat să te alături pe
-
-      > **%{site_title}**
-      >
-      > %{site_description}
-
-      Dacă te interesează, dă click pe link-ul de mai jos:
-
-      %{invite_link}
-
-      Această invitație vine de la un utilizator verificat, așa că ți se va crea automat un cont.
   custom_invite_forum_mailer:
     subject_template: "%{invitee_name} te-a invitat să te alături pe %{site_domain_name}"
-    text_body_template: |
-      %{invitee_name} te-a invitat să te alaturi pe
-
-      > **%{site_title}**
-      >
-      > %{site_description}
-
-      Mesaj de la %{invitee_name}:
-
-      %{user_custom_message}
-
-      Dacă te interesează, dă click pe link-ul de mai jos:
-
-      %{invite_link}
-
-      Această invitație vine de la un utilizator verificat, așa că ți se va crea automat un cont.
   invite_password_instructions:
     subject_template: "Setează parolă pentru contul tău %{site_name}"
-    text_body_template: |
-      Îți mulțumim că ai acceptat invitația pe %{site_name} -- bun venit!
-
-      Acum dă click pe acest link pentru a-ți alege o parolă:
-      %{base_url}/users/password-reset/%{email_token}
-
-      (Dacă linkul de mai sus a expirat, alege "Mi-am uitat parola" la autentificarea cu adresa ta de email.)
   test_mailer:
-    subject_template: "[%{site_name}] Test de capacitate de livrare email"
     text_body_template: |
       Acesta este un email de test de la
 
@@ -1555,7 +1476,6 @@ ro:
       [mj]: https://www.mailjet.com/pricing
       [mt]: http://www.mail-tester.com/
   new_version_mailer:
-    subject_template: "[%{site_name}] O nouă versiune de Discourse, actualizare disponibilă"
     text_body_template: |
       Uraaa, o nouă versiune de [Discourse](http://www.discourse.org) este acum disponibilă!
 
@@ -1568,7 +1488,6 @@ ro:
 
       - Vizitează [meta.discourse.org](https://meta.discourse.org) pentru știri, discuții și suport pentru Discourse
   new_version_mailer_with_notes:
-    subject_template: "[%{site_name}] actualizare disponibilă"
     text_body_template: |
       Uraaa, o nouă versiune de [Discourse](http://www.discourse.org) este acum disponibilă!
 
@@ -1585,10 +1504,6 @@ ro:
 
       %{notes}
   queued_posts_reminder:
-    subject_template:
-      one: "[%{site_name}] o postare așteptând să fie verificată"
-      few: "[%{site_name}] %{count}  postări așteptând să fie verificate"
-      other: "[%{site_name}] %{count} de postări așteptând să fie verificate"
     text_body_template: |
       Salutare,
 
@@ -1604,7 +1519,6 @@ ro:
     disagreed: "Îți mulțumim pentru avertizare. O să aruncăm o privire."
     deferred: "Îți mulțumim că ne-ai informat. O să aruncăm o privire."
     deferred_and_deleted: "Îți mulțumim că ne-ai informat. Am șters postarea."
-  temporarily_closed_due_to_flags: "Acest subiect este temporar închis din cauza numărului mare de marcaje de avertizare primite din partea comunității."
   system_messages:
     post_hidden:
       subject_template: "Postare ascunsă din cauza marcajelor de avertizare ale comunității"
@@ -1619,136 +1533,13 @@ ro:
 
         Mai mulți membri ai comunității au marcat acestă postare cu marcaje de avertizare înainte ca ea să fie ascunsă, așa că te rugăm să îți revizuiești postarea pentru a ține cont de feedback-ul primit. **Îți poți edita postarea după %{edit_delay} minute, și ea va fi automat re-afișată**
 
-        Totuși dacă postarea este ascunsă de comunitate pentru a doua oară, va rămâne așa până ce va fi gestionată de un membru al echipei -- și asta ar putea atrage și alte consecințe, inclusiv posibilitatea suspendării contului tău..
+        Totuși, dacă postarea este ascunsă de comunitate pentru a doua oară, va rămâne așa până ce va fi gestionată de un membru al echipei -- și asta ar putea atrage și alte consecințe, inclusiv posibilitatea suspendării contului tău..
 
-        Pentru îndreptări suplimentare, te rugăm să citești [ghidul comunității](%{base_url}/guidelines).
-    usage_tips:
-      text_body_template: |
-        Aici sunt câteva sfaturi rapide pentru început:
-
-        ## Citirea
-
-        Pentru a citi mai mult, **dă scroll în jos!**
-
-        Pe măsură ce sunt postate noi răspunsuri și noi subiecte, ele vor apărea în mod automat - nu e nevoie să reîmprospătezi pagina.
-
-        ## Navigarea
-
-        - Pentru a folosi căutarea, pentru a accesa pagina ta de utilizator, sau meniul <kbd>☰</kbd>, folosește **butoanele icoană din dreapta-sus**.
-
-        - Selectarea unui titlu de subiect te va duce întotdeauna la **următorul răspuns necitit** din subiect. Pentru a intra la începutul sau la sfârșitul listei de mesaje, selectează contorul de răspunsuri sau data ultimului răspuns.
-
-        <img src="%{base_url}/images/welcome/topic-list-select-areas-2x.png" width="593" height="59">
-
-        - Atunci când citești un subiect, poți folosi bara temporală din dreapta pentru a sări la începutul listei de mesaje, la sfârșitul ei sau la ultima poziție citită. Pe ecranele mai mici, selectează bara de progres din dreapta-jos pentru a o expanda:
-
-        <img src="%{base_url}/images/welcome/progress-bar-2x.png" width="153" height="181">
-
-        De asemenea, poți apăsa tasta <kbd>?</kbd> pentru o lista ultra-rapidă de scurtături de tastatură.
-
-        ## Răspunsul
-
-        Pentru a introduce un citat, sleceează textul pe care dorești să îl citezi, apoi apasă orice <img src="%{base_url}/images/welcome/reply-post-2x.png" width="25" height="23"> buton Răspunde pentru a deschide editorul. Pentru mai multe citate repetă operațiunea.
-
-        <img src="%{base_url}/images/welcome/quote-reply-2x.png" width="326" height="128">
-
-        Întotdeauna poți să continui să citești în timp ce ăți compui răspunsul, iar noi vom salva automat drafturile, pe măsură ce scrii.
-
-        Pentru a notifica pe cineva cu privire la răspunsul tău, menționează-i numele. Apasă `@` pentru a selecta un utilizator.
-
-        <img src="%{base_url}/images/welcome/username-completion-2x.png" width="191" height="125">
-
-        Pentru a folosi [Emoji standard](http://www.emoji.codes/), apasă pur și simplu `:` pentru a sorta după nume, sau folosește tradiționalele smileys `;)`
-
-        <img src="%{base_url}/images/welcome/emoji-completion-2x.png" width="144" height="153">
-
-        Pentru a genera un onebox pentru un link anume, lipiți-l pe o linie, de unul singur:
-
-        <img src="%{base_url}/images/welcome/link-oneboxing-animation.gif" width="480" height="228">
-
-        Răspunsul tău poate fi formatat folosind HTML simplu, BBCode, sau [Markdown](http://commonmark.org/help/):
-
-        Acesta este <b>bold</b>.
-        Acesta este  [b]bold[/b].
-        Acesta este **bold**.
-
-        Pentru mai multe sfaturi privind formatarea, [încearcă tutorialul nostru interactiv și amuzant de numai 10 minute!](http://commonmark.org/help/tutorial/)
-
-        ## Acțiunile
-
-        Există butoane de acțiune în partea de jos a fiecărei postări:
-
-        <img src="%{base_url}/images/welcome/like-link-flag-bookmark-2x.png" width="162" height="42">
-
-        - Pentru a-i spune cuiva că ți-a făcut plăcere și ai apreciat postarea sa, folosește butonul **apreciere**. Împărtășește apreciere!
-
-        - Folosind butonul **Distribuie** poți prelua un link ce se poate copia-lipi.
-
-        - Folosește <kbd>&hellip;</kbd> butonul arată mai mult pentru a descoperi mai multe acțiuni **Marchează cu marcaj de avertizare** pentru a informa în mod privat autorul, sau [echipa noastră](%{base_url}/about), cu privire la o anumită problemă. Folosește **Semn de carte** pentru a găsi această postare mai târziu, în pagina ta de profil.
-
-        ## Notificările
-
-        Când cineva îți răspunde la o postare, te citează, te menționează `@nume utilizator`, sau pune un link la un post al tău, îți va apărea imediat un număr în partea din dreapta-sus a paginii. Selectează-l pentru a-ți accesa **notificările**.
-
-        <img src="%{base_url}/images/welcome/notification-panel-2x.png" width="160" height="54">
-
-        Nu îți face griji că ai putea pierde vreun răspuns - vei primi pe email orice notificări apar cât ești plecat.
-
-        ## Preferințele
-
-        - Toate subiectele mai **recente de doua zile** sunt considerate noi.
-
-        - Orice subiect la care **ai participat în mod activ** (creându-l, răspunzând la el, sau citindu-l pe o perioadă mai îndelungată) va fi urmărit în mod automat pentru uzul tău.
-
-        Vei vedea indicatoarele "nou" și "număr necitite" alături de următoarele subiecte:
-
-        <img src="%{base_url}/images/welcome/topics-new-unread-2x.png" width="341" height="106">
-
-        Poți schimba notificările pentru fiecare subiect prin controlul de notificări aflat jos, în partea dreapta, la fiecare subiect.
-
-        <img src="%{base_url}/images/welcome/topic-notification-control-2x.png" width="608" height="312">
-
-        Poți de asemenea să alegi starea notificărilor pe categorii, dacă vrei să urmărești sau să ignori fiecare nou subiect dintr-o categorie specifică.
-
-        Pentru a schimba oricare dintre aceste preferințe, mergi la [preferințe utilizator](%{base_url}/my/preferences).
-
-        ## Încrederea comunității
-
-        Ne bucurăm de cunoștință! Pe măsură ce vei participa aici, de-a lungul timpului te vom cunoaște mai bine și limitările temporare de nou utilizator ce ți se aplică, vor fi ridicate. Continua să participi și, cu timpul, vei câștiga noi [niveluri de încredere](https://meta.discourse.org/t/what-do-user-trust-levels-do/4924) ce vor include abilități speciale pentru a ne ajuta să gestionăm împreună această comunitate.
+        Pentru informații suplimentare, te rugăm să citești [ghidul comunității](%{base_url}/guidelines).
     welcome_user:
       subject_template: "Bine ai venit pe %{site_name}!"
-      text_body_template: |
-        Îți mulțumim că te-ai alăturat pe %{site_name}, și bun venit!
-
-        %{new_user_tips}
-
-        Noi credem într-un [comporament civilizat al comunității](%{base_url}/guidelines) indiferent de circumstante.
-
-        ședere plăcută!
-
-        (Dacă ai nevoie să comunici cu [membrii echipei](%{base_url}/about) din postura de nou utilizator, pur și simplu dă reply la acest mesaj.)
     welcome_invite:
       subject_template: "Bine ai venit pe %{site_name}!"
-      text_body_template: |
-        Îți mulțumim că ai acceptat invitația pe %{site_name} -- bun venit!
-
-        Am creat pentru tine un nou cont **%{username}**, și acum ești autentificat. Îți poți schimba numele vizitându-ți [profilul utilizator][prefs].
-
-        Pentru a te autentifica mai târziu:
-
-        1. Întotdeauna **folosește aceeași adresă de email ca cea din invitația originală** atunci când te autentifici. Altfel nu ne vom putea da seama că ești tu!
-
-        2. Creează o parolă unică pentru [profilul utilizator][prefs], și folosește-o la autentificare.
-
-        %{new_user_tips}
-
-        Noi credem într-un [comportament civilizat al comunității](%{base_url}/guidelines) indiferent de circumstanțe.
-
-        ședere plăcută!
-
-        (Dacă ai nevoie să comunici cu [membrii echipei](%{base_url}/about) din postura de nou utilizator, pur și simplu dă reply la acest mesaj.)
-
-        [prefs]: %{user_preferences_url}
     backup_succeeded:
       subject_template: "Backup terminat cu succes"
       text_body_template: |
@@ -1796,69 +1587,47 @@ ro:
       text_body_template: "Fișierul tău de invitații multiple a fost procesat, %{sent} (de) invitații trimise."
     bulk_invite_failed:
       subject_template: "Invitația multiplă a fost procesată cu erori"
-      text_body_template: |
-        Fișierul tău de invitații multiple a fost procesat, %{sent} (de) invitații trimise cu %{failed} (de) erori.
-
-        Aici este raportul:
-
-        ```
-        %{logs}
-        ```
     csv_export_succeeded:
       subject_template: "Exportul datelor s-a terminat"
-      text_body_template: |
-        Exportul datelor tale a reușit! :dvd:
-
-        <a class="attachment" href="%{download_link}">%{file_name}</a> (%{file_size})
-
-        Link-ul de deasupra este disponibil 48 de ore.
     csv_export_failed:
       subject_template: "Exportul datelor a eșuat"
       text_body_template: "Ne pare rău, dar exportul datelor tale a eșuat. Te rugăm să verifici rapoartele sau să contactezi un membru al echipei."
     email_reject_insufficient_trust_level:
-      subject_template: "[%{site_name}] Problemă de email -- Nivelul de încredere este insuficient"
       text_body_template: |
         Ne pare rău, dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Contul tău nu are nivelul de încredere necesar pentru a crea noi subiecte, de la această adresă de email. Dacă ți se pare că aste e o eroare, contactează un membru al echipei.
     email_reject_user_not_found:
-      subject_template: "[%{site_name}] Problemă de email -- Utilizatorul nu a fost găsit"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Răspunsul tău a fost trimis de pe o adresă de email necunoscută. Încearcă să îl trimiți de pe o altă adresă de email, sau contactează un membru al echipei.
     email_reject_screened_email:
-      subject_template: "[%{site_name}] Problemă de email -- Email blocat"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Răspunsul tău a fost trimis de pe o adresă de email blocată. Încearcă să îl trimiți de pe o altă adresă, sau contactează un membru al echipei.
     email_reject_inactive_user:
-      subject_template: "[%{site_name}] Problemă de email -- Cont dezactivat"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Contul tău asociat acestei adrese de email nu este activat. Te rugăm să îți activezi contul înainte de a trimite emailuri.
     email_reject_blocked_user:
-      subject_template: "[%{site_name}] Problemă de email -- Utilizator blocat"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Contul asociat acestei adrese de email este blocat.
     email_reject_reply_user_not_matching:
-      subject_template: "[%{site_name}] Problemă de email -- Adresă de răspuns neasteptată"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Răspunsul tău a fost trimis de pe o adresă de email diferită de cea așteptată, așa că nu suntem siguri că este aceeași persoană. Încearcă să trimiți de pe altă adresă de email, sau contactează un membru al echipei.
     email_reject_no_account:
-      subject_template: "[%{site_name}] Problemă de email -- Cont utilizator necunoscut"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Nu putem găsi nici un cont care să corespundă adresei tale de email. Încearcă să trimiți de pe o adresă diferită de email, sau contactează un membru al echipei.
     email_reject_empty:
-      subject_template: "[%{site_name}] Problemă de email -- Fără conținut"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
@@ -1866,32 +1635,27 @@ ro:
 
         Dacă primești acest mesaj și _ai inclus_ un răspuns, încercă din nou cu o formatare mai simplă.
     email_reject_parsing:
-      subject_template: "[%{site_name}] Problemă de email -- Conținut nerecunoscut"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Nu am putu găsi răspunsul tău în email. **Asigură-te că răspunsul tău este în partea de sus a emailului** -- nu putem procesa răspunsuri intercalate.
     email_reject_invalid_access:
-      subject_template: "[%{site_name}] Problemă de email -- Acces invalid"
       text_body_template: |+
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Contul tău nu are drepturile necesare pentru a posta noi subiecte în acea categorie. Dacă ți se pare că asta e o eroare, contactează un membru al echipei.
 
     email_reject_strangers_not_allowed:
-      subject_template: "[%{site_name}] Problemă de email -- Acces invalid"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Categoria căreia i-ai trimis acest email nu permite răspunsuri decât de la utilizatori cu conturi valide și adrese de email cunoscute. Dacă ți se pare că e o eroare, contactează un membru al echipei.
     email_reject_invalid_post:
-      subject_template: "[%{site_name}] Problemă de email -- Eroare la trimiterea unui mesaj"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Dintre cauzele posibile: formatare complexă, mesaj prea lung, mesaj prea scurt. Te rugăm să încerci din nou sau să postezi prin intermediul site-ului, dacă eroarea continuă.
     email_reject_invalid_post_specified:
-      subject_template: "[%{site_name}] Problemă de email -- Eroare de postare"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
@@ -1901,43 +1665,36 @@ ro:
 
         Dacă poți corecta eroarea, te rugăm să încerci din nou.
     email_reject_invalid_post_action:
-      subject_template: "[%{site_name}] Problemă de email -- Acțiune de postare invalidă"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Acțiunea de postare nu a fost recunoscută. Te rugăm să încerci din nou, sau să postezi pe website dacă eroarea persistă.
     email_reject_reply_key:
-      subject_template: "[%{site_name}] Problemă de email -- Cheie de răspuns necunoscută"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Cheia de răspuns la acest email este invalidă sau necunoscută, așa că nu ne putem da seama la ce email vine acest răspuns. Contactați un membru al echipei.
     email_reject_bad_destination_address:
-      subject_template: "[%{site_name}] Problemă de email -- Adresă destinatar necunoscută"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Nici una din adresele de email de destinație nu este recunoscută. Te rugăm să verifici că trimiți la adresa corecta de email furnizată de către echipă.
     email_reject_topic_not_found:
-      subject_template: "[%{site_name}] Problemă de email -- Subiectul nu a fost găsit"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Subiectul la care vrei să răspunzi nu mai există -- poate că a fost șters? Dacă ți se pare că e o eroare, contactează un membru al echipei.
     email_reject_topic_closed:
-      subject_template: "[%{site_name}] Problemă de email -- Subiect închis"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Subiectul la care vrei să răspunzi este în prezent închis și nu mai acceptă răspunsuri. Dacă ți se pare că e o eroare, contactează un membru al echipei.
     email_reject_auto_generated:
-      subject_template: "[%{site_name}] Problemă de email - Răspuns autogenerat"
       text_body_template: |
         Ne pare rău dar mesajul tău către %{destination} (cu titlul %{former_title}) nu a mers.
 
         Emailul tău a fost marcat ca „autogenerat”, ceea ce înseamnă că a fost creat automat de un computer în loc să fie scris de un om; nu putem accepta aceste tipuri de emailuri. Dacă ți se pare că este o eroare, contactează un membru al echipei.
     email_error_notification:
-      subject_template: "[%{site_name}] Problemă de email - Eroare de autentificare POP3"
       text_body_template: |
         Din păcate,s-a produs o eroare de autentificare la retragerea emailurilor de pe serverul POP
 
@@ -1953,7 +1710,7 @@ ro:
 
         Ca măsura de precauție, noului tău cont i s-a blocat posibilitatea de a crea noi răspunsuri sau subiecte până ce un un membru al echipei nu îl va verifica. Ne cerem scuze pentru inconveniență.
 
-        Pentru îndreptări suplimentare, te rugăm să citești [ghidul comunității](%{base_url}/guidelines).
+        Pentru informații suplimentare, te rugăm să citești [ghidul comunității](%{base_url}/guidelines).
     too_many_tl3_flags:
       subject_template: "Cont nou suspendat"
       text_body_template: |
@@ -1963,7 +1720,7 @@ ro:
 
         Ca măsura de precauție, noului tău cont i s-a blocat posibilitatea de a crea noi răspunsuri sau subiecte până ce un un membru al echipei nu îl va verifica. Ne cerem scuze pentru inconveniență.
 
-        Pentru îndreptări suplimentare, te rugăm să citești [ghidul comunității](%{base_url}/guidelines).
+        Pentru informații suplimentare, te rugăm să citești [ghidul comunității](%{base_url}/guidelines).
     blocked_by_staff:
       subject_template: "Cont suspendat temporar"
       text_body_template: |+
@@ -1973,7 +1730,7 @@ ro:
 
         Poți să continui să răsfoiești, dar nu vei mai putea să răspunzi sau să creezi subiecte până când un [membru al echipei](%{base_url}/about) nu îți verifică postările recente. Ne cerem scuze pentru inconveniență.
 
-        Pentru îndreptări suplimentare, te rugăm să citești [ghidul comunității](%{base_url}/guidelines).
+        Pentru informații suplimentare, te rugăm să citești [ghidul comunității](%{base_url}/guidelines).
 
     user_automatically_blocked:
       subject_template: "Noul utilizator %{username} a fost blocat de marcajele de avertizare ale comunității."
@@ -2033,10 +1790,6 @@ ro:
   subject_pm: "[PM] "
   user_notifications:
     previous_discussion: "Răspunsurile precedente"
-    reached_limit:
-      one: "ATENȚIE: ai atins limita de un email zilnic. Notificările pe email viitoare vor fi stopate."
-      few: "ATENȚIE: ai atins limita de %{count}  emailuri zilnice. Notificările pe email viitoare vor fi stopate."
-      other: "ATENȚIE: ai atins limita de %{count} de emailuri zilnice. Notificările pe email viitoare vor fi stopate."
     in_reply_to: "Ca răspuns la"
     unsubscribe:
       title: "Dezabonare"
@@ -2068,7 +1821,6 @@ ro:
 
       > %{site_title} -- %{site_description}
     user_invited_to_private_message_pm:
-      subject_template: "[%{site_name}] %{username} te-a invitat la un mesaj '%{topic_title}'"
       text_body_template: |
         %{header_instructions}
 
@@ -2076,7 +1828,6 @@ ro:
 
         %{respond_instructions}
     user_invited_to_private_message_pm_staged:
-      subject_template: "[%{site_name}] %{username} te-a invitat la un mesaj '%{topic_title}'"
       text_body_template: |
         %{header_instructions}
 
@@ -2084,7 +1835,6 @@ ro:
 
         %{respond_instructions}
     user_invited_to_topic:
-      subject_template: "[%{site_name}] %{username} te-a invitat la subiectul '%{topic_title}'"
       text_body_template: |
         %{header_instructions}
 
@@ -2092,7 +1842,6 @@ ro:
 
         %{respond_instructions}
     user_replied:
-      subject_template: "[%{site_name}] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2102,7 +1851,6 @@ ro:
 
         %{respond_instructions}
     user_replied_pm:
-      subject_template: "[%{site_name}] [PM] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2112,7 +1860,6 @@ ro:
 
         %{respond_instructions}
     user_quoted:
-      subject_template: "[%{site_name}] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2122,7 +1869,6 @@ ro:
 
         %{respond_instructions}
     user_linked:
-      subject_template: "[%{site_name}] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2132,7 +1878,6 @@ ro:
 
         %{respond_instructions}
     user_mentioned:
-      subject_template: "[%{site_name}] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2142,7 +1887,6 @@ ro:
 
         %{respond_instructions}
     user_group_mentioned:
-      subject_template: "[%{site_name}] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2152,7 +1896,6 @@ ro:
 
         %{respond_instructions}
     user_posted:
-      subject_template: "[%{site_name}] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2162,7 +1905,6 @@ ro:
 
         %{respond_instructions}
     user_watching_first_post:
-      subject_template: "[%{site_name}] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2172,7 +1914,6 @@ ro:
 
         %{respond_instructions}
     user_posted_pm:
-      subject_template: "[%{site_name}] [MP] %{topic_title}"
       text_body_template: |
         %{header_instructions}
 
@@ -2188,75 +1929,21 @@ ro:
         %{message}
     digest:
       why: "Un rezumat scurt al %{site_link} de la ultima ta vizită din %{last_seen_at}."
-      subject_template: "[%{site_name}] Rezumat"
-      new_activity: "Activități noi în subiectele și postările tale:"
-      top_topics: "Postări populare"
-      other_new_topics: "Subiecte populare"
-      unsubscribe: "Acest rezumat este transmis de pe %{site_link} când a trecut ceva vreme de când nu te-am mai văzut. Pentru a te dezabona, %{unsubscribe_link}."
+      since_last_visit: "De la ultima ta vizită"
+      new_topics: "Subiecte noi"
+      unread_messages: "Mesaje necitite"
+      unread_notifications: "Notificări necitite"
+      liked_received: "Aprecieri primite"
+      new_posts: "Postări noi"
+      new_users: "Utilizatori noi"
+      popular_topics: "Subiecte notorii"
+      follow_topic: "Urmărește acest subiect"
+      join_the_discussion: "Citește mai mult"
+      popular_posts: "Postări notorii"
       click_here: "click aici"
       from: "%{site_name} rezumat"
-      read_more: "Citește mai mult"
-      more_topics: "Existau %{new_topics_since_seen} alte subiecte noi "
-      more_topics_category: "Mai multe subiecte noi:"
-    mailing_list:
-      why: "Toată activitatea de pe %{site_link} pentru data de %{date}"
-      subject_template: "[%{site_name}] Rezumatul pentru data de %{date}"
-      unsubscribe: "Acest rezumat este trimis zilnic pentru că modul mailing list este activat. Pentru dezabonare dă click pe %{unsubscribe_link}"
-      from: "%{site_name} rezumat"
-      new_topics: "Subiecte noi"
-      topic_updates: "Actualizări la subiect"
-      view_this_topic: "Vizualizează acest subiect"
-      back_to_top: "Înapoi sus"
-    forgot_password:
-      subject_template: "[%{site_name}] Resetare parolă"
-      text_body_template: |
-        Cineva a cerut resetarea parolei tale pe site-ul [%{site_name}](%{base_url}).
-
-        Dacă nu ai cerut-o tu, poți ignora fără griji acest email.
-
-        Click pe următoarea adresă pentru a reseta parola:
-        %{base_url}/users/password-reset/%{email_token}
-    set_password:
-      subject_template: "[%{site_name}] Setare parola"
-      text_body_template: |
-        Cineva a cerut crearea unei parole pe site-ul [%{site_name}](%{base_url}). Alternativ, te poți autentifica folosind orice serviciu online acceptat (Google, Facebook, etc), serviciu ce este asociat cu acesta adresa de email validată.
-
-        Dacă nu ai cerut asta, poți ignora fără griji acest email.
-
-        Click pe adresa următoare pentru a alege o parolă:
-        %{base_url}/users/password-reset/%{email_token}
-    admin_login:
-      subject_template: "[%{site_name}] Autentificare"
-      text_body_template: |
-        Cineva a încercat să se autentifice pe contul tău de pe [%{site_name}](%{base_url}).
-
-        Dacă ai fost tu, poți să ignori fără griji acest email.
-
-        Click pe următorul link pentru a te autentifica:
-        %{base_url}/users/admin-login/%{email_token}
-    account_created:
-      subject_template: "[%{site_name}] Noul tău cont"
-      text_body_template: |
-        Un cont nou a fost creat pentru tine pe %{site_name}
-
-        Click pe următorul link pentru a-ți alege o parolă pentru noul tău cont
-        %{base_url}/users/password-reset/%{email_token}
-    confirm_new_email:
-      subject_template: "[%{site_name}] Confirmă noua ta adresă de email"
-      text_body_template: |
-        Confirmă-ți noua adresă de email pentru %{site_name} dând click pe următorul link:
-
-        %{base_url}/users/authorize-email/%{email_token}
-    confirm_old_email:
-      subject_template: "[%{site_name}] Confirmă adresa ta de email curentă"
-      text_body_template: |
-        Înainte de a-ți putea schimba adresa de email, trebuie să ne confirmi că deții controlul asupra adresei de email curente. După ce completezi acest pas, va trebui să ne confirmi noua adresă de email.
-
-        Confirmă-ți adresa de email curentă pentru %{site_name} dând click pe următorul link:
-
-        %{base_url}/users/authorize-email/%{email_token}
+      preheader: "Un scurt rezumat de la ultima ta vizită din %{last_seen_at}"
     notify_old_email:
-      subject_template: "[%{site_name}] Adresa ta de email a fost schimbată"
       text_body_template: |
         Acesta este un mesaj automat pentru a te informa că adresa ta de email pentru %{site_name} a fost schimbată. Dacă acest lucru s-a întâmplat dintr-o eroare, contractează un administrator al site-lui.
 
@@ -2265,32 +1952,6 @@ ro:
         %{new_email}
     signup_after_approval:
       subject_template: "Contul tă pe site-ul %{site_name} a fost aprobat!"
-      text_body_template: |
-        Bun venit pe %{site_name}!
-
-        Un membru al echipei ți-a aprobat contul pe %{site_name}.
-
-        Click link-ul urmator pentru a-ți confirma și activa noul cont:
-        %{base_url}/users/activate-account/%{email_token}
-
-        Dacă link-ul de mai sus nu este clickabil, încearcă să îl copiezi și să îl lipești în bara de adrese din browser.
-
-        %{new_user_tips}
-
-        Noi credem într-un [comportament civlizat al comunității](%{base_url}/guidelines) indiferent de circumstanțe.
-
-        ședere plăcută!
-
-        (Dacă ai nevoie să comunici cu [membrii echipei](%{base_url}/about) din postura de nou utilizator, pur și simplu dă reply la acest mesaj.)
-    signup:
-      subject_template: "[%{site_name}] Confirmă-ți noul cont"
-      text_body_template: |
-        Bine ai venit pe %{site_name}!
-
-        Click pe următoarea adresă pentru a confirma și activa noul tău cont:
-        %{base_url}/users/activate-account/%{email_token}
-
-        Dacă adresa de mai sus nu e accesibilă, încearcă să o copiezi și să o lipești în bara de adrese a propriului browser.
   page_not_found:
     title: "Oops! Această pagină nu există sau este privată."
     popular_topics: "Populare"
@@ -2340,6 +2001,7 @@ ro:
     message_to_blank: "message.to este gol"
     text_part_body_blank: "text_part.body e gol"
     body_blank: "conținutul este gol"
+    no_echo_mailing_list_mode: "Notificările pe mail dezactivate pentru postările proprii ale utilizatorului"
   color_schemes:
     base_theme_name: "Bază"
   about: "Despre"
@@ -2353,106 +2015,143 @@ ro:
     Editează prima postare în acest subiect pentru a schimba conținutul paginii %{page_name}.
   guidelines_topic:
     title: "FAQ/Ghid"
-    body: |
-      <a name="civilized"></a>
-
-      ## [Acesta este un loc pentru discuții civilizate](#civilized)
-
-      Te rugăm să tratezi acest forum de discuții cu același respect cu care ai trata un parc public. și noi, la rândul nostru, suntem o resursă partajată a comunității &mdash; un loc în care ne punem la dispoziție aptitudinile, cunoștințele și priceperea prin intermediul conversației în desfășurare.
-
-      Acestea nu sunt reguli absolute, ci doar îndreptări pentru judecata rațională din spatele comunității.Folosește aceste îndreptări pentru a menține acest loc curat și bine iluminat pentru un discurs public civilizat.
-
-      <a name="improve"></a>
-
-      ## [Îmbunătățește calitatea discuției](#improve)
-
-      Ajută-ne să facem din locul astă o zonă propice conversației, contribuind neîncetat la creșterea calității discuțiilor, în orice mod, oricât de mic. Dacă nu ești sigur că o postare adaugă ceva la conversație, gândește-te din nou la ce ai de spus și încearcă din nou mai târziu.
-
-      Subiectele discutate aici contează pentru noi, și vrem să acționăm de așa manieră încât să conteze și pentru tine. Fi respectuos cu oamenii cu care discuți subiectele, chiar dacă nu ești de acord cu anumite lucruri care sunt spuse.
-
-      O metodă de a crește calitatea discuției este să te uiți întâi la discuțiile deja existente. Te rugăm să petreci puțin timp răsfoind subiectele de pe aici, înainte de a te apuca să răspunzi sau să le creezi pe ale tale. Astfel, vei avea mai multe șanse să dai peste alții care au aceleasi interese ca și tine.
-
-      <a name="agreeable"></a>
-
-      ## [Fi agreabil, chiar și atunci când nu ești de acord](#agreeable)
-
-      Poate că dorești să răspunzi la ceva cu care nu ești de acord. Asta-i bine. Dar, amintește-ți _să critici ideile și nu oamenii_. Te rugăm să eviți:
-
-      *   Insultele.
-      *   Atacurile la persoană.
-      *   Să răspunzi tonului unei postări în loc să răspunzi conținutului ei.
-      *   Contrazicerea de de dragul contrazicerii.
-
-      În loc de asta, furnizează contra-argumente motivate care să îmbunătățească conversația.
-
-      <a name="participate"></a>
-
-      ## [Participarea ta contează](#participate)
-
-      Conversațiile pe care le avem aici dau tonul pentru toată lumea. Ajută-ne să influențăm viitorul acestei comunități alegând să te angajezi în discuții care să facă din acest forum un loc interesant &mdash; și evitându-i pe cei care nu o fac.
-
-      Discourse furnizează instrumentele care dau posibilitatea comunității să identifice colectiv cele mai bune (și cele mai proaste) contribuții: favorite, semne de carte, aprecieri, marcaje de avertizare, răspunsuri, editări și așa mai departe. Folosește aceste instrumente ca să îți imbunătățești experiența și, de asemenea, pe cea a tuturor celorlați.
-
-      Să încercăm să lăsăm parcul mai frumos decât l-am găsit.
-
-      <a name="flag-problems"></a>
-
-      ## [Dacă vezi o problemă, marcheaz-o](#flag-problems)
-
-      Moderatorii au o autoritate specială; ei sunt responsabili de acest forum. Dar și tu, la rândul tău. Cu ajutorul tău, moderatorii pot fi facilitatori ai comunitătii și nu doar niste gunoieri sau polițiști.
-
-      Atunci când sesizezi un comportament greșit, nu răspunde. Asta ar încuraja acel comportament  greșit băgându-l în seamă, ți-ar consuma energia și ar irosi timpul tuturor. _Pur și simplu marchează-l cu marcaj de avertizare. Dacă se adună suficiente marcaje de avertizare, se iau masuri, fie automat fie prin intermediul intrevenției unui moderator.
-
-      Pentru a ne întreține comunitatea, moderatorii își rezervă dreptul să șteargă orice conținut și orice cont utilizator din orice motiv și în orice moment. Moderatorii nu pot previzualiza mesajele înainte de postare; ei și membrii echipei nu își pot asuma răspundera pentru nici un fel de conținut postat de comunitate.
-
-      <a name="be-civil"></a>
-
-      ## [Întodeauna fi civilizat](#be-civil)
-
-      Nimic nu sabotează o conversație sănătoasă mai mult decât bădărănia:
-
-      *   Fi civilizat. Nu posta ceva ce o persoană rezonabilă ar putea considera ofensator, abuziv sau incitare la ură.
-      *   Păstrează curățenia. Nu posta nimic obscen sau exlicit din punct de vedere sexual.
-      *   Respectați-vă reciproc. Nu hărțui sau îndurera pe nimeni, nu maimuțări alți oameni și nu le expune informațiile lor private.
-      *   Respectă-ne forumul. Nu posta spam sau orice altă formă de vandalism.
-
-      Aceștia nu sunt termeni concreți cu definiții precise &mdash; evită până și _aparența_ oricăror din aceste lucruri. Dacă nu ești sigur, întreabă-te cum te-ai simți dacă postarea ta ar apărea pe prima pagină din Dilema veche.
-
-      Acesta este un forum public și motoarele de căutare indexează aceste discuții. Păstrează limbajul, link-urile și imaginile sigure pentru familie și prieteni.
-
-      <a name="keep-tidy"></a>
-
-      ## [Păstrează ordinea](#keep-tidy)
-
-      Fă un efort să pui lucurile la locul potrivit, ca să petrecem mai mult timp discutând și mai puțin curâțând. Astfel:
-
-      *   Nu începe un subiect într-o categorie nepotrivită.
-      *   Nu posta încrucișat același lucru în subiecte diferite.
-      *   Nu posta răspunsuri fără conținut.
-      *   Nu deturna un subiect schimbându-i cursul în mijlocul conversației.
-      *   Nu îți semna postările &mdash; fiecare postare are atașate informațiile tale de profil.
-
-      În loc să postezi  “+1” sau “de acord”, folosește butonul Apreciere. În loc să duci un subiect într-o direcție radical diferită, folosește Răspunde ca subiect înrudit.
-
-      <a name="stealing"></a>
-
-      ## [Postează numai ce-i al tău](#stealing)
-
-      Nu posta nimic digital ce aparține altcuiva fără permisiunea lui prealabilă. Nu ai voie să postezi descrieri, link-uri sau metode de a fura conținutul proprietății intelectuale a altcuiva (software, video, audio, imagini), și nici să încalci orice altă lege.
-
-      <a name="power"></a>
-
-      ## [Propulsat de tine](#power)
-
-      Acest site este operat de [echipa noastră prietenoasă](/about) și de *tine*, membrul comunității. Dacă ai orice altă întrebare despre cum merg lucrurile pe-aici, deschide un nou subiect în [categoria de feedback la site](/c/site-feedback) și hai să discutăm! Dacă e vreo chestiune critică sau urgentă care nu poate fi gestionată printr-un meta-subiect sau marcaj de avertizare, contactează-ne prin [pagina echipei](/about).
-
-      <a name="tos"></a>
-
-      ## [Condițiile generale de utilizare a site-ului](#tos)
-
-      Da, legea este plictisitoare, însă trebuie să ne protejăm &ndash; și prin extensie, și pe tine și datele tale &ndash; împotriva băieților răi. Avem niște [Condiții generale de utilizare a site-ului](/tos) ce descriu comportamentul tău (și al nostru) și drepturile legate de conținut, confidențialitate și legi. Pentru a utiliza acest serviciu trebuie să ne accepți [CGU](/tos).
   tos_topic:
     title: "Condiții generale de utilizare"
+    body: |
+      The following terms and conditions govern all use of the %{company_domain} website and all content, services and products available at or through the website, including, but not limited to, %{company_domain} Forum Software, %{company_domain} Support Forums and the %{company_domain} Hosting service ("Hosting"), (taken together, the Website). The Website is owned and operated by %{company_full_name} ("%{company_name}"). The Website is offered subject to your acceptance without modification of all of the terms and conditions contained herein and all other operating rules, policies (including, without limitation, %{company_domain}’s [Privacy Policy](/privacy) and [Community Guidelines](/faq)) and procedures that may be published from time to time on this Site by %{company_name} (collectively, the "Agreement").
+
+      Please read this Agreement carefully before accessing or using the Website. By accessing or using any part of the web site, you agree to become bound by the terms and conditions of this agreement. If you do not agree to all the terms and conditions of this agreement, then you may not access the Website or use any services. If these terms and conditions are considered an offer by %{company_name}, acceptance is expressly limited to these terms. The Website is available only to individuals who are at least 13 years old.
+
+      <a name="1"></a>
+
+      ## [1. Your %{company_domain} Account](#1)
+
+      If you create an account on the Website, you are responsible for maintaining the security of your account and you are fully responsible for all activities that occur under the account. You must immediately notify %{company_name} of any unauthorized uses of your account or any other breaches of security. %{company_name} will not be liable for any acts or omissions by you, including any damages of any kind incurred as a result of such acts or omissions.
+
+      <a name="2"></a>
+
+      ## [2. Responsibility of Contributors](#2)
+
+      If you post material to the Website, post links on the Website, or otherwise make (or allow any third party to make) material available by means of the Website (any such material, "Content"), You are entirely responsible for the content of, and any harm resulting from, that Content. That is the case regardless of whether the Content in question constitutes text, graphics, an audio file, or computer software. By making Content available, you represent and warrant that:
+
+      *   the downloading, copying and use of the Content will not infringe the proprietary rights, including but not limited to the copyright, patent, trademark or trade secret rights, of any third party;
+      *   if your employer has rights to intellectual property you create, you have either (i) received permission from your employer to post or make available the Content, including but not limited to any software, or (ii) secured from your employer a waiver as to all rights in or to the Content;
+      *   you have fully complied with any third-party licenses relating to the Content, and have done all things necessary to successfully pass through to end users any required terms;
+      *   the Content does not contain or install any viruses, worms, malware, Trojan horses or other harmful or destructive content;
+      *   the Content is not spam, is not machine- or randomly-generated, and does not contain unethical or unwanted commercial content designed to drive traffic to third party sites or boost the search engine rankings of third party sites, or to further unlawful acts (such as phishing) or mislead recipients as to the source of the material (such as spoofing);
+      *   the Content is not pornographic, does not contain threats or incite violence, and does not violate the privacy or publicity rights of any third party;
+      *   your content is not getting advertised via unwanted electronic messages such as spam links on newsgroups, email lists, blogs and web sites, and similar unsolicited promotional methods;
+      *   your content is not named in a manner that misleads your readers into thinking that you are another person or company; and
+      *   you have, in the case of Content that includes computer code, accurately categorized and/or described the type, nature, uses and effects of the materials, whether requested to do so by %{company_name} or otherwise.
+
+      <a name="3"></a>
+
+      ## [3. User Content License](#3)
+
+      User contributions are licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-nc-sa/3.0/deed.en_US). Without limiting any of those representations or warranties, %{company_name} has the right (though not the obligation) to, in %{company_name}’s sole discretion (i) refuse or remove any content that, in %{company_name}’s reasonable opinion, violates any %{company_name} policy or is in any way harmful or objectionable, or (ii) terminate or deny access to and use of the Website to any individual or entity for any reason, in %{company_name}’s sole discretion. %{company_name} will have no obligation to provide a refund of any amounts previously paid.
+
+
+      <a name="4"></a>
+
+      ## [4. Payment and Renewal](#4)
+
+      ### General Terms
+
+      Optional paid services or upgrades may be available on the Website. When utilizing an optional paid service or upgrade, you agree to pay %{company_name} the monthly or annual subscription fees indicated. Payments will be charged on a pre-pay basis on the day you begin utilizing the service or upgrade and will cover the use of that service or upgrade for a monthly or annual subscription period as indicated. These fees are not refundable.
+
+      ### Automatic Renewal
+
+      Unless you notify %{company_name} before the end of the applicable subscription period that you want to cancel a service or upgrade, your subscription will automatically renew and you authorize us to collect the then-applicable annual or monthly subscription fee (as well as any taxes) using any credit card or other payment mechanism we have on record for you. Subscriptions can be canceled at any time.
+
+      <a name="5"></a>
+
+      ## [5. Services](#5)
+
+      ### Hosting, Support Services
+
+      Optional Hosting and Support services may be provided by %{company_name} under the terms and conditions for each such service. By signing up for a Hosting/Support or Support services account, you agree to abide by such terms and conditions.
+
+      <a name="6"></a>
+
+      ## [6. Responsibility of Website Visitors](#6)
+
+      %{company_name} has not reviewed, and cannot review, all of the material, including computer software, posted to the Website, and cannot therefore be responsible for that material’s content, use or effects. By operating the Website, %{company_name} does not represent or imply that it endorses the material there posted, or that it believes such material to be accurate, useful or non-harmful. You are responsible for taking precautions as necessary to protect yourself and your computer systems from viruses, worms, Trojan horses, and other harmful or destructive content. The Website may contain content that is offensive, indecent, or otherwise objectionable, as well as content containing technical inaccuracies, typographical mistakes, and other errors. The Website may also contain material that violates the privacy or publicity rights, or infringes the intellectual property and other proprietary rights, of third parties, or the downloading, copying or use of which is subject to additional terms and conditions, stated or unstated. %{company_name} disclaims any responsibility for any harm resulting from the use by visitors of the Website, or from any downloading by those visitors of content there posted.
+
+      <a name="7"></a>
+
+      ## [7. Content Posted on Other Websites](#7)
+
+      We have not reviewed, and cannot review, all of the material, including computer software, made available through the websites and webpages to which %{company_domain} links, and that link to %{company_domain}. %{company_name} does not have any control over those non-%{company_domain} websites and webpages, and is not responsible for their contents or their use. By linking to a non-%{company_domain} website or webpage, %{company_name} does not represent or imply that it endorses such website or webpage. You are responsible for taking precautions as necessary to protect yourself and your computer systems from viruses, worms, Trojan horses, and other harmful or destructive content. %{company_name} disclaims any responsibility for any harm resulting from your use of non-%{company_domain} websites and webpages.
+
+      <a name="8"></a>
+
+      ## [8. Copyright Infringement and DMCA Policy](#8)
+
+      As %{company_name} asks others to respect its intellectual property rights, it respects the intellectual property rights of others. If you believe that material located on or linked to by %{company_domain} violates your copyright, and if this website resides in the USA, you are encouraged to notify %{company_name} in accordance with %{company_name}’s [Digital Millennium Copyright Act](http://en.wikipedia.org/wiki/Digital_Millennium_Copyright_Act) ("DMCA") Policy. %{company_name} will respond to all such notices, including as required or appropriate by removing the infringing material or disabling all links to the infringing material. %{company_name} will terminate a visitor’s access to and use of the Website if, under appropriate circumstances, the visitor is determined to be a repeat infringer of the copyrights or other intellectual property rights of %{company_name} or others. In the case of such termination, %{company_name} will have no obligation to provide a refund of any amounts previously paid to %{company_name}.
+
+      <a name="9"></a>
+
+      ## [9. Intellectual Property](#9)
+
+      This Agreement does not transfer from %{company_name} to you any %{company_name} or third party intellectual property, and all right, title and interest in and to such property will remain (as between the parties) solely with %{company_name}. %{company_name}, %{company_domain}, the %{company_domain} logo, and all other trademarks, service marks, graphics and logos used in connection with %{company_domain}, or the Website are trademarks or registered trademarks of %{company_name} or %{company_name}’s licensors. Other trademarks, service marks, graphics and logos used in connection with the Website may be the trademarks of other third parties. Your use of the Website grants you no right or license to reproduce or otherwise use any %{company_name} or third-party trademarks.
+
+      <a name="10"></a>
+
+      ## [10. Advertisements](#10)
+
+      %{company_name} reserves the right to display advertisements on your content unless you have purchased an Ad-free Upgrade or a Services account.
+
+      <a name="11"></a>
+
+      ## [11. Attribution](#11)
+
+      %{company_name} reserves the right to display attribution links such as ‘Powered by %{company_domain},’ theme author, and font attribution in your content footer or toolbar. Footer credits and the %{company_domain} toolbar may not be removed regardless of upgrades purchased.
+
+      <a name="12"></a>
+
+      ## [12. Changes](#12)
+
+      %{company_name} reserves the right, at its sole discretion, to modify or replace any part of this Agreement. It is your responsibility to check this Agreement periodically for changes. Your continued use of or access to the Website following the posting of any changes to this Agreement constitutes acceptance of those changes. %{company_name} may also, in the future, offer new services and/or features through the Website (including, the release of new tools and resources). Such new features and/or services shall be subject to the terms and conditions of this Agreement.
+
+      <a name="13"></a>
+
+      ## [13. Termination](#13)
+
+      %{company_name} may terminate your access to all or any part of the Website at any time, with or without cause, with or without notice, effective immediately. If you wish to terminate this Agreement or your %{company_domain} account (if you have one), you may simply discontinue using the Website. All provisions of this Agreement which by their nature should survive termination shall survive termination, including, without limitation, ownership provisions, warranty disclaimers, indemnity and limitations of liability.
+
+      <a name="14"></a>
+
+      ## [14. Disclaimer of Warranties](#14)
+
+      The Website is provided "as is". %{company_name} and its suppliers and licensors hereby disclaim all warranties of any kind, express or implied, including, without limitation, the warranties of merchantability, fitness for a particular purpose and non-infringement. Neither %{company_name} nor its suppliers and licensors, makes any warranty that the Website will be error free or that access thereto will be continuous or uninterrupted. If you’re actually reading this, here’s [a treat](http://www.newyorker.com/online/blogs/shouts/2012/12/the-hundred-best-lists-of-all-time.html). You understand that you download from, or otherwise obtain content or services through, the Website at your own discretion and risk.
+
+      <a name="15"></a>
+
+      ## [15. Limitation of Liability](#15)
+
+      In no event will %{company_name}, or its suppliers or licensors, be liable with respect to any subject matter of this agreement under any contract, negligence, strict liability or other legal or equitable theory for: (i) any special, incidental or consequential damages; (ii) the cost of procurement for substitute products or services; (iii) for interruption of use or loss or corruption of data; or (iv) for any amounts that exceed the fees paid by you to %{company_name} under this agreement during the twelve (12) month period prior to the cause of action. %{company_name} shall have no liability for any failure or delay due to matters beyond their reasonable control. The foregoing shall not apply to the extent prohibited by applicable law.
+
+      <a name="16"></a>
+
+      ## [16. General Representation and Warranty](#16)
+
+      You represent and warrant that (i) your use of the Website will be in strict accordance with the %{company_name} [Privacy Policy](/privacy), [Community Guidelines](/guidelines), with this Agreement and with all applicable laws and regulations (including without limitation any local laws or regulations in your country, state, city, or other governmental area, regarding online conduct and acceptable content, and including all applicable laws regarding the transmission of technical data exported from the country in which this website resides or the country in which you reside) and (ii) your use of the Website will not infringe or misappropriate the intellectual property rights of any third party.
+
+      <a name="17"></a>
+
+      ## [17. Indemnification](#17)
+
+      You agree to indemnify and hold harmless %{company_name}, its contractors, and its licensors, and their respective directors, officers, employees and agents from and against any and all claims and expenses, including attorneys’ fees, arising out of your use of the Website, including but not limited to your violation of this Agreement.
+
+      <a name="18"></a>
+
+      ## [18. Miscellaneous](#18)
+
+      This Agreement constitutes the entire agreement between %{company_name} and you concerning the subject matter hereof, and they may only be modified by a written amendment signed by an authorized executive of %{company_name}, or by the posting by %{company_name} of a revised version. Except to the extent applicable law, if any, provides otherwise, this Agreement, any access to or use of the Website will be governed by the laws of the state of California, U.S.A., excluding its conflict of law provisions, and the proper venue for any disputes arising out of or relating to any of the same will be the state and federal courts located in San Francisco County, California. Except for claims for injunctive or equitable relief or claims regarding intellectual property rights (which may be brought in any competent court without the posting of a bond), any dispute arising under this Agreement shall be finally settled in accordance with the Comprehensive Arbitration Rules of the Judicial Arbitration and Mediation Service, Inc. (“JAMS”) by three arbitrators appointed in accordance with such Rules. The arbitration shall take place in San Francisco, California, in the English language and the arbitral decision may be enforced in any court. The prevailing party in any action or proceeding to enforce this Agreement shall be entitled to costs and attorneys’ fees. If any part of this Agreement is held invalid or unenforceable, that part will be construed to reflect the parties’ original intent, and the remaining portions will remain in full force and effect. A waiver by either party of any term or condition of this Agreement or any breach thereof, in any one instance, will not waive such term or condition or any subsequent breach thereof. You may assign your rights under this Agreement to any party that consents to, and agrees to be bound by, its terms and conditions; %{company_name} may assign its rights under this Agreement without condition. This Agreement will be binding upon and will inure to the benefit of the parties, their successors and permitted assigns.
+
+      This document is CC-BY-SA. It was last updated May 31, 2013.
+
+      Originally adapted from the [WordPress Terms of Service](http://en.wordpress.com/tos/).
   privacy_topic:
     title: "Politica de confidențialitate"
     body: |
@@ -2739,7 +2438,6 @@ ro:
         Acest ecuson se acordă prima data când adaugi un emoji la postarea ta :thumbsup:. Emoji permit transmiterea de emoții prin postări, de la fericire :smiley: la tristețe :anguished: la furie :angry: și întreaga planetă :sunglasses: . Apasă un : (două puncte) sau apasă pe butonul Emoji toolbar din editor pentru a alege dintre sute de opțiuni :ok_hand:
     first_mention:
       name: Prima mențiune
-      description: Ai fost menționat în postarea unui utilizator
       long_description: Acest ecuson se acordă când, pentru prima oară, ai menționat @numele de utilizator al cuiva într-o postare de-a ta. Fiecare menționare generează o notificare către acea persoană, astfel încât ea să știe despre postarea ta. Începi prin a apăsa tasta @ (simbolul at) ca să menționezi orice utilizator sau, dacă îți este permis, grup. E o metodă convenabilă să atragi atenția cuiva.
     first_onebox:
       name: Primul onebox
@@ -2747,7 +2445,6 @@ ro:
       long_description: Acest ecuson se acordă când, pentru prima data, ai postat un link singur pe line, ceea ce a făcut ca automat să fie expandat într-un onebox cu un scurt rezumat al link-ului, un titlu și (dacă e disponibilă) cu o poză.
     first_reply_by_email:
       name: Forum prin email
-      description: Ai răspuns la o postare prin email
       long_description: |
         Acest ecuosn se acordă când ai răspuns pentru prima dată la o postare prin email :e-mail:.
   admin_login:
@@ -2755,18 +2452,33 @@ ro:
     error: "Eroare!"
     email_input: "Email Admin"
     submit_button: "Trimite email"
-  discourse_hub:
-    access_token_problem: "Spune-i unui admin: Te rog actualizează setările site-ului pentru a include discourse_org_access_key ."
   performance_report:
     initial_post_raw: Acest subiect include rapoarte zilnice de performanță referitoare la site-ul tău.
     initial_topic_title: Rapoarte de performanță website
-  topic_invite:
-    user_exists: "Ne pare rău, acest utilizator a fost deja invitat. Nu poți să inviți un utilizator la un subiect decât o singură dată."
   tags:
     title: "Etichete"
     staff_tag_disallowed: "Eticheta \"%{tag}\" poate fi pusă doar de un membru al echipei."
     staff_tag_remove_disallowed: "Eticheta \"%{tag}\" poate fi ștearsă doar de un membru al echipei."
   rss_by_tag: "Subiecte etichetate %{tag}"
+  finish_installation:
+    congratulations: "Felicitări, ai instalat Discourse!"
+    register:
+      button: "Înregistrare"
+      title: "Înregistrare cont administrator"
+      help: "înregistrează un cont nou ca să începi"
+      no_emails: "Din păcate, niciun email de administrator nu a fost setat pe parcursul instalării, așa că finalizarea configurării <a href='https://meta.discourse.org/t/how-to-create-an-administrator-account-after-install/14046'>poate fi dificilă</a>."
+    confirm_email:
+      title: "Confirmare email"
+      message: "<p>Am trimis un email de activare la <b>%{email}</b>. Urmează instrucțiunile din email ca să-ți activezi contul.</p><p>Dacă nu primești email, verifică dacă l-ai introdus corect și verifică și dosarul de spam.</p>"
+    resend_email:
+      title: "Retrimite email de activare"
+      message: "<p>Am trimis un email de activare la <b>%{email}</b>"
+  safe_mode:
+    title: "Activează modul sigur"
+    description: "Modul sigur îți permite să îți testezi site-ul fără să încarci plugin-uri și personalizări."
+    only_official: "Dezactivează plugin-urile neoficiale"
+    no_plugins: "Dezactivează toate plugin-urile"
+    enter: "Activează modul sigur"
   wizard:
     title: "Configurare Discourse"
     step:
@@ -2790,11 +2502,9 @@ ro:
         fields:
           welcome:
             label: "Subiect de bun venit"
-            description: "<p>Cum ți-ai descrie comunitatea unui străin din lift, într-un minut?</p> <ul> <li>Cui îi sunt destinate aceste discuții?</li> <li>Ce pot găsi aici?</li> <li>De ce să vă vizitez?</li> </ul> <p>Subiectul vostru de bun venit este primul lucru pe care îl vor vedea noii vizitatori Gândește-te la el ca la<b>un paragraf/b> de 'agățat în lift' sau 'declarație de misiune'. </p>"
             one_paragraph: "Te rugăm să îți restrângi mesajul de bun venit la un paragraf."
       privacy:
         title: "Acces"
-        description: "<p>Este comunitatea voastră deschisă tuturor, sau este limită prin apartenență, invitații, sau aprobare? Dacă preferi, poți să setezi lucrurile pe privat și să comuți mai târziu pe public.</p> <p>Amintește-ți că întotdeauna poți să trimiți invitații din subiecte sau din pagina cu profilul tău de utilizator</p>"
         fields:
           privacy:
             choices:
@@ -2814,13 +2524,11 @@ ro:
           contact_url:
             label: "Pagină web"
             placeholder: "http://www.exemplu.com/contact"
-            description: "Pagina web de contact pentru organizația ta sau pentru tine însuți. Va fi afișată <a href='/about' target='_blank'>Despre noi</a>."
+            description: "Pagina web generică cu date de contact pentru tine sau organizația ta. Se va afișa pe <a href='/about' target='_blank'>pagina despre noi</a>. "
           site_contact:
             label: "Mesaje automate"
-            description: "Toate mesajele personale automate din Discourse vor fi trimite de la acest utilizator. Ce-i mai important este că acest utilizator va fi desemnat să trimită fiecare mesaj de bun venit ce se trimite automat noilor utilizatori."
       corporate:
         title: "Organizație"
-        description: "Aceste nume vor fi introduse în <a href='/privacy' target='blank'>Politica de confidențialitate</a> și <a href='/tos' target='blank'>Condițiile generale de utilizare</a>, pe care le poți edita oricând în categoria Echipa. Dacă nu ai o firmă, poți sări momentan peste acest pas."
         fields:
           company_short_name:
             label: "Numele firmei (scurt)"
@@ -2835,7 +2543,6 @@ ro:
         title: "Temă"
         fields:
           theme_id:
-            description: "Preferi o schemă de culori luminoasă sau una întunecată pentru început? Întotdeauna poți continua personalizarea aspectului site-ului via Admin, Personalizare."
             choices:
               default:
                 label: "Luminos simplu"
@@ -2860,7 +2567,6 @@ ro:
             label: "Iconiță mare"
             description: "Iconiță utilizata pentru a-ți reprezenta site-ul pe dispozitive moderne și care arată bine la dimensiuni mai mari. Dimensiunea recomandată este de 144px pe 144px."
       homepage:
-        description: "Recomandăm afișarea celor subiectelor recente pe pagina principală, dar, dacă preferi, poți să alegi afișarea categoriilor (grupuri de subiecte)."
         title: "Pagina principală"
         fields:
           homepage_style:
@@ -2871,7 +2577,6 @@ ro:
                 label: "Categorii"
       emoji:
         title: "Emoji"
-        description: "Ce stil de Emoji preferi pentru comunitatea ta? Întotdeauna poți să adaugi mai multe emoji personalizate via Admin, Personalizări, Emoji."
       invites:
         title: "Invită membrii echipei"
         description: "Aproape ai terminat! Hai să invităm niște membri ai echipei să dea o mână de ajutor <a href='https://blog.discourse.org/2014/08/building-a-discourse-community/' target='blank'>și să presare discuțiile</a> cu subiecte și răspunsuri interesante, pentru a lansa comunitatea."

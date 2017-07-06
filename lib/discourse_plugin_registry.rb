@@ -13,8 +13,11 @@ class DiscoursePluginRegistry
     attr_writer :handlebars
     attr_writer :serialized_current_user_fields
     attr_writer :seed_data
-
     attr_accessor :custom_html
+
+    def plugins
+      @plugins ||= []
+    end
 
     # Default accessor values
     def javascripts
@@ -56,6 +59,15 @@ class DiscoursePluginRegistry
     def seed_data
       @seed_data ||= HashWithIndifferentAccess.new({})
     end
+
+    def html_builders
+      @html_builders ||= {}
+    end
+
+    def vendored_pretty_text
+      @vendored_pretty_text ||= Set.new
+    end
+
   end
 
   def register_js(filename, options={})
@@ -93,10 +105,15 @@ class DiscoursePluginRegistry
     end
   end
 
+  JS_REGEX = /\.js$|\.js\.erb$|\.js\.es6$/
+  HANDLEBARS_REGEX = /\.hbs$|\.js\.handlebars$/
+
   def self.register_asset(asset, opts=nil)
-    if asset =~ /\.js$|\.js\.erb$|\.js\.es6$/
+    if asset =~ JS_REGEX
       if opts == :admin
         self.admin_javascripts << asset
+      elsif opts == :vendored_pretty_text
+        self.vendored_pretty_text << asset
       else
         self.javascripts << asset
       end
@@ -110,16 +127,21 @@ class DiscoursePluginRegistry
       else
         self.stylesheets << asset
       end
-
-    elsif asset =~ /\.hbs$/
-      self.handlebars << asset
-    elsif asset =~ /\.js\.handlebars$/
+    elsif asset =~ HANDLEBARS_REGEX
       self.handlebars << asset
     end
   end
 
   def self.register_seed_data(key, value)
     self.seed_data[key] = value
+  end
+
+  def self.register_html_builder(name, &block)
+    html_builders[name] = block
+  end
+
+  def self.build_html(name, ctx=nil)
+    html_builders[name]&.call(ctx)
   end
 
   def javascripts
@@ -164,6 +186,8 @@ class DiscoursePluginRegistry
     sass_variables.clear
     serialized_current_user_fields
     asset_globs.clear
+    html_builders.clear
+    vendored_pretty_text.clear
   end
 
   def self.setup(plugin_class)

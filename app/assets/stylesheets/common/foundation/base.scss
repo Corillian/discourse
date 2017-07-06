@@ -1,5 +1,5 @@
-@import "common/foundation/variables";
-@import "common/foundation/mixins";
+@import "./variables";
+@import "./mixins";
 
 // --------------------------------------------------
 // Base styles for HTML elements
@@ -85,6 +85,7 @@ fieldset {
 
 pre code {
   overflow: auto;
+  tab-size: 4;
 }
 
 // TODO figure out a clean place to put stuff like this

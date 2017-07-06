@@ -13,7 +13,9 @@ class Highlighted extends RawHtml {
 
   decorate($html) {
     if (this.term) {
-      $html.highlight(this.term.split(/\s+/), { className: 'search-highlight' });
+      // special case ignore "l" which is used for magic sorting
+      const words = _.reject(this.term.split(/\s+/), t => t === 'l');
+      $html.highlight(words, { className: 'search-highlight' });
     }
   }
 }
@@ -25,7 +27,8 @@ function createSearchResult(type, linkField, fn) {
         return h('li', this.attach('link', {
           href: r.get(linkField),
           contents: () => fn.call(this, r, attrs.term),
-          className: 'search-link'
+          className: 'search-link',
+          searchContextEnabled: this.attrs.searchContextEnabled
         }));
       });
     }
@@ -45,7 +48,7 @@ function postResult(result, link, term) {
 }
 
 createSearchResult('user', 'path', function(u) {
-  return [ avatarImg('small', { template: u.avatar_template, username: u.username }), ' ', u.username ];
+  return [ avatarImg('small', { template: u.avatar_template, username: u.username }), ' ', h('span.user-results', h('b', u.username)), ' ',  h('span.user-results', u.name ? u.name : '') ];
 });
 
 createSearchResult('topic', 'url', function(result, term) {
@@ -98,7 +101,11 @@ createWidget('search-menu-results', {
       }
 
       return [
-        h('ul', this.attach(rt.componentName, { results: rt.results, term: attrs.term })),
+        h('ul', this.attach(rt.componentName, {
+          searchContextEnabled: this.attrs.searchContextEnabled,
+          results: rt.results,
+          term: attrs.term
+        })),
         h('div.no-results', more)
       ];
     });

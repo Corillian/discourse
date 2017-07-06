@@ -49,7 +49,13 @@ class CategoryList
     end
 
     def find_categories
-      @categories = Category.includes(:topic_only_relative_url, subcategories: [:topic_only_relative_url]).secured(@guardian)
+      @categories = Category.includes(
+        :uploaded_background,
+        :uploaded_logo,
+        :topic_only_relative_url,
+        subcategories: [:topic_only_relative_url]
+      ).secured(@guardian)
+
       @categories = @categories.where(suppress_from_homepage: false) if @options[:is_homepage]
       @categories = @categories.where("categories.parent_category_id = ?", @options[:parent_category_id].to_i) if @options[:parent_category_id].present?
 
@@ -125,7 +131,7 @@ class CategoryList
     def sort_unpinned
       if @guardian.current_user && @all_topics.present?
         @categories.each do |c|
-          next if c.displayable_topics.blank? || c.displayable_topics.size <= SiteSetting.category_featured_topics
+          next if c.displayable_topics.blank? || c.displayable_topics.size <= c.num_featured_topics
           unpinned = []
           c.displayable_topics.each do |t|
             unpinned << t if t.pinned_at && PinnedCheck.unpinned?(t, t.user_data)
@@ -140,7 +146,7 @@ class CategoryList
     def trim_results
       @categories.each do |c|
         next if c.displayable_topics.blank?
-        c.displayable_topics = c.displayable_topics[0, SiteSetting.category_featured_topics]
+        c.displayable_topics = c.displayable_topics[0, c.num_featured_topics]
       end
     end
 

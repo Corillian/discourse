@@ -24,7 +24,7 @@ class Post < ActiveRecord::Base
   rate_limit :limit_posts_per_day
 
   belongs_to :user
-  belongs_to :topic, counter_cache: :posts_count
+  belongs_to :topic
 
   belongs_to :reply_to_user, class_name: "User"
 
@@ -51,10 +51,25 @@ class Post < ActiveRecord::Base
 
   validates_with ::Validators::PostValidator
 
+  after_save :index_search
+  after_save :create_user_action
+
   # We can pass several creating options to a post via attributes
   attr_accessor :image_sizes, :quoted_post_numbers, :no_bump, :invalidate_oneboxes, :cooking_options, :skip_unique_check
 
   SHORT_POST_CHARS = 1200
+
+  scope :private_posts_for_user, ->(user) {
+    where("posts.topic_id IN (SELECT topic_id
+             FROM topic_allowed_users
+             WHERE user_id = :user_id
+             UNION ALL
+             SELECT tg.topic_id
+             FROM topic_allowed_groups tg
+             JOIN group_users gu ON gu.user_id = :user_id AND
+                                      gu.group_id = tg.group_id)",
+                                              user_id: user.id)
+  }
 
   scope :by_newest, -> { order('created_at desc, id desc') }
   scope :by_post_number, -> { order('post_number ASC') }
@@ -66,13 +81,14 @@ class Post < ActiveRecord::Base
   scope :visible, -> { joins(:topic).where('topics.visible = true').where(hidden: false) }
   scope :secured, lambda { |guardian| where('posts.post_type in (?)', Topic.visible_post_types(guardian && guardian.user))}
   scope :for_mailing_list, ->(user, since) {
-     created_since(since)
-    .joins(:topic)
-    .where(topic: Topic.for_digest(user, 100.years.ago)) # we want all topics with new content, regardless when they were created
-    .order('posts.created_at ASC')
+    q = created_since(since)
+      .joins(:topic)
+      .where(topic: Topic.for_digest(user, 100.years.ago)) # we want all topics with new content, regardless when they were created
+
+    q = q.where.not(post_type: Post.types[:whisper]) unless user.staff?
+
+    q.order('posts.created_at ASC')
   }
-  scope :mailing_list_new_topics, ->(user, since) { for_mailing_list(user, since).where('topics.created_at > ?', since) }
-  scope :mailing_list_updates,    ->(user, since) { for_mailing_list(user, since).where('topics.created_at <= ?', since) }
 
   delegate :username, to: :user
 
@@ -126,7 +142,8 @@ class Post < ActiveRecord::Base
       updated_at: Time.now,
       user_id: user_id,
       last_editor_id: last_editor_id,
-      type: type
+      type: type,
+      version: version
     }.merge(options)
 
     if Topic.visible_post_types.include?(post_type)
@@ -393,9 +410,11 @@ class Post < ActiveRecord::Base
     "#{Discourse.base_url}#{url}"
   end
 
-  def url
+  def url(opts=nil)
+    opts ||= {}
+
     if topic
-      Post.url(topic.slug, topic.id, post_number)
+      Post.url(topic.slug, topic.id, post_number, opts)
     else
       "/404"
     end
@@ -405,8 +424,13 @@ class Post < ActiveRecord::Base
     "#{Discourse.base_url}/email/unsubscribe/#{UnsubscribeKey.create_key_for(user, self)}"
   end
 
-  def self.url(slug, topic_id, post_number)
-    "/t/#{slug}/#{topic_id}/#{post_number}"
+  def self.url(slug, topic_id, post_number, opts=nil)
+    opts ||= {}
+
+    result = "/t/"
+    result << "#{slug}/" unless !!opts[:without_slug]
+
+    "#{result}#{topic_id}/#{post_number}"
   end
 
   def self.urls(post_ids)
@@ -498,7 +522,7 @@ class Post < ActiveRecord::Base
                 SET avg_time = (x.gmean / 1000)
                 FROM (SELECT post_timings.topic_id,
                              post_timings.post_number,
-                             round(exp(avg(ln(msecs)))) AS gmean
+                             round(exp(avg(CASE WHEN msecs > 0 THEN ln(msecs) ELSE 0 END))) AS gmean
                       FROM post_timings
                       INNER JOIN posts AS p2
                         ON p2.post_number = post_timings.post_number
@@ -522,7 +546,11 @@ class Post < ActiveRecord::Base
 
   before_save do
     self.last_editor_id ||= user_id
-    self.cooked = cook(raw, topic_id: topic_id) unless new_record?
+
+    if !new_record? && raw_changed?
+      self.cooked = cook(raw, topic_id: topic_id)
+    end
+
     self.baked_at = Time.new
     self.baked_version = BAKED_VERSION
   end
@@ -632,6 +660,14 @@ class Post < ActiveRecord::Base
     PostTiming.where(topic_id: topic_id, post_number: post_number, user_id: user.id).exists?
   end
 
+  def index_search
+    SearchIndexer.index(self)
+  end
+
+  def create_user_action
+    UserActionCreator.log_post(self)
+  end
+
   private
 
   def parse_quote_into_arguments(quote)
@@ -715,6 +751,7 @@ end
 #  raw_email               :text
 #  public_version          :integer          default(1), not null
 #  action_code             :string
+#  image_url               :string
 #
 # Indexes
 #

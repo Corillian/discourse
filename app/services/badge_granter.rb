@@ -37,6 +37,7 @@ class BadgeGranter
                                        post_id: @post_id,
                                        seq: seq)
 
+      return unless SiteSetting.enable_badges
         if @granted_by != Discourse.system_user
           StaffActionLogger.new(@granted_by).log_badge_grant(user_badge)
         end
@@ -222,7 +223,7 @@ class BadgeGranter
     {errors: e.message}
   end
 
-  MAX_ITEMS_FOR_DELTA = 200
+  MAX_ITEMS_FOR_DELTA ||= 200
   def self.backfill(badge, opts=nil)
     return unless SiteSetting.enable_badges
     return unless badge.enabled
@@ -274,7 +275,7 @@ class BadgeGranter
             /*where*/
             RETURNING id, user_id, granted_at
             )
-            select w.*, username, locale FROM w
+            select w.*, username, locale, (u.admin OR u.moderator) AS staff FROM w
             JOIN users u on u.id = w.user_id
             "
 
@@ -314,6 +315,8 @@ class BadgeGranter
 
       # Make this variable in this scope
       notification = nil
+
+      next if (row.staff && badge.awarded_for_trust_level?)
 
       I18n.with_locale(notification_locale) do
         notification = Notification.create!(

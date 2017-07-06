@@ -73,6 +73,7 @@ class UserSerializer < BasicUserSerializer
 
   has_one :invited_by, embed: :object, serializer: BasicUserSerializer
   has_many :groups, embed: :object, serializer: BasicGroupSerializer
+  has_many :group_users, embed: :object, serializer: BasicGroupUserSerializer
   has_many :featured_user_badges, embed: :ids, serializer: UserBadgeSerializer, root: :user_badges
   has_one  :card_badge, embed: :object, serializer: BadgeSerializer
   has_one :user_option, embed: :object, serializer: UserOptionSerializer
@@ -114,6 +115,7 @@ class UserSerializer < BasicUserSerializer
                        :bio_excerpt,
                        :location,
                        :website,
+                       :website_name,
                        :profile_background,
                        :card_background
 
@@ -127,11 +129,12 @@ class UserSerializer < BasicUserSerializer
   end
 
   def groups
-    if scope.is_admin? || object.id == scope.user.try(:id)
-      object.groups
-    else
-      object.groups.where(visible: true)
-    end
+    object.groups.order(:id)
+          .visible_groups(scope.user)
+  end
+
+  def group_users
+    object.group_users.order(:group_id)
   end
 
   def include_email?
@@ -241,7 +244,7 @@ class UserSerializer < BasicUserSerializer
   end
 
   def can_send_private_message_to_user
-    scope.can_send_private_message?(object)
+    scope.can_send_private_message?(object) && scope.current_user != object
   end
 
   def bio_excerpt

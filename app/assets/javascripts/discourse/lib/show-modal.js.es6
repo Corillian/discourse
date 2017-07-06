@@ -9,28 +9,37 @@ export default function(name, opts) {
 
   modalController.set('modalClass', null);
 
-  const viewClass = container.lookupFactory('view:' + name);
-  const controller = container.lookup('controller:' + name);
-  if (viewClass) {
-    route.render(name, { into: 'modal', outlet: 'modalBody' });
-  } else {
-    const templateName = Ember.String.dasherize(name);
+  const controllerName = opts.admin ? `modals/${name}` : name;
 
-    const renderArgs = { into: 'modal', outlet: 'modalBody', view: 'modal-body'};
-    if (controller) { renderArgs.controller = name; }
+  let controller = container.lookup('controller:' + controllerName);
+  const templateName = opts.templateName || Ember.String.dasherize(name);
 
-    route.render('modal/' + templateName, renderArgs);
-    if (opts.title) {
-      modalController.set('title', I18n.t(opts.title));
-    }
-  }
-
+  const renderArgs = { into: 'modal', outlet: 'modalBody'};
   if (controller) {
-    const model = opts.model;
-    if (model) { controller.set('model', model); }
-    if (controller.onShow) { controller.onShow(); }
-    controller.set('flashMessage', null);
+    renderArgs.controller = controllerName;
+  } else {
+    // use a basic controller
+    renderArgs.controller = 'basic-modal-body';
+    controller = container.lookup(`controller:${renderArgs.controller}`);
   }
+
+
+  if (opts.addModalBodyView) {
+    renderArgs.view = 'modal-body';
+  }
+
+  const modalName = `modal/${templateName}`;
+  const fullName = opts.admin ? `admin/templates/${modalName}` : modalName;
+  route.render(fullName, renderArgs);
+  if (opts.title) {
+    modalController.set('title', I18n.t(opts.title));
+  }
+
+  controller.set('modal', modalController);
+  const model = opts.model;
+  if (model) { controller.set('model', model); }
+  if (controller.onShow) { controller.onShow(); }
+  controller.set('flashMessage', null);
 
   return controller;
 };

@@ -1,6 +1,6 @@
 import { default as PrettyText, buildOptions } from 'pretty-text/pretty-text';
 
-module("lib:details-cooked-test");
+QUnit.module("lib:details-cooked-test");
 
 const defaultOpts = buildOptions({
   siteSettings: {
@@ -13,11 +13,11 @@ const defaultOpts = buildOptions({
   getURL: url => url
 });
 
-function cooked(input, expected, text) {
-  equal(new PrettyText(defaultOpts).cook(input), expected.replace(/\/>/g, ">"), text);
-};
 
-test("details", () => {
+test("details", assert => {
+  const cooked = (input, expected, text) => {
+    assert.equal(new PrettyText(defaultOpts).cook(input), expected.replace(/\/>/g, ">"), text);
+  };
   cooked(`<details><summary>Info</summary>coucou</details>`,
          `<details><summary>Info</summary>\n\n<p>coucou</p>\n\n</details>`,
          "manual HTML for details");

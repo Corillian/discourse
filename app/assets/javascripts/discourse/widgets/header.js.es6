@@ -3,6 +3,7 @@ import { iconNode } from 'discourse/helpers/fa-icon-node';
 import { avatarImg } from 'discourse/widgets/post';
 import DiscourseURL from 'discourse/lib/url';
 import { wantsNewWindow } from 'discourse/lib/intercept-click';
+import { applySearchAutocomplete } from "discourse/lib/search";
 
 import { h } from 'virtual-dom';
 
@@ -42,6 +43,17 @@ createWidget('header-notifications', {
 
     const unreadPMs = currentUser.get('unread_private_messages');
     if (!!unreadPMs) {
+      if (!currentUser.get('read_first_notification')) {
+        contents.push(h('span.ring'));
+        if (!attrs.active && attrs.ringBackdrop) {
+          contents.push(h('span.ring-backdrop-spotlight'));
+          contents.push(h('span.ring-backdrop',
+            {},
+            h('h1.ring-first-notification', {} ,I18n.t('user.first_notification'))
+          ));
+        }
+      };
+
       contents.push(this.attach('link', { action: attrs.action,
                                           className: 'badge-notification unread-private-messages',
                                           rawLabel: unreadPMs }));
@@ -93,6 +105,8 @@ createWidget('header-icons', {
   },
 
   html(attrs) {
+    if (this.siteSettings.login_required && !this.currentUser) { return []; }
+
     const hamburger = this.attach('header-dropdown', {
                         title: 'hamburger_menu',
                         icon: 'bars',
@@ -101,12 +115,9 @@ createWidget('header-icons', {
                         action: 'toggleHamburger',
                         contents() {
                           if (!attrs.flagCount) { return; }
-                          return this.attach('link', {
-                            href: Discourse.getURL('/admin/flags/active'),
-                            title: 'notifications.total_flagged',
-                            rawLabel: attrs.flagCount,
-                            className: 'badge-notification flagged-posts'
-                          });
+                          return h('div.badge-notification.flagged-posts', { attributes: {
+                            title: I18n.t('notifications.total_flagged')
+                          } }, attrs.flagCount);
                         }
                       });
 
@@ -122,7 +133,8 @@ createWidget('header-icons', {
     const icons = [search, hamburger];
     if (this.currentUser) {
       icons.push(this.attach('user-dropdown', { active: attrs.userVisible,
-                                                action: 'toggleUserMenu' }));
+                                                action: 'toggleUserMenu',
+                                                ringBackdrop: attrs.ringBackdrop }));
     }
 
     return icons;
@@ -152,15 +164,30 @@ createWidget('header-buttons', {
   }
 });
 
+const forceContextEnabled = ['category', 'user', 'private_messages'];
+
+let additionalPanels = [];
+export function attachAdditionalPanel(name, toggle, transformAttrs) {
+  additionalPanels.push({ name, toggle, transformAttrs });
+}
+
 export default createWidget('header', {
   tagName: 'header.d-header.clearfix',
   buildKey: () => `header`,
 
   defaultState() {
-    return { searchVisible: false,
-             hamburgerVisible: false,
-             userVisible: false,
-             contextEnabled: false };
+    let states =  {
+      searchVisible: false,
+      hamburgerVisible: false,
+      userVisible: false,
+      ringBackdrop: true
+    };
+
+    if (this.site.mobileView) {
+      states.skipSearchContext = true;
+    }
+
+    return states;
   },
 
   html(attrs, state) {
@@ -168,15 +195,35 @@ export default createWidget('header', {
                     this.attach('header-icons', { hamburgerVisible: state.hamburgerVisible,
                                                   userVisible: state.userVisible,
                                                   searchVisible: state.searchVisible,
+                                                  ringBackdrop: state.ringBackdrop,
                                                   flagCount: attrs.flagCount })];
 
     if (state.searchVisible) {
+      const contextType = this.searchContextType();
+
+      if (state.searchContextType !== contextType) {
+        state.contextEnabled = undefined;
+        state.searchContextType = contextType;
+      }
+
+      if (state.contextEnabled === undefined) {
+        if (forceContextEnabled.includes(contextType)) {
+          state.contextEnabled = true;
+        }
+      }
+
       panels.push(this.attach('search-menu', { contextEnabled: state.contextEnabled }));
     } else if (state.hamburgerVisible) {
       panels.push(this.attach('hamburger-menu'));
     } else if (state.userVisible) {
       panels.push(this.attach('user-menu'));
     }
+
+    additionalPanels.map((panel) => {
+      if (this.state[panel.toggle]) {
+        panels.push(this.attach(panel.name, panel.transformAttrs.call(this, attrs, state)));
+      }
+    });
 
     const contents = [ this.attach('home-logo', { minimized: !!attrs.topic }),
                        h('div.panel.clearfix', panels) ];
@@ -190,7 +237,7 @@ export default createWidget('header', {
 
   updateHighlight() {
     if (!this.state.searchVisible) {
-      const service = this.container.lookup('search-service:main');
+      const service = this.register.lookup('search-service:main');
       service.set('highlightTerm', '');
     }
   },
@@ -201,19 +248,19 @@ export default createWidget('header', {
     this.state.searchVisible = false;
   },
 
-  linkClickedEvent() {
-    this.closeAll();
+  linkClickedEvent(attrs) {
+    if (!(attrs && attrs.searchContextEnabled)) this.closeAll();
     this.updateHighlight();
   },
 
   toggleSearchMenu() {
     if (this.site.mobileView) {
-      const searchService = this.container.lookup('search-service:main');
+      const searchService = this.register.lookup('search-service:main');
       const context = searchService.get('searchContext');
       var params = "";
 
       if (context) {
-        params = `?context=${context.type}&context_id=${context.id}&skip_context=true`;
+        params = `?context=${context.type}&context_id=${context.id}&skip_context=${this.state.skipSearchContext}`;
       }
 
       return DiscourseURL.routeTo('/search' + params);
@@ -223,11 +270,22 @@ export default createWidget('header', {
     this.updateHighlight();
 
     if (this.state.searchVisible) {
-      Ember.run.schedule('afterRender', () => $('#search-term').focus().select());
+      Ember.run.schedule('afterRender', () => {
+        const $searchInput = $('#search-term');
+        $searchInput.focus().select();
+
+        applySearchAutocomplete($searchInput, this.siteSettings, this.appEvents, {
+          appendSelector: '.menu-panel'
+        });
+      });
     }
   },
 
   toggleUserMenu() {
+    if (this.currentUser.get('read_first_notification')) {
+      this.state.ringBackdrop = false;
+    };
+
     this.state.userVisible = !this.state.userVisible;
   },
 
@@ -240,7 +298,7 @@ export default createWidget('header', {
 
     state.contextEnabled = false;
 
-    const currentPath = this.container.lookup('controller:application').get('currentPath');
+    const currentPath = this.register.lookup('controller:application').get('currentPath');
     const blacklist = [ /^discovery\.categories/ ];
     const whitelist = [ /^topic\./ ];
     const check = function(regex) { return !!currentPath.match(regex); };
@@ -249,7 +307,7 @@ export default createWidget('header', {
     // If we're viewing a topic, only intercept search if there are cloaked posts
     if (showSearch && currentPath.match(/^topic\./)) {
       showSearch = ($('.topic-post .cooked, .small-action:not(.time-gap)').length <
-                    this.container.lookup('controller:topic').get('model.postStream.stream.length'));
+                    this.register.lookup('controller:topic').get('model.postStream.stream.length'));
     }
 
     if (state.searchVisible) {
@@ -267,6 +325,7 @@ export default createWidget('header', {
   },
 
   searchMenuContextChanged(value) {
+    this.state.contextType = this.register.lookup('search-service:main').get('contextType');
     this.state.contextEnabled = value;
   },
 
@@ -295,6 +354,16 @@ export default createWidget('header', {
           msg.event.stopPropagation();
         }
         break;
+    }
+  },
+
+  searchContextType() {
+    const service = this.register.lookup('search-service:main');
+    if (service) {
+      const ctx = service.get('searchContext');
+      if (ctx) {
+        return Ember.get(ctx, 'type');
+      }
     }
   }
 

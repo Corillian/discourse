@@ -21,7 +21,7 @@ componentTest('preview sanitizes HTML', {
   template: '{{d-editor value=value}}',
 
   test(assert) {
-    this.set('value', `"><svg onload="prompt(/xss/)"></svg>`);
+    fillIn('.d-editor-input', `"><svg onload="prompt(/xss/)"></svg>`);
     andThen(() => {
       assert.equal(this.$('.d-editor-preview').html().trim(), '<p>\"&gt;</p>');
     });
@@ -31,7 +31,7 @@ componentTest('preview sanitizes HTML', {
 componentTest('updating the value refreshes the preview', {
   template: '{{d-editor value=value}}',
 
-  setup() {
+  beforeEach() {
     this.set('value', 'evil trout');
   },
 
@@ -52,7 +52,20 @@ function jumpEnd(textarea) {
 function testCase(title, testFunc) {
   componentTest(title, {
     template: '{{d-editor value=value}}',
-    setup() {
+    beforeEach() {
+      this.set('value', 'hello world.');
+    },
+    test(assert) {
+      const textarea = jumpEnd(this.$('textarea.d-editor-input')[0]);
+      testFunc.call(this, assert, textarea);
+    }
+  });
+}
+
+function composerTestCase(title, testFunc) {
+  componentTest(title, {
+    template: '{{d-editor value=value composerEvents=true}}',
+    beforeEach() {
       this.set('value', 'hello world.');
     },
     test(assert) {
@@ -256,7 +269,7 @@ testCase('link modal (link with description)', function(assert) {
 
 componentTest('advanced code', {
   template: '{{d-editor value=value}}',
-  setup() {
+  beforeEach() {
     this.siteSettings.code_formatting_style = '4-spaces-indent';
     this.set('value',
 `
@@ -291,7 +304,7 @@ function xyz(x, y, z) {
 
 componentTest('code button', {
   template: '{{d-editor value=value}}',
-  setup() {
+  beforeEach() {
     this.siteSettings.code_formatting_style = '4-spaces-indent';
   },
 
@@ -393,7 +406,7 @@ third line`
 
 componentTest('code fences', {
   template: '{{d-editor value=value}}',
-  setup() {
+  beforeEach() {
     this.set('value', '');
   },
 
@@ -502,29 +515,37 @@ third line`
 
 
 testCase('quote button', function(assert, textarea) {
-  click('button.quote');
-  andThen(() => {
-    assert.equal(this.get('value'), 'hello world.');
-  });
 
   andThen(() => {
     textarea.selectionStart = 6;
-    textarea.selectionEnd = 11;
+    textarea.selectionEnd = 9;
   });
 
   click('button.quote');
   andThen(() => {
-    assert.equal(this.get('value'), 'hello > world.');
-    assert.equal(textarea.selectionStart, 6);
-    assert.equal(textarea.selectionEnd, 13);
+    assert.equal(this.get('value'), 'hello\n\n> wor\n\nld.');
+    assert.equal(textarea.selectionStart, 7);
+    assert.equal(textarea.selectionEnd, 12);
+  });
+
+  click('button.quote');
+
+  andThen(() => {
+    assert.equal(this.get('value'), 'hello\n\nwor\n\nld.');
+    assert.equal(textarea.selectionStart, 7);
+    assert.equal(textarea.selectionEnd, 10);
+  });
+
+  andThen(() => {
+    textarea.selectionStart = 15;
+    textarea.selectionEnd = 15;
   });
 
   click('button.quote');
   andThen(() => {
-    assert.equal(this.get('value'), 'hello world.');
-    assert.equal(textarea.selectionStart, 6);
-    assert.equal(textarea.selectionEnd, 11);
+    assert.equal(this.get('value'), 'hello\n\nwor\n\nld.\n\n> Blockquote');
   });
+
 });
 
 testCase(`bullet button with no selection`, function(assert, textarea) {
@@ -727,7 +748,7 @@ testCase(`doesn't jump to bottom with long text`, function(assert, textarea) {
 
 componentTest('emoji', {
   template: '{{d-editor value=value}}',
-  setup() {
+  beforeEach() {
     // Test adding a custom button
     withPluginApi('0.1', api => {
       api.onToolbarCreate(toolbar => {
@@ -760,8 +781,19 @@ componentTest('emoji', {
   }
 });
 
-testCase("replace-text event", function(assert, textarea) {
+testCase("replace-text event by default", function(assert) {
+  this.set('value', "red green blue");
 
+  andThen(() => {
+    this.container.lookup('app-events:main').trigger('composer:replace-text', 'green', 'yellow');
+  });
+
+  andThen(() => {
+    assert.equal(this.get('value'), 'red green blue');
+  });
+});
+
+composerTestCase("replace-text event for composer", function(assert) {
   this.set('value', "red green blue");
 
   andThen(() => {
@@ -770,7 +802,97 @@ testCase("replace-text event", function(assert, textarea) {
 
   andThen(() => {
     assert.equal(this.get('value'), 'red yellow blue');
-    assert.equal(textarea.selectionStart, 10);
-    assert.equal(textarea.selectionEnd, 10);
   });
 });
+
+
+(() => {
+  // Tests to check cursor/selection after replace-text event.
+  const BEFORE = 'red green blue';
+  const NEEDLE = 'green';
+  const REPLACE = 'yellow';
+  const AFTER = BEFORE.replace(NEEDLE, REPLACE);
+
+  const CASES = [
+    {
+      description: 'cursor at start remains there',
+      before: [0, 0],
+      after: [0, 0]
+    },{
+      description: 'cursor before needle becomes cursor before replacement',
+      before: [BEFORE.indexOf(NEEDLE), 0],
+      after: [AFTER.indexOf(REPLACE), 0]
+    },{
+      description: 'cursor at needle start + 1 moves behind replacement',
+      before: [BEFORE.indexOf(NEEDLE) + 1, 0],
+      after: [AFTER.indexOf(REPLACE) + REPLACE.length, 0]
+    },{
+      description: 'cursor at needle end - 1 stays behind replacement',
+      before: [BEFORE.indexOf(NEEDLE) + NEEDLE.length - 1, 0],
+      after: [AFTER.indexOf(REPLACE) + REPLACE.length, 0]
+    },{
+      description: 'cursor behind needle becomes cursor behind replacement',
+      before: [BEFORE.indexOf(NEEDLE) + NEEDLE.length, 0],
+      after: [AFTER.indexOf(REPLACE) + REPLACE.length, 0]
+    },{
+      description: 'cursor at end remains there',
+      before: [BEFORE.length, 0],
+      after: [AFTER.length, 0]
+    },{
+      description: 'selection spanning needle start becomes selection until replacement start',
+      before: [BEFORE.indexOf(NEEDLE) - 1, 2],
+      after: [AFTER.indexOf(REPLACE) - 1, 1]
+    },{
+      description: 'selection spanning needle end becomes selection from replacement end',
+      before: [BEFORE.indexOf(NEEDLE) + NEEDLE.length - 1, 2],
+      after: [AFTER.indexOf(REPLACE) + REPLACE.length, 1]
+    },{
+      description: 'selection spanning needle becomes selection spanning replacement',
+      before: [BEFORE.indexOf(NEEDLE) - 1, NEEDLE.length + 2],
+      after: [AFTER.indexOf(REPLACE) - 1, REPLACE.length + 2]
+    },{
+      description: 'complete selection remains complete',
+      before: [0, BEFORE.length],
+      after: [0, AFTER.length]
+    }
+  ];
+
+  function setSelection(textarea, [start, len]) {
+    textarea.selectionStart = start;
+    textarea.selectionEnd = start + len;
+  }
+
+  function getSelection(textarea) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    return [start, end - start];
+  }
+
+  function formatTextWithSelection(text, [start, len]) {
+    return [
+      '"',
+      text.substr(0, start),
+      '<',
+      text.substr(start, len),
+      '>',
+      text.substr(start+len),
+      '"',
+    ].join('');
+  }
+
+  for (let i = 0; i < CASES.length; i++) {
+    const CASE = CASES[i];
+    composerTestCase(`replace-text event: ${CASE.description}`, function(assert, textarea) {
+      this.set('value', BEFORE);
+      setSelection(textarea, CASE.before);
+      andThen(() => {
+        this.container.lookup('app-events:main').trigger('composer:replace-text', 'green', 'yellow');
+      });
+      andThen(() => {
+        let expect = formatTextWithSelection(AFTER, CASE.after);
+        let actual = formatTextWithSelection(this.get('value'), getSelection(textarea));
+        assert.equal(actual, expect);
+      });
+    });
+  }
+})();

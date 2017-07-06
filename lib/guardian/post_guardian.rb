@@ -4,6 +4,12 @@ module PostGuardian
   # Can the user act on the post in a particular way.
   #  taken_actions = the list of actions the user has already taken
   def post_can_act?(post, action_key, opts={})
+
+    return false unless can_see_post?(post)
+
+    # no warnings except for staff
+    return false if (action_key == :notify_user && !is_staff? && opts[:is_warning].present? && opts[:is_warning] == 'true')
+
     taken = opts[:taken_actions].try(:keys).to_a
     is_flag = PostActionType.is_flag?(action_key)
     already_taken_this_action = taken.any? && taken.include?(PostActionType.types[action_key])
@@ -32,9 +38,6 @@ module PostGuardian
       # new users can't notify_user because they are not allowed to send private messages
       not(action_key == :notify_user && !@user.has_trust_level?(SiteSetting.min_trust_to_send_messages)) &&
 
-      # non-staff can't send an official warning
-      not(action_key == :notify_user && !is_staff? && opts[:is_warning].present? && opts[:is_warning] == 'true') &&
-
       # can't send private messages if they're disabled globally
       not(action_key == :notify_user && !SiteSetting.enable_private_messages) &&
 
@@ -46,7 +49,7 @@ module PostGuardian
   end
 
   def can_defer_flags?(post)
-    is_staff? && post
+    can_see_post?(post) && is_staff? && post
   end
 
   # Can we see who acted on a post in a particular way?
@@ -103,7 +106,7 @@ module PostGuardian
     end
 
     if post.wiki && (@user.trust_level >= SiteSetting.min_trust_to_edit_wiki_post.to_i)
-      return true
+      return can_create_post?(post.topic)
     end
 
     if @user.trust_level < SiteSetting.min_trust_to_edit_post
@@ -127,6 +130,8 @@ module PostGuardian
 
   # Deleting Methods
   def can_delete_post?(post)
+    can_see_post?(post)
+
     # Can't delete the first post
     return false if post.is_first_post?
 
@@ -144,7 +149,11 @@ module PostGuardian
 
   # Recovery Method
   def can_recover_post?(post)
-    is_staff? || (is_my_own?(post) && post.user_deleted && !post.deleted_at)
+    if is_staff?
+      post.deleted_at && post.user
+    else
+      is_my_own?(post) && post.user_deleted && !post.deleted_at
+    end
   end
 
   def can_delete_post_action?(post_action)
@@ -182,6 +191,10 @@ module PostGuardian
   end
 
   def can_change_post_owner?
+    is_admin?
+  end
+
+  def can_change_post_timestamps?
     is_admin?
   end
 

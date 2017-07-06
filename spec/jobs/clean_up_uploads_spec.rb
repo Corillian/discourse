@@ -33,6 +33,18 @@ describe Jobs::CleanUpUploads do
     expect(Upload.find_by(id: logo_upload.id)).to eq(logo_upload)
   end
 
+  it "does not clean up uploads in site settings when they use the CDN" do
+    Discourse.stubs(:asset_host).returns("//my.awesome.cdn")
+
+    logo_small_upload = fabricate_upload
+    SiteSetting.logo_small_url = "#{Discourse.asset_host}#{logo_small_upload.url}"
+
+    Jobs::CleanUpUploads.new.execute(nil)
+
+    expect(Upload.find_by(id: @upload.id)).to eq(nil)
+    expect(Upload.find_by(id: logo_small_upload.id)).to eq(logo_small_upload)
+  end
+
   it "does not delete profile background uploads" do
     profile_background_upload = fabricate_upload
     UserProfile.last.update_attributes!(profile_background: profile_background_upload.url)
@@ -55,7 +67,7 @@ describe Jobs::CleanUpUploads do
 
   it "does not delete category logo uploads" do
     category_logo_upload = fabricate_upload
-    Fabricate(:category, logo_url: category_logo_upload.url)
+    Fabricate(:category, uploaded_logo: category_logo_upload)
 
     Jobs::CleanUpUploads.new.execute(nil)
 
@@ -64,13 +76,13 @@ describe Jobs::CleanUpUploads do
   end
 
   it "does not delete category background url uploads" do
-    category_background_url = fabricate_upload
-    Fabricate(:category, background_url: category_background_url.url)
+    category_logo_upload = fabricate_upload
+    Fabricate(:category, uploaded_background: category_logo_upload)
 
     Jobs::CleanUpUploads.new.execute(nil)
 
     expect(Upload.find_by(id: @upload.id)).to eq(nil)
-    expect(Upload.find_by(id: category_background_url.id)).to eq(category_background_url)
+    expect(Upload.find_by(id: category_logo_upload.id)).to eq(category_logo_upload)
   end
 
   it "does not delete post uploads" do
@@ -103,6 +115,16 @@ describe Jobs::CleanUpUploads do
     expect(Upload.find_by(id: upload.id)).to eq(upload)
   end
 
+  it "does not delete user custom upload" do
+    upload = fabricate_upload
+    Fabricate(:user, user_avatar: Fabricate(:user_avatar, custom_upload: upload))
+
+    Jobs::CleanUpUploads.new.execute(nil)
+
+    expect(Upload.find_by(id: @upload.id)).to eq(nil)
+    expect(Upload.find_by(id: upload.id)).to eq(upload)
+  end
+
   it "does not delete uploads in a queued post" do
     upload = fabricate_upload
 
@@ -123,6 +145,16 @@ describe Jobs::CleanUpUploads do
   it "does not delete uploads in a draft" do
     upload = fabricate_upload
     Draft.set(Fabricate(:user), "test", 0, upload.sha1)
+
+    Jobs::CleanUpUploads.new.execute(nil)
+
+    expect(Upload.find_by(id: @upload.id)).to eq(nil)
+    expect(Upload.find_by(id: upload.id)).to eq(upload)
+  end
+
+  it "does not delete custom emojis" do
+    upload = fabricate_upload
+    CustomEmoji.create!(name: 'test', upload: upload)
 
     Jobs::CleanUpUploads.new.execute(nil)
 

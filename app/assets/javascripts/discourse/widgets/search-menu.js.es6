@@ -54,6 +54,11 @@ const SearchHelper = {
       this._activeSearch = searchForTerm(term, { typeFilter, searchContext, fullSearchUrl });
       this._activeSearch.then(content => {
         searchData.noResults = content.resultTypes.length === 0;
+
+        if (content.grouped_search_result) {
+          searchData.term = content.grouped_search_result.term;
+        }
+
         searchData.results = content;
       }).finally(() => {
         searchData.loading = false;
@@ -67,25 +72,41 @@ const SearchHelper = {
 export default createWidget('search-menu', {
   tagName: 'div.search-menu',
 
-  fullSearchUrl() {
+  fullSearchUrl(opts) {
     const contextEnabled = searchData.contextEnabled;
 
     const ctx = contextEnabled ? this.searchContext() : null;
-    const type = Ember.get(ctx, 'type');
+    const type = ctx ? Ember.get(ctx, 'type') : null;
 
     if (contextEnabled && type === 'topic') {
       return;
     }
 
-    let url = '/search?q=' + encodeURIComponent(searchData.term);
-    if (contextEnabled) {
-      if (this.currentUser &&
-          ctx.id.toString().toLowerCase() === this.currentUser.username_lower &&
-          type === "private_messages") {
-        url += ' in:private';
-      } else {
-        url += encodeURIComponent(" " + type + ":" + ctx.id);
+    let url = '/search';
+    const params = [];
+
+    if (searchData.term) {
+      let query = '';
+
+      query += `q=${encodeURIComponent(searchData.term)}`;
+
+      if (contextEnabled && ctx) {
+        if (this.currentUser &&
+            ctx.id.toString().toLowerCase() === this.currentUser.username_lower &&
+            type === "private_messages") {
+          query += ' in:private';
+        } else {
+          query += encodeURIComponent(" " + type + ":" + ctx.id);
+        }
       }
+
+      if (query) params.push(query);
+    }
+
+    if (opts && opts.expanded) params.push('expanded=true');
+
+    if (params.length > 0) {
+      url = `${url}?${params.join("&")}`;
     }
 
     return Discourse.getURL(url);
@@ -94,8 +115,13 @@ export default createWidget('search-menu', {
   panelContents() {
     const contextEnabled = searchData.contextEnabled;
 
-    const results = [this.attach('search-term', { value: searchData.term, contextEnabled }),
-                     this.attach('search-context', { contextEnabled })];
+    const results = [
+      this.attach('search-term', { value: searchData.term, contextEnabled }),
+      this.attach('search-context', {
+        contextEnabled,
+        url: this.fullSearchUrl({ expanded: true })
+      })
+    ];
 
     if (searchData.term) {
       if (searchData.loading) {
@@ -104,7 +130,8 @@ export default createWidget('search-menu', {
         results.push(this.attach('search-menu-results', { term: searchData.term,
                                                           noResults: searchData.noResults,
                                                           results: searchData.results,
-                                                          invalidTerm: searchData.invalidTerm }));
+                                                          invalidTerm: searchData.invalidTerm,
+                                                          searchContextEnabled: searchData.contextEnabled }));
       }
     }
 
@@ -113,7 +140,7 @@ export default createWidget('search-menu', {
 
   searchService() {
     if (!this._searchService) {
-      this._searchService = this.container.lookup('search-service:main');
+      this._searchService = this.register.lookup('search-service:main');
     }
     return this._searchService;
   },
@@ -126,7 +153,12 @@ export default createWidget('search-menu', {
   },
 
   html(attrs) {
-    searchData.contextEnabled = attrs.contextEnabled;
+    if (searchData.contextEnabled !== attrs.contextEnabled) {
+      searchData.contextEnabled = attrs.contextEnabled;
+      this.triggerSearch();
+    } else {
+      searchData.contextEnabled = attrs.contextEnabled;
+    }
 
     return this.attach('menu-panel', { maxWidth: 500, contents: () => this.panelContents() });
   },
@@ -148,6 +180,7 @@ export default createWidget('search-menu', {
   },
 
   searchContextChanged(enabled) {
+    // This indicates the checkbox has been clicked, NOT that the context has changed.
     searchData.typeFilter = null;
     this.sendWidgetAction('searchMenuContextChanged', enabled);
     searchData.contextEnabled = enabled;
@@ -170,6 +203,8 @@ export default createWidget('search-menu', {
     if (url) {
       this.sendWidgetEvent('linkClicked');
       DiscourseURL.routeTo(url);
+    } else if (searchData.contextEnabled) {
+      this.triggerSearch();
     }
   }
 });

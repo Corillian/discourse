@@ -1,6 +1,9 @@
 require 'rails_helper'
 
 describe Group do
+  let(:admin) { Fabricate(:admin) }
+  let(:user) { Fabricate(:user) }
+  let(:group) { Fabricate(:group) }
 
   describe '#builtin' do
     context "verify enum sequence" do
@@ -73,6 +76,26 @@ describe Group do
     it "is valid for proper incoming email" do
       group.incoming_email = "foo@bar.org"
       expect(group.valid?).to eq(true)
+    end
+
+    context 'when a group has no owners' do
+      it 'should not allow membership requests' do
+        group.allow_membership_requests = true
+
+        expect(group.valid?).to eq(false)
+
+        expect(group.errors.full_messages).to include(I18n.t(
+          "groups.errors.cant_allow_membership_requests"
+        ))
+
+        group.allow_membership_requests = false
+        group.save!
+
+        group.add_owner(user)
+        group.allow_membership_requests = true
+
+        expect(group.valid?).to eq(true)
+      end
     end
   end
 
@@ -152,6 +175,44 @@ describe Group do
     user.reload
     expect(user.title).to eq nil
 
+  end
+
+  describe '.refresh_automatic_group!' do
+    it "makes sure the everyone group is not visible" do
+      g = Group.refresh_automatic_group!(:everyone)
+      expect(g.visibility_level).to eq(Group.visibility_levels[:owners])
+    end
+
+    it "uses the localized name if name has not been taken" do
+      begin
+        default_locale = SiteSetting.default_locale
+        I18n.locale = SiteSetting.default_locale = 'de'
+
+        group = Group.refresh_automatic_group!(:staff)
+
+        expect(group.name).to_not eq('staff')
+        expect(group.name).to eq(I18n.t('groups.default_names.staff'))
+      ensure
+        I18n.locale = SiteSetting.default_locale = default_locale
+      end
+    end
+
+    it "does not use the localized name if name has already been taken" do
+      begin
+        default_locale = SiteSetting.default_locale
+        I18n.locale = SiteSetting.default_locale = 'de'
+
+        another_group = Fabricate(:group,
+          name: I18n.t('groups.default_names.staff').upcase
+        )
+
+        group = Group.refresh_automatic_group!(:staff)
+
+        expect(group.name).to eq('staff')
+      ensure
+        I18n.locale = SiteSetting.default_locale = default_locale
+      end
+    end
   end
 
   it "Correctly handles removal of primary group" do
@@ -317,7 +378,6 @@ describe Group do
     expect(Group.desired_trust_level_groups(2).sort).to eq [10,11,12]
   end
 
-
   it "correctly handles trust level changes" do
     user = Fabricate(:user, trust_level: 2)
     Group.user_trust_level_change!(user.id, 2)
@@ -364,4 +424,91 @@ describe Group do
     expect(u3.reload.trust_level).to eq(3)
   end
 
+  it 'should cook the bio' do
+    group = Fabricate(:group)
+    group.update_attributes!(bio_raw: 'This is a group for :unicorn: lovers')
+
+    expect(group.bio_cooked).to include("unicorn.png")
+  end
+
+  describe ".visible_groups" do
+
+    def can_view?(user, group)
+      Group.visible_groups(user).where(id: group.id).exists?
+    end
+
+    it 'correctly restricts group visibility' do
+      group = Fabricate.build(:group, visibility_level: Group.visibility_levels[:owners])
+      member = Fabricate(:user)
+      group.add(member)
+      group.save!
+
+      owner = Fabricate(:user)
+      group.add_owner(owner)
+
+      moderator = Fabricate(:user, moderator: true)
+      admin = Fabricate(:user, admin: true)
+
+      expect(can_view?(admin, group)).to eq(true)
+      expect(can_view?(owner, group)).to eq(true)
+      expect(can_view?(moderator, group)).to eq(false)
+      expect(can_view?(member, group)).to eq(false)
+      expect(can_view?(nil, group)).to eq(false)
+
+      group.update_columns(visibility_level: Group.visibility_levels[:staff])
+
+      expect(can_view?(admin, group)).to eq(true)
+      expect(can_view?(owner, group)).to eq(true)
+      expect(can_view?(moderator, group)).to eq(true)
+      expect(can_view?(member, group)).to eq(false)
+      expect(can_view?(nil, group)).to eq(false)
+
+      group.update_columns(visibility_level: Group.visibility_levels[:members])
+
+      expect(can_view?(admin, group)).to eq(true)
+      expect(can_view?(owner, group)).to eq(true)
+      expect(can_view?(moderator, group)).to eq(false)
+      expect(can_view?(member, group)).to eq(true)
+      expect(can_view?(nil, group)).to eq(false)
+
+      group.update_columns(visibility_level: Group.visibility_levels[:public])
+
+      expect(can_view?(admin, group)).to eq(true)
+      expect(can_view?(owner, group)).to eq(true)
+      expect(can_view?(moderator, group)).to eq(true)
+      expect(can_view?(member, group)).to eq(true)
+      expect(can_view?(nil, group)).to eq(true)
+    end
+
+  end
+
+  describe '#add' do
+    context 'when adding a user into a public group' do
+      let(:category) { Fabricate(:category) }
+
+      it "should publish the group's categories to the client" do
+        group.update!(public: true, categories: [category])
+
+        message = MessageBus.track_publish { group.add(user) }.first
+
+        expect(message.data[:categories].count).to eq(1)
+        expect(message.data[:categories].first[:id]).to eq(category.id)
+        expect(message.user_ids).to eq([user.id])
+      end
+    end
+  end
+
+  describe '.search_group' do
+    let(:group) { Fabricate(:group, name: 'tEsT', full_name: 'eSTt') }
+
+    it 'should return the right groups' do
+      group
+
+      expect(Group.search_group('te')).to eq([group])
+      expect(Group.search_group('TE')).to eq([group])
+      expect(Group.search_group('es')).to eq([group])
+      expect(Group.search_group('ES')).to eq([group])
+      expect(Group.search_group('test2')).to eq([])
+    end
+  end
 end

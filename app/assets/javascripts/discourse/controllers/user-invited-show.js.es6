@@ -12,13 +12,12 @@ export default Ember.Controller.extend({
   canLoadMore: true,
   invitesLoading: false,
   reinvitedAll: false,
+  rescindedAll: false,
 
   init: function() {
     this._super();
     this.set('searchTerm', '');
   },
-
-  uploadText: function() { return I18n.t("user.invited.bulk_invite.text"); }.property(),
 
   /**
     Observe the search term box with a debouncer and change the results.
@@ -34,7 +33,7 @@ export default Ember.Controller.extend({
 
   inviteRedeemed: Em.computed.equal('filter', 'redeemed'),
 
-  showReinviteAllButton: function() {
+  showBulkActionButtons: function() {
     return (this.get('filter') === "pending" && this.get('model').invites.length > 4 && this.currentUser.get('staff'));
   }.property('filter'),
 
@@ -88,16 +87,30 @@ export default Ember.Controller.extend({
       return false;
     },
 
+    rescindAll() {
+      bootbox.confirm(I18n.t("user.invited.rescind_all_confirm"), confirm => {
+        if (confirm) {
+          Invite.rescindAll().then(() => {
+            this.set('rescindedAll', true);
+            this.get('model.invites').clear();
+          }).catch(popupAjaxError);
+        }
+      });
+    },
+
     reinvite(invite) {
       invite.reinvite();
       return false;
     },
 
     reinviteAll() {
-      const self = this;
-      Invite.reinviteAll().then(function() {
-        self.set('reinvitedAll', true);
-      }).catch(popupAjaxError);
+      bootbox.confirm(I18n.t("user.invited.reinvite_all_confirm"), confirm => {
+        if (confirm) {
+          Invite.reinviteAll().then(() => {
+            this.set('reinvitedAll', true);
+          }).catch(popupAjaxError);
+        }
+      });
     },
 
     loadMore() {

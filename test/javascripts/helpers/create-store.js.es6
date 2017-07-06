@@ -6,12 +6,16 @@ import { buildResolver } from 'discourse-common/resolver';
 
 export default function() {
   const resolver = buildResolver('discourse').create();
+
   return Store.create({
-    container: {
+    register: {
       lookup(type) {
         if (type === "adapter:rest") {
-          this._restAdapter = this._restAdapter || RestAdapter.create({ container: this });
-          return (this._restAdapter);
+          if (!this._restAdapter) {
+            this._restAdapter = RestAdapter.create({ owner: this });
+            // this._restAdapter.container = this;
+          }
+          return this._restAdapter;
         }
         if (type === "key-value-store:main") {
           this._kvs = this._kvs || new KeyValueStore();
@@ -34,4 +38,3 @@ export default function() {
     }
   });
 }
-

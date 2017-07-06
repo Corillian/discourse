@@ -50,7 +50,7 @@
     <div class='filters'>
       <div>
         <label>{{fa-icon 'circle' class='tracking'}}{{i18n 'admin.web_hooks.categories_filter'}}</label>
-        {{category-selector categories=model.categoriesFilter blacklist=model.categoriesFilter}}
+        {{category-selector categories=model.categories blacklist=model.categories}}
         <div class="instructions">{{i18n 'admin.web_hooks.categories_filter_instructions'}}</div>
       </div>
       <div>
@@ -59,6 +59,8 @@
         <div class="instructions">{{i18n 'admin.web_hooks.groups_filter_instructions'}}</div>
       </div>
     </div>
+
+    {{plugin-outlet name="web-hook-fields" args=(hash model=model)}}
 
     <div>
       {{input type="checkbox" name="verify_certificate" checked=model.verify_certificate}} {{i18n 'admin.web_hooks.verify_certificate'}}

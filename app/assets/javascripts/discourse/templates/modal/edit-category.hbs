@@ -12,11 +12,11 @@
     {{/if}}
   </ul>
 
-  <div class="modal-body">
+  {{#d-modal-body}}
     {{#each panels as |tab|}}
       {{component tab selectedTab=selectedTab category=model}}
     {{/each}}
-  </div>
+  {{/d-modal-body}}
 
   <div class="modal-footer">
     {{d-button id="save-category" class="btn-primary" disabled=disabled action="saveCategory" label=saveLabel}}
@@ -28,8 +28,16 @@
                  icon="trash-o"
                  label="category.delete"}}
     {{else}}
-      <div class="cannot_delete_reason">
-        {{{model.cannot_delete_reason}}}
+      <div class="disable_info_wrap">
+        {{d-button disabled=deleteDisabled
+                   class="disable-no-hover"
+                   action="toggleDeleteTooltip"
+                   icon="question-circle"
+                   label="category.delete"}}
+
+        <div class="cannot_delete_reason {{if hiddenTooltip "hidden" ""}}">
+          {{{model.cannot_delete_reason}}}
+        </div>
       </div>
     {{/if}}
   </div>

@@ -19,7 +19,7 @@ unless Rails.env.test?
 
       SiteSetting.send("#{site_setting_key}=", post.topic_id)
 
-      reply = PostCreator.create( Discourse.system_user,
+      _reply = PostCreator.create( Discourse.system_user,
                                   raw: I18n.t('static_topic_first_reply', page_name: I18n.t(title_key, default: I18n.t(title_key, locale: :en))),
                                   skip_validations: true,
                                   topic_id: post.topic_id )
@@ -40,10 +40,9 @@ end
 if seed_welcome_topics
   puts "Seeding welcome topics"
 
-  PostCreator.create(Discourse.system_user, raw: I18n.t('assets_topic_body'), title: "Assets for the site design", skip_validations: true, category: staff ? staff.name : nil)
+  PostCreator.create(Discourse.system_user, raw: I18n.t('assets_topic_body'), title: I18n.t('assets_topic_title'), skip_validations: true, category: staff ? staff.name : nil)
 
-  welcome = File.read(Rails.root + 'docs/WELCOME-TO-DISCOURSE.md')
-  post = PostCreator.create(Discourse.system_user, raw: welcome, title: "Welcome to Discourse", skip_validations: true)
+  post = PostCreator.create(Discourse.system_user, raw: I18n.t('discourse_welcome_topic.body'), title: I18n.t('discourse_welcome_topic.title'), skip_validations: true)
   post.topic.update_pinned(true, true)
 
   lounge = Category.find_by(id: SiteSetting.lounge_category_id)
@@ -64,3 +63,51 @@ if seed_welcome_topics
                       skip_validations: true,
                       category: staff ? staff.name : nil)
 end
+
+
+
+# run this later, cause we need to make sure new application controller resilience is in place first
+
+ColumnDropper.drop(
+  table: 'user_stats',
+  after_migration: 'DropUnreadTrackingColumns',
+  columns: %w{
+    first_topic_unread_at
+  },
+  on_drop: ->(){
+    STDERR.puts "Removing superflous user stats columns!"
+    ActiveRecord::Base.exec_sql "DROP FUNCTION IF EXISTS first_unread_topic_for(int)"
+  }
+)
+
+ColumnDropper.drop(
+  table: 'topics',
+  after_migration: 'DropUnreadTrackingColumns',
+  columns: %w{
+    inappropriate_count
+    bookmark_count
+    off_topic_count
+    illegal_count
+    notify_user_count
+    last_unread_at
+  },
+  on_drop: ->(){
+    STDERR.puts "Removing superflous topic columns!"
+  }
+)
+
+ColumnDropper.drop(
+  table: 'topics',
+  after_migration: 'RemoveAutoCloseColumnsFromTopics',
+  columns: %w{
+    auto_close_at
+    auto_close_user_id
+    auto_close_started_at
+    auto_close_based_on_last_post
+    auto_close_hours
+  },
+  on_drop: ->(){
+    STDERR.puts "Removing superflous topic columns!"
+  },
+  delay: 3600
+)

@@ -2,7 +2,7 @@ class FinishInstallationController < ApplicationController
   skip_before_filter :check_xhr, :preload_json, :redirect_to_login_if_required
   layout 'finish_installation'
 
-  before_filter :ensure_no_admins, except: ['confirm_email']
+  before_filter :ensure_no_admins, except: ['confirm_email', 'resend_email']
 
   def index
   end
@@ -35,6 +35,17 @@ class FinishInstallationController < ApplicationController
     @email = session[:registered_email]
   end
 
+  def resend_email
+    @email = session[:registered_email]
+    @user = User.where(email: @email).first
+    if @user.present?
+      @email_token = @user.email_tokens.unconfirmed.active.first
+      if @email_token.present?
+        Jobs.enqueue(:critical_user_email, type: :signup, user_id: @user.id, email_token: @email_token.token)
+      end
+    end
+  end
+
   protected
 
     def redirect_confirm(email)
@@ -48,6 +59,7 @@ class FinishInstallationController < ApplicationController
     end
 
     def ensure_no_admins
+      preload_anonymous_data
       raise Discourse::InvalidAccess.new unless SiteSetting.has_login_hint?
     end
 end

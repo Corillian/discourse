@@ -14,7 +14,6 @@ class StaffActionLogger
     raise Discourse::InvalidParameters.new(:deleted_user) unless deleted_user && deleted_user.is_a?(User)
     UserHistory.create( params(opts).merge({
       action: UserHistory.actions[:delete_user],
-      email: deleted_user.email,
       ip_address: deleted_user.ip_address.to_s,
       details: [:id, :username, :name, :created_at, :trust_level, :last_seen_at, :last_emailed_at].map { |x| "#{x}: #{deleted_user.send(x)}" }.join("\n")
     }))
@@ -96,6 +95,14 @@ class StaffActionLogger
     }))
   end
 
+  def log_lock_trust_level(user, opts={})
+    raise Discourse::InvalidParameters.new(:user) unless user && user.is_a?(User)
+    UserHistory.create!( params(opts).merge({
+      action: UserHistory.actions[user.trust_level_locked ? :lock_trust_level : :unlock_trust_level],
+      target_user_id: user.id
+    }))
+  end
+
   def log_site_setting_change(setting_name, previous_value, new_value, opts={})
     raise Discourse::InvalidParameters.new(:setting_name) unless setting_name.present? && SiteSetting.respond_to?(setting_name)
     UserHistory.create( params(opts).merge({
@@ -106,40 +113,55 @@ class StaffActionLogger
     }))
   end
 
-  SITE_CUSTOMIZATION_LOGGED_ATTRS = [
-    'stylesheet', 'mobile_stylesheet',
-    'header', 'mobile_header',
-    'top', 'mobile_top',
-    'footer', 'mobile_footer',
-    'head_tag',
-    'body_tag',
-    'position',
-    'enabled',
-    'key'
-  ]
+  def theme_json(theme)
+    ThemeSerializer.new(theme, root:false).to_json
+  end
 
-  def log_site_customization_change(old_record, site_customization_params, opts={})
-    raise Discourse::InvalidParameters.new(:site_customization_params) unless site_customization_params
+  def strip_duplicates(old,cur)
+    return [old,cur] unless old && cur
+
+    old = JSON.parse(old)
+    cur = JSON.parse(cur)
+
+    old.each do |k, v|
+      next if k == "name"
+      next if k == "id"
+      if (v == cur[k])
+        cur.delete(k)
+        old.delete(k)
+      end
+    end
+
+    [old.to_json, cur.to_json]
+  end
+
+  def log_theme_change(old_json, new_theme, opts={})
+    raise Discourse::InvalidParameters.new(:new_theme) unless new_theme
+
+    new_json = theme_json(new_theme)
+
+    old_json,new_json = strip_duplicates(old_json,new_json)
+
     UserHistory.create( params(opts).merge({
-      action: UserHistory.actions[:change_site_customization],
-      subject: site_customization_params[:name],
-      previous_value: old_record ? old_record.attributes.slice(*SITE_CUSTOMIZATION_LOGGED_ATTRS).to_json : nil,
-      new_value: site_customization_params.slice(*(SITE_CUSTOMIZATION_LOGGED_ATTRS.map(&:to_sym))).to_json
+      action: UserHistory.actions[:change_theme],
+      subject: new_theme.name,
+      previous_value: old_json,
+      new_value: new_json
     }))
   end
 
-  def log_site_customization_destroy(site_customization, opts={})
-    raise Discourse::InvalidParameters.new(:site_customization) unless site_customization
+  def log_theme_destroy(theme, opts={})
+    raise Discourse::InvalidParameters.new(:theme) unless theme
     UserHistory.create( params(opts).merge({
-      action: UserHistory.actions[:delete_site_customization],
-      subject: site_customization.name,
-      previous_value: site_customization.attributes.slice(*SITE_CUSTOMIZATION_LOGGED_ATTRS).to_json
+      action: UserHistory.actions[:delete_theme],
+      subject: theme.name,
+      previous_value: theme_json(theme)
     }))
   end
 
   def log_site_text_change(subject, new_text=nil, old_text=nil, opts={})
     raise Discourse::InvalidParameters.new(:subject) unless subject.present?
-    UserHistory.create( params(opts).merge({
+    UserHistory.create!( params(opts).merge({
       action: UserHistory.actions[:change_site_text],
       subject: subject,
       previous_value: old_text,
@@ -154,6 +176,16 @@ class StaffActionLogger
       target_user_id: user.id,
       previous_value: old_username,
       new_value: new_username
+    }))
+  end
+
+  def log_name_change(user_id, old_name, new_name, opts={})
+    raise Discourse::InvalidParameters.new(:user) unless user_id
+    UserHistory.create( params(opts).merge({
+      action: UserHistory.actions[:change_name],
+      target_user_id: user_id,
+      previous_value: old_name,
+      new_value: new_name
     }))
   end
 
@@ -329,10 +361,28 @@ class StaffActionLogger
     }))
   end
 
-  def log_backup_operation(opts={})
+  def log_backup_create(opts={})
     UserHistory.create(params(opts).merge({
-      action: UserHistory.actions[:backup_operation],
+      action: UserHistory.actions[:backup_create],
       ip_address: @admin.ip_address.to_s
+    }))
+  end
+
+  def log_backup_download(backup, opts={})
+    raise Discourse::InvalidParameters.new(:backup) unless backup
+    UserHistory.create(params(opts).merge({
+      action: UserHistory.actions[:backup_download],
+      ip_address: @admin.ip_address.to_s,
+      details: backup.filename
+    }))
+  end
+
+  def log_backup_destroy(backup, opts={})
+    raise Discourse::InvalidParameters.new(:backup) unless backup
+    UserHistory.create(params(opts).merge({
+      action: UserHistory.actions[:backup_destroy],
+      ip_address: @admin.ip_address.to_s,
+      details: backup.filename
     }))
   end
 
@@ -353,12 +403,28 @@ class StaffActionLogger
     }))
   end
 
+  def log_user_activate(user, reason, opts={})
+    raise Discourse::InvalidParameters.new(:user) unless user
+    UserHistory.create(params(opts).merge({
+      action: UserHistory.actions[:activate_user],
+      target_user_id: user.id,
+      details: reason
+    }))
+  end
+
   def log_wizard_step(step, opts={})
     raise Discourse::InvalidParameters.new(:step) unless step
     UserHistory.create(params(opts).merge({
       action: UserHistory.actions[:wizard_step],
-      acting_user_id: @admin.id,
       context: step.id
+    }))
+  end
+
+  def log_change_readonly_mode(state)
+    UserHistory.create(params.merge({
+      action: UserHistory.actions[:change_readonly_mode],
+      previous_value: !state,
+      new_value: state
     }))
   end
 

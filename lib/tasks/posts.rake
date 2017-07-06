@@ -116,16 +116,7 @@ task 'posts:normalize_code' => :environment do
   puts "#{i} posts normalized!"
 end
 
-desc 'Remap all posts matching specific string'
-task 'posts:remap', [:find, :replace] => [:environment] do |_,args|
-  find = args[:find]
-  replace = args[:replace]
-  if !find || !replace
-    puts "ERROR: Expecting rake posts:rebake_match[find,replace]"
-    exit 1
-  end
-
-  puts "Remapping"
+def remap_posts(find, replace="")
   i = 0
   Post.where("raw LIKE ?", "%#{find}%").each do |p|
     new_raw = p.raw.dup
@@ -137,5 +128,63 @@ task 'posts:remap', [:find, :replace] => [:environment] do |_,args|
       i += 1
     end
   end
-  puts "", "#{i} posts remapped!", ""
+  i
+end
+
+desc 'Remap all posts matching specific string'
+task 'posts:remap', [:find, :replace] => [:environment] do |_,args|
+
+  find = args[:find]
+  replace = args[:replace]
+  if !find
+    puts "ERROR: Expecting rake posts:remap['find','replace']"
+    exit 1
+  elsif !replace
+    puts "ERROR: Expecting rake posts:remap['find','replace']. Want to delete a word/string instead? Try rake posts:delete_word['word-to-delete']"
+    exit 1
+  end
+
+  puts "Remapping"
+  total = remap_posts(find, replace)
+  puts "", "#{total} posts remapped!", ""
+end
+
+desc 'Delete occurrence of a word/string'
+task 'posts:delete_word', [:find] => [:environment] do |_,args|
+  require 'highline/import'
+
+  find = args[:find]
+  if !find
+    puts "ERROR: Expecting rake posts:delete_word['word-to-delete']"
+    exit 1
+  else
+    confirm_replace = ask("Are you sure you want to remove all occurrences of '#{find}'? (Y/n)  ")
+    exit 1 unless (confirm_replace == "" || confirm_replace.downcase == 'y')
+  end
+
+  puts "Processing"
+  total = remap_posts(find)
+  puts "", "#{total} posts updated!", ""
+end
+
+desc 'Delete all likes'
+task 'posts:delete_all_likes' => :environment do
+
+  post_actions = PostAction.where(post_action_type_id: PostActionType.types[:like])
+
+  likes_deleted = 0
+  total = post_actions.count
+
+  post_actions.each do |post_action|
+    begin
+      post_action.remove_act!(Discourse.system_user)
+      print_status(likes_deleted += 1, total)
+    rescue
+      # skip
+    end
+  end
+
+  UserStat.update_all(likes_given: 0, likes_received: 0) # clear user likes stats
+  DirectoryItem.update_all(likes_given: 0, likes_received: 0) # clear user directory likes stats
+  puts "", "#{likes_deleted} likes deleted!", ""
 end

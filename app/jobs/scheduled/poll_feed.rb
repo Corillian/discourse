@@ -8,17 +8,18 @@ require 'open-uri'
 
 module Jobs
   class PollFeed < Jobs::Scheduled
-    every 1.hour
+    every 5.minutes
 
     sidekiq_options retry: false
 
     def execute(args)
       poll_feed if SiteSetting.feed_polling_enabled? &&
-                   SiteSetting.feed_polling_url.present?
+                   SiteSetting.feed_polling_url.present? &&
+                   not_polled_recently?
     end
 
     def feed_key
-      @feed_key ||= "feed-modified:#{Digest::SHA1.hexdigest(SiteSetting.feed_polling_url)}"
+      "feed-modified:#{Digest::SHA1.hexdigest(SiteSetting.feed_polling_url)}"
     end
 
     def poll_feed
@@ -27,6 +28,15 @@ module Jobs
     end
 
     private
+
+    def not_polled_recently?
+      $redis.set(
+        'feed-polled-recently',
+        "1",
+        ex: SiteSetting.feed_polling_frequency_mins.minutes - 10.seconds,
+        nx: true
+      )
+    end
 
     def import_topics(feed_topics)
       feed_topics.each do |topic|
@@ -55,6 +65,9 @@ module Jobs
       def topics
         feed_topics = []
 
+        rss = fetch_rss
+        return feed_topics unless rss.present?
+
         rss.items.each do |i|
           current_feed_topic = FeedTopic.new(i)
           feed_topics << current_feed_topic if current_feed_topic.content
@@ -65,8 +78,10 @@ module Jobs
 
       private
 
-      def rss
+      def fetch_rss
         SimpleRSS.parse open(@feed_url, allow_redirections: :all)
+      rescue OpenURI::HTTPError, SimpleRSSError
+        nil
       end
 
     end
