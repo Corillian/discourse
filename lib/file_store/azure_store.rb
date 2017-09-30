@@ -1,4 +1,5 @@
 require "uri"
+require "mini_mime"
 require_dependency "file_store/base_store"
 require_dependency "file_store/local_store"
 require_dependency "file_helper"
@@ -14,16 +15,13 @@ module FileStore
       store_file(file, path, filename: upload.original_filename, content_type: content_type, cache_locally: true)
     end
 
+    # options
+    #   - filename
+    #   - content_type
+    #   - cache_locally
     def store_file(file, path, opts={})
-      # if this fails, it will throw an exception
-      # upload(file, path, filename, content_type)
-
-      filename      = opts[:filename].presence
-      content_type  = opts[:content_type].presence
-
-      if filename == nil
-        filename = File.basename(path)
-      end
+      filename = opts[:filename].presence || File.basename(path)
+      content_type = opts[:content_type].presence || MiniMime.lookup_by_filename(filename)&.content_type
 
       # cache file locally when needed
       cache_file(file, File.basename(path)) if opts[:cache_locally]
@@ -51,18 +49,18 @@ module FileStore
       "#{absolute_base_url}/#{path}"
     end
 
-    def remove_file(url)
+    def remove_file(url, path)
       return unless has_been_uploaded?(url)
-      filename = File.basename(url)
-      remove(filename)
+      remove(path)
     end
 
     def has_been_uploaded?(url)
       return false if url.blank?
       
-      return true if url.start_with?(absolute_base_url) 
-      #base_hostname = URI.parse(absolute_base_url).hostname
-      #return true if url[base_hostname]
+      base_hostname = URI.parse(absolute_base_url).hostname
+      return true if url[base_hostname]
+
+      #return true if url.start_with?(absolute_base_url) 
 
       #return false if SiteSetting.s3_cdn_url.blank?
       #cdn_hostname = URI.parse(SiteSetting.s3_cdn_url || "").hostname
