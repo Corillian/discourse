@@ -22,10 +22,10 @@
       {{composer-messages composer=model messageCount=messageCount addLinkLookup="addLinkLookup"}}
 
       <div class='control'>
-        {{#if site.mobileView}}
-          <a href class='toggle-toolbar' {{action "toggleToolbar" bubbles=false}}></a>
-        {{/if}}
-        <a href class='toggler' {{action "toggle" bubbles=false}} title={{i18n 'composer.toggler'}}></a>
+        {{composer-toggles
+          composeState=model.composeState
+          toggleComposer=(action "toggle")
+          toggleToolbar=(action "toggleToolbar")}}
 
         {{#if model.viewOpen}}
           <div class='control-row reply-area'>
@@ -72,11 +72,11 @@
 
                   {{#if model.showCategoryChooser}}
                     <div class="category-input">
-                      {{category-chooser valueAttribute="id" value=model.categoryId scopedCategoryId=scopedCategoryId tabindex="3"}}
+                      {{category-select-box value=model.categoryId scopedCategoryId=scopedCategoryId tabindex="3"}}
                       {{popup-input-tip validation=categoryValidation}}
                     </div>
                     {{#if model.archetype.hasOptions}}
-                      <button class='btn' {{action "showOptions"}}>{{i18n 'topic.options'}}</button>
+                      {{d-button action="showOptions" label="topic.options"}}
                     {{/if}}
                   {{/if}}
                 </div>
@@ -107,12 +107,19 @@
                 {{#if canEditTags}}
                   {{tag-chooser tags=model.tags tabIndex="4" categoryId=model.categoryId}}
                 {{/if}}
-                <button {{action "save"}} tabindex="5" class="btn btn-primary create {{if disableSubmit 'disabled'}}" title="{{i18n 'composer.title'}}">{{{model.saveIcon}}}{{model.saveText}}</button>
+                {{composer-save-button
+                  action=(action "save")
+                  icon=model.saveIcon
+                  label=model.saveLabel
+                  disableSubmit=disableSubmit}}
+
                 <a href {{action "cancel"}} class='cancel' tabindex="6">{{i18n 'cancel'}}</a>
 
                 {{#if site.mobileView}}
                 {{#if whisperOrUnlistTopic}}
-                  <span class='whisper'><i class='fa fa-eye-slash'></i></span>
+                  <span class='whisper'>
+                    {{d-icon "eye-slash"}}
+                  </span>
                 {{/if}}
                 {{/if}}
               </div>
@@ -130,7 +137,7 @@
               </div>
               <div class='draft-text'>
                 {{#if model.topic}}
-                  {{fa-icon "mail-forward"}} {{{draftTitle}}}
+                  {{d-icon "mail-forward"}} {{{draftTitle}}}
                 {{else}}
                   {{i18n "composer.saved_draft"}}
                 {{/if}}

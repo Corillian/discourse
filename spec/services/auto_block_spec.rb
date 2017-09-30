@@ -131,8 +131,8 @@ describe SpamRule::AutoBlock do
     subject       { described_class.new(user) }
 
     before do
-      described_class.stubs(:block?).with {|u| u.id != user.id }.returns(false)
-      described_class.stubs(:block?).with {|u| u.id == user.id }.returns(true)
+      described_class.stubs(:block?).with { |u| u.id != user.id }.returns(false)
+      described_class.stubs(:block?).with { |u| u.id == user.id }.returns(true)
       subject.stubs(:block?).returns(true)
     end
 
@@ -150,13 +150,13 @@ describe SpamRule::AutoBlock do
         SiteSetting.notify_mods_when_user_blocked = true
         moderator = Fabricate(:moderator)
         GroupMessage.expects(:create).with do |group, msg_type, params|
-          group == Group[:moderators].name and msg_type == :user_automatically_blocked and params[:user].id == user.id
+          group == (Group[:moderators].name) && msg_type == (:user_automatically_blocked) && params[:user].id == (user.id)
         end
         subject.block_user
       end
 
       it "doesn't send a pm to moderators if notify_mods_when_user_blocked is false" do
-        SiteSetting.stubs(:notify_mods_when_user_blocked).returns(false)
+        SiteSetting.notify_mods_when_user_blocked = false
         GroupMessage.expects(:create).never
         subject.block_user
       end
@@ -236,7 +236,7 @@ describe SpamRule::AutoBlock do
       end
 
       it 'returns false if num_users_to_block_new_user is 0' do
-        SiteSetting.stubs(:num_users_to_block_new_user).returns(0)
+        SiteSetting.num_users_to_block_new_user = 0
         subject.stubs(:num_spam_flags_against_user).returns(100)
         subject.stubs(:num_users_who_flagged_spam_against_user).returns(100)
         expect(subject.block?).to be_falsey

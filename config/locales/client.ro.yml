@@ -161,19 +161,19 @@ ro:
       default_description: "Implicit"
     s3:
       regions:
-        us_east_1: "US East (N. Virginia)"
-        us_west_1: "US West (N. California)"
-        us_west_2: "US West (Oregon)"
-        us_gov_west_1: "AWS GovCloud (US)"
-        eu_west_1: "EU (Irlanda)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Asia Pacific (Singapore)"
-        ap_southeast_2: "Asia Pacific (Sydney)"
-        ap_south_1: "Asia Pacific (Mumbai)"
         ap_northeast_1: "Asia Pacific (Tokyo)"
         ap_northeast_2: "Asia Pacific (Seoul)"
-        sa_east_1: "South America (Sao Paulo)"
+        ap_south_1: "Asia Pacific (Mumbai)"
+        ap_southeast_1: "Asia Pacific (Singapore)"
+        ap_southeast_2: "Asia Pacific (Sydney)"
         cn_north_1: "China (Beijing)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Irlanda)"
+        sa_east_1: "South America (Sao Paulo)"
+        us_east_1: "US East (N. Virginia)"
+        us_gov_west_1: "AWS GovCloud (US)"
+        us_west_1: "US West (N. California)"
+        us_west_2: "US West (Oregon)"
     edit: 'Editează titlul și categoria acestui subiect'
     not_implemented: "Această funcționalitate nu a fost implementată încă."
     no_value: "Nu"
@@ -395,10 +395,6 @@ ro:
       index:
         title: "Grupuri"
         empty: "Nu există nici un grup vizibil."
-      title:
-        one: "Grup"
-        few: "Grupuri"
-        other: "de grupuri"
       activity: "Activitate"
       members: "Membri"
       topics: "Subiecte"
@@ -406,7 +402,6 @@ ro:
       mentions: "Mențiuni"
       messages: "Mesaje"
       alias_levels:
-        title: "Cine poate trimite mesaje către acest grup sau să îl @menționeze?"
         nobody: "Nimeni"
         only_admins: "Doar adminii"
         mods_and_admins: "Doar moderatorii și adminii"
@@ -1096,30 +1091,6 @@ ro:
       empty: "Nu au fost găsite notificări."
       more: "vezi notificările mai vechi"
       total_flagged: "toate postările marcate"
-      mentioned: "<i title='menționat' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='grup menționat' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='citat' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='răspuns' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='postat' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='a editat' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='a apreciat' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
-      liked_many:
-        one: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} și încă cineva</span> {{description}}</p>"
-        few: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} și alți {{count}}</span> {{description}}</p>"
-        other: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} și alți {{count}}</span> {{description}}</p>"
-      private_message: "<i title='Mesaj privat' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='Mesaj privat' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='a invitat la discuţie' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='a acceptat invitația ta' class='fa fa-user'></i><p><span>{{username}}</span> a acceptat invitația ta</p>"
-      moved_post: "<i title='postare mutată' class='fa fa-sign-out'></i><p><span>{{username}}</span> mutată {{description}}</p>"
-      linked: "<i title='postare link-uita' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='ecuson acordat' class='fa fa-certificate'></i><p> Ţi s-a acordat {{description}}</p>"
-      watching_first_post: "<i title='postare nouă' class='fa fa-dot-circle-o'></i><p><span>Postare nouă</span> {{description}}</p>"
-      group_message_summary:
-        one: "<i title='mesaje în căsuța poștală a grupului' class='fa fa-group'></i><p>Există un mesaj în căsuța poștală a grupului {{group_name}}</p>"
-        few: "<i title='mesaje în căsuța poștală a grupului' class='fa fa-group'></i><p>Există {{count}} mesaje în căsuța poștală a grupului {{group_name}}</p>"
-        other: "<i title='mesaje în căsuța poștală a grupului' class='fa fa-group'></i><p>Există {{count}} de mesaje în căsuța poștală a grupului {{group_name}}</p>"
       alt:
         mentioned: "Menționat de"
         quoted: "Citat de"
@@ -1166,10 +1137,6 @@ ro:
       select_all: "Selectează tot"
       clear_all: "Șterge tot"
       too_short: "Termenul căutat este prea scurt."
-      result_count:
-        one: "Un rezultat pentru <span class='term'>\"{{term}}\"</span>"
-        few: "{{count}} rezultate pentru <span class='term'>\"{{term}}\"</span>"
-        other: "{{count}} de rezultate pentru <span class='term'>\"{{term}}\"</span>"
       title: "Caută subiecte, postări, utilizatori sau categorii"
       no_results: "Nici un rezultat."
       no_more_results: "Nu s-au mai găsit alte rezultate."
@@ -1373,6 +1340,7 @@ ro:
           '3_2': 'Vei primi notificări deoarece urmărești activ acest subiect.'
           '3_1': 'Vei primi notificări deoarece ai creat acest subiect.'
           '3': 'Vei primi notificări deoarece urmărești activ acest subiect.'
+          '2': 'Vei vedea numărul răspunsurilor noi deoarece <a href="/u/{{username}}/preferences">citești acest subiect</a>'
           '1_2': 'Vei fi notificat dacă cineva îți menționează @numele sau îți scrie un răspuns.'
           '1': 'Vei fi notificat dacă cineva îți menționează @numele sau îți scrie un răspuns.'
           '0_7': 'Ignori toate notificările din această categorie.'
@@ -2061,7 +2029,6 @@ ro:
         hamburger_menu: '<b>=</b> Deschide meniu hamburger'
         user_profile_menu: '<b>p</b> Deschide meniu utilizator'
         show_incoming_updated_topics: '<b>.</b> Arată subiectele actualizate'
-        search: '<b>/</b> Caută'
         help: '<b>?</b> Deschide ajutor tastatură'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Abandonează postări noi'
         dismiss_topics: '<b>x</b>, <b>t</b> Abandonează subiecte'
@@ -3135,10 +3102,6 @@ ro:
       upload: "Încărcare"
       uploading: "Se încarcă..."
       quit: "Poate mai târziu"
-      staff_count:
-        one: "Comunitatea ta are un membru al echipei."
-        few: "Comunitatea ta are %{count} membri ai echipei."
-        other: "Comunitatea ta are %{count} de membri ai echipei."
       invites:
         add_user: "adaugă"
         none_added: "Nu ați invitat nici un membru al echipei. Ești sigur că vrei să continui?"

@@ -32,7 +32,7 @@ createWidget('topic-admin-menu-button', {
     // We don't show the button when expanded on the right side
     if (!(attrs.rightSide && state.expanded)) {
       result.push(this.attach('button', {
-        className: 'btn ' + (attrs.fixed ? " show-topic-admin" : ""),
+        className: 'toggle-admin-menu' + (attrs.fixed ? " show-topic-admin" : ""),
         title: 'topic_admin_menu',
         icon: 'wrench',
         action: 'showAdminMenu',
@@ -140,11 +140,12 @@ export default createWidget('topic-admin-menu', {
                      icon: 'lock',
                      label: 'actions.close' });
     }
-
-    buttons.push({ className: 'topic-admin-status-update',
+    if (this.currentUser.get('staff')) {
+      buttons.push({ className: 'topic-admin-status-update',
                    action: 'showTopicStatusUpdate',
                    icon: 'clock-o',
                    label: 'actions.timed_update' });
+    }
 
     const isPrivateMessage = topic.get('isPrivateMessage');
 

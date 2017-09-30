@@ -95,7 +95,7 @@ fa_IR:
     action_codes:
       public_topic: "این موضوع در %{when}  عمومی شده"
       private_topic: "این موضوع در %{when}  خصوصی شده"
-      split_topic: "این موضوع را در %{when} جدا کنید "
+      split_topic: "این موضوع  %{when} جدا شد "
       invited_user: "%{who} در %{when} دعوت شده"
       invited_group: "%{who} در %{when} دعوت شده"
       removed_user: "%{who} در %{when} حذف شد"
@@ -130,20 +130,20 @@ fa_IR:
       default_description: "پیش‌فرض"
     s3:
       regions:
-        us_east_1: "شرق ایالات متحده (ویرجینیا شمالی)"
-        us_west_1: "غرب ایالات متحده (کالیفرنیا شمالی)"
-        us_west_2: "غرب ایالات متحده  (اورگان)"
-        us_gov_west_1: "AWS GovCloud (ایالات متحده)"
-        eu_west_1: "اروپا (ایرلند)"
-        eu_west_2: "اروپا (لندن)"
-        eu_central_1: "اروپا (فرانکفورت)"
-        ap_southeast_1: "آسیا و اقیانوسیه (سنگاپور)"
-        ap_southeast_2: "آسیا و اقیانوسیه (سیدنی)"
-        ap_south_1: "آسیا و اقیانوسیه (بمبئی)"
         ap_northeast_1: "آسیا و اقیانوسیه (توکیو)"
         ap_northeast_2: "آسیا و اقیانوسیه (سئول)"
-        sa_east_1: "آمریکای جنوبی (سائوپائولو)"
+        ap_south_1: "آسیا و اقیانوسیه (بمبئی)"
+        ap_southeast_1: "آسیا و اقیانوسیه (سنگاپور)"
+        ap_southeast_2: "آسیا و اقیانوسیه (سیدنی)"
         cn_north_1: "چین (پکن)"
+        eu_central_1: "اروپا (فرانکفورت)"
+        eu_west_1: "اروپا (ایرلند)"
+        eu_west_2: "اروپا (لندن)"
+        sa_east_1: "آمریکای جنوبی (سائوپائولو)"
+        us_east_1: "شرق ایالات متحده (ویرجینیا شمالی)"
+        us_gov_west_1: "AWS GovCloud (ایالات متحده)"
+        us_west_1: "غرب ایالات متحده (کالیفرنیا شمالی)"
+        us_west_2: "غرب ایالات متحده  (اورگان)"
     edit: 'موضوع و دسته‌ی این موضوع را ویرایش کنید'
     not_implemented: "آن ویژگی هنوز به کار گرفته نشده، متأسفیم!"
     no_value: "خیر"
@@ -350,8 +350,6 @@ fa_IR:
       index:
         title: "گروه‌ها"
         empty: "هیچ گروه قابل نمایشی وجود ندارد."
-      title:
-        other: "گروه‌ها"
       activity: "فعالیت"
       members: "اعضا"
       topics: "موضوعات"
@@ -366,7 +364,6 @@ fa_IR:
         staff: "صاحبان گروه، و کارکنان"
         owners: "صاحبان گروه و مدیران"
       alias_levels:
-        title: "چه کسی میتواند پیام بفرستد و به این گروه @اشاره کند؟"
         nobody: "هیچ‌کس"
         only_admins: "فقط مدیران ارشد"
         mods_and_admins: "فقط مدیران و مدیران ارشد"
@@ -1068,27 +1065,6 @@ fa_IR:
       empty: "اعلانی پیدا نشد."
       more: "نمایش اعلان‌های قدیمی‌تر"
       total_flagged: "همه‌ی نوشته‌های پرچم خورده"
-      mentioned: "<i title='mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='posted' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
-      liked_many:
-        other: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} و {{count}} دیگر</span> {{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='invited to topic' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> accepted your invitation</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> moved {{description}}</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>'{{description}}'  را بدست آورده</p>"
-      topic_reminder: "<i title='topic reminder' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>موضوع جدید</span> {{description}}</p"
-      group_message_summary:
-        other: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} پیام در صندوق دریافتی  {{group_name}}</p>"
       alt:
         mentioned: "اشاره شده توسط"
         quoted: "نقل‌قول شده توسط"
@@ -1136,8 +1112,6 @@ fa_IR:
       select_all: "انتخاب همه"
       clear_all: "پاک کردن همه"
       too_short: "کلمه جستجو شده بسیار کوتاه است"
-      result_count:
-        other: "{{count}} نتایج برای <span class='term'>\"{{term}}\"</span>"
       title: "جستجوی موضوعات، نوشته‌ها، کاربران یا دسته‌‌بندی‌ها"
       no_results: "چیزی یافت نشد."
       no_more_results: "نتایجی بیشتری یافت نشد."
@@ -1295,7 +1269,7 @@ fa_IR:
       toggle_information: " تغییر وضعیت جزئیات موضوع"
       read_more_in_category: "می‌خواهید بیشتر بخوانید؟موضوعات دیگر را در {{catLink}} یا {{latestLink}} مرور کنید."
       read_more: "می‌خواهید بیشتر بخوانید؟ {{catLink}} یا {{latestLink}}."
-      read_more_MF: "{ UNREAD, plural, =0 {} one { <a href='/unread'>یک پیام خوانده نشده</a> وجود دارد } other { <a href='/unread'># پیام خوانده نشده</a> وجود دارد } } { NEW, plural, =0 {} one { {BOTH, select, true{and } false {is } other{}} <a href='/new'>1 موضوع جدید</a> } other { {BOTH, select, true{and } false {are } other{}} <a href='/new'># موضوع جدید</a> } } remaining, or {CATEGORY, select, true {نمایش سایر موضوعات دسته‌بندی {catLink}} false {{latestLink}} other {}}"
+      read_more_MF: "{ UNREAD, plural, =0 {} one { <a href='/unread'>یک پیام خوانده نشده</a>  } other { <a href='/unread'># پیام خوانده نشده</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{و } false { } other{}} <a href='/new'>1 موضوع جدید</a> } other { {BOTH, select, true{و } false { } other{}} <a href='/new'># موضوع جدید</a> } } وجود دارد, یا {CATEGORY, select, true {نمایش سایر موضوعات دسته‌بندی {catLink}} false {{latestLink}} other {}}"
       browse_all_categories: جستوجوی همه‌ی دسته‌‌بندی‌ها
       view_latest_topics: مشاهده آخرین موضوع
       suggest_create_topic: چرا یک موضوع ایجاد نمی‌کنید؟
@@ -1376,7 +1350,7 @@ fa_IR:
           '2_2': 'به دلیل پیگیری این موضوع، تعداد پاسخ‌های جدید را خواهید دید.'
           '2': 'شما به دلیل <a href="/u/{{username}}/preferences">خواندن این موضوع</a>. تعداد پاسخ‌های جدید آن را خواهید دید.'
           '1_2': 'در صورتی که فردی با @نام به شما اشاره کند یا پاسخی دهد به شما اطلاع داده خواهد شد.'
-          '1': 'در صورتی که فردی با @نام به شما اشاره کند یا به پاسخی دهد به شما اطلاع داده خواهد شد.'
+          '1': 'در صورتی که فردی با @نام به شما اشاره کند یا پاسخی دهد، به شما اطلاع داده خواهد شد.'
           '0_7': 'شما تمام اعلان‌های این دسته‌بندی را نادیده گرفته اید'
           '0_2': 'شما تمام اعلان‌های این موضوع را نادیده گرفته اید'
           '0': 'شما تمام اعلان‌های این موضوع را نادیده گرفته اید'
@@ -1882,10 +1856,10 @@ fa_IR:
     posts: "نوشته‌ها"
     posts_long: "این موضوع {{number}} نوشته دارد"
     posts_likes_MF: |
-      این موضوع {count, plural, one {1 پاسخ} other {# پاسخ}} با {ratio, select,
-      low {تعداد پسند به نوشته بالایی دارد}
-      med {تعداد پسند به نوشته بسیار بالایی دارد}
-      high {تعداد پسند به نوشته بشدت بالایی دارد}
+      این موضوع دارای {count, plural, one {1 پاسخ} other {# پاسخ}} است {ratio, select,
+      low {و مورد پسند دیگران واقع شده است}
+      med {و بسیار مورد پسند دیگران واقع شده است}
+      high {و به شدت مورد پسند دیگران واقع شده است}
       other {}}
     original_post: "نوشته اصلی"
     views: "نمایش‌ها"
@@ -2012,7 +1986,6 @@ fa_IR:
         hamburger_menu: '<b>=</b> باز کردن منو همبرگری'
         user_profile_menu: '<b>p</b> نمایش منو کاربری'
         show_incoming_updated_topics: '<b>.</b> نمایش موضوعات به‌روز شده'
-        search: '<b>/</b> جستجو'
         help: '<b>?</b> باز کردن کمک صفحه‌کلید'
         dismiss_new_posts: '<b>x</b>, <b>r</b> بستن نوشته‌های جدید'
         dismiss_topics: '<b>x</b>, <b>t</b> بستن موضوعات'
@@ -3143,8 +3116,6 @@ fa_IR:
       upload: "بارگذاری"
       uploading: "در حال بار گذاری..."
       quit: "شاید بعدا"
-      staff_count:
-        other: "انجمن شما دارای %{count} عضو همکار است."
       invites:
         add_user: "اضافه کردن"
         none_added: "هیچ کدام از همکاران را دعوت نکردید. ادامه می‌دهید؟"

@@ -22,7 +22,7 @@ class DirectoryItem < ActiveRecord::Base
   end
 
   def self.refresh!
-    period_types.each_key {|p| refresh_period!(p)}
+    period_types.each_key { |p| refresh_period!(p) }
   end
 
   def self.refresh_period!(period_type)
@@ -30,16 +30,18 @@ class DirectoryItem < ActiveRecord::Base
     # Don't calculate it if the user directory is disabled
     return unless SiteSetting.enable_user_directory?
 
-    since = case period_type
-            when :daily then 1.day.ago
-            when :weekly then 1.week.ago
-            when :monthly then 1.month.ago
-            when :quarterly then 3.months.ago
-            when :yearly then 1.year.ago
-            else 1000.years.ago
-            end
+    since =
+      case period_type
+      when :daily then 1.day.ago
+      when :weekly then 1.week.ago
+      when :monthly then 1.month.ago
+      when :quarterly then 3.months.ago
+      when :yearly then 1.year.ago
+      else 1000.years.ago
+      end
 
     ActiveRecord::Base.transaction do
+      # Delete records that belonged to users who have been deleted
       exec_sql "DELETE FROM directory_items
                 USING directory_items di
                 LEFT JOIN users u ON u.id = user_id
@@ -47,7 +49,7 @@ class DirectoryItem < ActiveRecord::Base
                       u.id IS NULL AND
                       di.period_type = :period_type", period_type: period_types[period_type]
 
-
+      # Create new records for users who don't have one yet
       exec_sql "INSERT INTO directory_items(period_type, user_id, likes_received, likes_given, topics_entered, days_visited, posts_read, topic_count, post_count)
                 SELECT
                     :period_type,
@@ -64,6 +66,7 @@ class DirectoryItem < ActiveRecord::Base
                 WHERE di.id IS NULL AND u.id > 0
       ", period_type: period_types[period_type]
 
+      # Calculate new values and update records
       exec_sql "WITH x AS (SELECT
                     u.id user_id,
                     SUM(CASE WHEN ua.action_type = :was_liked_type THEN 1 ELSE 0 END) likes_received,
@@ -74,13 +77,12 @@ class DirectoryItem < ActiveRecord::Base
                     SUM(CASE WHEN ua.action_type = :new_topic_type THEN 1 ELSE 0 END) topic_count,
                     SUM(CASE WHEN ua.action_type = :reply_type THEN 1 ELSE 0 END) post_count
                   FROM users AS u
-                  LEFT OUTER JOIN user_actions AS ua ON ua.user_id = u.id
+                  LEFT OUTER JOIN user_actions AS ua ON ua.user_id = u.id AND COALESCE(ua.created_at, :since) >= :since
                   LEFT OUTER JOIN topics AS t ON ua.target_topic_id = t.id AND t.archetype = 'regular'
                   LEFT OUTER JOIN posts AS p ON ua.target_post_id = p.id
                   LEFT OUTER JOIN categories AS c ON t.category_id = c.id
                   WHERE u.active
                     AND NOT u.blocked
-                    AND COALESCE(ua.created_at, :since) >= :since
                     AND t.deleted_at IS NULL
                     AND COALESCE(t.visible, true)
                     AND p.deleted_at IS NULL
@@ -116,7 +118,6 @@ class DirectoryItem < ActiveRecord::Base
                   new_topic_type: UserAction::NEW_TOPIC,
                   reply_type: UserAction::REPLY,
                   regular_post_type: Post.types[:regular]
-
 
       if period_type == :all
         exec_sql <<SQL

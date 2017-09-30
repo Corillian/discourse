@@ -121,11 +121,11 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
       user clicks "No", reopenModal. If user clicks "Yes", be sure to call closeModal.
     **/
     hideModal() {
-      $('#discourse-modal').modal('hide');
+      $('.d-modal.fixed-modal').modal('hide');
     },
 
     reopenModal() {
-      $('#discourse-modal').modal('show');
+      $('.d-modal.fixed-modal').modal('show');
     },
 
     editCategory(category) {
@@ -136,11 +136,6 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
         showModal('edit-category', { model });
         this.controllerFor('edit-category').set('selectedTab', 'general');
       });
-    },
-
-    deleteSpammer(user) {
-      this.send('closeModal');
-      user.deleteAsSpammer(function() { window.location.reload(); });
     },
 
     checkEmail(user) {

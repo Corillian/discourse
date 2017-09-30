@@ -91,14 +91,16 @@
       width: 100%;
     }
   }
-
-  .category-combobox {
-    width: 100%;
-  }
 }
 
 .flag-modal {
   max-height: 450px;
+}
+
+@media only screen and (max-device-width: 568px) {
+  .modal .flag-modal .flag-message {
+    height: 1.2em;
+  }
 }
 
 .custom-message-length {

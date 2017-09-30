@@ -49,7 +49,7 @@ describe TopicQuery do
         results = results.where('topics.id = ?', topic_query.options[:only_topic_id])
       end
 
-      expect(TopicQuery.new(nil, {only_topic_id: topic1.id}).list_latest.topics.map(&:id)).to eq([topic1.id])
+      expect(TopicQuery.new(nil, only_topic_id: topic1.id).list_latest.topics.map(&:id)).to eq([topic1.id])
 
       TopicQuery.remove_custom_filter(:only_topic_id)
     end
@@ -63,6 +63,34 @@ describe TopicQuery do
 
       expect(TopicQuery.new(nil).list_topics_by(user).topics.count).to eq(1)
       expect(TopicQuery.new(user).list_topics_by(user).topics.count).to eq(2)
+    end
+
+  end
+
+  context "prioritize_pinned_topics" do
+
+    it "does the pagination correctly" do
+
+      num_topics = 15
+      per_page = 3
+
+      topics = []
+      (num_topics - 1).downto(0).each do |i|
+        topics[i] = Fabricate(:topic)
+      end
+
+      topic_query = TopicQuery.new(user)
+      results = topic_query.send(:default_results)
+
+      expect(topic_query.prioritize_pinned_topics(results,
+        per_page: per_page,
+        page: 0)
+      ).to eq(topics[0...per_page])
+
+      expect(topic_query.prioritize_pinned_topics(results,
+        per_page: per_page,
+        page: 1)
+      ).to eq(topics[per_page...num_topics])
     end
 
   end
@@ -82,7 +110,7 @@ describe TopicQuery do
       query = TopicQuery.new(user, filter: 'bookmarked').list_latest
 
       expect(query.topics.length).to eq(1)
-      expect(query.topics.first.user_data.post_action_data).to eq({PostActionType.types[:bookmark] => [1,2]})
+      expect(query.topics.first.user_data.post_action_data).to eq(PostActionType.types[:bookmark] => [1, 2])
     end
   end
 
@@ -118,7 +146,7 @@ describe TopicQuery do
     end
 
     context 'subcategories' do
-      let!(:subcategory) { Fabricate(:category, parent_category_id: category.id)}
+      let!(:subcategory) { Fabricate(:category, parent_category_id: category.id) }
 
       it "works with subcategories" do
         expect(TopicQuery.new(moderator, category: category.id).list_latest.topics.size).to eq(1)
@@ -139,9 +167,9 @@ describe TopicQuery do
 
     context "no category filter" do
       # create some topics before each test:
-      let!(:tagged_topic1) { Fabricate(:topic, {tags: [tag]}) }
-      let!(:tagged_topic2) { Fabricate(:topic, {tags: [other_tag]}) }
-      let!(:tagged_topic3) { Fabricate(:topic, {tags: [tag, other_tag]}) }
+      let!(:tagged_topic1) { Fabricate(:topic, tags: [tag]) }
+      let!(:tagged_topic2) { Fabricate(:topic, tags: [other_tag]) }
+      let!(:tagged_topic3) { Fabricate(:topic, tags: [tag, other_tag]) }
       let!(:no_tags_topic) { Fabricate(:topic) }
 
       it "returns topics with the tag when filtered to it" do
@@ -178,10 +206,10 @@ describe TopicQuery do
       let(:category2) { Fabricate(:category) }
 
       it "returns topics in the given category with the given tag" do
-        tagged_topic1 = Fabricate(:topic, {category: category1, tags: [tag]})
-        tagged_topic2 = Fabricate(:topic, {category: category2, tags: [tag]})
-        tagged_topic3 = Fabricate(:topic, {category: category1, tags: [tag, other_tag]})
-        no_tags_topic = Fabricate(:topic, {category: category1})
+        tagged_topic1 = Fabricate(:topic, category: category1, tags: [tag])
+        tagged_topic2 = Fabricate(:topic, category: category2, tags: [tag])
+        tagged_topic3 = Fabricate(:topic, category: category1, tags: [tag, other_tag])
+        no_tags_topic = Fabricate(:topic, category: category1)
 
         expect(TopicQuery.new(moderator, category: category1.id, tags: [tag.name]).list_latest.topics.map(&:id).sort).to eq([tagged_topic1.id, tagged_topic3.id].sort)
         expect(TopicQuery.new(moderator, category: category2.id, tags: [other_tag.name]).list_latest.topics.size).to eq(0)
@@ -304,7 +332,7 @@ describe TopicQuery do
 
       context 'sort_order' do
 
-        def ids_in_order(order, descending=true)
+        def ids_in_order(order, descending = true)
           TopicQuery.new(admin, order: order, ascending: descending ? 'false' : 'true').list_latest.topics.map(&:id)
         end
 
@@ -358,13 +386,11 @@ describe TopicQuery do
           # returns the topics in reverse sheep order if requested" do
           expect(ids_in_order('sheep', false)).to eq([invisible_topic, regular_topic, closed_topic, pinned_topic, future_topic, archived_topic].map(&:id))
 
-
         end
 
       end
 
     end
-
 
     context 'after clearring a pinned topic' do
       before do
@@ -417,6 +443,9 @@ describe TopicQuery do
   end
 
   context 'unread / read topics' do
+    after do
+      $redis.flushall
+    end
 
     context 'with no data' do
       it "has no unread topics" do
@@ -431,8 +460,8 @@ describe TopicQuery do
         first = create_post(raw: 'this is the first post', title: 'super amazing title')
 
         _whisper = create_post(topic_id: first.topic.id,
-                              post_type: Post.types[:whisper],
-                              raw: 'this is a whispered reply')
+                               post_type: Post.types[:whisper],
+                               raw: 'this is a whispered reply')
 
         topic_id = first.topic.id
 
@@ -458,10 +487,15 @@ describe TopicQuery do
 
       context 'list_unread' do
         it 'lists topics correctly' do
-          new_topic = Fabricate(:post, user: creator).topic
+          freeze_time do
+            new_topic = Fabricate(:post, user: creator).topic
 
-          expect(topic_query.list_unread.topics).to eq([])
-          expect(topic_query.list_read.topics).to match_array([fully_read, partially_read])
+            expect(topic_query.list_unread.topics).to eq([])
+            expect(topic_query.list_read.topics).to match_array([fully_read, partially_read])
+
+            expect($redis.get(topic_query.unread_results_redis_key))
+              .to eq(Time.zone.now.to_s)
+          end
         end
       end
 
@@ -469,10 +503,16 @@ describe TopicQuery do
         before do
           user.user_option.auto_track_topics_after_msecs = 0
           user.user_option.save
+          partially_read.update!(bumped_at: 2.days.ago)
         end
 
         it 'only contains the partially read topic' do
-          expect(topic_query.list_unread.topics).to eq([partially_read])
+          freeze_time do
+            expect(topic_query.list_unread.topics).to eq([partially_read])
+
+            expect($redis.get(topic_query.unread_results_redis_key))
+              .to eq(partially_read.bumped_at.to_s)
+          end
         end
       end
 
@@ -489,7 +529,7 @@ describe TopicQuery do
     end
 
     context 'preload api' do
-      let(:topics) { }
+      let(:topics) {}
 
       it "preloads data correctly" do
         TopicList.preloaded_custom_fields << "tag"
@@ -497,13 +537,13 @@ describe TopicQuery do
         TopicList.preloaded_custom_fields << "foo"
 
         topic = Fabricate.build(:topic, user: creator, bumped_at: 10.minutes.ago)
-        topic.custom_fields["tag"] = ["a","b","c"]
+        topic.custom_fields["tag"] = ["a", "b", "c"]
         topic.custom_fields["age"] = 22
         topic.save
 
         new_topic = topic_query.list_new.topics.first
 
-        expect(new_topic.custom_fields["tag"].sort).to eq(["a","b","c"])
+        expect(new_topic.custom_fields["tag"].sort).to eq(["a", "b", "c"])
         expect(new_topic.custom_fields["age"]).to eq("22")
 
         expect(new_topic.custom_field_preloaded?("tag")).to eq(true)
@@ -514,7 +554,7 @@ describe TopicQuery do
         TopicList.preloaded_custom_fields.clear
 
         # if we attempt to access non preloaded fields explode
-        expect{new_topic.custom_fields["boom"]}.to raise_error(StandardError)
+        expect { new_topic.custom_fields["boom"] }.to raise_error(StandardError)
 
       end
     end
@@ -522,7 +562,6 @@ describe TopicQuery do
     context 'with a new topic' do
       let!(:new_topic) { Fabricate(:topic, user: creator, bumped_at: 10.minutes.ago) }
       let(:topics) { topic_query.list_new.topics }
-
 
       it "contains no new topics for a user that has missed the window" do
 
@@ -577,7 +616,7 @@ describe TopicQuery do
 
     context "topic you've posted in" do
       let(:other_users_topic) { create_post(user: creator).topic }
-      let!(:your_post) { create_post(user: user, topic: other_users_topic )}
+      let!(:your_post) { create_post(user: user, topic: other_users_topic) }
 
       it "includes the posted topic" do
         expect(topics.include?(other_users_topic)).to eq(true)
@@ -631,7 +670,7 @@ describe TopicQuery do
       group
     end
 
-    def create_pm(user, opts=nil)
+    def create_pm(user, opts = nil)
       unless opts
         opts = user
         user = nil
@@ -640,30 +679,27 @@ describe TopicQuery do
       create_post(opts.merge(user: user, archetype: Archetype.private_message)).topic
     end
 
-    def read(user,topic,post_number)
+    def read(user, topic, post_number)
       TopicUser.update_last_read(user, topic, post_number, 10000)
     end
 
     it 'returns the correct suggestions' do
 
-
-      pm_to_group  = create_pm(sender, target_group_names: [group_with_user.name])
+      pm_to_group = create_pm(sender, target_group_names: [group_with_user.name])
       pm_to_user = create_pm(sender, target_usernames: [user.username])
 
-      new_pm  = create_pm(target_usernames: [user.username])
+      new_pm = create_pm(target_usernames: [user.username])
 
-      unread_pm  = create_pm(target_usernames: [user.username])
-      read(user,unread_pm, 0)
+      unread_pm = create_pm(target_usernames: [user.username])
+      read(user, unread_pm, 0)
 
       old_unrelated_pm = create_pm(target_usernames: [user.username])
       read(user, old_unrelated_pm, 1)
 
-
       related_by_user_pm = create_pm(sender, target_usernames: [user.username])
       read(user, related_by_user_pm, 1)
 
-
-      related_by_group_pm  = create_pm(sender, target_group_names: [group_with_user.name])
+      related_by_group_pm = create_pm(sender, target_group_names: [group_with_user.name])
       read(user, related_by_group_pm, 1)
 
       expect(TopicQuery.new(user).list_suggested_for(pm_to_group).topics.map(&:id)).to(
@@ -678,7 +714,7 @@ describe TopicQuery do
 
   context 'suggested_for' do
     def clear_cache!
-      $redis.keys('random_topic_cache*').each{|k| $redis.del k}
+      $redis.keys('random_topic_cache*').each { |k| $redis.del k }
     end
 
     before do
@@ -713,7 +749,7 @@ describe TopicQuery do
         tt = topic
         # lets clear cache once category is created - working around caching is hard
         clear_cache!
-        topic_query.list_suggested_for(tt).topics.map{|t| t.id}
+        topic_query.list_suggested_for(tt).topics.map { |t| t.id }
       }
 
       it "should return empty results when there is nothing to find" do
@@ -740,6 +776,65 @@ describe TopicQuery do
 
       end
 
+      context 'with private messages' do
+        let(:group_user) { Fabricate(:user) }
+        let(:group) { Fabricate(:group) }
+        let(:another_group) { Fabricate(:group) }
+
+        let!(:topic) do
+          Fabricate(:private_message_topic,
+            topic_allowed_users: [
+              Fabricate.build(:topic_allowed_user, user: user)
+            ],
+            topic_allowed_groups: [
+              Fabricate.build(:topic_allowed_group, group: group)
+            ]
+          )
+        end
+
+        let!(:private_message) do
+          Fabricate(:private_message_topic,
+            topic_allowed_users: [
+              Fabricate.build(:topic_allowed_user, user: user)
+            ],
+            topic_allowed_groups: [
+              Fabricate.build(:topic_allowed_group, group: group),
+              Fabricate.build(:topic_allowed_group, group: another_group),
+            ]
+          )
+        end
+
+        let!(:private_group_topic) do
+          Fabricate(:private_message_topic,
+            user: Fabricate(:user),
+            topic_allowed_groups: [
+              Fabricate.build(:topic_allowed_group, group: group)
+            ]
+          )
+        end
+
+        before do
+          group.add(group_user)
+          another_group.add(user)
+        end
+
+        describe 'as user not part of group' do
+          let!(:user) { Fabricate(:user) }
+
+          it 'should not return topics by the group user' do
+            expect(suggested_topics).to eq([private_message.id])
+          end
+        end
+
+        describe 'as user part of group' do
+          let!(:user) { group_user }
+
+          it 'should return the group topics' do
+            expect(suggested_topics).to eq([private_group_topic.id, private_message.id])
+          end
+        end
+      end
+
       context 'with some existing topics' do
         let!(:partially_read) { Fabricate(:post, user: creator).topic }
         let!(:new_topic) { Fabricate(:post, user: creator).topic }
@@ -763,13 +858,12 @@ describe TopicQuery do
           fully_read_archived.save
         end
 
-
         it "returns unread, then new, then random" do
           SiteSetting.suggested_topics = 7
           expect(suggested_topics[0]).to eq(partially_read.id)
-          expect(suggested_topics[1,3]).to include(new_topic.id)
-          expect(suggested_topics[1,3]).to include(closed_topic.id)
-          expect(suggested_topics[1,3]).to include(archived_topic.id)
+          expect(suggested_topics[1, 3]).to include(new_topic.id)
+          expect(suggested_topics[1, 3]).to include(closed_topic.id)
+          expect(suggested_topics[1, 3]).to include(archived_topic.id)
 
           # The line below appears to randomly fail, no idea why need to restructure test
           #expect(suggested_topics[4]).to eq(fully_read.id)
@@ -784,9 +878,9 @@ describe TopicQuery do
         it "won't return fully read if there are enough partially read topics and new topics" do
           SiteSetting.suggested_topics = 4
           expect(suggested_topics[0]).to eq(partially_read.id)
-          expect(suggested_topics[1,3]).to include(new_topic.id)
-          expect(suggested_topics[1,3]).to include(closed_topic.id)
-          expect(suggested_topics[1,3]).to include(archived_topic.id)
+          expect(suggested_topics[1, 3]).to include(new_topic.id)
+          expect(suggested_topics[1, 3]).to include(closed_topic.id)
+          expect(suggested_topics[1, 3]).to include(archived_topic.id)
         end
 
       end

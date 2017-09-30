@@ -2,14 +2,19 @@ require_dependency 'rate_limiter'
 require_dependency 'single_sign_on'
 
 class SessionController < ApplicationController
+  class LocalLoginNotAllowed < StandardError; end
+  rescue_from LocalLoginNotAllowed do
+    render body: nil, status: 500
+  end
 
-  skip_before_filter :redirect_to_login_if_required
-  skip_before_filter :preload_json, :check_xhr, only: ['sso', 'sso_login', 'become', 'sso_provider', 'destroy']
+  before_action :check_local_login_allowed, only: %i(create forgot_password)
+  skip_before_action :redirect_to_login_if_required
+  skip_before_action :preload_json, :check_xhr, only: ['sso', 'sso_login', 'become', 'sso_provider', 'destroy']
 
   ACTIVATE_USER_KEY = "activate_user"
 
   def csrf
-    render json: {csrf: form_authenticity_token }
+    render json: { csrf: form_authenticity_token }
   end
 
   def sso
@@ -31,11 +36,11 @@ class SessionController < ApplicationController
       end
       redirect_to sso.to_url
     else
-      render nothing: true, status: 404
+      render body: nil, status: 404
     end
   end
 
-  def sso_provider(payload=nil)
+  def sso_provider(payload = nil)
     payload ||= request.query_string
     if SiteSetting.enable_sso_provider
       sso = SingleSignOn.parse(payload, SiteSetting.sso_secret)
@@ -62,7 +67,7 @@ class SessionController < ApplicationController
         redirect_to path('/login')
       end
     else
-      render nothing: true, status: 404
+      render body: nil, status: 404
     end
   end
 
@@ -112,7 +117,7 @@ class SessionController < ApplicationController
           activation = UserActivator.new(user, request, session, cookies)
           activation.finish
           session["user_created_message"] = activation.message
-          redirect_to users_account_created_path and return
+          redirect_to(users_account_created_path) && (return)
         else
           if SiteSetting.verbose_sso_logging
             Rails.logger.warn("Verbose SSO log: User was logged on #{user.username}\n\n#{sso.diagnostics}")
@@ -176,12 +181,6 @@ class SessionController < ApplicationController
   end
 
   def create
-
-    unless allow_local_auth?
-      render nothing: true, status: 500
-      return
-    end
-
     RateLimiter.new(nil, "login-hr-#{request.remote_ip}", SiteSetting.max_logins_per_ip_per_hour, 1.hour).performed!
     RateLimiter.new(nil, "login-min-#{request.remote_ip}", SiteSetting.max_logins_per_ip_per_minute, 1.minute).performed!
 
@@ -234,11 +233,6 @@ class SessionController < ApplicationController
   def forgot_password
     params.require(:login)
 
-    unless allow_local_auth?
-      render nothing: true, status: 500
-      return
-    end
-
     RateLimiter.new(nil, "forgot-password-hr-#{request.remote_ip}", 6, 1.hour).performed!
     RateLimiter.new(nil, "forgot-password-min-#{request.remote_ip}", 3, 1.minute).performed!
 
@@ -267,7 +261,7 @@ class SessionController < ApplicationController
     if current_user.present?
       render_serialized(current_user, CurrentUserSerializer)
     else
-      render nothing: true, status: 404
+      render body: nil, status: 404
     end
   end
 
@@ -275,28 +269,32 @@ class SessionController < ApplicationController
     reset_session
     log_off_user
     if request.xhr?
-      render nothing: true
+      render body: nil
     else
       redirect_to (params[:return_url] || path("/"))
     end
   end
 
-  private
+  protected
 
-  def allow_local_auth?
-    !SiteSetting.enable_sso && SiteSetting.enable_local_logins
+  def check_local_login_allowed
+    if SiteSetting.enable_sso || !SiteSetting.enable_local_logins
+      raise LocalLoginNotAllowed, "SSO takes over local login or the local login is disallowed."
+    end
   end
+
+  private
 
   def login_not_approved_for?(user)
     SiteSetting.must_approve_users? && !user.approved? && !user.admin?
   end
 
   def invalid_credentials
-    render json: {error: I18n.t("login.incorrect_username_email_or_password")}
+    render json: { error: I18n.t("login.incorrect_username_email_or_password") }
   end
 
   def login_not_approved
-    render json: {error: I18n.t("login.not_approved")}
+    render json: { error: I18n.t("login.not_approved") }
   end
 
   def not_activated(user)
@@ -310,19 +308,19 @@ class SessionController < ApplicationController
   end
 
   def not_allowed_from_ip_address(user)
-    render json: {error: I18n.t("login.not_allowed_from_ip_address", username: user.username)}
+    render json: { error: I18n.t("login.not_allowed_from_ip_address", username: user.username) }
   end
 
   def admin_not_allowed_from_ip_address(user)
-    render json: {error: I18n.t("login.admin_not_allowed_from_ip_address", username: user.username)}
+    render json: { error: I18n.t("login.admin_not_allowed_from_ip_address", username: user.username) }
   end
 
   def failed_to_login(user)
     message = user.suspend_reason ? "login.suspended_with_reason" : "login.suspended"
 
     render json: {
-      error: I18n.t(message, { date: I18n.l(user.suspended_till, format: :date_only),
-                               reason: Rack::Utils.escape_html(user.suspend_reason) }),
+      error: I18n.t(message, date: I18n.l(user.suspended_till, format: :date_only),
+                             reason: Rack::Utils.escape_html(user.suspend_reason)),
       reason: 'suspended'
     }
   end
@@ -333,10 +331,10 @@ class SessionController < ApplicationController
 
     if payload = session.delete(:sso_payload)
       sso_provider(payload)
+    else
+      render_serialized(user, UserSerializer)
     end
-    render_serialized(user, UserSerializer)
   end
-
 
   def render_sso_error(status:, text:)
     @sso_error = text

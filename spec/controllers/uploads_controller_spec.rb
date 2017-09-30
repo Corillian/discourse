@@ -5,7 +5,7 @@ describe UploadsController do
   context '.create' do
 
     it 'requires you to be logged in' do
-      expect { xhr :post, :create }.to raise_error(Discourse::NotLoggedIn)
+      expect { post :create, format: :json }.to raise_error(Discourse::NotLoggedIn)
     end
 
     context 'logged in' do
@@ -13,41 +13,48 @@ describe UploadsController do
       before { @user = log_in :user }
 
       let(:logo) do
-        ActionDispatch::Http::UploadedFile.new({
-          filename: 'logo.png',
-          tempfile: file_from_fixtures("logo.png")
-        })
+        Rack::Test::UploadedFile.new(file_from_fixtures("logo.png"))
       end
 
       let(:fake_jpg) do
-        ActionDispatch::Http::UploadedFile.new({
-          filename: 'fake.jpg',
-          tempfile: file_from_fixtures("fake.jpg")
-        })
+        Rack::Test::UploadedFile.new(file_from_fixtures("fake.jpg"))
       end
 
       let(:text_file) do
-        ActionDispatch::Http::UploadedFile.new({
-          filename: 'LICENSE.TXT',
-          tempfile: File.new("#{Rails.root}/LICENSE.txt")
-        })
+        Rack::Test::UploadedFile.new(File.new("#{Rails.root}/LICENSE.txt"))
       end
 
       it 'expects a type' do
-        expect { xhr :post, :create, file: logo }.to raise_error(ActionController::ParameterMissing)
+        expect do
+          post :create, params: { format: :json, file: logo }
+        end.to raise_error(ActionController::ParameterMissing)
       end
 
       it 'parameterize the type' do
-        subject.expects(:create_upload).with(logo, nil, "super_long_type_with_charssuper_long_type_with_char", false, false)
-        xhr :post, :create, file: logo, type: "super \# long \//\\ type with \\. $%^&*( chars" * 5
+        subject.expects(:create_upload).with(
+          anything,
+          nil,
+          "super_long_type_with_charssuper_long_type_with_char",
+          false,
+          false
+        )
+
+        post :create, params: { format: :json, file: logo, type: "super \# long \//\\ type with \\. $%^&*( chars" * 5 }
+      end
+
+      it 'can look up long urls' do
+        upload = Fabricate(:upload)
+        post :lookup_urls, params: { short_urls: [upload.short_url], format: :json }
+        result = JSON.parse(response.body)
+        expect(result[0]["url"]).to eq(upload.url)
       end
 
       it 'is successful with an image' do
         Jobs.expects(:enqueue).with(:create_avatar_thumbnails, anything)
 
         message = MessageBus.track_publish do
-          xhr :post, :create, file: logo, type: "avatar"
-        end.first
+          post :create, params: { file: logo, type: "avatar", format: :json }
+        end.find { |m| m.channel == "/uploads/avatar" }
 
         expect(response.status).to eq 200
 
@@ -61,8 +68,8 @@ describe UploadsController do
         Jobs.expects(:enqueue).never
 
         message = MessageBus.track_publish do
-          xhr :post, :create, file: text_file, type: "composer"
-        end.first
+          post :create, params: { file: text_file, type: "composer", format: :json }
+        end.find { |m| m.channel == "/uploads/composer" }
 
         expect(response.status).to eq 200
         expect(message.channel).to eq("/uploads/composer")
@@ -78,12 +85,18 @@ describe UploadsController do
         stub_request(:head, 'http://example.com/image.png')
         stub_request(:get, "http://example.com/image.png").to_return(body: File.read('spec/fixtures/images/logo.png'))
 
-        xhr :post, :create, url: 'http://example.com/image.png', type: "avatar", synchronous: true
+        post :create, params: {
+          url: 'http://example.com/image.png',
+          type: "avatar",
+          synchronous: true,
+          format: :json
+        }
 
         json = ::JSON.parse(response.body)
 
         expect(response.status).to eq 200
         expect(json["id"]).to be
+        expect(json["short_url"]).to eq("upload://qUm0DGR49PAZshIi7HxMd3cAlzn.png")
       end
 
       it 'correctly sets retain_hours for admins' do
@@ -91,7 +104,12 @@ describe UploadsController do
         Jobs.expects(:enqueue).with(:create_avatar_thumbnails, anything).never
 
         message = MessageBus.track_publish do
-          xhr :post, :create, file: logo, retain_hours: 100, type: "profile_background"
+          post :create, params: {
+            file: logo,
+            retain_hours: 100,
+            type: "profile_background",
+            format: :json
+          }
         end.first
 
         id = message.data["id"]
@@ -102,7 +120,7 @@ describe UploadsController do
         Jobs.expects(:enqueue).never
 
         message = MessageBus.track_publish do
-          xhr :post, :create, type: "composer"
+          post :create, params: { type: "composer", format: :json }
         end.first
 
         expect(response.status).to eq 200
@@ -115,7 +133,7 @@ describe UploadsController do
         Jobs.expects(:enqueue).never
 
         message = MessageBus.track_publish do
-          xhr :post, :create, file: text_file, type: "avatar"
+          post :create, params: { file: text_file, type: "avatar", format: :json }
         end.first
 
         expect(response.status).to eq 200
@@ -124,13 +142,13 @@ describe UploadsController do
 
       it 'ensures allow_uploaded_avatars is enabled when uploading an avatar' do
         SiteSetting.allow_uploaded_avatars = false
-        xhr :post, :create, file: logo, type: "avatar"
+        post :create, params: { file: logo, type: "avatar", format: :json }
         expect(response).to_not be_success
       end
 
       it 'ensures sso_overrides_avatar is not enabled when uploading an avatar' do
         SiteSetting.sso_overrides_avatar = true
-        xhr :post, :create, file: logo, type: "avatar"
+        post :create, params: { file: logo, type: "avatar", format: :json }
         expect(response).to_not be_success
       end
 
@@ -140,7 +158,12 @@ describe UploadsController do
         @user.update_columns(moderator: true)
 
         message = MessageBus.track_publish do
-          xhr :post, :create, file: text_file, type: "composer", for_private_message: "true"
+          post :create, params: {
+            file: text_file,
+            type: "composer",
+            for_private_message: "true",
+            format: :json
+          }
         end.first
 
         expect(response).to be_success
@@ -151,8 +174,8 @@ describe UploadsController do
         Jobs.expects(:enqueue).with(:create_avatar_thumbnails, anything).never
 
         message = MessageBus.track_publish do
-          xhr :post, :create, file: fake_jpg, type: "composer"
-        end.first
+          post :create, params: { file: fake_jpg, type: "composer", format: :json }
+        end.find { |m| m.channel == '/uploads/composer' }
 
         expect(response.status).to eq 200
 
@@ -174,14 +197,14 @@ describe UploadsController do
       Discourse.stubs(:store).returns(store)
       Upload.expects(:find_by).never
 
-      get :show, site: site, sha: sha, extension: "pdf"
+      get :show, params: { site: site, sha: sha, extension: "pdf" }
       expect(response.response_code).to eq(404)
     end
 
     it "returns 404 when the upload doesn't exist" do
       Upload.stubs(:find_by).returns(nil)
 
-      get :show, site: site, sha: sha, extension: "pdf"
+      get :show, params: { site: site, sha: sha, extension: "pdf" }
       expect(response.response_code).to eq(404)
     end
 
@@ -192,7 +215,7 @@ describe UploadsController do
       controller.stubs(:render)
       controller.expects(:send_file)
 
-      get :show, site: site, sha: sha, extension: "zip"
+      get :show, params: { site: site, sha: sha, extension: "zip" }
     end
 
     it "handles file without extension" do
@@ -201,7 +224,7 @@ describe UploadsController do
       controller.stubs(:render)
       controller.expects(:send_file)
 
-      get :show, site: site, sha: sha
+      get :show, params: { site: site, sha: sha, format: :json }
       expect(response).to be_success
     end
 
@@ -212,7 +235,7 @@ describe UploadsController do
       it "returns 404 when an anonymous user tries to download a file" do
         Upload.expects(:find_by).never
 
-        get :show, site: site, sha: sha, extension: "pdf"
+        get :show, params: { site: site, sha: sha, extension: "pdf", format: :json }
         expect(response.response_code).to eq(404)
       end
 

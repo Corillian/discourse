@@ -10,16 +10,16 @@
 
   {{#if model.postStream.loaded}}
     {{#if model.postStream.firstPostPresent}}
-      {{#topic-title cancelled="cancelEditingTopic" save="finishedEditingTopic"}}
+      {{#topic-title cancelled="cancelEditingTopic" save="finishedEditingTopic" model=model}}
         {{#if editingTopic}}
           {{#if model.isPrivateMessage}}
-            <span class="private-message-glyph">{{fa-icon "envelope"}}</span>
+            <span class="private-message-glyph">{{d-icon "envelope"}}</span>
           {{/if}}
 
           {{text-field id="edit-title" value=buffered.title maxlength=siteSettings.max_topic_title_length autofocus="true"}}
           {{#if showCategoryChooser}}
             <br>
-            {{category-chooser valueAttribute="id" value=buffered.category_id}}
+            {{category-select-box class="small" value=buffered.category_id}}
           {{/if}}
 
           {{#if canEditTags}}
@@ -36,7 +36,7 @@
           <h1>
             {{#unless model.is_warning}}
               <a href={{pmPath}}>
-                <span class="private-message-glyph">{{fa-icon "envelope"}}</span>
+                <span class="private-message-glyph">{{d-icon "envelope"}}</span>
               </a>
             {{/unless}}
 
@@ -48,7 +48,7 @@
             {{/if}}
 
             {{#if model.details.can_edit}}
-              <a href {{action "editTopic"}} class="edit-topic" title="{{i18n "edit"}}">{{fa-icon "pencil"}}</a>
+              <a href {{action "editTopic"}} class="edit-topic" title="{{i18n "edit"}}">{{d-icon "pencil"}}</a>
             {{/if}}
           </h1>
 
@@ -186,6 +186,19 @@
           {{#conditional-loading-spinner condition=model.postStream.loadingFilter}}
             {{#if loadedAllPosts}}
 
+              {{#if model.pending_posts_count}}
+                <div class="has-pending-posts">
+                  {{{i18n "queue.has_pending_posts" count=model.pending_posts_count}}}
+
+                  {{#if currentUser.show_queued_posts}}
+                    {{#link-to "queued-posts"}}
+                      {{d-icon "check"}}
+                      {{i18n "queue.view_pending"}}
+                    {{/link-to}}
+                  {{/if}}
+                </div>
+              {{/if}}
+
               {{topic-timer-info
                   statusType=model.topic_timer.status_type
                   executeAt=model.topic_timer.execute_at
@@ -218,23 +231,10 @@
                     replyToPost=(action "replyToPost")
                     }}
                 {{else}}
-                  <div id="topic-footer-button">
+                  <div id="topic-footer-buttons">
                     {{d-button icon="reply" class="btn-primary pull-right" action="showLogin" label="topic.reply.title"}}
                   </div>
                 {{/if}}
-              {{/if}}
-
-              {{#if model.pending_posts_count}}
-                <div class="has-pending-posts">
-                  {{{i18n "queue.has_pending_posts" count=model.pending_posts_count}}}
-
-                  {{#if currentUser.show_queued_posts}}
-                    {{#link-to "queued-posts"}}
-                      {{fa-icon "check"}}
-                      {{i18n "queue.view_pending"}}
-                    {{/link-to}}
-                  {{/if}}
-                </div>
               {{/if}}
 
               {{#if showSelectedPostsAtBottom}}
@@ -245,22 +245,9 @@
 
               {{plugin-outlet name="topic-above-suggested" args=(hash model=model)}}
 
-              {{#if model.details.suggested_topics.length}}
-                <div id="suggested-topics">
-                  <h3>{{{suggestedTitle}}}</h3>
-                  <div class="topics">
-                    {{#if model.isPrivateMessage}}
-                      {{basic-topic-list hideCategory="true"
-                                         showPosters="true"
-                                         topics=model.details.suggested_topics}}
-                    {{else}}
-                      {{basic-topic-list topics=model.details.suggested_topics}}
-                    {{/if}}
-                  </div>
-                  <h3>{{{browseMoreMessage}}}</h3>
-                </div>
+              {{#if model.suggestedTopics.length}}
+                {{suggested-topics topic=model}}
               {{/if}}
-
             {{/if}}
           {{/conditional-loading-spinner}}
 

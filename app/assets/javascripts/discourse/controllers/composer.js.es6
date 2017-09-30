@@ -277,7 +277,17 @@ export default Ember.Controller.extend({
 
     // Toggle the reply view
     toggle() {
-      this.toggle();
+      this.closeAutocomplete();
+      if (this.get('model.composeState') === Composer.OPEN) {
+        if (Ember.isEmpty(this.get('model.reply')) && Ember.isEmpty(this.get('model.title'))) {
+          this.close();
+        } else {
+          this.shrink();
+        }
+      } else {
+        this.close();
+      }
+      return false;
     },
 
     togglePreview() {
@@ -330,6 +340,11 @@ export default Ember.Controller.extend({
     },
 
     hitEsc() {
+      if (Ember.$(".emoji-picker-modal.fadeIn").length === 1) {
+        this.appEvents.trigger('emoji-picker:close');
+        return;
+      }
+
       if ((this.get('messageCount') || 0) > 0) {
         this.appEvents.trigger('composer-messages:close');
         return;
@@ -385,20 +400,6 @@ export default Ember.Controller.extend({
     return Discourse.Category.list();
   }.property(),
 
-  toggle() {
-    this.closeAutocomplete();
-    if (this.get('model.composeState') === Composer.OPEN) {
-      if (Ember.isEmpty(this.get('model.reply')) && Ember.isEmpty(this.get('model.title'))) {
-        this.close();
-      } else {
-        this.shrink();
-      }
-    } else {
-      this.close();
-    }
-    return false;
-  },
-
   disableSubmit: Ember.computed.or("model.loading", "isUploading"),
 
   save(force) {
@@ -429,7 +430,7 @@ export default Ember.Controller.extend({
 
         let buttons = [{
           "label": I18n.t("composer.cancel"),
-          "class": "cancel",
+          "class": "d-modal-cancel",
           "link": true
         }];
 

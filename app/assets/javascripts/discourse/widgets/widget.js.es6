@@ -112,6 +112,10 @@ export function createWidget(name, opts) {
   opts.html = opts.html || emptyContent;
   opts.draw = drawWidget;
 
+  if (opts.template) {
+    opts.html = opts.template;
+  }
+
   Object.keys(opts).forEach(k => result.prototype[k] = opts[k]);
   return result;
 }
@@ -121,6 +125,10 @@ export function reopenWidget(name, opts) {
   if (!existing) {
     console.error(`Could not find widget ${name} in registry`);
     return;
+  }
+
+  if (opts.template) {
+    opts.html = opts.template;
   }
 
   Object.keys(opts).forEach(k => existing.prototype[k] = opts[k]);

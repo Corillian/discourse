@@ -6,12 +6,14 @@ class WebHookEvent < ActiveRecord::Base
   default_scope { order('created_at DESC') }
 
   def update_web_hook_delivery_status
-    web_hook.last_delivery_status = case status
-                                    when 200..299
-                                      WebHook.last_delivery_statuses[:successful]
-                                    else
-                                      WebHook.last_delivery_statuses[:failed]
-                                    end
+    web_hook.last_delivery_status =
+      case status
+      when 200..299
+        WebHook.last_delivery_statuses[:successful]
+      else
+        WebHook.last_delivery_statuses[:failed]
+      end
+
     web_hook.save!
   end
 end
@@ -28,8 +30,8 @@ end
 #  response_headers :string
 #  response_body    :text
 #  duration         :integer          default(0)
-#  created_at       :datetime
-#  updated_at       :datetime
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
 #
 # Indexes
 #

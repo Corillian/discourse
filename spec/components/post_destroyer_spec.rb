@@ -51,7 +51,7 @@ describe PostDestroyer do
 
   describe 'destroy_old_stubs' do
     it 'destroys stubs for deleted by user posts' do
-      SiteSetting.stubs(:delete_removed_posts_after).returns(24)
+      SiteSetting.delete_removed_posts_after = 24
       Fabricate(:admin)
       topic = post.topic
       reply1 = create_post(topic: topic)
@@ -102,7 +102,7 @@ describe PostDestroyer do
       PostDestroyer.new(reply1.user, reply1).destroy
       PostDestroyer.new(reply2.user, reply2).destroy
 
-      SiteSetting.stubs(:delete_removed_posts_after).returns(1)
+      SiteSetting.delete_removed_posts_after = 1
 
       reply2.update_column(:updated_at, 70.minutes.ago)
 
@@ -114,7 +114,7 @@ describe PostDestroyer do
       expect(reply1.deleted_at).to eq(nil)
       expect(reply2.deleted_at).not_to eq(nil)
 
-      SiteSetting.stubs(:delete_removed_posts_after).returns(72)
+      SiteSetting.delete_removed_posts_after = 72
 
       reply1.update_column(:updated_at, 2.days.ago)
 
@@ -122,7 +122,7 @@ describe PostDestroyer do
 
       expect(reply1.reload.deleted_at).to eq(nil)
 
-      SiteSetting.stubs(:delete_removed_posts_after).returns(47)
+      SiteSetting.delete_removed_posts_after = 47
 
       PostDestroyer.destroy_stubs
 
@@ -134,7 +134,7 @@ describe PostDestroyer do
       topic = post.topic
       reply1 = create_post(topic: topic)
 
-      SiteSetting.stubs(:delete_removed_posts_after).returns(0)
+      SiteSetting.delete_removed_posts_after = 0
 
       PostDestroyer.new(reply1.user, reply1).destroy
 
@@ -213,7 +213,7 @@ describe PostDestroyer do
         expect(post2.deleted_at).to be_blank
         expect(post2.deleted_by).to be_blank
         expect(post2.user_deleted).to eq(true)
-        expect(post2.raw).to eq(I18n.t('js.post.deleted_by_author', {count: 24}))
+        expect(post2.raw).to eq(I18n.t('js.post.deleted_by_author', count: 24))
         expect(post2.version).to eq(2)
         expect(called).to eq(1)
 
@@ -360,7 +360,7 @@ describe PostDestroyer do
       it "creates a new user history entry" do
         expect {
           PostDestroyer.new(admin, post).destroy
-        }.to change { UserHistory.count}.by(1)
+        }.to change { UserHistory.count }.by(1)
       end
     end
   end
@@ -441,13 +441,11 @@ describe PostDestroyer do
     let(:second_post) { Fabricate(:post, topic_id: post.topic_id) }
 
     def create_user_action(action_type)
-      UserAction.log_action!({
-        action_type: action_type,
-        user_id: codinghorror.id,
-        acting_user_id: codinghorror.id,
-        target_topic_id: second_post.topic_id,
-        target_post_id: second_post.id
-      })
+      UserAction.log_action!(action_type: action_type,
+                             user_id: codinghorror.id,
+                             acting_user_id: codinghorror.id,
+                             target_topic_id: second_post.topic_id,
+                             target_post_id: second_post.id)
     end
 
     it "should delete the user actions" do

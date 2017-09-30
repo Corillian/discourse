@@ -25,6 +25,7 @@ module Jobs
       raw = post.raw.dup
       start_raw = raw.dup
       downloaded_urls = {}
+      broken_images, large_images = [], []
 
       extract_images_from(post.cooked).each do |image|
         src = original_src = image['src']
@@ -43,6 +44,9 @@ module Jobs
                   follow_redirect: true
                 )
               rescue Discourse::InvalidParameters
+                log(:error, "InvalidParameters while downloading hotlinked image (#{src}) for post: #{post_id}")
+              rescue => e
+                log(:error, "Failed to download image #{e}")
               end
               if hotlinked
                 if File.size(hotlinked.path) <= @max_size
@@ -52,13 +56,15 @@ module Jobs
                   if upload.persisted?
                     downloaded_urls[src] = upload.url
                   else
-                    log(:info, "Failed to pull hotlinked image for post: #{post_id}: #{src} - #{upload.errors.join("\n")}")
+                    log(:error, "Failed to pull hotlinked image for post: #{post_id}: #{src} - #{upload.errors.join("\n")}")
                   end
                 else
-                  log(:info, "Failed to pull hotlinked image for post: #{post_id}: #{src} - Image is bigger than #{@max_size}")
+                  log(:error, "Failed to pull hotlinked image for post: #{post_id}: #{src} - Image is bigger than #{@max_size}")
+                  large_images << original_src
                 end
               else
                 log(:error, "There was an error while downloading '#{src}' locally for post: #{post_id}")
+                broken_images << original_src
               end
             end
             # have we successfully downloaded that file?
@@ -84,7 +90,7 @@ module Jobs
               raw.gsub!(/^#{escaped_src}(\s?)$/) { "<img src='#{url}'>#{$1}" }
             end
           rescue => e
-            log(:info, "Failed to pull hotlinked image: #{src} post:#{post_id}\n" + e.message + "\n" + e.backtrace.join("\n"))
+            log(:error, "Failed to pull hotlinked image (#{src}) post: #{post_id}\n" + e.message + "\n" + e.backtrace.join("\n"))
           end
         end
 
@@ -98,6 +104,40 @@ module Jobs
         post.revise(Discourse.system_user, changes, options)
       elsif downloaded_urls.present?
         post.trigger_post_process(true)
+      elsif broken_images.present? || large_images.present?
+        start_html = post.cooked
+        doc = Nokogiri::HTML::fragment(start_html)
+        images = doc.css("img[src]") - doc.css("img.avatar")
+        images.each do |tag|
+          src = tag['src']
+          if broken_images.include?(src)
+            tag.name = 'span'
+            tag.set_attribute('class', 'broken-image fa fa-chain-broken')
+            tag.set_attribute('title', I18n.t('post.image_placeholder.broken'))
+            tag.remove_attribute('src')
+            tag.remove_attribute('width')
+            tag.remove_attribute('height')
+          elsif large_images.include?(src)
+            tag.name = 'a'
+            tag.set_attribute('href', src)
+            tag.set_attribute('target', '_blank')
+            tag.set_attribute('title', I18n.t('post.image_placeholder.large'))
+            tag.remove_attribute('src')
+            tag.remove_attribute('width')
+            tag.remove_attribute('height')
+            tag.inner_html = '<span class="large-image fa fa-picture-o"></span>'
+            parent = tag.parent
+            if parent.name == 'a'
+              parent.add_next_sibling(tag)
+              parent.add_next_sibling('<br>')
+              parent.content = parent["href"]
+            end
+          end
+        end
+        if start_html == post.cooked && doc.to_html != post.cooked
+          post.update_column(:cooked, doc.to_html)
+          post.publish_change_to_clients! :revised
+        end
       end
     end
 

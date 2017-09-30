@@ -19,7 +19,7 @@ class PostMover
     end
   end
 
-  def to_new_topic(title, category_id=nil)
+  def to_new_topic(title, category_id = nil)
     @move_type = PostMover.move_types[:new_topic]
 
     post = Post.find_by(id: post_ids.first)
@@ -79,7 +79,9 @@ class PostMover
 
     PostReply.where("reply_id IN (:post_ids) OR post_id IN (:post_ids)", post_ids: post_ids).each do |post_reply|
       if post_reply.post && post_reply.reply && post_reply.reply.topic_id != post_reply.post.topic_id
-        PostReply.delete_all(reply_id: post_reply.reply.id, post_id: post_reply.post.id)
+        PostReply
+          .where(reply_id: post_reply.reply.id, post_id: post_reply.post.id)
+          .delete_all
       end
     end
   end
@@ -98,6 +100,9 @@ class PostMover
     new_post.update_column(:reply_count, @reply_count[1] || 0)
     new_post.custom_fields = post.custom_fields
     new_post.save_custom_fields
+
+    DiscourseEvent.trigger(:post_moved, new_post, original_topic.id)
+
     new_post
   end
 
@@ -116,7 +121,9 @@ class PostMover
       update[:reply_to_user_id] = nil
     end
 
-    Post.where(id: post.id, topic_id: original_topic.id).update_all(update)
+    post.update(update)
+
+    DiscourseEvent.trigger(:post_moved, post, original_topic.id)
 
     # Move any links from the post to the new topic
     post.topic_links.update_all(topic_id: destination_topic.id)
@@ -149,11 +156,14 @@ class PostMover
   def create_moderator_post_in_original_topic
     move_type_str = PostMover.move_types[@move_type].to_s
 
-    original_topic.add_moderator_post(
-      user,
+    message = I18n.with_locale(SiteSetting.default_locale) do
       I18n.t("move_posts.#{move_type_str}_moderator_post",
              count: post_ids.count,
-             topic_link: "[#{destination_topic.title}](#{destination_topic.relative_url})"),
+             topic_link: "[#{destination_topic.title}](#{destination_topic.relative_url})")
+    end
+
+    original_topic.add_moderator_post(
+      user, message,
       post_type: Post.types[:small_action],
       action_code: "split_topic",
       post_number: @first_post_number_moved

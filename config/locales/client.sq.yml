@@ -144,20 +144,20 @@ sq:
       default_description: "Paracaktuar"
     s3:
       regions:
-        us_east_1: "US East (N. Virginia)"
-        us_west_1: "US West (N. California)"
-        us_west_2: "US West (Oregon)"
-        us_gov_west_1: "AWS GovCloud (US)"
-        eu_west_1: "EU (Ireland)"
-        eu_west_2: "BE (Londër)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Asia Pacific (Singapore)"
-        ap_southeast_2: "Asia Pacific (Sydney)"
-        ap_south_1: "Asia Pacific (Mumbai)"
         ap_northeast_1: "Asia Pacific (Tokyo)"
         ap_northeast_2: "Asia Pacific (Seoul)"
-        sa_east_1: "South America (Sao Paulo)"
+        ap_south_1: "Asia Pacific (Mumbai)"
+        ap_southeast_1: "Asia Pacific (Singapore)"
+        ap_southeast_2: "Asia Pacific (Sydney)"
         cn_north_1: "China (Beijing)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Ireland)"
+        eu_west_2: "BE (Londër)"
+        sa_east_1: "South America (Sao Paulo)"
+        us_east_1: "US East (N. Virginia)"
+        us_gov_west_1: "AWS GovCloud (US)"
+        us_west_1: "US West (N. California)"
+        us_west_2: "US West (Oregon)"
     edit: 'redakto titullin dhe kategorinë e kësaj teme'
     not_implemented: "Kjo veçori nuk është implementuar akoma, na vjen keq!"
     no_value: "Jo"
@@ -362,9 +362,6 @@ sq:
       owner: "autori"
       index:
         title: "Grupet"
-      title:
-        one: "grup"
-        other: "grupe"
       activity: "Aktiviteti"
       members: "Anëtarë"
       topics: "Tema"
@@ -372,7 +369,6 @@ sq:
       mentions: "Përmendje"
       messages: "Mesazhet"
       alias_levels:
-        title: "Kush mund ti bëjë mesazh dhe @permendje këtij grupi?"
         nobody: "Asnjëri"
         only_admins: "Vetëm adminët"
         mods_and_admins: "Vetëm moderatorët dhe adminët"
@@ -586,6 +582,7 @@ sq:
         taken: "Na vjen keq, por ky email nuk është i disponueshëm."
         error: "Hasëm një gabim gjatë ndryshimit të adresës email. Mos vallë është në përdorim nga dikush tjetër?"
         success: "Ju dërguam një email tek adresa që shkruajtët. Ju ftojmë të ndiqni udhëzimet e konfirmimit."
+        success_staff: "Ju dërguam një email tek adresa që shkruajtët. Ju ftojmë të ndiqni udhëzimet e konfirmimit."
       change_avatar:
         title: "Ndrysho fotografinë e profilit"
         gravatar: "<a href='//gravatar.com/emails' target='_blank'>Gravatar</a>, bazur në"
@@ -1052,28 +1049,6 @@ sq:
       empty: "Nuk u gjet asnjë njoftim. "
       more: "shiko njoftimet e kaluara"
       total_flagged: "totali i postimeve të sinjalizuar"
-      mentioned: "<i title='mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='posted' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='pëlqeu' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='pëlqeu' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
-      liked_many:
-        one: "<i title='pëlqeu' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} dhe 1 tjetër</span> {{description}}</p>"
-        other: "<i title='pëlqeu' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} dhe {{count}} të tjerë</span> {{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='invited to topic' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> pranoi ftesën tuaj</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> transferoi {{description}}</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>Fituat '{{description}}'</p>"
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>Temë e re</span> {{description}}</p>"
-      group_message_summary:
-        one: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} message in your {{group_name}} inbox</p>"
-        other: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} mesazhe në inboxin e {{group_name}}</p>"
       alt:
         mentioned: "Përmendur nga"
         quoted: "Cituar nga"
@@ -1121,9 +1096,6 @@ sq:
       select_all: "Zgjidhni Gjithçka"
       clear_all: "Pastro kriteret"
       too_short: "Fraza e kërkuar është shumë e shkurtër. "
-      result_count:
-        one: "1 rezultat për <span class='term'>\"{{term}}\"</span>"
-        other: "{{count}} rezultate për <span class='term'>\"{{term}}\"</span>"
       title: "kërko në faqe"
       no_results: "Nuk u gjet asnjë rezultat."
       no_more_results: "Nuk gjetëm rezultate të tjera. "
@@ -1897,7 +1869,6 @@ sq:
         hamburger_menu: '<b>=</b> Hap menunë hamburger'
         user_profile_menu: '<b>p</b> Hap menunë e përdoruesit'
         show_incoming_updated_topics: '<b>.</b> Shiko temat e përditësuara'
-        search: '<b>/</b> Kërko'
         help: '<b>?</b> Trego shkurtimet e tastierës'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Hiq Të Rejat/Postimet'
         dismiss_topics: '<b>x</b>, <b>t</b> Hiq temat'
@@ -2749,9 +2720,6 @@ sq:
       upload: "Ngarko"
       uploading: "Duke ngarkuar..."
       quit: "Mbase më vonë"
-      staff_count:
-        one: "Komuniteti juaj ka 1 anëtar stafi."
-        other: "Komuniteti juaj ka %{count} anëtarë stafi."
       invites:
         add_user: "shto"
         none_added: "Nuk keni ftuar asnjë staf. Doni të vazhdoni?"

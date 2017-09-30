@@ -48,8 +48,6 @@ Discourse::Application.configure do
   config.enable_anon_caching = false
   require 'rbtrace'
 
-
-
   if emails = GlobalSetting.developer_emails
     config.developer_emails = emails.split(",").map(&:downcase).map(&:strip)
   end
@@ -61,6 +59,9 @@ Discourse::Application.configure do
   end
 
   config.after_initialize do
+    SiteSetting.defaults.set_regardless_of_locale(:port, 3000)
+    SiteSetting.refresh!
+
     if ENV['BULLET']
       Bullet.enable = true
       Bullet.rails_logger = true

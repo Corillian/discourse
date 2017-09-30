@@ -2,7 +2,7 @@
 .user-badge {
   padding: 3px 8px;
   color: $primary;
-  border: 1px solid dark-light-diff($primary, $secondary, 90%, -65%);
+  border: 1px solid $primary-low;
   line-height: 19px;
   display: inline-block;
   background-color: $secondary;
@@ -55,19 +55,6 @@
         margin-top: 10px;
       }
     }
-  }
-}
-
-.user-info.medium.badge-info {
-  min-height: 80px;
-
-  .granted-on {
-    color: dark-light-choose(scale-color($primary, $lightness: 50%), scale-color($secondary, $lightness: 50%));
-  }
-
-  .post-link {
-    display: block;
-    margin-top: 0.2em;
   }
 }
 
@@ -126,7 +113,7 @@
 .badge-card {
   position: relative;
   display: inline-block;
-  background-color: dark-light-diff($primary, $secondary, 95%, -65%);
+  background-color: $primary-low;
   margin-right: 5px;
   margin-bottom: 10px;
   box-shadow: 1px 1px 3px rgba(0.0, 0.0, 0.0, 0.2);
@@ -142,7 +129,7 @@
     right: 5px;
     top: 5px;
     font-weight: bold;
-    color: dark-light-diff($primary, $secondary, 50%, -15%);
+    color: $primary-medium;
     font-size: 1.2em;
   }
 
@@ -150,13 +137,14 @@
     display: flex;
     flex-direction: row;
     min-height: 128px;
+    height: 100%;
 
     .badge-icon {
       min-width: 90px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: dark-light-diff($primary, $secondary, 92%, -60%);
+      background-color: $primary-low;
       font-size: 3em;
 
       img {
@@ -228,10 +216,21 @@
     display: flex;
     align-items: center;
     margin-left: 1em;
+    &.hidden {
+      display: none;
+    }
   }
   .grant-info-item {
     margin-bottom: 1em;
     color: dark-light-choose(scale-color($primary, $lightness: 40%), scale-color($secondary, $lightness: 60%));
+  }
+
+  .badge-title .form-horizontal .controls {
+    margin-left: 20px;
+  }
+
+  .close-btn {
+    margin: -20px 0 0 20px;
   }
 }
 

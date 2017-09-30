@@ -180,20 +180,21 @@ en:
 
     s3:
       regions:
-        us_east_1: "US East (N. Virginia)"
-        us_west_1: "US West (N. California)"
-        us_west_2: "US West (Oregon)"
-        us_gov_west_1: "AWS GovCloud (US)"
-        eu_west_1: "EU (Ireland)"
-        eu_west_2: "EU (London)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Asia Pacific (Singapore)"
-        ap_southeast_2: "Asia Pacific (Sydney)"
-        ap_south_1: "Asia Pacific (Mumbai)"
         ap_northeast_1: "Asia Pacific (Tokyo)"
         ap_northeast_2: "Asia Pacific (Seoul)"
-        sa_east_1: "South America (Sao Paulo)"
+        ap_south_1: "Asia Pacific (Mumbai)"
+        ap_southeast_1: "Asia Pacific (Singapore)"
+        ap_southeast_2: "Asia Pacific (Sydney)"
         cn_north_1: "China (Beijing)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Ireland)"
+        eu_west_2: "EU (London)"
+        sa_east_1: "South America (Sao Paulo)"
+        us_east_1: "US East (N. Virginia)"
+        us_east_2: "US East (Ohio)"
+        us_gov_west_1: "AWS GovCloud (US)"
+        us_west_1: "US West (N. California)"
+        us_west_2: "US West (Oregon)"
 
     edit: 'edit the title and category of this topic'
     not_implemented: "That feature hasn't been implemented yet, sorry!"
@@ -408,7 +409,8 @@ en:
         add_members: "Add Members"
         delete_member_confirm: "Remove '%{username}' from the '%{group}' group?"
       name_placeholder: "Group name, no spaces, same as username rule"
-      public: "Allow users to join/leave the group freely (Requires publicly visible group)"
+      public_admission: "Allow users to join the group freely (Requires publicly visible group)"
+      public_exit: "Allow users to leave the group freely"
       empty:
         posts: "There are no posts by members of this group."
         members: "There are no members in this group."
@@ -420,10 +422,17 @@ en:
       join: "Join Group"
       leave: "Leave Group"
       request: "Request to Join Group"
+      message: "Message"
       automatic_group: Automatic Group
       closed_group: Closed Group
       is_group_user: "You are a member of this group"
       allow_membership_requests: "Allow users to send membership requests to group owners"
+      membership_request_template: "Custom template to display to users when sending a membership request"
+      membership_request:
+        submit: "Submit Request"
+        title: "Request to join @%{group_name}"
+        reason: "Let the group owners know why you belong in this group"
+
       membership: "Membership"
       name: "Name"
       user_count: "Number of Members"
@@ -434,8 +443,8 @@ en:
         title: "Groups"
         empty: "There are no visible groups."
       title:
-        one: "group"
-        other: "groups"
+        one: "Group"
+        other: "Groups"
       activity: "Activity"
       members: "Members"
       topics: "Topics"
@@ -450,7 +459,8 @@ en:
         staff: "Group owners and staff"
         owners: "Group owners and admins"
       alias_levels:
-        title: "Who can message and @mention this group?"
+        mentionable: "Who can @mention this group?"
+        messageable: "Who can message this group?"
         nobody: "Nobody"
         only_admins: "Only admins"
         mods_and_admins: "Only moderators and Admins"
@@ -541,6 +551,7 @@ en:
       topics_entered: "topics entered"
       post_count: "# posts"
       confirm_delete_other_accounts: "Are you sure you want to delete these accounts?"
+      powered_by: "powered by <a href='https://ipinfo.io'>ipinfo.io</a>"
 
     user_fields:
       none: "(select an option)"
@@ -697,6 +708,7 @@ en:
         taken: "Sorry, that email is not available."
         error: "There was an error changing your email. Perhaps that address is already in use?"
         success: "We've sent an email to that address. Please follow the confirmation instructions."
+        success_staff: "We've sent an email to your current address. Please follow the confirmation instructions."
 
       change_avatar:
         title: "Change your profile picture"
@@ -1133,6 +1145,29 @@ en:
       ctrl: 'Ctrl'
       alt: 'Alt'
 
+    select_box:
+      default_header_text: Select...
+      no_content: No matches found
+      filter_placeholder: Search...
+
+    emoji_picker:
+      filter_placeholder: Search for emoji
+      people: People
+      nature: Nature
+      food: Food
+      activity: Activity
+      travel: Travel
+      objects: Objects
+      celebration: Celebration
+      custom: Custom emojis
+      recent: Recently used
+      default_tone: No skin tone
+      light_tone: Light skin tone
+      medium_light_tone: Medium light skin tone
+      medium_tone: Medium skin tone
+      medium_dark_tone: Medium dark skin tone
+      dark_tone: Dark skin tone
+
     composer:
       emoji: "Emoji :)"
       more_emoji: "more..."
@@ -1235,31 +1270,30 @@ en:
       empty: "No notifications found."
       more: "view older notifications"
       total_flagged: "total flagged posts"
-      mentioned: "<i title='mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='posted' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
+      mentioned: "<span>{{username}}</span> {{description}}"
+      group_mentioned: "<span>{{username}}</span> {{description}}"
+      quoted: "<span>{{username}}</span> {{description}}"
+      replied: "<span>{{username}}</span> {{description}}"
+      posted: "<span>{{username}}</span> {{description}}"
+      edited: "<span>{{username}}</span> {{description}}"
+      liked: "<span>{{username}}</span> {{description}}"
+      liked_2: "<span>{{username}}, {{username2}}</span> {{description}}"
       liked_many:
-        one: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} and 1 other</span> {{description}}</p>"
-        other: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} and {{count}} others</span> {{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='invited to topic' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> accepted your invitation</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> moved {{description}}</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>Earned '{{description}}'</p>"
-      topic_reminder: "<i title='topic reminder' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>New Topic</span> {{description}}</p>"
+        one: "<span>{{username}}, {{username2}} and 1 other</span> {{description}}"
+        other: "<span>{{username}}, {{username2}} and {{count}} others</span> {{description}}"
+      private_message: "<span>{{username}}</span> {{description}}"
+      invited_to_private_message: "<p><span>{{username}}</span> {{description}}"
+      invited_to_topic: "<span>{{username}}</span> {{description}}"
+      invitee_accepted: "<span>{{username}}</span> accepted your invitation"
+      moved_post: "<span>{{username}}</span> moved {{description}}"
+      linked: "<span>{{username}}</span> {{description}}"
+      granted_badge: "Earned '{{description}}'"
+      topic_reminder: "<span>{{username}}</span> {{description}}"
+      watching_first_post: "<span>New Topic</span> {{description}}"
 
       group_message_summary:
-          one: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} message in your {{group_name}} inbox</p>"
-          other: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} messages in your {{group_name}} inbox</p>"
+          one: "{{count}} message in your {{group_name}} inbox"
+          other: "{{count}} messages in your {{group_name}} inbox"
 
       alt:
         mentioned: "Mentioned by"
@@ -1312,14 +1346,21 @@ en:
       clear_all: "Clear All"
       too_short: "Your search term is too short."
       result_count:
-        one: "1 result for <span class='term'>\"{{term}}\"</span>"
-        other: "{{count}} results for <span class='term'>\"{{term}}\"</span>"
+        one: "1 result for <span class='term'>{{term}}</span>"
+        other: "{{count}} results for <span class='term'>{{term}}</span>"
       title: "search topics, posts, users, or categories"
       no_results: "No results found."
       no_more_results: "No more results found."
       searching: "Searching ..."
       post_format: "#{{post_number}} by {{username}}"
       results_page: "Search Results"
+      more_results: "There are more results. Please narrow your search criteria."
+      cant_find: "Can’t find what you’re looking for?"
+      start_new_topic: "Perhaps start a new topic?"
+      or_search_google: "Or try searching with Google instead:"
+      search_google: "Try searching with Google instead:"
+      search_google_button: "Google"
+      search_google_title: "Search this site"
 
       context:
         user: "Search posts by @{{username}}"
@@ -1353,6 +1394,7 @@ en:
           seen: I've read
           unseen: I've not read
           wiki: are wiki
+          images: includes image(s)
           all_tags: Contains all tags
         statuses:
           label: Where topics
@@ -1723,6 +1765,7 @@ en:
         success_email: "We mailed out an invitation to <b>{{emailOrUsername}}</b>. We'll notify you when the invitation is redeemed. Check the invitations tab on your user page to keep track of your invites."
         success_username: "We've invited that user to participate in this topic."
         error: "Sorry, we couldn't invite that person. Perhaps they have already been invited? (Invites are rate limited)"
+        success_existing_email: "A user with email <b>{{emailOrUsername}}</b> already exists. We've invited that user to participate in this topic."
 
       login_reply: 'Log In to Reply'
 
@@ -2335,7 +2378,7 @@ en:
         hamburger_menu: '<b>=</b> Open hamburger menu'
         user_profile_menu: '<b>p</b> Open user menu'
         show_incoming_updated_topics: '<b>.</b> Show updated topics'
-        search: '<b>/</b> Search'
+        search: '<b>/</b> or <b>ctrl</b>+<b>shift</b>+<b>s</b> Search'
         help: '<b>?</b> Open keyboard help'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Dismiss New/Posts'
         dismiss_topics: '<b>x</b>, <b>t</b> Dismiss Topics'
@@ -2553,8 +2596,9 @@ en:
 
       flags:
         title: "Flags"
-        old: "Old"
-        active: "Active"
+        active_posts: "Flagged Posts"
+        old_posts: "Old Flagged Posts"
+        topics: "Flagged Topics"
 
         agree: "Agree"
         agree_title: "Confirm this flag as valid and correct"
@@ -2583,6 +2627,8 @@ en:
         clear_topic_flags: "Done"
         clear_topic_flags_title: "The topic has been investigated and issues have been resolved. Click Done to remove the flags."
         more: "(more replies...)"
+        suspend_user: "Suspend User"
+        suspend_user_title: "Suspend user for this post"
 
         dispositions:
           agreed: "agreed"
@@ -2595,11 +2641,19 @@ en:
         system: "System"
         error: "Something went wrong"
         reply_message: "Reply"
-        no_results: "There are no flags."
+        no_results: "There are no flagged posts."
         topic_flagged: "This <strong>topic</strong> has been flagged."
+        show_full: "show full post"
         visit_topic: "Visit the topic to take action"
         was_edited: "Post was edited after the first flag"
         previous_flags_count: "This post has already been flagged {{count}} times."
+        show_details: "Show flag details"
+
+        flagged_topics:
+          topic: "Topic"
+          type: "Type"
+          users: "Users"
+          last_flagged: "Last Flagged"
 
         summary:
           action_type_3:
@@ -3128,6 +3182,33 @@ en:
         logster:
           title: "Error Logs"
 
+      watched_words:
+        title: "Watched Words"
+        search: "search"
+        clear_filter: "Clear"
+        show_words: "show words"
+        word_count:
+          one: "1 word"
+          other: "%{count} words"
+        actions:
+          block: 'Block'
+          censor: 'Censor'
+          require_approval: 'Require Approval'
+          flag: 'Flag'
+        action_descriptions:
+          block: 'Prevent posts containing these words from being posted. The user will see an error message when they try to submit their post.'
+          censor: 'Allow posts containing these words, but replace them with characters that hide the censored words.'
+          require_approval: 'Posts containing these words will require approval by staff before they can be seen.'
+          flag: 'Allow posts containing these words, but flag them as inappropriate so moderators can review them.'
+        form:
+          label: 'New Word:'
+          placeholder: 'full word or * as wildcard'
+          placeholder_regexp: "regular expression"
+          add: 'Add'
+          success: 'Success'
+          upload: "Upload"
+          upload_successful: "Upload successful. Words have been added."
+
       impersonate:
         title: "Impersonate"
         help: "Use this tool to impersonate a user account for debugging purposes. You will have to log out once finished."
@@ -3187,10 +3268,15 @@ en:
         suspend_failed: "Something went wrong suspending this user {{error}}"
         unsuspend_failed: "Something went wrong unsuspending this user {{error}}"
         suspend_duration: "How long will the user be suspended for?"
-        suspend_duration_units: "(days)"
         suspend_reason_label: "Why are you suspending? This text <b>will be visible to everyone</b> on this user's profile page, and will be shown to the user when they try to log in. Keep it short."
+        suspend_reason_hidden_label: "Why are you suspending? This text will be shown to the user when they try to log in. Keep it short."
         suspend_reason: "Reason"
+        suspend_reason_placeholder: "Suspension Reason"
+        suspend_message: "Email Message"
+        suspend_message_placeholder: "Optionally, provide more information about the suspension and it will be emailed to the user."
         suspended_by: "Suspended by"
+        suspended_until: "(until %{until})"
+        cant_suspend: "This user cannot be suspended."
         delete_all_posts: "Delete all posts"
 
         # keys ending with _MF use message format, see https://meta.discourse.org/t/message-format-support-for-localization/7035 for details
@@ -3542,8 +3628,8 @@ en:
       quit: "Maybe Later"
 
       staff_count:
-        one: "Your community has 1 staff member. "
-        other: "Your community has %{count} staff members."
+        one: "Your community has 1 staff (you). "
+        other: "Your community has %{count} staff, including you."
 
       invites:
         add_user: "add"

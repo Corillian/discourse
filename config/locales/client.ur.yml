@@ -132,19 +132,19 @@ ur:
     bootstrap_mode_disabled: "بوٹسٹریپ کا موڈ اگلے 24 گھنٹوں میں غیر فعال کر دیا جائے گا۔"
     s3:
       regions:
-        us_east_1: "امریکی مشرق (شمالی ورجینیا)"
-        us_west_1: "امریکی مغرب (شمالی کیلی فورنیا)"
-        us_west_2: "امریکی مغرب (اوریگن)"
-        us_gov_west_1: "اے ڈبلیو ایس گَو کلاوڈ (امریکہ)"
-        eu_west_1: "یورپی یونین (آئر لینڈ)"
-        eu_central_1: "یورپی یونین (فرینکفرٹ)"
-        ap_southeast_1: "ایشیا پیسفک (سنگاپور)"
-        ap_southeast_2: "ایشیا پیسفک (سڈنی)"
-        ap_south_1: "ایشیا پیسفک (ممبئی)"
         ap_northeast_1: "ایشیا پیسفک (ٹوکیو)"
         ap_northeast_2: "ایشیا پیسفک (سیول)"
-        sa_east_1: "ایشیا پیسفک (ساؤ پالو)"
+        ap_south_1: "ایشیا پیسفک (ممبئی)"
+        ap_southeast_1: "ایشیا پیسفک (سنگاپور)"
+        ap_southeast_2: "ایشیا پیسفک (سڈنی)"
         cn_north_1: "چین (بیجنگ)"
+        eu_central_1: "یورپی یونین (فرینکفرٹ)"
+        eu_west_1: "یورپی یونین (آئر لینڈ)"
+        sa_east_1: "ایشیا پیسفک (ساؤ پالو)"
+        us_east_1: "امریکی مشرق (شمالی ورجینیا)"
+        us_gov_west_1: "اے ڈبلیو ایس گَو کلاوڈ (امریکہ)"
+        us_west_1: "امریکی مغرب (شمالی کیلی فورنیا)"
+        us_west_2: "امریکی مغرب (اوریگن)"
     edit: 'اس ٹاپک کے عنوان اور زمرے میں ترمیم کریں'
     not_implemented: "یہ خصوصیت ابھی تک لاگو نہیں کی گئی، معضرت!"
     no_value: "نہیں "
@@ -358,9 +358,6 @@ ur:
       index:
         title: "گروپس"
         empty: "کوئی نظر آنے والے گروپ موجود نہیں ہیں۔"
-      title:
-        one: "گروپ"
-        other: "گروپس"
       activity: "سرگرمی"
       members: "ممبران"
       topics: "ٹاپک"
@@ -368,7 +365,6 @@ ur:
       mentions: "ذکر"
       messages: "پیغامات"
       alias_levels:
-        title: "کون اِس گروپ کو پیغام بھیج سکتا اور@زکر کرسکتا ہے؟"
         nobody: "کوئی بھی نہیں"
         only_admins: "صرف منتظمین"
         mods_and_admins: "صرف ثالث اور منتظمین"
@@ -1056,28 +1052,6 @@ ur:
       empty: "کوئی اطلاعات نہیں ملیں۔"
       more: "پرانی اطلاعات دیکھیے"
       total_flagged: "کُل فلَیگ کی گئی پوسٹس"
-      mentioned: "<i title='mentioned' class='fa fa-at'></i><p><span>{{ نام}}</span> {{description}}</p>"
-      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='posted' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}، {{صارف نام2}}</span> {{description}}</p>"
-      liked_many:
-        one: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}، {{صارف نام2}} اور 1 دوسرا</span> {{description}}</p>"
-        other: "<i title='liked' class='fa fa-heart'></i><p><span>{{username2}}، {{username}} اور {{count}} دوسرے</span> {{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='invited to topic' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> نے آپ کی دعوت قبول کرلی</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> {{description}} منتقل کر دیا</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>'{{description}}' حاصل کیا</p>"
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>نیا ٹاپک</span> {{description}}</p>"
-      group_message_summary:
-        one: "i title='messages in group inbox' class='fa fa-group'></i><p> آپ کے {{group_name}} اِن باکس میں {{count}} پیغام</p>"
-        other: "i title='messages in group inbox' class='fa fa-group'></i><p> آپ کے {{group_name}} اِن باکس میں {{count}} پیغامات</p>"
       alt:
         mentioned: "کی طرف سے ذکر کیا گیا"
         quoted: "کی طرف سے اقتباس کیا گیا"
@@ -1124,9 +1098,6 @@ ur:
       select_all: "تمام منتخب کریں"
       clear_all: "تمام کو صاف کریں"
       too_short: "آپ کا سَرچ ٹَرم بہت مختصر ہے۔"
-      result_count:
-        one: "<span class='term'>\"{{term}}\"</span> کیلئیے 1 نتیجہ"
-        other: "<span class='term'>\"{{term}}\"</span> کیلئیے {{count}} نتائج"
       title: "ٹاپک، پوسٹس، صارفین، یا زمرہ جات کو سَرچ کریں"
       no_results: "کوئی نتائج نہیں پائے گئے۔"
       no_more_results: "کوئی اور نتائج نہیں پائے گئے۔"
@@ -2004,7 +1975,6 @@ ur:
         hamburger_menu: '<b>=</b> ہیمبرگر مینو کھولیں'
         user_profile_menu: '<b>p</b> صارف مینو کھولیں'
         show_incoming_updated_topics: 'اَپ ڈیٹ ہوے ٹاپک دکھائیں'
-        search: '<b>/</b> سرچ'
         help: '<b>?</b> کیبورڈ مدد کھولیں'
         dismiss_new_posts: '<b>x</b>، <b>r</b> برخاست کریں نئے/پوسٹس'
         dismiss_topics: '<b>x</b>، <b>t</b> ٹاپک برخاست کریں'
@@ -3074,9 +3044,6 @@ ur:
       upload: "اَپ لوڈ"
       uploading: "اَپ لوڈ کیا جا رہا ہے..."
       quit: "شاید بعد میں"
-      staff_count:
-        one: "آپ کی کمیونٹی میں 1 سٹاف کا رکن ہے۔"
-        other: "آپ کی کمیونٹی میں ٪{count} سٹاف کے ارکان ہیں۔"
       invites:
         add_user: "شامل کریں"
         none_added: "آپ نے کسی  بھی سٹاف کو مدعو نہیں کیا۔ کیا آپ واقعی آگے جانا چاہتے ہیں؟"

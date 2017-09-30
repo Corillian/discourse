@@ -18,7 +18,7 @@
 }
 
 .menu-panel {
-  border: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
+  border: 1px solid $primary-low;
   box-shadow: 0 2px 2px rgba(0,0,0, .25);
   background-color: $secondary;
   z-index: 1100;
@@ -60,7 +60,7 @@
       padding: 0.25em 0.5em;
       display: block;
       &:hover {
-        background-color: dark-light-diff($highlight, $secondary, 50%, -55%);
+        background-color: $highlight-medium;
       }
     }
 
@@ -129,13 +129,9 @@
 
   .searching {
     position: absolute;
+    top: 0.25em;
+    right: 1.5em;
 
-    top: -3px;
-    right: 0.75em;
-    .drop-down-visible & {
-      top: 0.2em;
-      right: 1.2em;
-    }
     .spinner {
       width: 10px;
       height: 10px;
@@ -148,6 +144,7 @@
     padding: 5px;
     text-align: center;
   }
+
   .filter {
     padding: 0;
     &:hover {background: transparent;}
@@ -191,7 +188,7 @@
     }
 
     &:hover a:not(.badge-notification) {
-      background-color: dark-light-diff($highlight, $secondary, 50%, -55%);
+      background-color: $highlight-medium;
     }
 
     button {margin-left: 5px;}
@@ -210,15 +207,22 @@
     .fa { color: dark-light-choose(scale-color($primary, $lightness: 50%), scale-color($secondary, $lightness: 50%)); }
     .icon { color: dark-light-choose(scale-color($primary, $lightness: 30%), scale-color($secondary, $lightness: 70%)); }
     li {
-      background-color: dark-light-diff($tertiary, $secondary, 85%, -65%);
+      background-color: $tertiary-low;
       padding: 0.25em 0.5em;
       i {
         float: left;
         margin-right: 5px;
         padding-top: 2px;
       }
+
+      // This is until other languages remove the HTML from within
+      // notifications. It can then be removed
+      div i.fa {
+        display: none;
+      }
+
       span { color: $primary; }
-      &:hover { background-color: dark-light-diff($highlight, $secondary, 50%, -55%); }
+      &:hover { background-color: $highlight-medium; }
       a { padding: 0; }
       p {
         margin: 0;
@@ -226,7 +230,7 @@
       }
     }
     .is-warning {
-      i.fa-envelope-o {
+      .d-icon-envelope-o {
         &:before {
           content: "\f0e0";
         }
@@ -256,7 +260,7 @@
 .notifications .logout {
   padding: 0.25em;
   &:hover {
-    background-color: dark-light-diff($highlight, $secondary, 50%, -55%);
+    background-color: $highlight-medium;
   }
 }
 
@@ -269,7 +273,7 @@ div.menu-links-header {
     display: table-row;
   }
   a:hover {
-    background-color: dark-light-diff($highlight, $secondary, 50%, -55%);
+    background-color: $highlight-medium;
   }
   a {
     padding: 0.5em;
@@ -301,7 +305,7 @@ div.menu-links-header {
   a {
     font-size: 1.1em;
   }
-  .fa-user {
+  .d-icon-user {
     margin-right: 0.2em;
   }
 }

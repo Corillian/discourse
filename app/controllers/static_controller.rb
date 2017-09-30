@@ -3,8 +3,8 @@ require_dependency 'file_helper'
 
 class StaticController < ApplicationController
 
-  skip_before_filter :check_xhr, :redirect_to_login_if_required
-  skip_before_filter :verify_authenticity_token, only: [:brotli_asset, :cdn_asset, :enter, :favicon]
+  skip_before_action :check_xhr, :redirect_to_login_if_required
+  skip_before_action :verify_authenticity_token, only: [:brotli_asset, :cdn_asset, :enter, :favicon]
 
   PAGES_WITH_EMAIL_PARAM = ['login', 'password_reset', 'signup']
 
@@ -13,9 +13,9 @@ class StaticController < ApplicationController
     return redirect_to path('/login') if SiteSetting.login_required? && current_user.nil? && (params[:id] == 'faq' || params[:id] == 'guidelines')
 
     map = {
-      "faq" => {redirect: "faq_url", topic_id: "guidelines_topic_id"},
-      "tos" => {redirect: "tos_url", topic_id: "tos_topic_id"},
-      "privacy" => {redirect: "privacy_policy_url", topic_id: "privacy_topic_id"}
+      "faq" => { redirect: "faq_url", topic_id: "guidelines_topic_id" },
+      "tos" => { redirect: "tos_url", topic_id: "tos_topic_id" },
+      "privacy" => { redirect: "privacy_policy_url", topic_id: "privacy_topic_id" }
     }
 
     @page = params[:id]
@@ -100,7 +100,7 @@ class StaticController < ApplicationController
   # a huge expiry, we also cache these assets in nginx so it bypassed if needed
   def favicon
 
-    data = DistributedMemoizer.memoize('favicon' + SiteSetting.favicon_url, 60*30) do
+    data = DistributedMemoizer.memoize('favicon' + SiteSetting.favicon_url, 60 * 30) do
       begin
         file = FileHelper.download(
           SiteSetting.favicon_url,
@@ -121,13 +121,13 @@ class StaticController < ApplicationController
     if data.bytesize == 0
       @@default_favicon ||= File.read(Rails.root + "public/images/default-favicon.png")
       response.headers["Content-Length"] = @@default_favicon.bytesize.to_s
-      render text: @@default_favicon, content_type: "image/png"
+      render plain: @@default_favicon, content_type: "image/png"
     else
       immutable_for 1.year
       response.headers["Expires"] = 1.year.from_now.httpdate
       response.headers["Content-Length"] = data.bytesize.to_s
       response.headers["Last-Modified"] = Time.new('2000-01-01').httpdate
-      render text: data, content_type: "image/png"
+      render plain: data, content_type: "image/png"
     end
   end
 
@@ -137,20 +137,18 @@ class StaticController < ApplicationController
     end
   end
 
-
   def cdn_asset
     serve_asset
   end
 
   protected
 
-  def serve_asset(suffix=nil)
+  def serve_asset(suffix = nil)
 
     path = File.expand_path(Rails.root + "public/assets/#{params[:path]}#{suffix}")
 
     # SECURITY what if path has /../
     raise Discourse::NotFound unless path.start_with?(Rails.root.to_s + "/public/assets")
-
 
     response.headers["Expires"] = 1.year.from_now.httpdate
     response.headers["Access-Control-Allow-Origin"] = params[:origin] if params[:origin]

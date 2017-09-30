@@ -33,7 +33,7 @@ QUnit.test("Share Popup", assert => {
 QUnit.test("Showing and hiding the edit controls", assert => {
   visit("/t/internationalization-localization/280");
 
-  click('#topic-title .fa-pencil');
+  click('#topic-title .d-icon-pencil');
 
   andThen(() => {
     assert.ok(exists('#edit-title'), 'it shows the editing controls');
@@ -48,10 +48,14 @@ QUnit.test("Showing and hiding the edit controls", assert => {
 
 QUnit.test("Updating the topic title and category", assert => {
   visit("/t/internationalization-localization/280");
-  click('#topic-title .fa-pencil');
+
+  click('#topic-title .d-icon-pencil');
 
   fillIn('#edit-title', 'this is the new title');
-  selectDropdown('.category-combobox', 4);
+
+  expandSelectBox('.title-wrapper .category-select-box');
+
+  selectBoxSelectRow(4, {selector: '.title-wrapper .category-select-box'});
 
   click('#topic-title .submit-edit');
 
@@ -99,7 +103,7 @@ QUnit.test("Reply as new topic", assert => {
       "it fills composer with the ring string"
     );
     assert.equal(
-      find('.category-combobox').select2('data').text, "feature",
+      selectBox('.category-select-box').header.text(), "feature",
       "it fills category selector with the right category"
     );
   });
@@ -138,9 +142,29 @@ QUnit.test("Reply as new message", assert => {
   });
 });
 
+QUnit.test("Visit topic routes", assert => {
+  visit("/t/12");
+
+  andThen(() => {
+    assert.equal(
+      find('.fancy-title').text().trim(), 'PM for testing',
+      'it routes to the right topic'
+    );
+  });
+
+  visit("/t/280/20");
+
+  andThen(() => {
+    assert.equal(
+      find('.fancy-title').text().trim(), 'Internationalization / localization',
+      'it routes to the right topic'
+    );
+  });
+});
+
 QUnit.test("Updating the topic title with emojis", assert => {
   visit("/t/internationalization-localization/280");
-  click('#topic-title .fa-pencil');
+  click('#topic-title .d-icon-pencil');
 
   fillIn('#edit-title', 'emojis title :bike: :blonde_woman:t6:');
 

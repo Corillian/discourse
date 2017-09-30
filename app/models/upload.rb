@@ -4,6 +4,7 @@ require_dependency "url_helper"
 require_dependency "db_helper"
 require_dependency "validators/upload_validator"
 require_dependency "file_store/local_store"
+require_dependency "base62"
 
 class Upload < ActiveRecord::Base
   belongs_to :user
@@ -30,7 +31,7 @@ class Upload < ActiveRecord::Base
     thumbnail(width, height).present?
   end
 
-  def create_thumbnail!(width, height, crop=false)
+  def create_thumbnail!(width, height, crop = false)
     return unless SiteSetting.create_thumbnails?
 
     opts = {
@@ -53,8 +54,20 @@ class Upload < ActiveRecord::Base
     end
   end
 
-  def extension
-    File.extname(original_filename)
+  def short_url
+    "upload://#{Base62.encode(sha1.hex)}.#{extension}"
+  end
+
+  def self.sha1_from_short_url(url)
+    if url =~ /(upload:\/\/)?([a-zA-Z0-9]+)(\..*)?/
+      sha1 = Base62.decode($2).to_s(16)
+
+      if sha1.length > 40
+        nil
+      else
+        sha1.rjust(40, '0')
+      end
+    end
   end
 
   def self.generate_digest(path)
@@ -75,7 +88,7 @@ class Upload < ActiveRecord::Base
     Upload.find_by(url: url)
   end
 
-  def self.migrate_to_new_scheme(limit=nil)
+  def self.migrate_to_new_scheme(limit = nil)
     problems = []
 
     if SiteSetting.migrate_to_new_scheme
@@ -109,9 +122,7 @@ class Upload < ActiveRecord::Base
             upload.sha1 = Upload.generate_digest(path)
           end
           # optimize if image
-          if FileHelper.is_image?(File.basename(path))
-            ImageOptim.new.optimize_image!(path)
-          end
+          FileHelper.optimize_image!(path) if FileHelper.is_image?(File.basename(path))
           # store to new location & update the filesize
           File.open(path) do |f|
             upload.url = Discourse.store.store_upload(f, upload)
@@ -155,6 +166,7 @@ end
 #  sha1              :string(40)
 #  origin            :string(1000)
 #  retain_hours      :integer
+#  extension         :string(10)
 #
 # Indexes
 #

@@ -12,7 +12,7 @@ describe CategoryList do
     it "properly hide secure categories" do
       cat = Fabricate(:category)
       Fabricate(:topic, category: cat)
-      cat.set_permissions(:admins => :full)
+      cat.set_permissions(admins: :full)
       cat.save
 
       # uncategorized + this
@@ -55,7 +55,7 @@ describe CategoryList do
 
     context "with a topic in a category" do
       let!(:topic) { Fabricate(:topic, category: topic_category) }
-      let(:category) { category_list.categories.find{|c| c.id == topic_category.id} }
+      let(:category) { category_list.categories.find { |c| c.id == topic_category.id } }
 
       it "should return the category" do
         expect(category).to be_present
@@ -69,7 +69,7 @@ describe CategoryList do
       let!(:topic2) { Fabricate(:topic, category: topic_category, bumped_at: 5.minutes.ago) }
       let!(:topic3) { Fabricate(:topic, category: topic_category, bumped_at: 2.minutes.ago) }
       let!(:pinned) { Fabricate(:topic, category: topic_category, pinned_at: 10.minutes.ago, bumped_at: 10.minutes.ago) }
-      let(:category) { category_list.categories.find{|c| c.id == topic_category.id} }
+      let(:category) { category_list.categories.find { |c| c.id == topic_category.id } }
 
       it "returns pinned topic first" do
         expect(category.displayable_topics.map(&:id)).to eq([pinned.id, topic3.id])
@@ -94,7 +94,7 @@ describe CategoryList do
 
     context 'fixed_category_positions is enabled' do
       before do
-        SiteSetting.stubs(:fixed_category_positions).returns(true)
+        SiteSetting.fixed_category_positions = true
       end
 
       it "returns categories in specified order" do
@@ -104,7 +104,7 @@ describe CategoryList do
 
       it "handles duplicate position values" do
         cat1, cat2, cat3, cat4 = Fabricate(:category, position: 0), Fabricate(:category, position: 0), Fabricate(:category, position: nil), Fabricate(:category, position: 0)
-        first_three = category_ids[0,3] # The order is not deterministic
+        first_three = category_ids[0, 3] # The order is not deterministic
         expect(first_three).to include(cat1.id)
         expect(first_three).to include(cat2.id)
         expect(first_three).to include(cat4.id)
@@ -114,7 +114,7 @@ describe CategoryList do
 
     context 'fixed_category_positions is disabled' do
       before do
-        SiteSetting.stubs(:fixed_category_positions).returns(false)
+        SiteSetting.fixed_category_positions = false
       end
 
       it "returns categories in order of activity" do

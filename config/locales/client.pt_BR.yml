@@ -148,20 +148,20 @@ pt_BR:
       default_description: "Padrão"
     s3:
       regions:
-        us_east_1: "Leste dos EUA (N. da Virgínia)"
-        us_west_1: "Oeste dos EUA (N. da Califórnia)"
-        us_west_2: "Leste dos EUA (Oregon)"
-        us_gov_west_1: "AWS GovCloud (EUA)"
-        eu_west_1: "EU (Irlanda)"
-        eu_west_2: "UE (Londres)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Ásia Pacífico (Singapura)"
-        ap_southeast_2: "Ásia Pacífico (Sidney)"
-        ap_south_1: "Ásia-Pacífico (Mumbai)"
         ap_northeast_1: "Ásia Pacífico (Tóquio)"
         ap_northeast_2: "Ásia Pacífico (Seul)"
-        sa_east_1: "América do Sul (São Paulo)"
+        ap_south_1: "Ásia-Pacífico (Mumbai)"
+        ap_southeast_1: "Ásia Pacífico (Singapura)"
+        ap_southeast_2: "Ásia Pacífico (Sidney)"
         cn_north_1: "China (Beijing)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Irlanda)"
+        eu_west_2: "UE (Londres)"
+        sa_east_1: "América do Sul (São Paulo)"
+        us_east_1: "Leste dos EUA (N. da Virgínia)"
+        us_gov_west_1: "AWS GovCloud (EUA)"
+        us_west_1: "Oeste dos EUA (N. da Califórnia)"
+        us_west_2: "Leste dos EUA (Oregon)"
     edit: 'edite o título e a categoria deste tópico'
     not_implemented: "Esse recurso ainda não foi implementado, desculpe!"
     no_value: "Não"
@@ -376,9 +376,6 @@ pt_BR:
       index:
         title: "Grupos"
         empty: "Não há grupos visíveis."
-      title:
-        one: "grupo"
-        other: "grupos"
       activity: "Atividade"
       members: "Membros"
       topics: "Tópicos"
@@ -387,7 +384,6 @@ pt_BR:
       messages: "Mensagens"
       notification_level: "Nível de notificação padrão para mensagens de grupo"
       alias_levels:
-        title: "Quem pode enviar mensagem e @mention a este grupo?"
         nobody: "Ninguém"
         only_admins: "Somente administradores"
         mods_and_admins: "Somente moderadores e Administradores"
@@ -1091,28 +1087,6 @@ pt_BR:
       empty: "Não foi encontrada nenhuma notificação."
       more: "ver notificações antigas"
       total_flagged: "total de mensagens sinalizadas"
-      mentioned: "<i title='mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='posted' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
-      liked_many:
-        one: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} e mais 1 pessoa</span> {{description}}</p>"
-        other: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} e outras {{count}} pessoas</span> {{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='invited to topic' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> accepted your invitation</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> moved {{description}}</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>Adquirido '{{description}}'</p>"
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>Novo Tópico</span> {{description}}</p>"
-      group_message_summary:
-        one: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} mensagem na caixa de entrada de {{group_name}}</p>"
-        other: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} mensagens na caixa de entrada de {{group_name}}</p>"
       alt:
         mentioned: "Mencionado por"
         quoted: "Citado por"
@@ -1160,9 +1134,6 @@ pt_BR:
       select_all: "Selecionar Todos"
       clear_all: "Limpar Todos"
       too_short: "Seu termo de pesquisa é muito curto."
-      result_count:
-        one: "1 resultado para <span class='term'>\"{{term}}\"</span>"
-        other: "{{count}} resultados para <span class='term'>\"{{term}}\"</span>"
       title: "procurar em tópicos, respostas, usuários ou categorias"
       no_results: "Nenhum resultado encontrado."
       no_more_results: "Sem mais resultados encontrados."
@@ -2071,7 +2042,6 @@ pt_BR:
         hamburger_menu: '<b>=</b> Abrir o menu hambúrguer'
         user_profile_menu: '<b>p</b> Abrir menu do usuário'
         show_incoming_updated_topics: '<b>.</b> Exibir tópicos atualizados'
-        search: '<b>/</b> Pesquisa'
         help: '<b>?</b> Abrir ajuda de teclado'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Descartar Novas Postagens'
         dismiss_topics: '<b>x</b>, <b>t</b> Descartar Tópicos'
@@ -3157,9 +3127,6 @@ pt_BR:
       upload: "Enviar"
       uploading: "Enviando..."
       quit: "Talvez Depois"
-      staff_count:
-        one: "Sua comunidade tem 1 membro na equipe."
-        other: "Sua comunidade tem %{count} membros na equipe."
       invites:
         add_user: "adicionar"
         none_added: "Você ainda não convidou ninguém para a equipe. Tem certeza que deseja continuar?"

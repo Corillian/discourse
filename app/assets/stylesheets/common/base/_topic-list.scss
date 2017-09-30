@@ -14,10 +14,41 @@
       font: 1.071em/0.9 "FontAwesome";
     }
   }
+
+  .select-box {
+    align-self: center;
+
+    &.categories-admin-dropdown, &.category-notifications-button, &.tag-notifications-button {
+      float: right;
+      margin-left: 8px;
+    }
+  }
 }
 
-html.anon .topic-list a.title:visited:not(.badge-notification) {color: dark-light-diff($primary, $secondary, 45%, -30%);}
-.topic-list a.title.visited:not(.badge-notification) {color: dark-light-diff($primary, $secondary, 45%, -30%);}
+.topic-list-item.visited,
+.latest-topic-list-item.visited,
+.category-topic-link.visited {
+  a.title:not(.badge-notification) { color: $primary-medium; }
+}
+
+.topic-list-main-link {
+  font-size: 1.143em;
+  a.title {
+    padding: 15px 0;
+    word-break: break-word;
+    color: $primary;
+  }
+
+  .anon & {
+    a.title:visited:not(.badge-notification) {
+      color: $primary-medium;
+    }
+  }
+
+  a.title.visited:not(.badge-notification) {
+    color: $primary-medium;
+  }
+}
 
 .topic-list {
   width: 100%;
@@ -28,7 +59,7 @@ html.anon .topic-list a.title:visited:not(.badge-notification) {color: dark-ligh
       vertical-align: top;
       margin-top: 2px;
     }
-    border-bottom: 1px solid dark-light-diff($primary, $secondary, 90%, -75%);
+    border-bottom: 1px solid $primary-low;
 
     &.last-visit {
       border-bottom: none;
@@ -58,7 +89,7 @@ html.anon .topic-list a.title:visited:not(.badge-notification) {color: dark-ligh
   }
 
   > tbody > tr:first-of-type {
-    border-top: 3px solid dark-light-diff($primary, $secondary, 90%, -75%);
+    border-top: 3px solid $primary-low;
   }
 
   th,
@@ -72,7 +103,7 @@ html.anon .topic-list a.title:visited:not(.badge-notification) {color: dark-ligh
     color: dark-light-choose(scale-color($primary, $lightness: 50%), scale-color($secondary, $lightness: 50%));
     font-weight: normal;
     font-size: 1em;
-    button i.fa {color: dark-light-choose(scale-color($primary, $lightness: 50%), scale-color($secondary, $lightness: 50%));}
+    button .d-icon {color: dark-light-choose(scale-color($primary, $lightness: 50%), scale-color($secondary, $lightness: 50%));}
 
   }
   td {
@@ -81,11 +112,7 @@ html.anon .topic-list a.title:visited:not(.badge-notification) {color: dark-ligh
   }
 
   .main-link {
-    font-size: 1.143em;
-    a.title {
-      padding: 15px 0;
-      word-break: break-word;
-    }
+    @extend .topic-list-main-link;
   }
 
   .topic-featured-link {
@@ -238,7 +265,7 @@ ol.category-breadcrumb {
   overflow-x: hidden;
   overflow-y: auto;
   position: absolute;
-  border: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
+  border: 1px solid $primary-low;
   background-color: $secondary;
   z-index: 100;
 
@@ -247,7 +274,7 @@ ol.category-breadcrumb {
     overflow:hidden;
     margin-bottom: 0;
   }
-  a.badge-category {
+  a.badge-category, .dropdown-header {
     font-size: 0.929em;
     font-weight: bold;
     float: none;
@@ -257,7 +284,7 @@ ol.category-breadcrumb {
   }
 }
 
-.fa-thumb-tack.unpinned {
+.d-icon-thumb-tack.unpinned {
   @include fa-icon-rotate(180deg, 1);
   color: $primary;
   /* because it is rotated, right becomes left! */
@@ -300,7 +327,7 @@ ol.category-breadcrumb {
     @include unselectable;
 
     font-size: 1.2em;
-    border: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
+    border: 1px solid $primary-low;
     padding: 5px;
     background: $secondary;
     position: absolute;
@@ -326,7 +353,7 @@ ol.category-breadcrumb {
           font-size: 0.8em;
         }
         &:hover {
-          background-color: dark-light-diff($highlight, $secondary, 50%, -70%);
+          background-color: $highlight-medium;
         }
       }
     }
@@ -343,4 +370,14 @@ ol.category-breadcrumb {
 
 div.education {
   color: dark-light-choose(scale-color($primary, $lightness: 50%), scale-color($secondary, $lightness: 50%));
+}
+
+.list-cell {
+  padding: 12px 5px;
+  color: dark-light-choose(scale-color($primary, $lightness: 50%), scale-color($secondary, $lightness: 40%));
+}
+
+.table-heading {
+  @extend .list-cell;
+  border-bottom: 2px solid $primary-low;
 }

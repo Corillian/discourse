@@ -115,13 +115,13 @@ QUnit.test("Create an enqueued Topic", assert => {
   fillIn('.d-editor-input', "enqueue this content please");
   click('#reply-control button.create');
   andThen(() => {
-    assert.ok(visible('#discourse-modal'), 'it pops up a modal');
+    assert.ok(visible('.d-modal'), 'it pops up a modal');
     assert.equal(currentURL(), "/", "it doesn't change routes");
   });
 
   click('.modal-footer button');
   andThen(() => {
-    assert.ok(invisible('#discourse-modal'), 'the modal can be dismissed');
+    assert.ok(invisible('.d-modal'), 'the modal can be dismissed');
   });
 });
 
@@ -183,12 +183,12 @@ QUnit.test("Create an enqueued Reply", assert => {
   });
 
   andThen(() => {
-    assert.ok(visible('#discourse-modal'), 'it pops up a modal');
+    assert.ok(visible('.d-modal'), 'it pops up a modal');
   });
 
   click('.modal-footer button');
   andThen(() => {
-    assert.ok(invisible('#discourse-modal'), 'the modal can be dismissed');
+    assert.ok(invisible('.d-modal'), 'the modal can be dismissed');
   });
 });
 
@@ -264,7 +264,7 @@ QUnit.test("Composer can toggle between reply and createTopic", assert => {
 
   click('.topic-post:eq(0) button.reply');
   click('button.options');
-  click('.popup-menu .fa-eye-slash');
+  click('.popup-menu .d-icon-eye-slash');
   andThen(() => {
     assert.ok(
       find('.composer-fields .whisper').text().indexOf(I18n.t("composer.whisper")) > 0,
@@ -286,7 +286,7 @@ QUnit.test("Composer can toggle between reply and createTopic", assert => {
   });
 
   click('button.options');
-  click('.popup-menu .fa-eye-slash');
+  click('.popup-menu .d-icon-eye-slash');
   andThen(() => {
     assert.ok(
       find('.composer-fields .whisper').text().indexOf(I18n.t("composer.unlist")) > 0,

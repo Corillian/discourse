@@ -148,20 +148,20 @@ da:
       default_description: "Standard"
     s3:
       regions:
-        us_east_1: "US East (N. Virginia)"
-        us_west_1: "US West (N. California)"
-        us_west_2: "US West (Oregon)"
-        us_gov_west_1: "AWS GovCloud (US)"
-        eu_west_1: "EU (Irland)"
-        eu_west_2: "EU (London)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Asien (Singapore)"
-        ap_southeast_2: "Asien (Sydney)"
-        ap_south_1: "Asien (Mumbai)"
         ap_northeast_1: "Asien (Tokyo)"
         ap_northeast_2: "Asien (Seoul)"
-        sa_east_1: "Sydamerika (Sao Paulo)"
+        ap_south_1: "Asien (Mumbai)"
+        ap_southeast_1: "Asien (Singapore)"
+        ap_southeast_2: "Asien (Sydney)"
         cn_north_1: "Kina (Beijing)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Irland)"
+        eu_west_2: "EU (London)"
+        sa_east_1: "Sydamerika (Sao Paulo)"
+        us_east_1: "US East (N. Virginia)"
+        us_gov_west_1: "AWS GovCloud (US)"
+        us_west_1: "US West (N. California)"
+        us_west_2: "US West (Oregon)"
     edit: 'redigér titel og kategori for dette emne'
     not_implemented: "Beklager, denne feature er ikke blevet implementeret endnu."
     no_value: "Nej"
@@ -376,9 +376,6 @@ da:
       index:
         title: "Grupper"
         empty: "Der er ingen synlige grupper"
-      title:
-        one: "gruppe"
-        other: "grupper"
       activity: "Aktivitet"
       members: "Medlemmer"
       topics: "Emner"
@@ -387,7 +384,6 @@ da:
       messages: "Beskeder"
       notification_level: "Standard notifikationsniveau for gruppebeskeder"
       alias_levels:
-        title: "Hvem kan sende beskeder til og @nævne denne gruppe?"
         nobody: "Ingen"
         only_admins: "Kun administratore"
         mods_and_admins: "Kun moderatore og administratore"
@@ -1092,28 +1088,6 @@ da:
       empty: "Ingen notifikationer fundet."
       more: "se ældre notifikationer"
       total_flagged: "total markerede indlæg"
-      mentioned: "<i title='nævnte' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='citeret' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='svaret' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='posted' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='redigeret' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
-      liked_many:
-        one: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} og 1 mere</span> {{description}}</p>"
-        other: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} og {{count}} andre</span> {{description}}</p>"
-      private_message: "<i title='privat besked' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='privat besked' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='inviteret til emne' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepterede din invitation' class='fa fa-user'></i><p><span>{{username}}</span> accepted your invitation</p>"
-      moved_post: "<i title='indlæg flyttet' class='fa fa-sign-out'></i><p><span>{{username}}</span> moved {{description}}</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='badge givet' class='fa fa-certificate'></i><p>Du blev tildelt '{{description}}'</p>"
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>Nyt Emne</span> {{description}}</p>"
-      group_message_summary:
-        one: "<i title='beskeder i din gruppes indbakke' class='fa fa-group'></i><p> {{count}} besked i din {{group_name}} inbox</p>"
-        other: "<i title='beskeder i gruppens indbakke' class='fa fa-group'></i><p> {{count}} beskeder i din {{group_name}} inbox</p>"
       alt:
         mentioned: "Nævnt af"
         quoted: "Citeret af"
@@ -1161,9 +1135,6 @@ da:
       select_all: "Vælg alle"
       clear_all: "Ryd alle"
       too_short: "Dit søgekriterie er for kort."
-      result_count:
-        one: "1 resultat for <span class='term'>\"{{term}}\"</span>"
-        other: "{{count}} resultater for <span class='term'>\"{{term}}\"</span>"
       title: "søg efter emner, indlæg, brugere eller kategorier"
       no_results: "Ingen resultater fundet."
       no_more_results: "Ikke flere resultater."
@@ -2084,7 +2055,6 @@ da:
         hamburger_menu: '<b>=</b> Åben hamburger menu'
         user_profile_menu: '<b>p</b> Åben bruger menu'
         show_incoming_updated_topics: '<b>.</b> Vis opdaterede emner'
-        search: '<b>/</b> Søg'
         help: '<b>?</b> Åben tastaturhjælp'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Afvis Nyt/Indlæg'
         dismiss_topics: '<b>x</b>, <b>t</b> Afvis emner'
@@ -3222,9 +3192,6 @@ da:
       upload: "Upload"
       uploading: "Uploader..."
       quit: "Måske senere"
-      staff_count:
-        one: "Dit fællesskab har 1 hjælper"
-        other: "Dit fællesskab har %{count} hjælpere."
       invites:
         add_user: "tilføj"
         none_added: "Du har ikke inviteret nogen til hjælperteamet. Er du sikker på, at du vil fortsætte?"

@@ -1,4 +1,5 @@
 require 'i18n/backend/pluralization'
+require_dependency 'locale_site_setting'
 
 module I18n
   module Backend
@@ -51,7 +52,7 @@ module I18n
 
       protected
 
-        def find_results(regexp, results, translations, path=nil)
+        def find_results(regexp, results, translations, path = nil)
           return results if translations.blank?
 
           translations.each do |k_sym, v|
@@ -72,11 +73,12 @@ module I18n
         # the original translations before applying our overrides.
         def lookup(locale, key, scope = [], options = {})
           existing_translations = super(locale, key, scope, options)
+          return existing_translations if scope.is_a?(Array) && scope.include?(:models)
+
           overrides = options.dig(:overrides, locale)
 
-          if overrides && existing_translations
-            if options[:count]
-
+          if overrides
+            if existing_translations && options[:count]
               remapped_translations =
                 if existing_translations.is_a?(Hash)
                   Hash[existing_translations.map { |k, v| ["#{key}.#{k}", v] }]

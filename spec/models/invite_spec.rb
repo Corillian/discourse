@@ -245,7 +245,7 @@ describe Invite do
 
     context "invite trust levels" do
       it "returns the trust level in default_invitee_trust_level" do
-        SiteSetting.stubs(:default_invitee_trust_level).returns(TrustLevel[3])
+        SiteSetting.default_invitee_trust_level = TrustLevel[3]
         expect(invite.redeem.trust_level).to eq(TrustLevel[3])
       end
     end
@@ -253,7 +253,7 @@ describe Invite do
     context 'inviting when must_approve_users? is enabled' do
       it 'correctly activates accounts' do
         invite.invited_by = Fabricate(:admin)
-        SiteSetting.stubs(:must_approve_users).returns(true)
+        SiteSetting.must_approve_users = true
         user = invite.redeem
         expect(user.approved?).to eq(true)
       end
@@ -281,7 +281,6 @@ describe Invite do
           # returns true for redeemed
           expect(invite).to be_redeemed
         end
-
 
         context 'again' do
           context "without a passthrough" do
@@ -393,7 +392,7 @@ describe Invite do
 
       invites = Invite.find_pending_invites_from(inviter)
 
-      expect(invites.size).to eq(1)
+      expect(invites.length).to eq(1)
       expect(invites.first).to eq pending_invite
     end
   end
@@ -417,7 +416,7 @@ describe Invite do
 
       invites = Invite.find_redeemed_invites_from(inviter)
 
-      expect(invites.size).to eq(1)
+      expect(invites.length).to eq(1)
       expect(invites.first).to eq redeemed_invite
     end
   end
@@ -459,25 +458,6 @@ describe Invite do
 
     it 'does not redeem the invite if email does not match' do
       Invite.redeem_from_email('test24@example.com')
-      invite.reload
-      expect(invite).not_to be_redeemed
-    end
-
-  end
-
-  describe '.redeem_from_token' do
-    let(:inviter) { Fabricate(:user) }
-    let(:invite) { Fabricate(:invite, invited_by: inviter, email: 'test@example.com', user_id: nil) }
-    let(:user) { Fabricate(:user, email: invite.email) }
-
-    it 'redeems the invite from token' do
-      Invite.redeem_from_token(invite.invite_key, user.email)
-      invite.reload
-      expect(invite).to be_redeemed
-    end
-
-    it 'does not redeem the invite if token does not match' do
-      Invite.redeem_from_token("bae0071f995bb4b6f756e80b383778b5", user.email)
       invite.reload
       expect(invite).not_to be_redeemed
     end

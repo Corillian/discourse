@@ -115,24 +115,29 @@ export default createWidget('search-menu', {
   panelContents() {
     const contextEnabled = searchData.contextEnabled;
 
-    const results = [
+    let searchInput = [
       this.attach('search-term', { value: searchData.term, contextEnabled }),
+    ];
+    if (searchData.term && searchData.loading) {
+      searchInput.push(h('div.searching', h('div.spinner')));
+    }
+
+    const results = [
+      h('div.search-input', searchInput),
       this.attach('search-context', {
         contextEnabled,
         url: this.fullSearchUrl({ expanded: true })
       })
     ];
 
-    if (searchData.term) {
-      if (searchData.loading) {
-        results.push(h('div.searching', h('div.spinner')));
-      } else {
-        results.push(this.attach('search-menu-results', { term: searchData.term,
-                                                          noResults: searchData.noResults,
-                                                          results: searchData.results,
-                                                          invalidTerm: searchData.invalidTerm,
-                                                          searchContextEnabled: searchData.contextEnabled }));
-      }
+    if (searchData.term && !searchData.loading) {
+      results.push(this.attach('search-menu-results', {
+        term: searchData.term,
+        noResults: searchData.noResults,
+        results: searchData.results,
+        invalidTerm: searchData.invalidTerm,
+        searchContextEnabled: searchData.contextEnabled,
+      }));
     }
 
     return results;
@@ -165,6 +170,75 @@ export default createWidget('search-menu', {
 
   clickOutside() {
     this.sendWidgetAction('toggleSearchMenu');
+  },
+
+  keyDown(e) {
+    if (searchData.loading || searchData.noResults) {
+      return;
+    }
+
+    if (e.which === 65 /* a */) {
+      let focused = $('header .results .search-link:focus');
+      if (focused.length === 1) {
+        if ($('#reply-control.open').length === 1) {
+          // add a link and focus composer
+
+          this.appEvents.trigger('composer:insert-text', focused[0].href, {ensureSpace: true});
+          this.appEvents.trigger('header:keyboard-trigger', {type: 'search'});
+
+          e.preventDefault();
+          $('#reply-control.open textarea').focus();
+          return false;
+        }
+      }
+    }
+
+    const up = e.which === 38;
+    const down = e.which === 40;
+    if (up || down) {
+
+      let focused = $('header .panel-body *:focus')[0];
+
+      if (!focused) {
+        return;
+      }
+
+      let links = $('header .panel-body .results a');
+      let results = $('header .panel-body .results .search-link');
+
+      let prevResult;
+      let result;
+
+      links.each((idx,item) => {
+        if ($(item).hasClass('search-link')) {
+          prevResult = item;
+        }
+
+        if (item === focused) {
+          result = prevResult;
+        }
+      });
+
+      let index = -1;
+
+      if (result) {
+        index = results.index(result);
+      }
+
+      if (index === -1 && down) {
+        $('header .panel-body .search-link:first').focus();
+      } else if (index === 0 && up) {
+        $('header .panel-body input:first').focus();
+      } else if (index > -1) {
+        index += (down ? 1 : -1);
+        if (index >= 0 && index < results.length) {
+          $(results[index]).focus();
+        }
+      }
+
+      e.preventDefault();
+      return false;
+    }
   },
 
   triggerSearch() {

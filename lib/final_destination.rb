@@ -6,12 +6,18 @@ require 'rate_limiter'
 # Determine the final endpoint for a Web URI, following redirects
 class FinalDestination
 
-  attr_reader :status
-  attr_reader :cookie
+  attr_reader :status, :cookie, :status_code
 
-  def initialize(url, opts=nil)
-    @uri = URI(url) rescue nil
+  def initialize(url, opts = nil)
+    @url = url
+    @uri =
+      begin
+        URI(escape_url) if @url
+      rescue URI::InvalidURIError
+      end
+
     @opts = opts || {}
+    @force_get_hosts = @opts[:force_get_hosts] || []
     @opts[:max_redirects] ||= 5
     @opts[:lookup_ip] ||= lambda do |host|
       begin
@@ -23,6 +29,7 @@ class FinalDestination
     @ignored = [Discourse.base_url_no_prefix] + (@opts[:ignore_redirects] || [])
     @limit = @opts[:max_redirects]
     @status = :ready
+    @http_verb = @force_get_hosts.any? { |host| hostname_matches?(host) } ? :get : :head
     @cookie = nil
   end
 
@@ -73,13 +80,17 @@ class FinalDestination
 
     return nil unless validate_uri
     headers = request_headers
-    response = Excon.head(
+    response = Excon.public_send(@http_verb,
       @uri.to_s,
       read_timeout: FinalDestination.connection_timeout,
       headers: headers
     )
 
     location = nil
+    headers = nil
+
+    response_status = response.status.to_i
+
     case response.status
     when 200
       @status = :resolved
@@ -87,25 +98,37 @@ class FinalDestination
     when 405, 409, 501
       get_response = small_get(headers)
 
-      if get_response.code.to_i == 200
+      response_status = get_response.code.to_i
+      if response_status == 200
         @status = :resolved
         return @uri
       end
 
+      headers = {}
       if cookie_val = get_response.get_fields('set-cookie')
-        @cookie = cookie_val.join
+        headers['set-cookie'] = cookie_val.join
       end
 
+      # TODO this is confusing why grap location for anything not
+      # between 300-400 ?
       if location_val = get_response.get_fields('location')
-        location = location_val.join
+        headers['location'] = location_val.join
       end
-    else
+    end
+
+    unless headers
+      headers = {}
       response.headers.each do |k, v|
-        case k.downcase
-        when 'set-cookie' then @cookie = v
-        when 'location' then location = v
-        end
+        headers[k.to_s.downcase] = v
       end
+    end
+
+    if (300..399).include?(response_status)
+      location = headers["location"]
+    end
+
+    if set_cookie = headers["set-cookie"]
+      @cookie = set_cookie
     end
 
     if location
@@ -115,6 +138,12 @@ class FinalDestination
       return resolve
     end
 
+    # this is weird an exception seems better
+    @status = :failure
+    @status_code = response.status
+
+    nil
+  rescue Excon::Errors::Timeout
     nil
   end
 
@@ -156,7 +185,7 @@ class FinalDestination
 
     address = IPAddr.new(address_s)
 
-    if private_ranges.any? {|r| r === address }
+    if private_ranges.any? { |r| r === address }
       @status = :invalid_address
       return false
     end
@@ -171,9 +200,16 @@ class FinalDestination
     false
   end
 
+  def escape_url
+    TopicEmbed.escape_uri(
+      CGI.unescapeHTML(@url),
+      Regexp.new("[^#{URI::PATTERN::UNRESERVED}#{URI::PATTERN::RESERVED}#]")
+    )
+  end
+
   def private_ranges
     FinalDestination.standard_private_ranges +
-      SiteSetting.blacklist_ip_blocks.split('|').map {|r| IPAddr.new(r) rescue nil }.compact
+      SiteSetting.blacklist_ip_blocks.split('|').map { |r| IPAddr.new(r) rescue nil }.compact
   end
 
   def self.standard_private_ranges

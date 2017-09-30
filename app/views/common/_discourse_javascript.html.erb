@@ -21,6 +21,7 @@
 
 <script>
   <%- if !current_user && flash[:authentication_data] %>
+    Discourse.showingSignup = true
     require('discourse/routes/application').default.reopen({
       actions: {
         didTransition: function() {
@@ -42,9 +43,7 @@
     Discourse.Environment = '<%= Rails.env %>';
     Discourse.SiteSettings = ps.get('siteSettings');
     Discourse.LetterAvatarVersion = '<%= LetterAvatar.version %>';
-    <%- if SiteSetting.enable_experimental_markdown_it %>
     Discourse.MarkdownItURL = '<%= asset_url('markdown-it-bundle.js') %>';
-    <%- end %>
     I18n.defaultLocale = '<%= SiteSetting.default_locale %>';
     Discourse.start();
     Discourse.set('assetVersion','<%= Discourse.assets_digest %>');

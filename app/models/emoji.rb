@@ -1,6 +1,6 @@
 class Emoji
   # update this to clear the cache
-  EMOJI_VERSION = "v5"
+  EMOJI_VERSION = "5"
 
   FITZPATRICK_SCALE ||= [ "1f3fb", "1f3fc", "1f3fd", "1f3fe", "1f3ff" ]
 
@@ -8,9 +8,6 @@ class Emoji
 
   attr_reader :path
   attr_accessor :name, :url
-
-  # whitelist emojis so that new user can post emojis
-  Post::white_listed_image_classes << "emoji"
 
   def initialize(path = nil)
     @path = path
@@ -46,15 +43,19 @@ class Emoji
 
   def self.create_from_db_item(emoji)
     name = emoji["name"]
-    filename = "#{emoji['filename'] || name}.png"
+    filename = emoji['filename'] || name
     Emoji.new.tap do |e|
       e.name = name
-      e.url = "#{Discourse.base_uri}/images/emoji/#{SiteSetting.emoji_set}/#{filename}"
+      e.url = Emoji.url_for(filename)
     end
   end
 
+  def self.url_for(name)
+    "#{Discourse.base_uri}/images/emoji/#{SiteSetting.emoji_set}/#{name}.png?v=#{EMOJI_VERSION}"
+  end
+
   def self.cache_key(name)
-    "#{name}:#{EMOJI_VERSION}:#{Plugin::CustomEmoji.cache_key}"
+    "#{name}:v#{EMOJI_VERSION}:#{Plugin::CustomEmoji.cache_key}"
   end
 
   def self.clear_cache
@@ -74,13 +75,13 @@ class Emoji
   end
 
   def self.load_standard
-    db['emojis'].map {|e| Emoji.create_from_db_item(e) }
+    db['emojis'].map { |e| Emoji.create_from_db_item(e) }
   end
 
   def self.load_custom
     result = []
 
-    CustomEmoji.order(:name).all.each do |emoji|
+    CustomEmoji.includes(:upload).order(:name).each do |emoji|
       result << Emoji.new.tap do |e|
         e.name = emoji.name
         e.url = emoji.upload&.url
@@ -131,7 +132,7 @@ class Emoji
       if is_tonable_emojis.include?(name)
         fitzpatrick_scales.each_with_index do |scale, index|
           toned_code = code.codepoints.insert(1, scale).pack("U*".freeze)
-          @unicode_replacements[toned_code] = "#{name}:t#{index+2}"
+          @unicode_replacements[toned_code] = "#{name}:t#{index + 2}"
         end
       end
     end
@@ -155,6 +156,12 @@ class Emoji
     end.join
   end
 
+  def self.gsub_emoji_to_unicode(str)
+    if str
+      str.gsub(/:([\w\-+]*(?::t\d)?):/) { |name| Emoji.lookup_unicode($1) || name }
+    end
+  end
+
   def self.lookup_unicode(name)
     @reverse_map ||= begin
       map = {}
@@ -170,7 +177,7 @@ class Emoji
         if is_tonable_emojis.include?(e['name'])
           FITZPATRICK_SCALE.each_with_index do |scale, index|
             toned_code = (code.codepoints.insert(1, scale.to_i(16))).pack("U*")
-            map["#{e['name']}:t#{index+2}"] = toned_code
+            map["#{e['name']}:t#{index + 2}"] = toned_code
           end
         end
       end

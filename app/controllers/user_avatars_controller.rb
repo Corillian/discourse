@@ -2,7 +2,7 @@ require_dependency 'letter_avatar'
 
 class UserAvatarsController < ApplicationController
 
-  skip_before_filter :preload_json, :redirect_to_login_if_required, :check_xhr, :verify_authenticity_token, only: [:show, :show_letter, :show_proxy_letter]
+  skip_before_action :preload_json, :redirect_to_login_if_required, :check_xhr, :verify_authenticity_token, only: [:show, :show_letter, :show_proxy_letter]
 
   def refresh_gravatar
     user = User.find_by(username_lower: params[:username].downcase)
@@ -89,7 +89,7 @@ class UserAvatarsController < ApplicationController
     return render_blank if size < 8 || size > 1000
 
     if !Discourse.avatar_sizes.include?(size) && Discourse.store.external?
-      closest = Discourse.avatar_sizes.to_a.min { |a,b| (size-a).abs <=> (size-b).abs }
+      closest = Discourse.avatar_sizes.to_a.min { |a, b| (size - a).abs <=> (size - b).abs }
       avatar_url = UserAvatar.local_avatar_url(hostname, user.username_lower, upload_id, closest)
       return redirect_to cdn_path(avatar_url)
     end

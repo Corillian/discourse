@@ -30,11 +30,13 @@
             <div class="instructions">{{i18n 'user.username.instructions'}}</div>
           </div>
 
-          <div class="input name-input">
-            <label>{{i18n 'invites.name_label'}}</label>
-            {{input value=accountName id="new-account-name" name="name"}}
-            <div class="instructions">{{nameInstructions}}</div>
-          </div>
+          {{#if fullnameRequired}}
+            <div class="input name-input">
+              <label>{{i18n 'invites.name_label'}}</label>
+              {{input value=accountName id="new-account-name" name="name"}}
+              <div class="instructions">{{nameInstructions}}</div>
+            </div>
+          {{/if}}
 
           <div class="input password-input">
             <label>{{i18n 'invites.password_label'}}</label>
@@ -42,7 +44,8 @@
             &nbsp;{{input-tip validation=passwordValidation}}
             <div class="instructions">
               {{passwordInstructions}} {{i18n 'invites.optional_description'}}
-              <div class="caps-lock-warning {{unless capsLockOn 'invisible'}}"><i class="fa fa-exclamation-triangle"></i> {{i18n 'login.caps_lock_warning'}}</div>
+              <div class="caps-lock-warning {{unless capsLockOn 'invisible'}}">
+                {{d-icon "exclamation-triangle"}} {{i18n 'login.caps_lock_warning'}}</div>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import { iconNode } from 'discourse/helpers/fa-icon-node';
+import { iconNode } from 'discourse-common/lib/icon-library';
 import { addDecorator } from 'discourse/widgets/post-cooked';
 import ComposerEditor from 'discourse/components/composer-editor';
 import { addButton } from 'discourse/widgets/post-menu';
@@ -6,7 +6,6 @@ import { includeAttributes } from 'discourse/lib/transform-post';
 import { addToolbarCallback } from 'discourse/components/d-editor';
 import { addWidgetCleanCallback } from 'discourse/components/mount-widget';
 import { createWidget, reopenWidget, decorateWidget, changeSetting } from 'discourse/widgets/widget';
-import { onPageChange } from 'discourse/lib/page-tracker';
 import { preventCloak } from 'discourse/widgets/post-stream';
 import { h } from 'virtual-dom';
 import { addFlagProperty } from 'discourse/components/site-header';
@@ -19,10 +18,12 @@ import { addUserMenuGlyph } from 'discourse/widgets/user-menu';
 import { addPostClassesCallback } from 'discourse/widgets/post';
 import { addPostTransformCallback } from 'discourse/widgets/post-stream';
 import { attachAdditionalPanel } from 'discourse/widgets/header';
+import { registerIconRenderer, replaceIcon } from 'discourse-common/lib/icon-library';
+import { addNavItem } from 'discourse/models/nav-item';
 
 
 // If you add any methods to the API ensure you bump up this number
-const PLUGIN_API_VERSION = '0.8.7';
+const PLUGIN_API_VERSION = '0.8.11';
 
 class PluginApi {
   constructor(version, container) {
@@ -52,10 +53,61 @@ class PluginApi {
    * });
    * ```
    **/
-  modifyClass(resolverName, changes) {
+  modifyClass(resolverName, changes, opts) {
+    opts = opts || {};
+
+    if (this.container.cache[resolverName]) {
+      console.warn(`"${resolverName}" was already cached in the container. Changes won't be applied.`);
+    }
+
     const klass = this.container.factoryFor(resolverName);
+    if (!klass) {
+      if (!opts.ignoreMissing) {
+        console.warn(`"${resolverName}" was not found by modifyClass`);
+      }
+      return;
+    }
+
     klass.class.reopen(changes);
     return klass;
+  }
+
+  /**
+   * If you want to use custom icons in your discourse application,
+   * you can register a renderer that will return an icon in the
+   * format required.
+   *
+   * For example, the follwing resolver will render a smile in the place
+   * of every icon on Discourse.
+   *
+   * api.registerIconRenderer({
+   *   name: 'smile-icons',
+   *
+   *   // for the place in code that render a string
+   *   string() {
+   *     return "<i class='fa fa-smile-o'></i>";
+   *   },
+   *
+   *   // for the places in code that render virtual dom elements
+   *   node() {
+   *     return h('i', { className: 'fa fa-smile-o' });
+   *   }
+   * });
+   **/
+  registerIconRenderer(fn) {
+    registerIconRenderer(fn);
+  }
+
+  /**
+   * Replace all ocurrences of one icon with another without having to
+   * resort to a custom IconRenderer. If you want to do something more
+   * complicated than a simple replacement then create a new icon renderer.
+   *
+   * api.replaceIcon('d-tracking', 'smile-o');
+   *
+   **/
+  replaceIcon(source, destination) {
+    replaceIcon(source, destination);
   }
 
   /**
@@ -297,7 +349,8 @@ class PluginApi {
     ```
   **/
   onPageChange(fn) {
-    onPageChange(fn);
+    let appEvents = this.container.lookup('app-events:main');
+    appEvents.on('page:changed', data => fn(data.url, data.title));
   }
 
   /**
@@ -497,6 +550,26 @@ class PluginApi {
   addPostTransformCallback(callback) {
     addPostTransformCallback(callback);
   }
+
+  /**
+  *
+  * Adds a new item in the navigation bar.
+  *
+  * Example:
+  *
+  * addNavigationBarItem({
+  *   name: "discourse",
+  *   displayName: "Discourse"
+  *   href: "https://www.discourse.org",
+  * })
+  */
+  addNavigationBarItem(item) {
+    if (!item["name"]) {
+      console.warn("A 'name' is required when adding a Navigation Bar Item.", item);
+    } else {
+      addNavItem(item);
+    }
+  }
 }
 
 let _pluginv01;
@@ -523,7 +596,7 @@ function cmpVersions (a, b) {
 
 function getPluginApi(version) {
   version = version.toString();
-  if (cmpVersions(version,PLUGIN_API_VERSION) <= 0) {
+  if (cmpVersions(version, PLUGIN_API_VERSION) <= 0) {
     if (!_pluginv01) {
       _pluginv01 = new PluginApi(version, Discourse.__container__);
     }

@@ -845,9 +845,7 @@ da:
     educate_until_posts: "When the user starts typing their first (n) new posts, show the pop-up new user education panel in the composer."
     title: "Sitets navn, som anvendt i tittel."
     site_description: "Beskriv denne side i én sætning, som anvendt i meta beskrivelsen."
-    contact_email: "Email adresse på ansvarlig kontaktperson for denne side. Anvendes til kritiske notifikationer som ubehandlede flag, og hastende sager."
     contact_url: "Kontakt URL for denne side. Anvendt på kontakt admin, i tilfælde af hastesager."
-    queue_jobs: "KUN FOR UDVIKLERE! ADVARSEL! Brug sidekiq som jobkø. Hvis dette slås fra går dit site i stykker."
     crawl_images: "Hent billeder fra eksterne URLs for at indsætte de korrekte bredde og højde dimensioner."
     download_remote_images_to_local: "Konverter eksterne billeder til lokale billeder ved at downloade dem; dette forebygger at billeder ikke forsvinder."
     download_remote_images_threshold: "Minimum hukommelse påkrævet på drev for at downloade billeder lokalt (i procent)"
@@ -861,7 +859,6 @@ da:
     max_image_height: "Maksimum miniaturebillede højde for billeder i et indlæg"
     fixed_category_positions: "Hvis krydset af, vil du være i stand til at arrangere ordnet visning af kategorier. Hvis ikke afkrydset vil de være listet i en rækkefølge baseret på aktivitet."
     fixed_category_positions_on_create: "Hvis afkrydset vil kategori visning blive vedligeholdt baseret på emne (kræver manuelt valgt visning af kategorier)."
-    exclude_rel_nofollow_domains: "En liste af domæner hvor 'nofollow' skal tilføjes til links. tid.com vil desuden automatisk tillade sub.tid Som minimum bør du tilføje top level domænet til sitet, for at hjælpe webcrawlere finde alt indhold. Såfremt andre dele af jeres site er på andre domæner, så tilføj også disse."
     post_excerpt_maxlength: "Max længde på uddrag af indlæg / opsummering."
     show_pinned_excerpt_mobile: "Vis uddrag af fastgjorte emner på mobilen."
     show_pinned_excerpt_desktop: "Vis uddrag af fastgjorte emner i desktop visning"
@@ -903,7 +900,6 @@ da:
     notify_mods_when_user_blocked: "Send en besked til alle moderatorer hvis en bruger blokeres automatisk"
     flag_sockpuppets: "Hvis en ny bruger svarer på et emne fra den samme IP adresse som den der startede emnet, så rapporter begge at deres indlæg potentielt er spam."
     traditional_markdown_linebreaks: "Brug traditionelle linjeskift i Markdown, som kræver 2 mellemrum i slutningen af sætningen."
-    allow_html_tables: "Tillad tabeller at blive oprettet i Markdown med brug af HTML tags. TABLE, THEAD, TD, TR, TH vil blive tilladt (kræver en fuld re-indeksering af gamle indlæg som benytter tabeller) "
     post_undo_action_window_mins: "Antal minutter som brugere er tilladt at fortryde handlinger på et indlæg (like, flag, etc)."
     must_approve_users: "Personale skal godkende alle nye bruger konti inden de kan tilgå sitet. ADVARSEL: aktivering af dette for et live site vil medføre en ophævning af adgang for eksisterende ikke-personale brugere."
     pending_users_reminder_delay: "Underret moderatorer hvis nye brugere har ventet på godkendelse i længere end så mange timer. Skriv -1 for at deaktivere notifikationer."
@@ -929,8 +925,6 @@ da:
     enable_whispers: "Tillad at hjælperteamet har private samtaler i emner."
     log_out_strict: "Når brugeren logger af, log da ud af alle sessioner, på alle enheder"
     new_version_emails: "Send en email til contact_email adressen når der er en ny version af Discourse tilgængelig."
-    port: "KUN FOR UDVIKLERE! ADVARSEL! Brug denne HTTP-port i stedet for standarden, som er port 80. Lad feltet stå tomt for at bruge standardværdien."
-    force_hostname: "KUN FOR UDVIKLERE! ADVARSEL! Angiv et host-navn i URLen. Lad feltet stå tomt for at bruge standardværdien."
     invite_expiry_days: "Hvor længe brugerinvitationsnøgler er gyldige, i dage."
     invite_passthrough_hours: "Hvor længe kan en bruger benytte en tidligere benyttet invitation til at logge ind, i timer."
     login_required: "Kræv godkendelse til at læse indhold på dette site, og tillad ikke anonym adgang."
@@ -1151,40 +1145,8 @@ da:
 
   invite_mailer:
     subject_template: "%{invitee_name} inviterede dig til '%{topic_title}' på %{site_domain_name}"
-    text_body_template: |
-      %{invitee_name} inviterede dig til en debat om
-
-      > **%{topic_title}**
-      >
-      > %{topic_excerpt}
-
-      på
-
-      > %{site_title} -- %{site_description}
-
-      Hvis du er interesseret, så klik på linket herunder:
-
-      %{invite_link}
   custom_invite_mailer:
     subject_template: "%{invitee_name} inviterede dig til '%{topic_title}' på %{site_domain_name}"
-    text_body_template: |
-      %{invitee_name} inviterede dig til en debat
-
-      > **%{topic_title}**
-      >
-      > %{topic_excerpt}
-
-      på
-
-      > %{site_title} -- %{site_description}
-
-      Med denne besked
-
-      > %{user_custom_message}
-
-      Hvis du er interesseret, så klik på linket herunder:
-
-      %{invite_link}
   invite_forum_mailer:
     subject_template: "%{invitee_name} inviterede dig til at oprette dig på %{site_domain_name}"
   custom_invite_forum_mailer:
@@ -1218,15 +1180,6 @@ da:
     subject_template: "[%{email_prefix}] Ny version af Discourse, opdatering tilgængelig"
   new_version_mailer_with_notes:
     subject_template: "[%{email_prefix}] opdatering tilgængelig"
-  queued_posts_reminder:
-    title: "Påmindelse om indlæg, der skal godkendes"
-    subject_template:
-      one: "[%{email_prefix}] 1 post waiting to be reviewed"
-      other: "[%{email_prefix}] %{count} indlæg venter på at blive gennemgået"
-    text_body_template: |
-      Hej,
-
-      Indlæg fra nye brugere er tilbageholdt for at blive godkendt og afventer at blive gennemgået. [Godkend eller afvis dem her](%{base_url}/queued-posts).
   flag_reasons:
     off_topic: "Dit indlæg blev flagmarkeret som **off-topic**: Fællesskabet synes ikke, at det passer godt ind i emnet, som er blevet defineret af titlen og det første indlæg."
     inappropriate: "Dit indlæg blev markeret som **upassende**: Fællesskabet synes, at det er stødende, groft eller krænker [vores fællesskabs retningslinier](/guidelines)."
@@ -1246,21 +1199,6 @@ da:
     contents_hidden: "Gå venligst til indlægget for at se indholdet."
     post_hidden:
       subject_template: "Inlægget er skjult pga. flagmarkeringer"
-      text_body_template: |+
-        Hej,
-
-        Dette er en automatisk besked fra %{site_name} for at lade dig vide, at dit indlæg er blevet skjult.
-
-        %{base_url}%{url}
-
-        %{flag_reason}
-
-        Flere af de andre brugere har flaget indlægget, før det blev skjult, så overvej venligst, hvordan du kan opdatere dit indlæg baseret på deres feedback. **Du kan redigere dit indlæg efter %{edit_delay} minutter, hvoretefter det automatisk bliver vist igen.**
-
-        Hvis dit indlæg bliver skjult af de andre brugere endnu en gang, vil det forblive skjult, indtil moderatorerne tager sig af det - det kan medføre yderligere sanktioner, herunder en mulig suspendering af din konto.
-
-        Se venligst [Retningslinjerne](%{base_url}/guidelines) for yderligere vejledning.
-
     usage_tips:
       text_body_template: |
         Hvis du vil have et par hurtige tips til at komme i gang som ny bruger, så [tjek dette blogindlæg](https://blog.discourse.org/2016/12/discourse-new-user-tips-and-tricks/).
@@ -1272,23 +1210,6 @@ da:
     welcome_invite:
       title: "Velkomst til inviterede brugere"
       subject_template: "Velkommen til %{site_name}!"
-    csv_export_failed:
-      text_body_template: "Desværre, din dataeksport mislykkedes. Kig venligst i loggen eller kontakt hjælperteamet."
-    email_reject_insufficient_trust_level:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Din konto har ikke det nødvendige tillidsniveau til at kunne oprette nye emner til denne emailadresse. Hvis du mener, at det er en fejl, så kontakt hjælperteamet.
-    email_reject_user_not_found:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Dit svar blev sendt fra en ukendt emailadresse. Prøv at sende fra en anden emailadresse eller kontakt hjælperteamet.
-    email_reject_screened_email:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Dit svar blev sendt fra en blokeret emailadresse. Prøv at sende fra en anden emailadresse eller kontakt hjælperteamet.
     email_reject_inactive_user:
       text_body_template: |+
         Vi beklager, men din mailbesked til %{destination} (titled %{former_title}) fungerede ikke.
@@ -1301,16 +1222,6 @@ da:
 
         Den konto, der er knyttet til denne mailadresse, er blokeret.
 
-    email_reject_reply_user_not_matching:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Dit svar blev sendt fra en anden emailadresse end den forventede, så vi er ikke sikre på, at det er den samme person. Prøv at sende fra en anden emailadresse eller kontakt hjælperteamet.
-    email_reject_no_account:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Vi kan ikke finde nogen konto, der matcher din emailadresse. Prøv at sende fra en anden emailadresse eller kontakt hjælperteamet.
     email_reject_empty:
       text_body_template: |+
         Vi beklager, men din mailbesked til %{destination} (titled %{former_title}) fungerede ikke.
@@ -1324,16 +1235,6 @@ da:
         Vi beklager, men din mailbesked til %{destination} (titled %{former_title}) fungerede ikke.
 
         Vi kunne ikke finde dit svar i mailen. **Sørg for at dit svar står øverst i mailen** -- vi kan ikke behandle svar, der er indsat i den oprindelige tekst.
-    email_reject_invalid_access:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Din konto har ikke tilladelse til at oprette nye emner i kategorien. Hvis du mener, at det er en fejl, så kontakt hjælperteamet.
-    email_reject_strangers_not_allowed:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Kategorien du sendte mailen til tillader kun svar fra brugere med gyldige kontoer og kendte emailadresser. Hvis du mener, at det er en fejl, så kontakt hjælperteamet.
     email_reject_invalid_post:
       text_body_template: |
         Vi beklager, men din mailbesked til %{destination} (titled %{former_title}) fungerede ikke.
@@ -1354,31 +1255,6 @@ da:
 
         Send-handlingen blev ikke genkendt. Prøv igen, eller send via websitet, hvis det fortsætter.
 
-    email_reject_reply_key:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Svarknappen i emailen er ugyldig eller ukendt, så vi ved ikke, hvad denne email er et svar til. Kontakt hjælpeteamet.
-    email_reject_bad_destination_address:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Ingen af modtageradresserne kan genkendes. Dobbelttjek at du sender til den korrekte emailadresse fra hjælperteamet.
-    email_reject_topic_not_found:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Emnet du besvarer eksisterer ikke længere - Det er måske slettet? Hvis du mener, at det er en fejl, så kontakt hjælperteamet.
-    email_reject_topic_closed:
-      text_body_template: |
-        Desværre, din mail til %{destination} (titled %{former_title}) virkede ikke.
-
-        Emnet du besvarer er i øjeblikket lukket og modtager ikke længere svar. Hvis du mener, at det er en fejl, så kontakt hjælperteamet.
-    email_reject_auto_generated:
-      text_body_template: |
-        Vi beklager, men din mailbesked til %{destination} (titled %{former_title}) fungerede ikke.
-
-        Din mail blev markeret som "autogenereret", hvilket betyder, at den er blevet oprettet automastisk af en computer i stedet for at blive tastet ind af en peron; vi kan ikke acceptere den slags mails. Hvis du mener, det er en fejl, kan du kontakte et medlem af staben.
     too_many_spam_flags:
       title: "For Mange Flagmarkeringer for Spam"
       subject_template: "Nyoprettet konto sat på hold"
@@ -1925,7 +1801,6 @@ da:
         description: "Hvilken Emoji-stil foretrækker du for dit fællesskab? Du kan tilføje flere brugerdefinerede Emoji'er senere via Admin, Tilpas, Emoji."
       invites:
         title: "Inviter hjælpere"
-        description: "Du er næsten færdig! Lad os invitere nogle til hjælpereteamet, som kan href='https://blog.discourse.org/2014/08/building-a-discourse-community/' target='blank'>starte debatter</a> med interessante emner og svar for at få gang i dit fællesskab."
       finished:
         title: "Discourse er gjort klar til dig!"
   activemodel:

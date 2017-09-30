@@ -56,6 +56,10 @@ class Badge < ActiveRecord::Base
   GivesBack = 32
   Empathetic = 39
 
+  Enthusiast = 45
+  Aficionado = 46
+  Devotee = 47
+
   NewUserOfTheMonth = 44
 
   # other consts
@@ -63,7 +67,7 @@ class Badge < ActiveRecord::Base
 
   def self.trigger_hash
     Hash[*(
-      Badge::Trigger.constants.map{|k|
+      Badge::Trigger.constants.map { |k|
         [k.to_s.underscore, Badge::Trigger.const_get(k)]
       }.flatten
     )]
@@ -100,7 +104,7 @@ class Badge < ActiveRecord::Base
   validates :allow_title, inclusion: [true, false]
   validates :multiple_grant, inclusion: [true, false]
 
-  scope :enabled, ->{ where(enabled: true) }
+  scope :enabled, -> { where(enabled: true) }
 
   before_create :ensure_not_system
 
@@ -207,7 +211,6 @@ class Badge < ActiveRecord::Base
     self[:description] = val if val != description
     val
   end
-
 
   def slug
     Slug.for(self.display_name, '-')

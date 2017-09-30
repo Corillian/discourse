@@ -6,26 +6,25 @@
 
     <div>
       {{#if showTimeOnly}}
-        {{auto-update-input
+        {{future-date-input
             input=updateTime
             statusType=selection
             basedOnLastPost=false}}
       {{else if publishToCategory}}
         <div class="control-group">
           <label>{{i18n 'topic.topic_status_update.publish_to'}}</label>
-          {{category-chooser
-              valueAttribute="id"
-              value=topicTimer.category_id
-              excludeCategoryId=excludeCategoryId}}
+          {{category-select-box
+            value=topicTimer.category_id
+            excludeCategoryId=excludeCategoryId}}
         </div>
 
-        {{auto-update-input
+        {{future-date-input
             input=updateTime
             statusType=selection
             categoryId=topicTimer.category_id
             basedOnLastPost=false}}
       {{else if autoClose}}
-        {{auto-update-input
+        {{future-date-input
             input=updateTime
             statusType=selection
             basedOnLastPost=topicTimer.based_on_last_post
@@ -40,7 +39,7 @@
         label="topic.topic_status_update.save"
         action="saveTimer"}}
 
-    <a {{action "closeModal"}}>{{i18n 'cancel'}}</a>
+    {{d-modal-cancel close=(action "closeModal")}}
     {{conditional-loading-spinner size="small" condition=loading}}
 
     {{#if topicTimer.execute_at}}

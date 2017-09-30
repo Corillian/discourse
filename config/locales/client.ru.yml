@@ -181,20 +181,20 @@ ru:
       default_description: "По умолчанию"
     s3:
       regions:
-        us_east_1: "US East (N. Virginia)"
-        us_west_1: "US West (N. California)"
-        us_west_2: "US West (Oregon)"
-        us_gov_west_1: "AWS GovCloud (US)"
-        eu_west_1: "EU (Ireland)"
-        eu_west_2: "EU (London)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Asia Pacific (Singapore)"
-        ap_southeast_2: "Asia Pacific (Sydney)"
-        ap_south_1: "Asia Pacific (Mumbai)"
         ap_northeast_1: "Asia Pacific (Tokyo)"
         ap_northeast_2: "Asia Pacific (Seoul)"
-        sa_east_1: "South America (Sao Paulo)"
+        ap_south_1: "Asia Pacific (Mumbai)"
+        ap_southeast_1: "Asia Pacific (Singapore)"
+        ap_southeast_2: "Asia Pacific (Sydney)"
         cn_north_1: "China (Beijing)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Ireland)"
+        eu_west_2: "EU (London)"
+        sa_east_1: "South America (Sao Paulo)"
+        us_east_1: "US East (N. Virginia)"
+        us_gov_west_1: "AWS GovCloud (US)"
+        us_west_1: "US West (N. California)"
+        us_west_2: "US West (Oregon)"
     edit: 'отредактировать название и раздел темы'
     not_implemented: "Извините, эта функция еще не реализована!"
     no_value: "Нет"
@@ -411,9 +411,13 @@ ru:
       join: "Вступить в Группу"
       leave: "Покинуть Группу"
       request: "Попроситься в Группу"
+      message: "Сообщение"
       automatic_group: Автоматическая Группа
       closed_group: Закрытая Группа
       is_group_user: "Вы участник этой группы"
+      membership_request:
+        submit: "Подтвердить запрос"
+        title: "Запрос на вступление в группу %{group_name}"
       membership: "Участие"
       name: "Название"
       user_count: "Количество Участников"
@@ -423,19 +427,18 @@ ru:
       index:
         title: "Группы"
         empty: "Нет видимых групп."
-      title:
-        one: "группа"
-        few: "группы"
-        many: "групп"
-        other: "групп"
       activity: "Деятельность"
       members: "Участники"
       topics: "Темы"
       posts: "Сообщения"
       mentions: "Упоминания"
       messages: "Сообщения"
+      visibility_levels:
+        title: "Кто может видеть эту группу?"
+        public: "Все"
+        members: "Владельцы группы, участники и администраторы"
+        owners: "Владельцы группы и администраторы"
       alias_levels:
-        title: "Кто может отправлять сообщения и @упоминать эту группу?"
         nobody: "Никто"
         only_admins: "Только администраторы"
         mods_and_admins: "Только модераторы и администраторы"
@@ -803,6 +806,9 @@ ru:
         expired: "Это приглашение истекло."
         rescind: "Отозвать"
         rescinded: "Приглашение отозвано"
+        rescind_all: "Удалить все приглашения"
+        rescinded_all: "Все приглашения были удалены!"
+        rescind_all_confirm: "Вы уверены, что хотите удалить все приглашения?"
         reinvite: "Повторить приглашение"
         reinvite_all: "Повторить все приглашения"
         reinvite_all_confirm: "Вы действительно хотите отправить все приглашения повторно?"
@@ -1074,6 +1080,8 @@ ru:
       twitter: "Twitter"
       emoji_one: "Emoji One"
       win10: "Win10"
+      google_classic: "Google Classic"
+      facebook_messenger: "Facebook Messenger"
     category_page_style:
       categories_only: "Только разделы"
       categories_with_featured_topics: "Разделы и их лучшие темы"
@@ -1082,12 +1090,25 @@ ru:
       shift: 'Shift'
       ctrl: 'Ctrl'
       alt: 'Alt'
+    select_box:
+      filter_placeholder: Искать...
+    emoji_picker:
+      filter_placeholder: Искать emoji
+      people: People
+      nature: Nature
+      food: Food
+      activity: Activity
+      travel: Travel
+      objects: Objects
+      celebration: Celebration
+      recent: Недавно использованные
     composer:
       emoji: "Смайлики :)"
       more_emoji: "еще..."
       options: "Дополнительные опции"
       whisper: "внутреннее сообщение"
       unlist: "исключена из списков тем"
+      blockquote_text: "Цитата"
       add_warning: "Это официальное предупреждение."
       toggle_whisper: "Внутреннее сообщение"
       toggle_unlisted: "Спрятать из списков тем"
@@ -1177,33 +1198,6 @@ ru:
       empty: "Уведомления не найдены."
       more: "посмотреть более ранние уведомления"
       total_flagged: "всего сообщений с жалобами"
-      mentioned: "<i title='mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='posted' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
-      liked_many:
-        one: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} и ещё {{count}}</span> {{description}}</p>"
-        few: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} и ещё {{count}}</span> {{description}}</p>"
-        many: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} и ещё {{count}}</span> {{description}}</p>"
-        other: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} и ещё {{count}}</span> {{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='приглашен в тему' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> принял(а) ваше приглашение</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> переместил(а) {{description}}</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>Вы награждены: {{description}}</p>"
-      topic_reminder: "<i title='topic reminder' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>Новая Тема</span> {{description}}</p>"
-      group_message_summary:
-        one: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} входящее сообщение в Вашей группе {{group_name}}</p>"
-        few: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} входящих сообщения в Вашей группе {{group_name}}</p>"
-        many: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} входящих сообщений в Вашей группе {{group_name}}</p>"
-        other: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} входящих сообщений в Вашей группе {{group_name}}</p>"
       alt:
         mentioned: "Упомянуто"
         quoted: "Процитировано пользователем"
@@ -1251,17 +1245,15 @@ ru:
       select_all: "Выбрать все"
       clear_all: "Сбросить все"
       too_short: "Слишком короткое слово для поиска."
-      result_count:
-        one: "Найдено 1: <span class='term'>\"{{term}}\"</span>"
-        few: "Найдено {{count}}: <span class='term'>\"{{term}}\"</span>"
-        many: "Найдено {{count}}: <span class='term'>\"{{term}}\"</span>"
-        other: "Найдено {{count}}: <span class='term'>\"{{term}}\"</span>"
       title: "Поиск по темам, сообщениям, псевдонимам и разделам"
       no_results: "Ничего не найдено."
       no_more_results: "Больше ничего не найдено."
       searching: "Поиск ..."
       post_format: "#{{post_number}} от {{username}}"
       results_page: "Результаты поиска"
+      more_results: "Найдено множество результатов. Пожалуйста, уточните, критерии поиска."
+      cant_find: "Не можете найти нужную информацию?"
+      start_new_topic: "Создать новую тему?"
       context:
         user: "Искать сообщения от @{{username}}"
         category: "Искать в разделе #{{category}}"
@@ -1332,6 +1324,7 @@ ru:
         change_category: "Задать раздел"
         close_topics: "Закрыть темы"
         archive_topics: "Архивировать темы"
+        notification_level: "Уведомления"
         choose_new_category: "Выберите новый раздел для этих тем:"
         selected:
           one: "Вы выбрали <b>{{count}}</b> тему."
@@ -2275,7 +2268,6 @@ ru:
         hamburger_menu: '<b>=</b> Открыть меню гамбургер'
         user_profile_menu: '<b>p</b> Открыть меню профиля'
         show_incoming_updated_topics: '<b>.</b> Показать обновленные темы'
-        search: '<b>/</b> Поиск'
         help: '<b>?</b> Показать сочетания клавиш'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Отложить новые сообщения'
         dismiss_topics: '<b>x</b>, <b>t</b> Отложить темы'
@@ -3463,11 +3455,6 @@ ru:
       upload: "Загрузить"
       uploading: "Загрузка..."
       quit: "Может быть позже"
-      staff_count:
-        one: "В Вашем сообществе 1 сотрудник."
-        few: "В Вашем сообществе %{count} сотрудника."
-        many: "В Вашем сообществе %{count} сотрудников."
-        other: "В Вашем сообществе %{count} сотрудников."
       invites:
         add_user: "добавить"
         none_added: "Вы ещё не пригласили сотрудников. Вы уверены, что хотите продолжить?"

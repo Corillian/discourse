@@ -34,7 +34,7 @@ class Guardian
 
   attr_accessor :can_see_emails
 
-  def initialize(user=nil)
+  def initialize(user = nil)
     @user = user.presence || AnonymousUser.new
   end
 
@@ -91,7 +91,7 @@ class Guardian
     end
   end
 
-  def can_create?(klass, parent=nil)
+  def can_create?(klass, parent = nil)
     return false unless authenticated? && klass
 
     # If no parent is provided, we look for a can_create_klass?
@@ -155,8 +155,6 @@ class Guardian
     true
   end
 
-
-
   # Can we impersonate this user?
   def can_impersonate?(target)
     target &&
@@ -178,7 +176,7 @@ class Guardian
 
   # Can we approve it?
   def can_approve?(target)
-    is_staff? && target && not(target.approved?)
+    is_staff? && target && target.active? && not(target.approved?)
   end
 
   def can_activate?(target)
@@ -233,7 +231,7 @@ class Guardian
     is_me?(user)
   end
 
-  def can_invite_to_forum?(groups=nil)
+  def can_invite_to_forum?(groups = nil)
     authenticated? &&
     (SiteSetting.max_invites_per_day.to_i > 0 || is_staff?) &&
     !SiteSetting.enable_sso &&
@@ -242,16 +240,16 @@ class Guardian
       (!SiteSetting.must_approve_users? && @user.has_trust_level?(TrustLevel[2])) ||
       is_staff?
     ) &&
-    (groups.blank? || is_admin?)
+    (groups.blank? || is_admin? || groups.all? { |g| can_edit_group?(g) })
   end
 
-  def can_invite_to?(object, group_ids=nil)
+  def can_invite_to?(object, groups = nil)
     return false unless authenticated?
     return true if is_admin?
     return false unless SiteSetting.enable_private_messages?
     return false if (SiteSetting.max_invites_per_day.to_i == 0 && !is_staff?)
     return false unless can_see?(object)
-    return false if group_ids.present?
+    return false if groups.present?
 
     if object.is_a?(Topic) && object.category
       if object.category.groups.any?
@@ -268,10 +266,6 @@ class Guardian
   end
 
   def can_bulk_invite_to_forum?(user)
-    user.admin?
-  end
-
-  def can_create_disposable_invite?(user)
     user.admin?
   end
 
@@ -305,6 +299,17 @@ class Guardian
     (!is_blocked? || target.staff?)
   end
 
+  def cand_send_private_messages_to_email?
+    # Staged users must be enabled to create a temporary user.
+    SiteSetting.enable_staged_users &&
+    # User is authenticated
+    authenticated? &&
+    # User is trusted enough
+    @user.has_trust_level?(SiteSetting.min_trust_to_send_email_messages) &&
+    # PMs to email addresses are enabled
+    (is_staff? || SiteSetting.enable_private_email_messages)
+  end
+
   def can_see_emails?
     @can_see_emails
   end
@@ -325,7 +330,6 @@ class Guardian
       Theme.user_theme_keys.include?(theme_key)
     end
   end
-
 
   private
 

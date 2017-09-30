@@ -3,6 +3,20 @@ task 'posts:rebake' => :environment do
   ENV['RAILS_DB'] ? rebake_posts : rebake_posts_all_sites
 end
 
+task 'posts:rebake_uncooked_posts' => :environment do
+  uncooked = Post.where(baked_version: nil)
+
+  rebaked = 0
+  total = uncooked.count
+
+  uncooked.find_each do |post|
+    rebake_post(post)
+    print_status(rebaked += 1, total)
+  end
+
+  puts "", "#{rebaked} posts done!", ""
+end
+
 desc 'Update each post with latest markdown and refresh oneboxes'
 task 'posts:refresh_oneboxes' => :environment do
   ENV['RAILS_DB'] ? rebake_posts(invalidate_oneboxes: true) : rebake_posts_all_sites(invalidate_oneboxes: true)
@@ -13,7 +27,7 @@ task 'posts:fix_letter_avatars' => :environment do
   return unless SiteSetting.external_system_avatars_enabled
 
   search = Post.where("user_id <> -1")
-               .where("raw LIKE '%/letter\_avatar/%' OR cooked LIKE '%/letter\_avatar/%'")
+    .where("raw LIKE '%/letter\_avatar/%' OR cooked LIKE '%/letter\_avatar/%'")
 
   rebaked = 0
   total = search.count
@@ -27,7 +41,7 @@ task 'posts:fix_letter_avatars' => :environment do
 end
 
 desc 'Rebake all posts matching string/regex and optionally delay the loop'
-task 'posts:rebake_match', [:pattern, :type, :delay] => [:environment] do |_,args|
+task 'posts:rebake_match', [:pattern, :type, :delay] => [:environment] do |_, args|
   pattern = args[:pattern]
   type = args[:type]
   type = type.downcase if type
@@ -106,7 +120,7 @@ task 'posts:normalize_code' => :environment do
   Post.where("raw like '%<pre>%<code>%'").each do |p|
     normalized = Import::Normalize.normalize_code_blocks(p.raw, lang)
     if normalized != p.raw
-      p.revise(Discourse.system_user, { raw: normalized })
+      p.revise(Discourse.system_user, raw: normalized)
       putc "."
       i += 1
     end
@@ -116,14 +130,14 @@ task 'posts:normalize_code' => :environment do
   puts "#{i} posts normalized!"
 end
 
-def remap_posts(find, replace="")
+def remap_posts(find, replace = "")
   i = 0
   Post.where("raw LIKE ?", "%#{find}%").each do |p|
     new_raw = p.raw.dup
     new_raw = new_raw.gsub!(/#{Regexp.escape(find)}/, replace) || new_raw
 
     if new_raw != p.raw
-      p.revise(Discourse.system_user, { raw: new_raw }, { bypass_bump: true, skip_revision: true })
+      p.revise(Discourse.system_user, { raw: new_raw }, bypass_bump: true, skip_revision: true)
       putc "."
       i += 1
     end
@@ -132,7 +146,7 @@ def remap_posts(find, replace="")
 end
 
 desc 'Remap all posts matching specific string'
-task 'posts:remap', [:find, :replace] => [:environment] do |_,args|
+task 'posts:remap', [:find, :replace] => [:environment] do |_, args|
 
   find = args[:find]
   replace = args[:replace]
@@ -150,7 +164,7 @@ task 'posts:remap', [:find, :replace] => [:environment] do |_,args|
 end
 
 desc 'Delete occurrence of a word/string'
-task 'posts:delete_word', [:find] => [:environment] do |_,args|
+task 'posts:delete_word', [:find] => [:environment] do |_, args|
   require 'highline/import'
 
   find = args[:find]
@@ -187,4 +201,24 @@ task 'posts:delete_all_likes' => :environment do
   UserStat.update_all(likes_given: 0, likes_received: 0) # clear user likes stats
   DirectoryItem.update_all(likes_given: 0, likes_received: 0) # clear user directory likes stats
   puts "", "#{likes_deleted} likes deleted!", ""
+end
+
+desc 'Defer all flags'
+task 'posts:defer_all_flags' => :environment do
+
+  active_flags = FlagQuery.flagged_post_actions('active')
+
+  flags_deferred = 0
+  total = active_flags.count
+
+  active_flags.each do |post_action|
+    begin
+      PostAction.defer_flags!(Post.find(post_action.post_id), Discourse.system_user)
+      print_status(flags_deferred += 1, total)
+    rescue
+      # skip
+    end
+  end
+
+  puts "", "#{flags_deferred} flags deferred!", ""
 end

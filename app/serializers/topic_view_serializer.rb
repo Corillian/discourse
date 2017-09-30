@@ -3,6 +3,7 @@ require_dependency 'new_post_manager'
 
 class TopicViewSerializer < ApplicationSerializer
   include PostStreamSerializerMixin
+  include SuggestedTopicsMixin
   include ApplicationHelper
 
   def self.attributes_from_topic(*list)
@@ -21,7 +22,6 @@ class TopicViewSerializer < ApplicationSerializer
                         :created_at,
                         :views,
                         :reply_count,
-                        :participant_count,
                         :like_count,
                         :last_posted_at,
                         :visible,
@@ -35,17 +35,18 @@ class TopicViewSerializer < ApplicationSerializer
                         :deleted_at,
                         :pending_posts_count,
                         :user_id,
-                        :pm_with_non_human_user?
+                        :pm_with_non_human_user?,
+                        :featured_link,
+                        :pinned_globally,
+                        :pinned_at,
+                        :pinned_until
 
   attributes :draft,
              :draft_key,
              :draft_sequence,
              :posted,
              :unpinned,
-             :pinned_globally,
-             :pinned,    # Is topic pinned and viewer hasn't cleared the pin?
-             :pinned_at, # Ignores clear pin
-             :pinned_until,
+             :pinned,
              :details,
              :highest_post_number,
              :last_read_post_number,
@@ -59,10 +60,10 @@ class TopicViewSerializer < ApplicationSerializer
              :bookmarked,
              :message_archived,
              :tags,
-             :featured_link,
              :topic_timer,
              :unicode_title,
-             :message_bus_last_id
+             :message_bus_last_id,
+             :participant_count
 
   # TODO: Split off into proper object / serializer
   def details
@@ -83,20 +84,14 @@ class TopicViewSerializer < ApplicationSerializer
 
       result[:allowed_users] = object.topic.allowed_users.select do |user|
         !allowed_user_ids.include?(user.id)
-      end.map do |user|
+      end.map! do |user|
         BasicUserSerializer.new(user, scope: scope, root: false)
       end
     end
 
     if object.post_counts_by_user.present?
       result[:participants] = object.post_counts_by_user.map do |pc|
-        TopicPostCountSerializer.new({user: object.participants[pc[0]], post_count: pc[1]}, scope: scope, root: false)
-      end
-    end
-
-    if object.suggested_topics.try(:topics).present?
-      result[:suggested_topics] = object.suggested_topics.topics.map do |topic|
-        SuggestedTopicSerializer.new(topic, scope: scope, root: false)
+        TopicPostCountSerializer.new({ user: object.participants[pc[0]], post_count: pc[1] }, scope: scope, root: false)
       end
     end
 
@@ -193,10 +188,6 @@ class TopicViewSerializer < ApplicationSerializer
   end
   alias_method :include_posted?, :has_topic_user?
 
-  def pinned_globally
-    object.topic.pinned_globally
-  end
-
   def pinned
     PinnedCheck.pinned?(object.topic, object.topic_user)
   end
@@ -205,22 +196,14 @@ class TopicViewSerializer < ApplicationSerializer
     PinnedCheck.unpinned?(object.topic, object.topic_user)
   end
 
-  def pinned_at
-    object.topic.pinned_at
-  end
-
-  def pinned_until
-    object.topic.pinned_until
-  end
-
   def actions_summary
     result = []
-    return [] unless post = object.posts.try(:first)
+    return [] unless post = object.posts&.first
     PostActionType.topic_flag_types.each do |sym, id|
       result << { id: id,
                   count: 0,
                   hidden: false,
-                  can_act: scope.post_can_act?(post, sym)}
+                  can_act: scope.post_can_act?(post, sym) }
       # TODO: other keys? :can_defer_flags, :acted, :can_undo
     end
     result
@@ -243,7 +226,7 @@ class TopicViewSerializer < ApplicationSerializer
   end
 
   def bookmarked
-    object.topic_user.try(:bookmarked)
+    object.topic_user&.bookmarked
   end
 
   def include_pending_posts_count?
@@ -255,9 +238,7 @@ class TopicViewSerializer < ApplicationSerializer
   end
 
   def topic_timer
-    TopicTimerSerializer.new(
-      object.topic.public_topic_timer, root: false
-    )
+    TopicTimerSerializer.new(object.topic.public_topic_timer, root: false)
   end
 
   def tags
@@ -268,20 +249,20 @@ class TopicViewSerializer < ApplicationSerializer
     SiteSetting.topic_featured_link_enabled
   end
 
-  def featured_link
-    object.topic.featured_link
-  end
-
   def include_unicode_title?
     !!(object.topic.title =~ /:([\w\-+]*):/)
   end
 
   def unicode_title
-    gsub_emoji_to_unicode(object.topic.title)
+    Emoji.gsub_emoji_to_unicode(object.topic.title)
   end
 
   def include_pm_with_non_human_user?
     private_message?(object.topic)
+  end
+
+  def participant_count
+    object.participants.size
   end
 
   private

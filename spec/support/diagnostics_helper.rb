@@ -11,10 +11,11 @@ module MessageBus::DiagnosticsHelper
   end
 
   def track_publish
-    @tracking = tracking =  []
+    @tracking = tracking = []
     yield
-    @tracking = nil
     tracking
+  ensure
+    @tracking = nil
   end
 end
 

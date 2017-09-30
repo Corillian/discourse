@@ -156,18 +156,18 @@ sk:
     bootstrap_mode_disabled: "Zavádzací režim bude zrušený v priebehu nasledujúcich 24 hodín."
     s3:
       regions:
-        us_east_1: "USA Východ (S. Virginia)"
-        us_west_1: "USA Západ (S. Kalifornia)"
-        us_west_2: "USA Západ (Oregon)"
-        us_gov_west_1: "AWS GovCloud (USA)"
-        eu_west_1: "EU (Írsko)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Ázia Tichomorie (Singapur)"
-        ap_southeast_2: "Ázia Tichomorie (Sydney)"
         ap_northeast_1: "Ázia Tichomorie (Tokio)"
         ap_northeast_2: "Asia Pacific (Soul)"
-        sa_east_1: "Južná Amerika (Sao Paulo)"
+        ap_southeast_1: "Ázia Tichomorie (Singapur)"
+        ap_southeast_2: "Ázia Tichomorie (Sydney)"
         cn_north_1: "Čína (Peking)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Írsko)"
+        sa_east_1: "Južná Amerika (Sao Paulo)"
+        us_east_1: "USA Východ (S. Virginia)"
+        us_gov_west_1: "AWS GovCloud (USA)"
+        us_west_1: "USA Západ (S. Kalifornia)"
+        us_west_2: "USA Západ (Oregon)"
     edit: 'upraviť názov a kategóriu témy'
     not_implemented: "Ľutujeme, táto funkcia ešte nie je implementovaná."
     no_value: "Nie"
@@ -374,10 +374,6 @@ sk:
       index:
         title: "Skupiny"
         empty: "Nenašli sa viditeľné skupiny."
-      title:
-        one: "skupina"
-        few: "skupiny"
-        other: "skupiny"
       activity: "Aktivita"
       members: "Členovia"
       topics: "Témy"
@@ -385,7 +381,6 @@ sk:
       mentions: "Zmienky"
       messages: "Správy"
       alias_levels:
-        title: "Kto môže poslať správu a @zmieniť túto skupinu?"
         nobody: "Nikto"
         only_admins: "Iba administrátori"
         mods_and_admins: "Iba moderátori a administrátori"
@@ -1037,22 +1032,6 @@ sk:
       empty: "Žiadne upozornenia sa nenašli."
       more: "zobraziť staršie upozornenia"
       total_flagged: "označených príspevkov celkom"
-      mentioned: "<i title='zmienený' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='zmienená skupina' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='invited to topic' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> prijal Vaše pozvanie</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> presunul {{description}}</p>"
-      granted_badge: "<i title='udelený odznak' class='fa fa-certificate'></i><p>Získal '{{description}}'</p>"
-      group_message_summary:
-        one: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} správa vo vašej {{group_name}} schránke</p>"
-        few: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} správy vo vašej {{group_name}} schránke</p>"
-        other: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} správ vo vašej {{group_name}} schránke</p>"
       alt:
         mentioned: "Zmienený od"
         quoted: "Citovaný používateľom"
@@ -1099,10 +1078,6 @@ sk:
       select_all: "Označ všetky"
       clear_all: "Odznač všetky"
       too_short: "Vyhladávací termín je príliš krátky."
-      result_count:
-        one: "1 výsledok pre <span class='term'>\"{{term}}\"</span>"
-        few: "{{count}} výsledky pre <span class='term'>\"{{term}}\"</span>"
-        other: "{{count}} výsledkov pre <span class='term'>\"{{term}}\"</span>"
       title: "hľadaj témy, príspevky, používateľov, alebo kategórie"
       no_results: "Žiadne výsledky"
       no_more_results: "Nenašlo sa viac výsledkov"
@@ -1939,7 +1914,6 @@ sk:
         hamburger_menu: '<b>=</b> Otvoriť hamburger menu'
         user_profile_menu: '<b>p</b> Otvor užívateľské menu'
         show_incoming_updated_topics: '<b>.</b> Zobraz aktualizované témy'
-        search: '<b>/</b> Hľadať'
         help: '<b>?</b> Pomoc s klávesovými skratkami'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Zahodiť Nové/Príspevky'
         dismiss_topics: '<b>x</b>, <b>t</b> Zahodiť témy'
@@ -2882,10 +2856,6 @@ sk:
       upload: "Načítať"
       uploading: "Načítavam..."
       quit: "Možno neskôr"
-      staff_count:
-        one: "Vaša komunita má 1 člena. "
-        few: "Vaša komunita má %{count} členov. "
-        other: "Vaša komunita má %{count} členov. "
       invites:
         add_user: "pridať"
         none_added: "Neprizvali ste žiadnych členov. Určite chcete pokračovať?"

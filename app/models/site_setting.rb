@@ -14,11 +14,7 @@ class SiteSetting < ActiveRecord::Base
 
   def self.load_settings(file)
     SiteSettings::YamlLoader.new(file).load do |category, name, default, opts|
-      if opts.delete(:client)
-        client_setting(name, default, opts.merge(category: category))
-      else
-        setting(name, default, opts.merge(category: category))
-      end
+      setting(name, default, opts.merge(category: category))
     end
   end
 
@@ -31,10 +27,15 @@ class SiteSetting < ActiveRecord::Base
     end
   end
 
+  # `current` hash is not populated everytime when load a site setting
+  # in order to support locale default. Instead, we simply `refresh!` once.
+  # This should only affects the spec in which you should populate `current`
+  refresh!
+
   client_settings << :available_locales
 
   def self.available_locales
-    LocaleSiteSetting.values.map{ |e| e[:value] }.join('|')
+    LocaleSiteSetting.values.map { |e| e[:value] }.join('|')
   end
 
   def self.topic_title_length
@@ -71,8 +72,8 @@ class SiteSetting < ActiveRecord::Base
 
   def self.anonymous_homepage
     top_menu_items.map { |item| item.name }
-                  .select { |item| anonymous_menu_items.include?(item) }
-                  .first
+      .select { |item| anonymous_menu_items.include?(item) }
+      .first
   end
 
   def self.should_download_images?(src)

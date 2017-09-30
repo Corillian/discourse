@@ -31,7 +31,7 @@ describe CookedPostProcessor do
     end
 
     context "admin user" do
-      let(:post) { Fabricate(:post, user: Fabricate(:admin) ) }
+      let(:post) { Fabricate(:post, user: Fabricate(:admin)) }
 
       it "omits nofollow" do
         cpp = CookedPostProcessor.new(post)
@@ -41,8 +41,8 @@ describe CookedPostProcessor do
   end
 
   context ".keep_reverse_index_up_to_date" do
-    let(:video_upload) { Fabricate(:upload, url: '/uploads/default/1/1234567890123456.mp4' ) }
-    let(:image_upload) { Fabricate(:upload, url: '/uploads/default/1/1234567890123456.jpg' ) }
+    let(:video_upload) { Fabricate(:upload, url: '/uploads/default/1/1234567890123456.mp4') }
+    let(:image_upload) { Fabricate(:upload, url: '/uploads/default/1/1234567890123456.jpg') }
     let(:audio_upload) { Fabricate(:upload, url: '/uploads/default/1/1234567890123456.ogg') }
     let(:attachment_upload) { Fabricate(:upload, url: '/uploads/default/1/1234567890123456.csv') }
 
@@ -75,8 +75,13 @@ describe CookedPostProcessor do
     end
 
     it "cleans the reverse index up for the current post" do
-      PostUpload.expects(:delete_all).with(post_id: post.id)
       cpp.keep_reverse_index_up_to_date
+
+      post_uploads_ids = post.post_uploads.pluck(:id)
+
+      cpp.keep_reverse_index_up_to_date
+
+      expect(post.reload.post_uploads.pluck(:id)).to_not eq(post_uploads_ids)
     end
 
   end
@@ -100,7 +105,7 @@ describe CookedPostProcessor do
       before { cpp.post_process_images }
 
       context "valid" do
-        let(:image_sizes) { {"http://foo.bar/image.png" => {"width" => 111, "height" => 222}} }
+        let(:image_sizes) { { "http://foo.bar/image.png" => { "width" => 111, "height" => 222 } } }
 
         it "uses them" do
 
@@ -113,17 +118,17 @@ describe CookedPostProcessor do
       end
 
       context "invalid width" do
-        let(:image_sizes) { {"http://foo.bar/image.png" => {"width" => 0, "height" => 222}} }
+        let(:image_sizes) { { "http://foo.bar/image.png" => { "width" => 0, "height" => 222 } } }
         include_examples "leave dimensions alone"
       end
 
       context "invalid height" do
-        let(:image_sizes) { {"http://foo.bar/image.png" => {"width" => 111, "height" => 0}} }
+        let(:image_sizes) { { "http://foo.bar/image.png" => { "width" => 111, "height" => 0 } } }
         include_examples "leave dimensions alone"
       end
 
       context "invalid width & height" do
-        let(:image_sizes) { {"http://foo.bar/image.png" => {"width" => 0, "height" => 0}} }
+        let(:image_sizes) { { "http://foo.bar/image.png" => { "width" => 0, "height" => 0 } } }
         include_examples "leave dimensions alone"
       end
 
@@ -249,7 +254,7 @@ describe CookedPostProcessor do
       it "adds a topic image if there's one in the first post" do
         FastImage.stubs(:size)
         expect(post.topic.image_url).to eq(nil)
-        cpp.post_process_images
+        cpp.update_post_image
         post.topic.reload
         expect(post.topic.image_url).to be_present
       end
@@ -262,7 +267,7 @@ describe CookedPostProcessor do
       it "adds a post image if there's one in the post" do
         FastImage.stubs(:size)
         expect(reply.image_url).to eq(nil)
-        cpp.post_process_images
+        cpp.update_post_image
         reply.reload
         expect(reply.image_url).to be_present
       end
@@ -287,32 +292,32 @@ describe CookedPostProcessor do
     let(:cpp) { CookedPostProcessor.new(post) }
 
     it "returns the size when width and height are specified" do
-      img = { 'src' => 'http://foo.bar/image3.png', 'width' => 50, 'height' => 70}
+      img = { 'src' => 'http://foo.bar/image3.png', 'width' => 50, 'height' => 70 }
       expect(cpp.get_size_from_attributes(img)).to eq([50, 70])
     end
 
     it "returns the size when width and height are floats" do
-      img = { 'src' => 'http://foo.bar/image3.png', 'width' => 50.2, 'height' => 70.1}
+      img = { 'src' => 'http://foo.bar/image3.png', 'width' => 50.2, 'height' => 70.1 }
       expect(cpp.get_size_from_attributes(img)).to eq([50, 70])
     end
 
     it "resizes when only width is specified" do
-      img = { 'src' => 'http://foo.bar/image3.png', 'width' => 100}
-      SiteSetting.stubs(:crawl_images?).returns(true)
+      img = { 'src' => 'http://foo.bar/image3.png', 'width' => 100 }
+      SiteSetting.crawl_images = true
       FastImage.expects(:size).returns([200, 400])
       expect(cpp.get_size_from_attributes(img)).to eq([100, 200])
     end
 
     it "resizes when only height is specified" do
-      img = { 'src' => 'http://foo.bar/image3.png', 'height' => 100}
-      SiteSetting.stubs(:crawl_images?).returns(true)
+      img = { 'src' => 'http://foo.bar/image3.png', 'height' => 100 }
+      SiteSetting.crawl_images = true
       FastImage.expects(:size).returns([100, 300])
       expect(cpp.get_size_from_attributes(img)).to eq([33, 100])
     end
 
     it "doesn't raise an error with a weird url" do
-      img = { 'src' => nil, 'height' => 100}
-      SiteSetting.stubs(:crawl_images?).returns(true)
+      img = { 'src' => nil, 'height' => 100 }
+      SiteSetting.crawl_images = true
       expect(cpp.get_size_from_attributes(img)).to be_nil
     end
 
@@ -346,7 +351,7 @@ describe CookedPostProcessor do
     end
 
     it "caches the results" do
-      SiteSetting.stubs(:crawl_images?).returns(true)
+      SiteSetting.crawl_images = true
       FastImage.expects(:size).returns([200, 400])
       cpp.get_size("http://foo.bar/image3.png")
       expect(cpp.get_size("http://foo.bar/image3.png")).to eq([200, 400])
@@ -354,7 +359,9 @@ describe CookedPostProcessor do
 
     context "when crawl_images is disabled" do
 
-      before { SiteSetting.stubs(:crawl_images?).returns(false) }
+      before do
+        SiteSetting.crawl_images = false
+      end
 
       it "doesn't call FastImage" do
         FastImage.expects(:size).never
@@ -412,12 +419,12 @@ describe CookedPostProcessor do
     end
 
     it "returns the original filename of the upload when there is an upload" do
-      upload = build(:upload, { original_filename: "upload.jpg" })
+      upload = build(:upload, original_filename: "upload.jpg")
       expect(cpp.get_filename(upload, "http://domain.com/image.png")).to eq("upload.jpg")
     end
 
     it "returns a generic name for pasted images" do
-      upload = build(:upload, { original_filename: "blob.png" })
+      upload = build(:upload, original_filename: "blob.png")
       expect(cpp.get_filename(upload, "http://domain.com/image.png")).to eq(I18n.t('upload.pasted_image_filename'))
     end
 
@@ -430,8 +437,8 @@ describe CookedPostProcessor do
 
     before do
       Oneboxer.expects(:onebox)
-              .with("http://www.youtube.com/watch?v=9bZkp7q19f0", post_id: 123, invalidate_oneboxes: true)
-              .returns("<div>GANGNAM STYLE</div>")
+        .with("http://www.youtube.com/watch?v=9bZkp7q19f0", post_id: 123, invalidate_oneboxes: true)
+        .returns("<div>GANGNAM STYLE</div>")
       cpp.post_process_oneboxes
     end
 
@@ -525,14 +532,15 @@ describe CookedPostProcessor do
     before { cpp.stubs(:available_disk_space).returns(90) }
 
     it "does not run when download_remote_images_to_local is disabled" do
-      SiteSetting.stubs(:download_remote_images_to_local).returns(false)
+      SiteSetting.download_remote_images_to_local = false
       Jobs.expects(:cancel_scheduled_job).never
       cpp.pull_hotlinked_images
     end
 
     context "when download_remote_images_to_local? is enabled" do
-
-      before { SiteSetting.stubs(:download_remote_images_to_local).returns(true) }
+      before do
+        SiteSetting.download_remote_images_to_local = true
+      end
 
       it "does not run when there is not enough disk space" do
         cpp.expects(:disable_if_low_on_disk_space).returns(true)
@@ -649,7 +657,7 @@ describe CookedPostProcessor do
     let(:cpp) { CookedPostProcessor.new(post) }
 
     context "emoji inside a quote" do
-      let(:post) { Fabricate(:post, raw: "time to eat some sweet [quote]:candy:[/quote] mmmm") }
+      let(:post) { Fabricate(:post, raw: "time to eat some sweet \n[quote]\n:candy:\n[/quote]\n mmmm") }
 
       it "doesn't award a badge when the emoji is in a quote" do
         cpp.grant_badges

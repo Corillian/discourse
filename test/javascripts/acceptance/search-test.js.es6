@@ -1,4 +1,4 @@
-import { acceptance } from "helpers/qunit-helpers";
+import { acceptance, logIn } from "helpers/qunit-helpers";
 acceptance("Search");
 
 QUnit.test("search", (assert) => {
@@ -22,6 +22,18 @@ QUnit.test("search", (assert) => {
   andThen(() => {
     assert.equal(find('.full-page-search').val(), 'dev', 'it shows the search term');
     assert.ok(exists('.search-advanced-options'), 'advanced search is expanded');
+  });
+});
+
+QUnit.test("search for a tag", (assert) => {
+  visit("/");
+
+  click('#search-button');
+
+  fillIn('#search-term', 'evil');
+  keyEvent('#search-term', 'keyup', 16);
+  andThen(() => {
+    assert.ok(exists('.search-menu .results ul li'), 'it shows results');
   });
 });
 
@@ -71,5 +83,51 @@ QUnit.test("Search with context", assert => {
 
   andThen(() => {
     assert.ok(!$('.search-context input[type=checkbox]').is(":checked"));
+  });
+});
+
+QUnit.test("Right filters are shown to anonymous users", assert => {
+  visit("/search?expanded=true");
+
+  andThen(() => {
+    assert.ok(exists('select#in option[value=first]'));
+    assert.ok(exists('select#in option[value=pinned]'));
+    assert.ok(exists('select#in option[value=unpinned]'));
+    assert.ok(exists('select#in option[value=wiki]'));
+    assert.ok(exists('select#in option[value=images]'));
+
+    assert.notOk(exists('select#in option[value=unseen]'));
+    assert.notOk(exists('select#in option[value=posted]'));
+    assert.notOk(exists('select#in option[value=watching]'));
+    assert.notOk(exists('select#in option[value=tracking]'));
+    assert.notOk(exists('select#in option[value=bookmarks]'));
+
+    assert.notOk(exists('.search-advanced-options .in-likes'));
+    assert.notOk(exists('.search-advanced-options .in-private'));
+    assert.notOk(exists('.search-advanced-options .in-seen'));
+  });
+});
+
+QUnit.test("Right filters are shown to logged-in users", assert => {
+  logIn();
+  Discourse.reset();
+  visit("/search?expanded=true");
+
+  andThen(() => {
+    assert.ok(exists('select#in option[value=first]'));
+    assert.ok(exists('select#in option[value=pinned]'));
+    assert.ok(exists('select#in option[value=unpinned]'));
+    assert.ok(exists('select#in option[value=wiki]'));
+    assert.ok(exists('select#in option[value=images]'));
+
+    assert.ok(exists('select#in option[value=unseen]'));
+    assert.ok(exists('select#in option[value=posted]'));
+    assert.ok(exists('select#in option[value=watching]'));
+    assert.ok(exists('select#in option[value=tracking]'));
+    assert.ok(exists('select#in option[value=bookmarks]'));
+
+    assert.ok(exists('.search-advanced-options .in-likes'));
+    assert.ok(exists('.search-advanced-options .in-private'));
+    assert.ok(exists('.search-advanced-options .in-seen'));
   });
 });

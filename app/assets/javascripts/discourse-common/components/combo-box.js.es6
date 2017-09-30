@@ -1,5 +1,6 @@
 import { bufferedRender } from 'discourse-common/lib/buffered-render';
 import { on, observes } from 'ember-addons/ember-computed-decorators';
+import { iconHTML } from 'discourse-common/lib/icon-library';
 
 export default Ember.Component.extend(bufferedRender({
   tagName: 'select',
@@ -97,7 +98,7 @@ export default Ember.Component.extend(bufferedRender({
       this.selectionTemplate = (item) => {
         let name = Em.get(item, 'text');
         name = Handlebars.escapeExpression(name);
-        return `<i class='fa fa-${this.get("selectionIcon")}'></i>${name}`;
+        return iconHTML(this.get('selectionIcon')) + name;
       };
     }
 
@@ -123,7 +124,7 @@ export default Ember.Component.extend(bufferedRender({
       if (val && val.length && castInteger) {
         val = parseInt(val, 10);
       }
-      this.set('value', val);
+      Ember.run(() => this.set('value', val));
     });
 
     Ember.run.scheduleOnce('afterRender', this, this._triggerChange);

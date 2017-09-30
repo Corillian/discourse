@@ -17,7 +17,8 @@ class TopicConverter
         else
           Category.where(read_restricted: false)
             .where.not(id: SiteSetting.uncategorized_category_id)
-            .first.id
+            .order('id asc')
+            .pluck(:id).first
         end
 
       @topic.archetype = Archetype.default
@@ -70,7 +71,7 @@ class TopicConverter
   def watch_topic(topic)
     @topic.notifier.watch_topic!(topic.user_id)
 
-    @topic.topic_allowed_users(true).each do |tau|
+    @topic.reload.topic_allowed_users.each do |tau|
       next if tau.user_id < 0 || tau.user_id == topic.user_id
       topic.notifier.watch!(tau.user_id)
     end

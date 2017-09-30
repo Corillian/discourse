@@ -42,6 +42,11 @@
     "invisible":true,
     "asyncRender":true,
     "selectDropdown":true,
+    "selectBox":true,
+    "expandSelectBox":true,
+    "collapseSelectBox":true,
+    "selectBoxSelectRow":true,
+    "selectBoxFillInFilter":true,
     "asyncTestDiscourse":true,
     "fixture":true,
     "find":true,
@@ -92,7 +97,9 @@
     "wrap-iife": [
       2,
       "inside"
-    ]
+    ],
+    "no-mixed-spaces-and-tabs": 2,
+    "no-trailing-spaces": 2
   },
   "parser": "babel-eslint"
 }

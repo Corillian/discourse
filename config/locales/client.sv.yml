@@ -142,21 +142,25 @@ sv:
     emails_are_disabled: "All utgående e-post har blivit globalt inaktiverad av en administratör. Inga e-postnotifikationer av något slag kommer att skickas ut."
     bootstrap_mode_enabled: "Du är i bootstrap-läge för att göra lanseringen av din nya webbplats enklare. Alla nya användare kommer att beviljas förtroendenivå 1 och få dagliga sammanfattningar skickade via e-post. Det här stängs automatiskt av när det totala antalet användare överstiger %{min_users}."
     bootstrap_mode_disabled: "Bootstrap-läge otillgängliggörs i 24 timmar."
+    themes:
+      default_description: "Standard"
     s3:
       regions:
-        us_east_1: "Östra USA (N. Virginia)"
-        us_west_1: "Västra USA (N. Kalifornien)"
-        us_west_2: "Västra USA (Oregon)"
-        us_gov_west_1: "AWS GovCloud (US)"
-        eu_west_1: "EU (Irland)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Asien Stillahavsområdet (Singapore)"
-        ap_southeast_2: "Asien Stillahavsområdet (Sydney)"
-        ap_south_1: "Asien Stillahavsområdet (Mumbai)"
         ap_northeast_1: "Asien Stillahavsområdet (Tokyo)"
         ap_northeast_2: "Asien Stillahavsområdet (Seoul)"
-        sa_east_1: "Sydamerika (Sao Paulo)"
+        ap_south_1: "Asien Stillahavsområdet (Mumbai)"
+        ap_southeast_1: "Asien Stillahavsområdet (Singapore)"
+        ap_southeast_2: "Asien Stillahavsområdet (Sydney)"
         cn_north_1: "Kina (Peking)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Irland)"
+        eu_west_2: "EU (London)"
+        sa_east_1: "Sydamerika (Sao Paulo)"
+        us_east_1: "Östra USA (N. Virginia)"
+        us_east_2: "Öster USA (Ohio)"
+        us_gov_west_1: "AWS GovCloud (US)"
+        us_west_1: "Västra USA (N. Kalifornien)"
+        us_west_2: "Västra USA (Oregon)"
     edit: 'redigera rubrik och kategori för det här ämnet'
     not_implemented: "Denna funktion har inte implementerats än, vi beklagar!"
     no_value: "Nej"
@@ -371,9 +375,6 @@ sv:
       index:
         title: "Grupper"
         empty: "Det finns inga synliga grupper"
-      title:
-        one: "grupp"
-        other: "grupper"
       activity: "Aktivitet"
       members: "Medlemmar"
       topics: "Ämnen"
@@ -381,7 +382,6 @@ sv:
       mentions: "Omnämnaden"
       messages: "Meddelanden"
       alias_levels:
-        title: "Vem kan meddela och @omnämna den här gruppen?"
         nobody: "Ingen"
         only_admins: "Bara administratörer"
         mods_and_admins: "Bara moderatorer och administratörer"
@@ -607,7 +607,7 @@ sv:
         upload_title: "Ladda upp din bild"
         upload_picture: "Ladda upp bild"
         image_is_not_a_square: "Varning: vi beskar din bild; bredden och höjden var inte samma."
-        cache_notice: "Du har nu bytt profilbild med det kan ta lite tid innan den visas på grund av webbläsar-cachen."
+        cache_notice: "Du har nu bytt profilbild men det kan ta lite tid innan den visas på grund av webbläsarens s.k. cache."
       change_profile_background:
         title: "Profilbakgrund"
         instructions: "Bakgrunderna är centrerade och har en förinställd bredd på 850px"
@@ -616,7 +616,7 @@ sv:
         instructions: "Bakgrundsbilder kommer att vara centrerade och ha en standardbredd på 590 px."
       email:
         title: "E-post"
-        instructions: "aldrig visat för allmänheten"
+        instructions: "visas aldrig publikt"
         ok: "Vi skickar e-post till dig för bekräftelse"
         invalid: "Vänligen ange en giltig e-postadress"
         authenticated: "Din e-postadress har blivit verifierad av {{provider}}"
@@ -633,7 +633,7 @@ sv:
       username:
         title: "Användarnamn"
         instructions: "unikt, inga mellanrum, kort"
-        short_instructions: "Folk kan nämna dig som @{{username}}"
+        short_instructions: "Du kan omnämnas som @{{username}}"
         available: "Ditt användarnamn är tillgängligt"
         not_available: "Inte tillgängligt. Prova {{suggestion}}?"
         not_available_no_suggestion: "Inte tillgänglig"
@@ -1072,28 +1072,6 @@ sv:
       empty: "Inga notifieringar hittades."
       more: "visa äldre notifikationer"
       total_flagged: "totalt antal flaggade inlägg"
-      mentioned: "<i title='omnämnd' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='group mentioned' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='posted' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
-      liked_many:
-        one: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} och en annan</span> {{description}}</p>"
-        other: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} och {{count}} andra</span> {{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='inbjuden till ämne' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span> accepterade din inbjudan</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> flyttade {{description}}</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>Förtjänade '{{description}}'</p>"
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>Nytt ämne</span> {{description}}</p>"
-      group_message_summary:
-        one: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} meddelande i din {{group_name}}-inkorg</p>"
-        other: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} meddelanden i din {{group_name}}-inkorg</p>"
       alt:
         mentioned: "Omnämnd av"
         quoted: "Citerad av"
@@ -1141,9 +1119,6 @@ sv:
       select_all: "Markera alla"
       clear_all: "Rensa allt"
       too_short: "Din sökterm är för kort."
-      result_count:
-        one: "1 resultat för <span class='term'>\"{{term}}\"</span>"
-        other: "{{count}} resultat för <span class='term'>\"{{term}}\"</span>"
       title: "sök efter ämnen, inlägg, användare, eller kategorier"
       no_results: "Inga resultat hittades."
       no_more_results: "Inga fler resultat hittades."
@@ -1239,7 +1214,7 @@ sv:
         search: "Inga sökresultat hittades."
         educate:
           new: '<p>Dina nya ämnen hamnar här.</p><p>Standard är att ämnen anses nya och kommer att visa en <span class="badge new-topic badge-notification" style="vertical-align:middle;line-height:inherit;">ny</span> indikator om de skapades de senaste 2 dagarna.</p><p>Besök dina <a href="%{userPrefsUrl}">användarinställningar</a> för att ändra det.</p>'
-          unread: '<p>Dina olästa ämnen hamnar här.</p><p>Standard är att inlägg anses olästa och kommer att visa antal olästa inlägg <span class="badge new-posts badge-notification">1</span> om du:</p><ul><li>Skapade ämnet</li><li>Svarade på ämnet</li><li>Läste ämnet i mer än 4 minuter</li></ul><p>Eller om du explicit har markerat ämnet som Följd eller Bekvakad via notifieringspanelen längst ned i varje ämne.</p><p>Besök dina <a href="%{userPrefsUrl}">användarinställningar</a> för att ändra det.</p>'
+          unread: '<p>Dina olästa ämnen hamnar här.</p><p>Standard är att inlägg anses olästa och kommer att visa antal olästa inlägg <span class="badge new-posts badge-notification">1</span> om du:</p><ul><li>Skapade ämnet</li><li>Svarade på ämnet</li><li>Läste ämnet i mer än 4 minuter</li></ul><p>Eller om du explicit har markerat ämnet som Följd eller Bevakad via notifieringspanelen längst ned i varje ämne.</p><p>Besök dina <a href="%{userPrefsUrl}">användarinställningar</a> för att ändra det.</p>'
       bottom:
         latest: "Det finns inga fler senaste ämnen."
         hot: "Det finns inga fler heta ämnen."
@@ -2038,7 +2013,6 @@ sv:
         hamburger_menu: '<b>=</b> Öppna hamburgarmenyn'
         user_profile_menu: '<b>p</b> Öppna användarmeny'
         show_incoming_updated_topics: '<b>.</b> Visa uppdaterade ämnen'
-        search: '<b>/</b> Sök'
         help: '<b>?</b> Öppna tangentbordshjälp'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Avfärda nya/inlägg'
         dismiss_topics: '<b>x</b>, <b>t</b> Avfärda ämnen'
@@ -3109,9 +3083,6 @@ sv:
       upload: "Ladda upp"
       uploading: "Laddar upp..."
       quit: "Kanske senare"
-      staff_count:
-        one: "Ditt forum har 1 personalmedlem."
-        other: "Ditt forum har %{count} personalmedlemmar."
       invites:
         add_user: "lägg till"
         none_added: "Du har inte bjudit in någon personal. Är du säker på att du vill fortsätta?"

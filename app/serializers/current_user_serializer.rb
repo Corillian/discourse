@@ -18,6 +18,7 @@ class CurrentUserSerializer < BasicUserSerializer
              :external_links_in_new_tab,
              :dynamic_favicon,
              :trust_level,
+             :can_send_private_email_messages,
              :can_edit,
              :can_invite_to_forum,
              :no_password,
@@ -35,7 +36,9 @@ class CurrentUserSerializer < BasicUserSerializer
              :automatically_unpin_topics,
              :mailing_list_mode,
              :previous_visit_at,
-             :seen_notification_id
+             :seen_notification_id,
+             :primary_group_id,
+             :primary_group_name
 
   def include_site_flagged_posts_count?
     object.staff?
@@ -83,6 +86,10 @@ class CurrentUserSerializer < BasicUserSerializer
 
   def site_flagged_posts_count
     PostAction.flagged_posts_count
+  end
+
+  def can_send_private_email_messages
+    scope.cand_send_private_messages_to_email?
   end
 
   def can_edit
@@ -137,7 +144,7 @@ class CurrentUserSerializer < BasicUserSerializer
   def muted_category_ids
     @muted_category_ids ||= CategoryUser.where(user_id: object.id,
                                                notification_level: TopicUser.notification_levels[:muted])
-                                         .pluck(:category_id)
+      .pluck(:category_id)
   end
 
   def dismissed_banner_key
@@ -166,6 +173,18 @@ class CurrentUserSerializer < BasicUserSerializer
 
   def mailing_list_mode
     object.user_option.mailing_list_mode
+  end
+
+  def include_primary_group_id?
+    object.primary_group_id.present?
+  end
+
+  def primary_group_name
+    object.primary_group.name.downcase
+  end
+
+  def include_primary_group_name?
+    object.primary_group&.name.present?
   end
 
 end

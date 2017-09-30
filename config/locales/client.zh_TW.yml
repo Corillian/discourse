@@ -123,19 +123,19 @@ zh_TW:
     bootstrap_mode_disabled: "初始化模式將會在24小時後關閉。"
     s3:
       regions:
-        us_east_1: "美國東部 (北維珍尼亞州)"
-        us_west_1: "美國西部 (北加州)"
-        us_west_2: "美國西部 (奧勒岡州)"
-        us_gov_west_1: "AWS GovCloud (美國)"
-        eu_west_1: "歐洲 (愛爾蘭)"
-        eu_central_1: "歐洲 (法蘭克福)"
-        ap_southeast_1: "亞太地區 (新加坡)"
-        ap_southeast_2: "亞太地區 (悉尼)"
-        ap_south_1: "亞太地區 (孟買)"
         ap_northeast_1: "亞太地區 (東京)"
         ap_northeast_2: "亞太地區 (首爾)"
-        sa_east_1: "南美洲 (聖保羅)"
+        ap_south_1: "亞太地區 (孟買)"
+        ap_southeast_1: "亞太地區 (新加坡)"
+        ap_southeast_2: "亞太地區 (悉尼)"
         cn_north_1: "中國 (北京)"
+        eu_central_1: "歐洲 (法蘭克福)"
+        eu_west_1: "歐洲 (愛爾蘭)"
+        sa_east_1: "南美洲 (聖保羅)"
+        us_east_1: "美國東部 (北維珍尼亞州)"
+        us_gov_west_1: "AWS GovCloud (美國)"
+        us_west_1: "美國西部 (北加州)"
+        us_west_2: "美國西部 (奧勒岡州)"
     edit: '編輯此討論話題的標題與分類'
     not_implemented: "抱歉，此功能尚未開放。"
     no_value: "否"
@@ -329,6 +329,7 @@ zh_TW:
       join: "加入團隊"
       leave: "離開團隊"
       request: "請求加入團隊"
+      message: "訊息"
       automatic_group: 自動群組
       closed_group: 關閉群組
       is_group_user: "你是團隊裡面的成員"
@@ -341,8 +342,6 @@ zh_TW:
       index:
         title: "群組"
         empty: "沒有可看見的群組。"
-      title:
-        other: "群組"
       activity: "活動"
       members: "成員"
       topics: "主題"
@@ -350,7 +349,6 @@ zh_TW:
       mentions: "提及"
       messages: "訊息"
       alias_levels:
-        title: "誰可以在這個群組發送訊息和使用@提到"
         nobody: "沒有"
         only_admins: "只有管理員"
         mods_and_admins: "只有板主以及管理員"
@@ -495,7 +493,7 @@ zh_TW:
         individual_no_echo: "每當有新文章時，寄給我郵件通知（除了我自己的文章）"
         many_per_day: "每當有新文章時，寄給我郵件通知（每天約有  {{dailyEmailEstimate}}  封）。"
         few_per_day: "每當有新文章時，寄給我郵件通知（每天約有 2  封）。"
-      tag_settings: "添加"
+      tag_settings: "標籤"
       watched_tags: "已觀看"
       watched_tags_instructions: "您將會自動監視所有這些添加的主題。您會收到新文章或新主題的通知，新文章數量將出現在每個主題後。"
       tracked_tags: "已追蹤"
@@ -545,6 +543,15 @@ zh_TW:
         move_to_archive: "封存"
         failed_to_move: "移動到所選郵件失敗(也許你的網絡沒有開啟)"
         select_all: "選擇全部"
+      preferences_nav:
+        account: "帳號"
+        profile: "基本資料"
+        emails: "電子郵件"
+        notifications: "通知"
+        categories: "分類"
+        tags: "標籤"
+        interface: "界面"
+        apps: "應用"
       change_password:
         success: "( 寄出的郵件 )"
         in_progress: "( 正在傳送郵件 )"
@@ -1025,26 +1032,6 @@ zh_TW:
       empty: "未找到任何通知。"
       more: "檢視較舊的通知"
       total_flagged: "所有被投訴的文章"
-      mentioned: "<i title='被提到' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='群組被提及' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='quoted' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='replied' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='回覆' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='edited' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='liked' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='讚' class='fa fa-heart'></i><p><span>{{username}}、{{username2}}</span> {{description}}</p>"
-      liked_many:
-        other: "<i title='讚' class='fa fa-heart'></i><p><span>{{username}}、{{username2}}</span>和其他 {{count}} 人</span>{{description}}</p>"
-      private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='private message' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='邀請至主題' class='fa fa-heart'></i><p><span>{{username}}</span>{{description}}</p>"
-      invitee_accepted: "<i title='accepted your invitation' class='fa fa-user'></i><p><span>{{username}}</span>已接受你的邀請</p>"
-      moved_post: "<i title='moved post' class='fa fa-sign-out'></i><p><span>{{username}}</span> 移動了 {{description}}</p>"
-      linked: "<i title='關聯帖子' class='fa fa-link'></i><p><span>{{username}}</span>{{description}}</p>"
-      granted_badge: "<i title='badge granted' class='fa fa-certificate'></i><p>獲得徽章「{{description}}」</p>"
-      watching_first_post: "<i title='近期主題' class='fa fa-dot-circle-o'></i><p><span>近期主題</span>{{description}}</p>"
-      group_message_summary:
-        other: "<i title='群組收件箱中的消息' class='fa fa-group'></i><p> {{count}} 條消息在{{group_name}}組的收件箱中</p>"
       alt:
         mentioned: "被提及"
         quoted: "引用者"
@@ -1091,8 +1078,6 @@ zh_TW:
       select_all: "選擇全部"
       clear_all: "清除全部"
       too_short: "你的搜索詞太短。"
-      result_count:
-        other: "搜索<span class='term'>“{{term}}”</span>有 {{count}} 條相關結果"
       title: "搜尋討論話題、文章、用戶或分類"
       no_results: "未找到任何結果。"
       no_more_results: "沒有找到更多的結果。"
@@ -1892,7 +1877,6 @@ zh_TW:
         hamburger_menu: '<b>=</b> 打開漢堡菜單'
         user_profile_menu: '<b>p</b> 打開用戶菜單'
         show_incoming_updated_topics: '<b>.</b> 顯示更新主題'
-        search: '<b>/</b> 搜索'
         help: '<b> ? </b> 打開按鍵說明'
         dismiss_new_posts: '<b>x</b> 然後 <b>r</b> 解除新/帖子提示'
         dismiss_topics: '<b>x</b> 然後 <b>t</b> 解除主題提示'
@@ -2939,8 +2923,6 @@ zh_TW:
       upload: "上傳"
       uploading: "上傳中..."
       quit: "以後再說"
-      staff_count:
-        other: "你的社群中有 %{count} 位工作人員。"
       invites:
         add_user: "添加"
         none_added: "你還沒有邀請任何工作人員。你確定要繼續嗎？"

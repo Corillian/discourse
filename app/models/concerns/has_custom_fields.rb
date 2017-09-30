@@ -18,8 +18,8 @@ module HasCustomFields
       return unless types
 
       sorted_types = types.keys.select { |k| k.end_with?("*") }
-                               .sort_by(&:length)
-                               .reverse
+        .sort_by(&:length)
+        .reverse
 
       sorted_types.each do |t|
         return types[t] if key =~ /^#{t}/i
@@ -32,9 +32,9 @@ module HasCustomFields
       return value unless type = get_custom_field_type(types, key)
 
       case type
-        when :boolean then !!CUSTOM_FIELD_TRUE.include?(value)
-        when :integer then value.to_i
-        when :json    then ::JSON.parse(value)
+      when :boolean then !!CUSTOM_FIELD_TRUE.include?(value)
+      when :integer then value.to_i
+      when :json    then ::JSON.parse(value)
       else
         value
       end
@@ -42,7 +42,7 @@ module HasCustomFields
   end
 
   included do
-    has_many :_custom_fields, dependent: :destroy, :class_name => "#{name}CustomField"
+    has_many :_custom_fields, dependent: :destroy, class_name: "#{name}CustomField"
     after_save :save_custom_fields
 
     attr_accessor :preloaded_custom_fields
@@ -58,7 +58,7 @@ module HasCustomFields
       return result if whitelisted_fields.blank?
 
       klass.where(foreign_key => ids, :name => whitelisted_fields)
-           .pluck(foreign_key, :name, :value).each do |cf|
+        .pluck(foreign_key, :name, :value).each do |cf|
         result[cf[0]] ||= {}
         append_custom_field(result[cf[0]], cf[1], cf[2])
       end
@@ -96,7 +96,7 @@ module HasCustomFields
           .where("name in (?)", fields)
           .pluck(fk, :name, :value).each do |id, name, value|
 
-            preloaded = map[id].preloaded_custom_fields
+          preloaded = map[id].preloaded_custom_fields
 
             if preloaded[name].nil?
               preloaded.delete(name)
@@ -139,7 +139,6 @@ module HasCustomFields
   end
 
   def custom_fields
-
     if @preloaded_custom_fields
       return @preloaded_proxy ||= PreloadedProxy.new(@preloaded_custom_fields)
     end
@@ -156,7 +155,7 @@ module HasCustomFields
     !@custom_fields || @custom_fields_orig == @custom_fields
   end
 
-  def save_custom_fields(force=false)
+  def save_custom_fields(force = false)
     if force || !custom_fields_clean?
       dup = @custom_fields.dup
 
@@ -177,7 +176,10 @@ module HasCustomFields
             dup.delete(f.name)
           end
         else
-          if dup[f.name] != f.value
+          t = {}
+          self.class.append_custom_field(t, f.name, f.value)
+
+          if dup[f.name] != t[f.name]
             f.destroy
           else
             dup.delete(f.name)
@@ -194,7 +196,7 @@ module HasCustomFields
         end
       end
 
-      dup.each do |k,v|
+      dup.each do |k, v|
         if v.is_a? Array
           v.each { |subv| _custom_fields.create(name: k, value: subv) }
         elsif v.is_a? Hash
@@ -212,7 +214,7 @@ module HasCustomFields
 
   def refresh_custom_fields_from_db
     target = Hash.new
-    _custom_fields.pluck(:name,:value).each do |key, value|
+    _custom_fields.pluck(:name, :value).each do |key, value|
       self.class.append_custom_field(target, key, value)
     end
     @custom_fields_orig = target

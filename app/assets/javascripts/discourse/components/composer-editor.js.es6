@@ -1,10 +1,11 @@
 import userSearch from 'discourse/lib/user-search';
-import { default as computed, on } from 'ember-addons/ember-computed-decorators';
+import { default as computed, on, observes } from 'ember-addons/ember-computed-decorators';
 import { linkSeenMentions, fetchUnseenMentions } from 'discourse/lib/link-mentions';
 import { linkSeenCategoryHashtags, fetchUnseenCategoryHashtags } from 'discourse/lib/link-category-hashtags';
 import { linkSeenTagHashtags, fetchUnseenTagHashtags } from 'discourse/lib/link-tag-hashtag';
 import Composer from 'discourse/models/composer';
 import { load } from 'pretty-text/oneboxer';
+import { applyInlineOneboxes } from 'pretty-text/inline-oneboxer';
 import { ajax } from 'discourse/lib/ajax';
 import InputValidation from 'discourse/models/input-validation';
 import { findRawTemplate } from 'discourse/lib/raw-templates';
@@ -12,6 +13,9 @@ import { tinyAvatar,
          displayErrorForUpload,
          getUploadMarkdown,
          validateUploadedFiles } from 'discourse/lib/utilities';
+import { lookupCachedUploadUrl,
+         lookupUncachedUploadUrls,
+         cacheShortUploadUrl } from 'pretty-text/image-short-url';
 
 export default Ember.Component.extend({
   classNames: ['wmd-controls'],
@@ -30,6 +34,14 @@ export default Ember.Component.extend({
   _setupPreview() {
     const val = (this.site.mobileView ? false : (this.keyValueStore.get('composer.showPreview') || 'true'));
     this.set('showPreview', val === 'true');
+
+    this.appEvents.on('composer:show-preview', () => {
+      this.set('showPreview', true);
+    });
+
+    this.appEvents.on('composer:hide-preview', () => {
+      this.set('showPreview', false);
+    });
   },
 
   @computed('site.mobileView', 'showPreview')
@@ -42,9 +54,16 @@ export default Ember.Component.extend({
     return showPreview ? I18n.t('composer.hide_preview') : I18n.t('composer.show_preview');
   },
 
+  @observes('showPreview')
+  showPreviewChanged() {
+      this.keyValueStore.set({ key: 'composer.showPreview', value: this.get('showPreview') });
+  },
+
   @computed
   markdownOptions() {
     return {
+      previewing: true,
+
       lookupAvatarByPostNumber: (postNumber, topicId) => {
         const topic = this.get('topic');
         if (!topic) { return; }
@@ -158,6 +177,10 @@ export default Ember.Component.extend({
     });
   },
 
+  _loadInlineOneboxes(inline) {
+    applyInlineOneboxes(inline, ajax);
+  },
+
   _loadOneboxes($oneboxes) {
     const post = this.get('composer.post');
     let refresh = false;
@@ -169,6 +192,24 @@ export default Ember.Component.extend({
     }
 
     $oneboxes.each((_, o) => load(o, refresh, ajax, this.currentUser.id));
+  },
+
+  _loadShortUrls($images) {
+    const urls = _.map($images, img => $(img).data('orig-src'));
+    lookupUncachedUploadUrls(urls, ajax).then(() => this._loadCachedShortUrls($images));
+  },
+
+  _loadCachedShortUrls($images) {
+    $images.each((idx, image) => {
+      let $image = $(image);
+      let url = lookupCachedUploadUrl($image.data('orig-src'));
+      if (url) {
+        $image.removeAttr('data-orig-src');
+        if (url !== "missing") {
+          $image.attr('src', url);
+        }
+      }
+    });
   },
 
   _warnMentionedGroups($preview) {
@@ -292,6 +333,7 @@ export default Ember.Component.extend({
       if (upload && upload.url) {
         if (!this._xhr || !this._xhr._userCancelled) {
           const markdown = getUploadMarkdown(upload);
+          cacheShortUploadUrl(upload.short_url, upload.url);
           this.appEvents.trigger('composer:replace-text', uploadPlaceholder, markdown);
           this._resetUpload(false);
         } else {
@@ -445,6 +487,8 @@ export default Ember.Component.extend({
   @on('willDestroyElement')
   _composerClosed() {
     this.appEvents.trigger('composer:will-close');
+    this.appEvents.off('composer:show-preview');
+    this.appEvents.off('composer:hide-preview');
     Ember.run.next(() => {
       $('#main-outlet').css('padding-bottom', 0);
       // need to wait a bit for the "slide down" transition of the composer
@@ -486,7 +530,6 @@ export default Ember.Component.extend({
 
     togglePreview() {
       this.toggleProperty('showPreview');
-      this.keyValueStore.set({ key: 'composer.showPreview', value: this.get('showPreview') });
     },
 
     extraButtons(toolbar) {
@@ -556,6 +599,31 @@ export default Ember.Component.extend({
       const $oneboxes = $('a.onebox', $preview);
       if ($oneboxes.length > 0 && $oneboxes.length <= this.siteSettings.max_oneboxes_per_post) {
         Ember.run.debounce(this, this._loadOneboxes, $oneboxes, 450);
+      }
+
+      // Short upload urls
+      let $shortUploadUrls = $('img[data-orig-src]');
+
+      if ($shortUploadUrls.length > 0) {
+        this._loadCachedShortUrls($shortUploadUrls);
+
+        $shortUploadUrls = $('img[data-orig-src]');
+        if ($shortUploadUrls.length > 0) {
+          // this is carefully batched so we can do an leading debounce (trigger right away)
+          Ember.run.debounce(this, this._loadShortUrls, $shortUploadUrls, 450, true);
+        }
+      }
+
+      let inline = {};
+      $('a.inline-onebox-loading', $preview).each(function(index, link) {
+        let $link = $(link);
+        $link.removeClass('inline-onebox-loading');
+        let text = $link.text();
+        inline[text] = inline[text] || [];
+        inline[text].push($link);
+      });
+      if (Object.keys(inline).length > 0) {
+        Ember.run.debounce(this, this._loadInlineOneboxes, inline, 450);
       }
 
       this.trigger('previewRefreshed', $preview);

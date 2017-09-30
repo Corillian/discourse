@@ -148,20 +148,21 @@ de:
       default_description: "Standard"
     s3:
       regions:
-        us_east_1: "USA Ost (Nord-Virginia)"
-        us_west_1: "USA West (Nordkalifornien)"
-        us_west_2: "USA West (Oregon)"
-        us_gov_west_1: "AWS GovCloud (USA)"
-        eu_west_1: "EU (Irland)"
-        eu_west_2: "EU (London)"
-        eu_central_1: "EU (Frankfurt)"
-        ap_southeast_1: "Asien-Pazifik (Singapur)"
-        ap_southeast_2: "Asien-Pazifik (Sydney)"
-        ap_south_1: "Asien-Pazifik (Mumbai)"
         ap_northeast_1: "Asien-Pazifik (Tokio)"
         ap_northeast_2: "Asien-Pazifik (Seoul)"
-        sa_east_1: "Südamerika (São Paulo)"
+        ap_south_1: "Asien-Pazifik (Mumbai)"
+        ap_southeast_1: "Asien-Pazifik (Singapur)"
+        ap_southeast_2: "Asien-Pazifik (Sydney)"
         cn_north_1: "China (Peking)"
+        eu_central_1: "EU (Frankfurt)"
+        eu_west_1: "EU (Irland)"
+        eu_west_2: "EU (London)"
+        sa_east_1: "Südamerika (São Paulo)"
+        us_east_1: "USA Ost (Nord-Virginia)"
+        us_east_2: "USA West (Ohio)"
+        us_gov_west_1: "AWS GovCloud (USA)"
+        us_west_1: "USA West (Nordkalifornien)"
+        us_west_2: "USA West (Oregon)"
     edit: 'Titel und Kategorie dieses Themas ändern'
     not_implemented: "Entschuldige, diese Funktion wurde noch nicht implementiert!"
     no_value: "Nein"
@@ -352,7 +353,8 @@ de:
         add_members: "Mitglieder hinzufügen"
         delete_member_confirm: "'%{username}' aus der Gruppe '%{group}' entfernen?"
       name_placeholder: "Gruppenname, keine Leerzeichen, gleiche Regel wie beim Benutzernamen"
-      public: "Nutzenden erlauben, die Gruppe eigenständig zu betreten/zu verlassen (nur bei öffentlich sichtbaren Gruppen) "
+      public_admission: "Erlaube Benutzern, die Gruppe eigenständig zu betreten (Erfordert, dass die Gruppe öffentlich sichtbar ist)"
+      public_exit: "Erlaube Benutzern, die Gruppe eigenständig zu verlassen"
       empty:
         posts: "Es gibt keine Beiträge von Mitgliedern dieser Gruppe."
         members: "Es gibt keine Mitglieder in dieser Gruppe."
@@ -364,10 +366,16 @@ de:
       join: "Gruppe beitreten"
       leave: "Gruppe verlassen"
       request: "Gruppenbeitritt beantragen"
+      message: "Nachricht"
       automatic_group: Automatische Gruppe
       closed_group: Geschlossene Gruppe
       is_group_user: "Du bist ein Mitglied in dieser Gruppe."
       allow_membership_requests: "Erlaube Benutzern, eine Mitgliedschaftsanfrage an Gruppen-Eigentümer zu senden."
+      membership_request_template: "Benutzerdefinierte Vorlage, das Benutzern angezeigt wird, die eine Mitgliedschaftsanfrage senden"
+      membership_request:
+        submit: "Anfrage abschicken"
+        title: "Anfrage, um @%{group_name} beizutreten"
+        reason: "Lass’ die Gruppenbesitzer wissen, warum du in diese Gruppe gehörst"
       membership: "Mitgliedschaft"
       name: "Name"
       user_count: "Anzahl der Mitglieder"
@@ -394,7 +402,8 @@ de:
         staff: "Gruppenbesitzer und Team"
         owners: "Gruppenbesitzer und Admins"
       alias_levels:
-        title: "Wer kann diese Gruppe kontaktieren und per @Gruppenname erwähnen?"
+        mentionable: "Wer kann diese Gruppe @erwähnen?"
+        messageable: "Wer cann dieser Gruppe eine Nachricht schicken?"
         nobody: "Niemand"
         only_admins: "Nur Administratoren"
         mods_and_admins: "Nur Moderatoren und Administratoren"
@@ -482,6 +491,7 @@ de:
       topics_entered: "betrachtete Themen"
       post_count: "# Beiträge"
       confirm_delete_other_accounts: "Bist du sicher, dass du diese Konten löschen willst?"
+      powered_by: "powered by <a href='https://ipinfo.io'>ipinfo.io</a>"
     user_fields:
       none: "(wähle eine Option aus)"
     user:
@@ -626,6 +636,7 @@ de:
         taken: "Entschuldige, diese E-Mail-Adresse ist nicht verfügbar."
         error: "Beim Ändern der E-Mail-Adresse ist ein Fehler aufgetreten. Möglicherweise wird diese Adresse schon benutzt."
         success: "Wir haben eine E-Mail an die angegebene E-Mail-Adresse gesendet. Folge zur Bestätigung der Adresse bitte den darin enthaltenen Anweisungen."
+        success_staff: "Wir haben eine E-Mail an deine aktuelle Adresse geschickt. Bitte folge den Bestätigungsanweisungen."
       change_avatar:
         title: "Ändere dein Profilbild"
         gravatar: "<a href='//gravatar.com/emails' target='_blank'>Gravatar</a>, basierend auf"
@@ -940,6 +951,7 @@ de:
       complete_email_found: "Wir haben ein zu <b>%{email}</b> gehörendes Benutzerkonto gefunden. Du solltest in Kürze eine E-Mail mit Anweisungen zum Zurücksetzen deines Passwortes erhalten."
       complete_username_not_found: "Es gibt kein Konto mit dem Benutzernamen <b>%{username}</b>"
       complete_email_not_found: "Es gibt kein Benutzerkonto für <b>%{email}</b>"
+      help: "E-Mail nicht angekommen? Bitte prüfe zuerst deinen Spam-Ordner. <p>Nicht sicher, welche E-Mail-Adresse du verwendet hast? Gib eine E-Mail-Adresse ein und wir werden dir sagen, ob sie hier existiert.</p><p>Falls du keinen Zugriff mehr auf die hinterlegte E-Mail-Adresse deines Kontos hast, kontaktiere bitte <a href='/about'>unser hilfsbereites Team. </a></p>"
       button_ok: "OK"
       button_help: "Hilfe"
     login:
@@ -1021,6 +1033,27 @@ de:
       shift: 'Umschalt'
       ctrl: 'Strg'
       alt: 'Alt'
+    select_box:
+      default_header_text: Auswählen…
+      no_content: Keine Treffer gefunden
+      filter_placeholder: Suchen…
+    emoji_picker:
+      filter_placeholder: Emoji suchen
+      people: Personen
+      nature: Natur
+      food: Lebensmittel
+      activity: Aktivität
+      travel: Reisen
+      objects: Objekte
+      celebration: Feiern
+      custom: Benutzerdefinierte Emojis
+      recent: Zuletzt verwendet
+      default_tone: Keine Hautfarbe
+      light_tone: Helle Hautfarbe
+      medium_light_tone: Mittel-helle Hautfarbe
+      medium_tone: Mittlere Hautfarbe
+      medium_dark_tone: Mittel-dunkle Hautfarbe
+      dark_tone: Dunkle Hautfarbe
     composer:
       emoji: "Emoji :)"
       more_emoji: "mehr…"
@@ -1115,29 +1148,29 @@ de:
       empty: "Keine Benachrichtigungen gefunden."
       more: "ältere Benachrichtigungen anzeigen"
       total_flagged: "Anzahl der gemeldeten Beiträge"
-      mentioned: "<i title='erwähnt' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      group_mentioned: "<i title='Gruppe erwähnt' class='fa fa-at'></i><p><span>{{username}}</span> {{description}}</p>"
-      quoted: "<i title='zitiert' class='fa fa-quote-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      replied: "<i title='geantwortet' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      posted: "<i title='geantwortet' class='fa fa-reply'></i><p><span>{{username}}</span> {{description}}</p>"
-      edited: "<i title='bearbeitet' class='fa fa-pencil'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked: "<i title='gefällt' class='fa fa-heart'></i><p><span>{{username}}</span> {{description}}</p>"
-      liked_2: "<i title='gefällt' class='fa fa-heart'></i><p><span>{{username}}, {{username2}}</span> {{description}}</p>"
+      mentioned: "<span>{{username}}</span> {{description}}"
+      group_mentioned: "<span>{{username}}</span> {{description}}"
+      quoted: "<span>{{username}}</span> {{description}}"
+      replied: "<span>{{username}}</span> {{description}}"
+      posted: "<span>{{username}}</span> {{description}}"
+      edited: "<span>{{username}}</span> {{description}}"
+      liked: "<span>{{username}}</span> {{description}}"
+      liked_2: "<span>{{username}}, {{username2}}</span> {{description}}"
       liked_many:
-        one: "<i title='gefällt' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} und 1 anderer</span> {{description}}</p>"
-        other: "<i title='gefällt' class='fa fa-heart'></i><p><span>{{username}}, {{username2}} und {{count}} andere</span> {{description}}</p>"
-      private_message: "<i title='Nachricht' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_private_message: "<i title='Nachricht' class='fa fa-envelope-o'></i><p><span>{{username}}</span> {{description}}</p>"
-      invited_to_topic: "<i title='zu Thema eingeladen' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      invitee_accepted: "<i title='Einladung angenommen' class='fa fa-user'></i><p><span>{{username}}</span> hat deine Einladung angenommen</p>"
-      moved_post: "<i title='Beitrag verschoben' class='fa fa-sign-out'></i><p><span>{{username}}</span> hat {{description}} verschoben</p>"
-      linked: "<i title='linked post' class='fa fa-link'></i><p><span>{{username}}</span> {{description}}</p>"
-      granted_badge: "<i title='Abzeichen verliehen' class='fa fa-certificate'></i><p>Abzeichen '{{description}}' erhalten</p>"
-      topic_reminder: "<i title='topic reminder' class='fa fa-hand-o-right'></i><p><span>{{username}}</span> {{description}}</p>"
-      watching_first_post: "<i title='new topic' class='fa fa-dot-circle-o'></i><p><span>Neues Thema</span> {{description}}</p>"
+        one: "<span>{{username}}, {{username2}} und jemand anderes</span> {{description}}"
+        other: "<span>{{username}}, {{username2}} und {{count}} andere</span> {{description}}"
+      private_message: "<span>{{username}}</span> {{description}}"
+      invited_to_private_message: "<p><span>{{username}}</span> {{description}}"
+      invited_to_topic: "<span>{{username}}</span> {{description}}"
+      invitee_accepted: "<span>{{username}}</span> hat deine Einladung angenommen"
+      moved_post: "<span>{{username}}</span> hat {{description}} verschoben"
+      linked: "<span>{{username}}</span> {{description}}"
+      granted_badge: "Hat '{{description}}' verliehen bekommen"
+      topic_reminder: "<span>{{username}}</span> {{description}}"
+      watching_first_post: "<span>New Topic</span> {{description}}"
       group_message_summary:
-        one: "<i title='messages in group inbox' class='fa fa-group'></i><p> Eine Nachricht in deinem {{group_name}} Postfach</p>"
-        other: "<i title='messages in group inbox' class='fa fa-group'></i><p> {{count}} Nachrichten in deinem {{group_name}} Postfach</p>"
+        one: "{{count}} Nachricht in deinem {{group_name}} Posteingang"
+        other: "{{count}} Nachrichten in deinem {{group_name}} Posteingang"
       alt:
         mentioned: "Erwähnt von"
         quoted: "Zitiert von"
@@ -1186,14 +1219,21 @@ de:
       clear_all: "Auswahl aufheben"
       too_short: "Der Suchbegriff ist zu kurz."
       result_count:
-        one: "1 Ergebnis für <span class='term'>\"{{term}}\"</span>"
-        other: "{{count}} Ergebnisse für <span class='term'>\"{{term}}\"</span>"
+        one: "1 Ergebnis für <span class='term'>{{term}}</span>"
+        other: "{{count}} Ergebnisse für <span class='term'>{{term}}</span>"
       title: "suche nach Themen, Beiträgen, Benutzern oder Kategorien"
       no_results: "Keine Ergebnisse gefunden."
       no_more_results: "Es wurde keine weiteren Ergebnisse gefunden."
       searching: "Suche …"
       post_format: "#{{post_number}} von {{username}}"
       results_page: "Suchergebnisse"
+      more_results: "Es gibt mehr Ergebnisse. Bitte grenze deine Suchkriterien weiter ein."
+      cant_find: "Nicht gefunden, wonach du suchst?"
+      start_new_topic: "Wie wär’s mit einem neuen Thema?"
+      or_search_google: "Oder versuche stattdessen mit Google zu suchen:"
+      search_google: "Versuche stattdessen mit Google zu suchen:"
+      search_google_button: "Google"
+      search_google_title: "Durchsuche diese Seite"
       context:
         user: "Beiträge von @{{username}} durchsuchen"
         category: "Kategorie #{{category}} durchsuchen"
@@ -1225,6 +1265,7 @@ de:
           seen: Gelesene Themen/Beiträge
           unseen: Ungelesene Themen/Beiträge
           wiki: Wikis
+          images: eingeschlossene(s) Bild(er)
           all_tags: Enthält alle Schlagwörter
         statuses:
           label: 'Themen einschränken:'
@@ -1555,6 +1596,7 @@ de:
         success_email: "Wir haben an <b>{{emailOrUsername}}</b> eine Einladung verschickt und werden dich benachrichtigen, sobald die Einladung angenommen wurde. In deinem Benutzerprofil kannst du alle deine Einladungen überwachen."
         success_username: "Wir haben den Benutzer gebeten, sich an diesem Thema zu beteiligen."
         error: "Es tut uns leid, wir konnten diese Person nicht einladen. Wurde diese Person vielleicht schon eingeladen? (Einladungen sind in ihrer Zahl beschränkt)"
+        success_existing_email: "Ein Benutzer mit der E-Mail-Adresse <b>{{emailOrUsername}}</b> existiert bereits. Wir haben den Benutzer eingeladen, sich an diesem Thema zu beteiligen."
       login_reply: 'Anmelden, um zu antworten'
       filters:
         n_posts:
@@ -1777,6 +1819,10 @@ de:
         confirm:
           one: "Möchtest du wirklich diesen Beitrag löschen?"
           other: "Möchtest du wirklich all diese Beiträge löschen?"
+      merge:
+        confirm:
+          one: "Möchtest du diese Beiträge wirklich zusammenführen?"
+          other: "Möchtest du diese {{count}} Beiträge wirklich zusammenführen?"
       revisions:
         controls:
           first: "Erste Überarbeitung"
@@ -1822,6 +1868,8 @@ de:
       settings: 'Einstellungen'
       topic_template: "Themenvorlage"
       tags: "Schlagwörter"
+      tags_allowed_tags: "Erlaube in dieser Kategorie nur folgende Schlagwörter:"
+      tags_allowed_tag_groups: "Erlaube in dieser Kategorie nur Schlagwörter aus folgenden Schlagwortgruppen:"
       tags_placeholder: "(Optional) Liste erlaubter Schlagwörter"
       tag_groups_placeholder: "(Optional) Liste erlaubter Schlagwort-Gruppen"
       topic_featured_link_allowed: "Erlaube hervorgehobene Links in dieser Kategorie"
@@ -2116,7 +2164,7 @@ de:
         hamburger_menu: '<b>=</b> „Hamburger“-Menü öffnen'
         user_profile_menu: '<b>p</b> Benutzermenü öffnen'
         show_incoming_updated_topics: '<b>.</b> Aktualisierte Themen anzeigen'
-        search: '<b>/</b> Suche'
+        search: '<b>/</b> oder <b>Strg</b>+<b>Shift</b>+<b>s</b> Suche'
         help: '<b>?</b> Tastaturhilfe öffnen'
         dismiss_new_posts: '<b>x</b>, <b>r</b> Neue/ausgewählte Beiträge ausblenden'
         dismiss_topics: '<b>x</b>, <b>t</b> Themen ausblenden'
@@ -2639,6 +2687,9 @@ de:
           updating: "Wird aktualisiert..."
           up_to_date: "Theme ist aktuell, zuletzt geprüft:"
           add: "Hinzufügen"
+          commits_behind:
+            one: "Theme liegt 1 Commit zurück!"
+            other: "Theme liegt {{count}} Commits zurück!"
           scss:
             text: "CSS"
             title: "Gib benutzerdefiniertes CSS ein, wir akzeptieren alle gültigen CSS und SCSS-Stile"
@@ -2874,6 +2925,31 @@ de:
             title: "Erzeugt neue Einträge zum Blockieren von Subnetzen, wenn mindestens 'min_ban_entries_for_roll_up' Einträge vorhanden sind."
         logster:
           title: "Fehlerprotokolle"
+      watched_words:
+        title: "Beobachtete Wörter"
+        search: "Suchen"
+        clear_filter: "Zurücksetzen"
+        show_words: "Wörter anzeigen"
+        word_count:
+          one: "1 Wort"
+          other: "%{count} Wörter"
+        actions:
+          block: 'Blockieren'
+          censor: 'Zensieren'
+          require_approval: 'Erfordert Genehmigung'
+          flag: 'Melden'
+        action_descriptions:
+          block: 'Verhindert, dass Beiträge mit diesen Wörtern abgeschickt werden. Benutzer werden eine Fehlermeldung sehen, wenn sie ihren Beitrag abschicken.'
+          censor: 'Erlaube Beiträge mit diesen Wörtern, aber ersetze sie mit Zeichen, die die zensierten Wörter verstecken.'
+          require_approval: 'Beitärge mit diesen Wörtern werden eine Genehmigung vom Team erfordern, bevor sie sichtbar sind.'
+          flag: 'Erlaube Beiträge mit diesen Wörtern, aber markiere sie als unangemessen, damit Moderatoren sie überprüfen können.'
+        form:
+          label: 'Neues Wort:'
+          placeholder: 'vollständiges Wort oder * als Platzhalter'
+          add: 'Hinzufügen'
+          success: 'Erfolg'
+          upload: "Hochladen"
+          upload_successful: "Hochladen erfolgreich. Wörter wurden hinzugefügt."
       impersonate:
         title: "Als Benutzer ausgeben"
         help: "Benutze dieses Werkzeug, um zur Fehlersuche in die Rolle eines anderen Benutzers zu schlüpfen. Du musst dich abmelden, wenn du fertig bist."
@@ -3014,6 +3090,7 @@ de:
         reset_bounce_score:
           label: "Zurücksetzen"
           title: "Anzahl unzustellbarer E-Mails auf 0 zurücksetzen"
+        visit_profile: "Besuche die <a href='%{url}'>Benutzer-Einstellungen</a>, um dieses Profil zu bearbeiten"
         deactivate_explanation: "Ein deaktivierter Benutzer muss seine E-Mail-Adresse erneut bestätigen."
         suspended_explanation: "Ein gesperrter Benutzer kann sich nicht anmelden."
         block_explanation: "Ein geblockter Benutzer kann keine Themen erstellen oder Beiträge veröffentlichen."
@@ -3271,8 +3348,8 @@ de:
       uploading: "Hochladen..."
       quit: "Vielleicht später"
       staff_count:
-        one: "Deine Community hat 1 Team-Mitglied."
-        other: "Deine Community hat %{count} Team-Mitglieder."
+        one: "Deine Community hat ein Team-Mitglied (du)."
+        other: "Deine Community hat %{count} Team-Mitglieder, einschließlich dir."
       invites:
         add_user: "Hinzufügen"
         none_added: "Du hast bisher kein Team eingeladen. Möchtest du wirklich fortfahren?"

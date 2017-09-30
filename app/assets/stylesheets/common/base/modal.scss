@@ -13,11 +13,11 @@
 
 .input-hint-text {
   margin-left: 0.5em;
-  color: dark-light-diff($secondary, $primary, 30%, -35%);
+  color: $secondary-medium;
 }
 
 .modal-header {
-  border-bottom: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
+  border-bottom: 1px solid $primary-low; 
 }
 
 .modal-backdrop {
@@ -83,7 +83,13 @@
 }
 
 
-.modal {
+.inline-modal {
+  .modal-inner-container {
+    border: 1px solid $secondary-medium;
+  }
+}
+
+.fixed-modal {
   position: fixed;
   top: 0;
   width: 100%;
@@ -96,7 +102,7 @@
 }
 .modal-footer {
   padding: 14px 15px 15px;
-  border-top: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
+  border-top: 1px solid $primary-low; 
 }
 .modal-footer:before,
 .modal-footer:after {
@@ -118,15 +124,15 @@
 .modal {
   .nav {
     padding: 10px 30px 10px 15px;
-    background-color: dark-light-diff($secondary, $primary, 10%, -15%);
+    background-color: $secondary;
     li > a {
       font-size: 1em;
     }
-    border-bottom: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
+    border-bottom: 1px solid $primary-low; 
 
   }
 
-    &.hidden {
+  &.hidden {
     display: none;
   }
 
@@ -221,6 +227,12 @@
 
 .reply-where-modal {
   .modal-footer {
+    a {
+      display: block;
+    }
+    .d-modal-cancel {
+      margin-top: 1em;
+    }
     .btn {
       text-align: left;
       font-size: 1.286em;
@@ -235,18 +247,17 @@
         font-weight: normal;
       }
       &.btn-reply-here {
-        background: dark-light-diff($primary, $secondary, 90%, -60%);
+        background: $primary-low;
         text-shadow: none;
         color: $primary;
       }
     }
-    .cancel {
-      float: right;
-      margin-right: 5px;
-    }
   }
 }
-
+.d-modal-cancel {
+  margin-left: 5px;
+  color: $primary-medium;
+}
 
 .delete-user-modal {
   .modal-footer {
@@ -259,15 +270,7 @@
       display: inline-block;
       margin-left: 0;
     }
-    .cancel {
-      display: block;
-      margin-right: 5px;
-    }
   }
-}
-
-.modal-footer .cancel-inline {
-  margin-left: 10px;
 }
 
 .invite-modal {
@@ -292,7 +295,7 @@
   .permission {
     margin-left: 20px;
   }
-  .fa-times-circle {
+  .d-icon-times-circle {
     margin-left: 5px;
   }
   li {
@@ -301,7 +304,7 @@
 }
 
 .edit-category-modal {
-  .auto-update-input, .num-featured-topics-fields, .position-fields {
+  .future-date-input, .num-featured-topics-fields, .position-fields {
     input[type=text] {
       width: 50px;
     }
@@ -356,7 +359,7 @@
       font-weight: bold;
     }
     &:focus {
-      outline: 2px solid dark-light-diff($primary, $secondary, 90%, -60%);
+      outline: 2px solid $primary-low; 
     }
   }
   .incoming-email-tabs {
@@ -367,7 +370,7 @@
     textarea, .incoming-email-html-part {
       height: 95%;
       border: none;
-      border-top: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
+      border-top: 1px solid $primary-low; 
       padding-top: 10px;
     }
     textarea {

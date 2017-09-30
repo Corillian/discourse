@@ -45,7 +45,7 @@
 
 .topic-status-info {
   padding-left: 10px;
-  border-top: 1px solid dark-light-diff($primary, $secondary, 90%, -75%);
+  border-top: 1px solid $primary-low; 
   padding-top: 10px;
   h3 {
     margin: 0;
@@ -66,7 +66,7 @@
 }
 
 #topic-progress-expanded {
-  border: 1px solid dark-light-diff($primary, $secondary, 90%, -60%);
+  border: 1px solid $primary-low; 
   padding: 5px;
   background: $secondary;
 
@@ -113,7 +113,7 @@
   }
   background-color: $secondary;
   color: $tertiary;
-  border: 1px solid dark-light-diff($tertiary, $secondary, 85%, -65%);
+  border: 1px solid $tertiary-low;
   border-bottom: none;
   width: 145px;
   height: 34px;
@@ -133,7 +133,7 @@
     font-size: 1.286em;
     line-height: 15px;
   }
-  i.fa {
+  .d-icon {
     position: absolute;
     right: 8px;
     bottom: 9px;
@@ -144,8 +144,8 @@
     top: 0;
     bottom: 0;
     width: 0;
-    border-right: 1px solid  dark-light-diff($tertiary, $secondary, 85%, -65%);
-    background-color:  dark-light-diff($tertiary, $secondary, 85%, -65%);
+    border-right: 1px solid  $tertiary-low;
+    background-color:  $tertiary-low;
     transition: width .75s;
   }
 }
@@ -183,7 +183,9 @@ sup sup, sub sup, sup sub, sub sub { top: 0; }
   input#edit-title {
     width: 95%;
     padding: 5px;
+    box-sizing: border-box;
   }
+
   .btn-small {
     padding: 8px 12px;
     margin: 6px 6px 0 0;
@@ -191,6 +193,10 @@ sup sup, sub sup, sup sub, sub sub { top: 0; }
   .select2-container {
     margin-top: 8px;
     width: 95% !important;
+  }
+  .category-select-box {
+    margin-top: 8px;
+    width: 95%;
   }
 }
 
@@ -201,7 +207,7 @@ sup sup, sub sup, sup sub, sub sub { top: 0; }
 }
 
 .edit-topic-timer-modal {
-  .auto-update-input {
+  .future-date-input {
     .alert-info {
       margin: 0 -10px -10px -10px;
       padding: 10px;
