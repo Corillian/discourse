@@ -14,15 +14,33 @@ describe DistributedCache do
   end
 
   def cache(name)
-    DistributedCache.new(name, @manager)
+    DistributedCache.new(name, manager: @manager)
+  end
+
+  let :cache_name do
+    SecureRandom.hex
   end
 
   let! :cache1 do
-    cache("test")
+    cache(cache_name)
   end
 
   let! :cache2 do
-    cache("test")
+    cache(cache_name)
+  end
+
+  it 'supports arrays with hashes' do
+
+    c1 = cache("test1")
+    c2 = cache("test1")
+
+    c1["test"] = [{ test: :test }]
+
+    wait_for do
+      c2["test"] == [{ test: :test }]
+    end
+
+    expect(c2[:test]).to eq([{ test: :test }])
   end
 
   it 'allows us to store Set' do

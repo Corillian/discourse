@@ -5,12 +5,33 @@ require_dependency 'upload_creator'
 module Jobs
 
   class PullHotlinkedImages < Jobs::Base
-
     sidekiq_options queue: 'low'
 
     def initialize
-      # maximum size of the file in bytes
       @max_size = SiteSetting.max_image_size_kb.kilobytes
+    end
+
+    def download(src)
+      downloaded = nil
+
+      begin
+        retries ||= 3
+
+        downloaded = FileHelper.download(
+          src,
+          max_file_size: @max_size,
+          retain_on_max_file_size_exceeded: true,
+          tmp_file_name: "discourse-hotlinked",
+          follow_redirect: true
+        )
+      rescue
+        if (retries -= 1) > 0 && !Rails.env.test?
+          sleep 1
+          retry
+        end
+      end
+
+      downloaded
     end
 
     def execute(args)
@@ -24,47 +45,46 @@ module Jobs
 
       raw = post.raw.dup
       start_raw = raw.dup
+
       downloaded_urls = {}
-      broken_images, large_images = [], []
+
+      large_images = JSON.parse(post.custom_fields[Post::LARGE_IMAGES].presence || "[]")
+      broken_images = JSON.parse(post.custom_fields[Post::BROKEN_IMAGES].presence || "[]")
+      downloaded_images = JSON.parse(post.custom_fields[Post::DOWNLOADED_IMAGES].presence || "{}")
+
+      has_new_large_image  = false
+      has_new_broken_image = false
+      has_downloaded_image = false
 
       extract_images_from(post.cooked).each do |image|
         src = original_src = image['src']
-        src = "http:#{src}" if src.start_with?("//")
+        src = "#{SiteSetting.force_https ? "https" : "http"}:#{src}" if src.start_with?("//")
 
         if is_valid_image_url(src)
-          hotlinked = nil
           begin
             # have we already downloaded that file?
-            unless downloaded_urls.include?(src)
-              begin
-                hotlinked = FileHelper.download(
-                  src,
-                  max_file_size: @max_size,
-                  tmp_file_name: "discourse-hotlinked",
-                  follow_redirect: true
-                )
-              rescue Discourse::InvalidParameters
-                log(:error, "InvalidParameters while downloading hotlinked image (#{src}) for post: #{post_id}")
-              rescue => e
-                log(:error, "Failed to download image #{e}")
-              end
-              if hotlinked
+            schemeless_src = remove_scheme(original_src)
+
+            unless downloaded_images.include?(schemeless_src) || large_images.include?(schemeless_src) || broken_images.include?(schemeless_src)
+              if hotlinked = download(src)
                 if File.size(hotlinked.path) <= @max_size
                   filename = File.basename(URI.parse(src).path)
                   filename << File.extname(hotlinked.path) unless filename["."]
                   upload = UploadCreator.new(hotlinked, filename, origin: src).create_for(post.user_id)
                   if upload.persisted?
                     downloaded_urls[src] = upload.url
+                    downloaded_images[remove_scheme(src)] = upload.id
+                    has_downloaded_image = true
                   else
-                    log(:error, "Failed to pull hotlinked image for post: #{post_id}: #{src} - #{upload.errors.join("\n")}")
+                    log(:info, "Failed to pull hotlinked image for post: #{post_id}: #{src} - #{upload.errors.full_messages.join("\n")}")
                   end
                 else
-                  log(:error, "Failed to pull hotlinked image for post: #{post_id}: #{src} - Image is bigger than #{@max_size}")
-                  large_images << original_src
+                  large_images << remove_scheme(original_src)
+                  has_new_large_image = true
                 end
               else
-                log(:error, "There was an error while downloading '#{src}' locally for post: #{post_id}")
-                broken_images << original_src
+                broken_images << remove_scheme(original_src)
+                has_new_broken_image = true
               end
             end
             # have we successfully downloaded that file?
@@ -93,51 +113,24 @@ module Jobs
             log(:error, "Failed to pull hotlinked image (#{src}) post: #{post_id}\n" + e.message + "\n" + e.backtrace.join("\n"))
           end
         end
-
       end
 
+      large_images.uniq!
+      broken_images.uniq!
+
+      post.custom_fields[Post::LARGE_IMAGES]      = large_images.to_json      if large_images.present?
+      post.custom_fields[Post::BROKEN_IMAGES]     = broken_images.to_json     if broken_images.present?
+      post.custom_fields[Post::DOWNLOADED_IMAGES] = downloaded_images.to_json if downloaded_images.present?
+      # only save custom fields if there are any
+      post.save_custom_fields if large_images.present? || broken_images.present? || downloaded_images.present?
+
       post.reload
+
       if start_raw == post.raw && raw != post.raw
         changes = { raw: raw, edit_reason: I18n.t("upload.edit_reason") }
-        # we never want that job to bump the topic
-        options = { bypass_bump: true }
-        post.revise(Discourse.system_user, changes, options)
-      elsif downloaded_urls.present?
-        post.trigger_post_process(true)
-      elsif broken_images.present? || large_images.present?
-        start_html = post.cooked
-        doc = Nokogiri::HTML::fragment(start_html)
-        images = doc.css("img[src]") - doc.css("img.avatar")
-        images.each do |tag|
-          src = tag['src']
-          if broken_images.include?(src)
-            tag.name = 'span'
-            tag.set_attribute('class', 'broken-image fa fa-chain-broken')
-            tag.set_attribute('title', I18n.t('post.image_placeholder.broken'))
-            tag.remove_attribute('src')
-            tag.remove_attribute('width')
-            tag.remove_attribute('height')
-          elsif large_images.include?(src)
-            tag.name = 'a'
-            tag.set_attribute('href', src)
-            tag.set_attribute('target', '_blank')
-            tag.set_attribute('title', I18n.t('post.image_placeholder.large'))
-            tag.remove_attribute('src')
-            tag.remove_attribute('width')
-            tag.remove_attribute('height')
-            tag.inner_html = '<span class="large-image fa fa-picture-o"></span>'
-            parent = tag.parent
-            if parent.name == 'a'
-              parent.add_next_sibling(tag)
-              parent.add_next_sibling('<br>')
-              parent.content = parent["href"]
-            end
-          end
-        end
-        if start_html == post.cooked && doc.to_html != post.cooked
-          post.update_column(:cooked, doc.to_html)
-          post.publish_change_to_clients! :revised
-        end
+        post.revise(Discourse.system_user, changes, bypass_bump: true)
+      elsif has_downloaded_image || has_new_large_image || has_new_broken_image
+        post.trigger_post_process(bypass_bump: true)
       end
     end
 
@@ -157,7 +150,7 @@ module Jobs
       # parse the src
       begin
         uri = URI.parse(src)
-      rescue URI::InvalidURIError
+      rescue URI::Error
         return false
       end
 
@@ -166,7 +159,7 @@ module Jobs
 
       # we don't want to pull images hosted on the CDN (if we use one)
       return false if Discourse.asset_host.present? && URI.parse(Discourse.asset_host).hostname == hostname
-      return false if SiteSetting.s3_cdn_url.present? && URI.parse(SiteSetting.s3_cdn_url).hostname == hostname
+      return false if SiteSetting.Upload.s3_cdn_url.present? && URI.parse(SiteSetting.Upload.s3_cdn_url).hostname == hostname
       # we don't want to pull images hosted on the main domain
       return false if URI.parse(Discourse.base_url_no_prefix).hostname == hostname
       # check the domains blacklist
@@ -180,6 +173,11 @@ module Jobs
       )
     end
 
+    private
+
+    def remove_scheme(src)
+      src.sub(/^https?:/i, "")
+    end
   end
 
 end

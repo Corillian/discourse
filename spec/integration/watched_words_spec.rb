@@ -21,7 +21,7 @@ describe WatchedWord do
       expect {
         result = manager.perform
         expect(result).to_not be_success
-        expect(result.errors[:base]&.first).to eq(I18n.t('contains_blocked_words'))
+        expect(result.errors[:base]&.first).to eq(I18n.t('contains_blocked_words', word: block_word.word))
       }.to_not change { Post.count }
     end
 
@@ -163,11 +163,20 @@ describe WatchedWord do
     end
 
     it "flags on revisions" do
+      SiteSetting.queue_jobs = false
       post = Fabricate(:post, topic: Fabricate(:topic, user: tl2_user), user: tl2_user)
       expect {
         PostRevisor.new(post).revise!(post.user, { raw: "Want some #{flag_word.word} for cheap?" }, revised_at: post.updated_at + 10.seconds)
       }.to change { PostAction.count }.by(1)
       expect(PostAction.where(post_id: post.id, post_action_type_id: PostActionType.types[:inappropriate]).exists?).to eq(true)
+    end
+
+    it "should not flag on rebake" do
+      post = Fabricate(:post, topic: Fabricate(:topic, user: tl2_user), user: tl2_user, raw: "I have coupon codes. Message me.")
+      Fabricate(:watched_word, action: WatchedWord.actions[:flag], word: "coupon")
+      expect {
+        post.rebake!
+      }.to_not change { PostAction.count }
     end
   end
 end

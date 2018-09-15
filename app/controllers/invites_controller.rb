@@ -2,11 +2,15 @@ require_dependency 'rate_limiter'
 
 class InvitesController < ApplicationController
 
+  requires_login only: [
+    :destroy, :create, :create_invite_link, :rescind_all_invites,
+    :resend_invite, :resend_all_invites, :upload_csv
+  ]
+
   skip_before_action :check_xhr, except: [:perform_accept_invitation]
   skip_before_action :preload_json, except: [:show]
   skip_before_action :redirect_to_login_if_required
 
-  before_action :ensure_logged_in, only: [:destroy, :create, :create_invite_link, :rescind_all_invites, :resend_invite, :resend_all_invites, :upload_csv]
   before_action :ensure_new_registrations_allowed, only: [:show, :perform_accept_invitation]
   before_action :ensure_not_logged_in, only: [:show, :perform_accept_invitation]
 
@@ -15,7 +19,7 @@ class InvitesController < ApplicationController
 
     invite = Invite.find_by(invite_key: params[:id])
 
-    if invite.present?
+    if invite.present? && !invite.redeemed?
       store_preloaded("invite_info", MultiJson.dump(
         invited_by: UserNameSerializer.new(invite.invited_by, scope: guardian, root: false),
         email: invite.email,
@@ -24,14 +28,14 @@ class InvitesController < ApplicationController
 
       render layout: 'application'
     else
-      flash.now[:error] = I18n.t('invite.not_found')
+      flash.now[:error] = I18n.t('invite.not_found_template', site_name: SiteSetting.title, base_url: Discourse.base_url)
       render layout: 'no_ember'
     end
   end
 
   def perform_accept_invitation
     params.require(:id)
-    params.permit(:username, :name, :password, :user_custom_fields)
+    params.permit(:username, :name, :password, user_custom_fields: {})
     invite = Invite.find_by(invite_key: params[:id])
 
     if invite.present?
@@ -93,9 +97,11 @@ class InvitesController < ApplicationController
       group_ids: params[:group_ids],
       group_names: params[:group_names]
     )
-
     guardian.ensure_can_invite_to_forum!(groups)
+
     topic = Topic.find_by(id: params[:topic_id])
+    guardian.ensure_can_invite_to!(topic) if topic.present?
+
     group_ids = groups.map(&:id)
 
     invite_exists = Invite.where(email: params[:email], invited_by_id: current_user.id).first
@@ -159,20 +165,18 @@ class InvitesController < ApplicationController
     name = params[:name] || File.basename(file.original_filename, ".*")
     extension = File.extname(file.original_filename)
 
-    Scheduler::Defer.later("Upload CSV") do
-      begin
-        data = if extension.downcase == ".csv"
-          path = Invite.create_csv(file, name)
-          Jobs.enqueue(:bulk_invite, filename: "#{name}#{extension}", current_user_id: current_user.id)
-          { url: path }
-        else
-          failed_json.merge(errors: [I18n.t("bulk_invite.file_should_be_csv")])
-        end
-      rescue
-        failed_json.merge(errors: [I18n.t("bulk_invite.error")])
+    begin
+      data = if extension.downcase == ".csv"
+        path = Invite.create_csv(file, name)
+        Jobs.enqueue(:bulk_invite, filename: "#{name}#{extension}", current_user_id: current_user.id)
+        { url: path }
+      else
+        failed_json.merge(errors: [I18n.t("bulk_invite.file_should_be_csv")])
       end
-      MessageBus.publish("/uploads/csv", data.as_json, user_ids: [current_user.id])
+    rescue
+      failed_json.merge(errors: [I18n.t("bulk_invite.error")])
     end
+    MessageBus.publish("/uploads/csv", data.as_json, user_ids: [current_user.id])
 
     render json: success_json
   end
@@ -205,14 +209,14 @@ class InvitesController < ApplicationController
 
   private
 
-    def post_process_invite(user)
-      user.enqueue_welcome_message('welcome_invite') if user.send_welcome_message
-      if user.has_password?
-        email_token = user.email_tokens.create(email: user.email)
-        Jobs.enqueue(:critical_user_email, type: :signup, user_id: user.id, email_token: email_token.token)
-      elsif !SiteSetting.enable_sso && SiteSetting.enable_local_logins
-        Jobs.enqueue(:invite_password_instructions_email, username: user.username)
-      end
+  def post_process_invite(user)
+    user.enqueue_welcome_message('welcome_invite') if user.send_welcome_message
+    if user.has_password?
+      email_token = user.email_tokens.create(email: user.email)
+      Jobs.enqueue(:critical_user_email, type: :signup, user_id: user.id, email_token: email_token.token)
+    elsif !SiteSetting.enable_sso && SiteSetting.enable_local_logins
+      Jobs.enqueue(:invite_password_instructions_email, username: user.username)
     end
+  end
 
 end

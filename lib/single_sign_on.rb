@@ -1,13 +1,44 @@
 class SingleSignOn
-  ACCESSORS = [:nonce, :name, :username, :email, :avatar_url, :avatar_force_update, :require_activation,
-               :bio, :external_id, :return_sso_url, :admin, :moderator, :suppress_welcome_message, :title,
-               :add_groups, :remove_groups]
+
+  ACCESSORS = %i{
+    add_groups
+    admin moderator
+    avatar_force_update
+    avatar_url
+    bio
+    card_background_url
+    email
+    external_id
+    groups
+    locale
+    locale_force_update
+    name
+    nonce
+    profile_background_url
+    remove_groups
+    require_activation
+    return_sso_url
+    suppress_welcome_message
+    title
+    username
+    website
+  }
+
   FIXNUMS = []
-  BOOLS = [:avatar_force_update, :admin, :moderator, :require_activation, :suppress_welcome_message]
+
+  BOOLS = %i{
+    admin
+    avatar_force_update
+    locale_force_update
+    moderator
+    require_activation
+    suppress_welcome_message
+  }
+
   NONCE_EXPIRY_TIME = 10.minutes
 
   attr_accessor(*ACCESSORS)
-  attr_accessor :sso_secret, :sso_url
+  attr_writer :sso_secret, :sso_url
 
   def self.sso_secret
     raise RuntimeError, "sso_secret not implemented on class, be sure to set it on instance"
@@ -78,7 +109,7 @@ class SingleSignOn
   end
 
   def payload
-    payload = Base64.encode64(unsigned_payload)
+    payload = Base64.strict_encode64(unsigned_payload)
     "sso=#{CGI::escape(payload)}&sig=#{sign(payload)}"
   end
 

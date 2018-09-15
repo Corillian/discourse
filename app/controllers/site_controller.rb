@@ -25,6 +25,16 @@ class SiteController < ApplicationController
     render json: custom_emoji
   end
 
+  def selectable_avatars
+    avatars = if SiteSetting.selectable_avatars_enabled?
+      (SiteSetting.selectable_avatars.presence || "").split("\n")
+    else
+      []
+    end
+
+    render json: avatars, root: false
+  end
+
   def basic_info
     results = {
       logo_url: UrlHelper.absolute(SiteSetting.logo_url),
@@ -34,7 +44,7 @@ class SiteController < ApplicationController
       title: SiteSetting.title,
       description: SiteSetting.site_description
     }
-    results[:mobile_logo_url] = SiteSetting.mobile_logo_url if SiteSetting.mobile_logo_url.present?
+    results[:mobile_logo_url] = SiteSetting.mobile_logo_url.presence
 
     DiscourseHub.stats_fetched_at = Time.zone.now if request.user_agent == "Discourse Hub"
 

@@ -70,7 +70,7 @@ SQL
     SELECT pa.user_id, min(pa.id) id
     FROM post_actions pa
     JOIN badge_posts p on p.id = pa.post_id
-    WHERE post_action_type_id IN (#{PostActionType.flag_types.values.join(",")}) AND
+    WHERE post_action_type_id IN (#{PostActionType.flag_types_without_custom.values.join(",")}) AND
       (:backfill OR pa.post_id IN (:post_ids) )
     GROUP BY pa.user_id
   ) x
@@ -141,10 +141,10 @@ SQL
         SELECT invited_by_id
         FROM invites i
         JOIN users u2 ON u2.id = i.user_id
-        WHERE i.deleted_at IS NULL AND u2.active AND u2.trust_level >= #{trust_level.to_i} AND not u2.blocked
+        WHERE i.deleted_at IS NULL AND u2.active AND u2.trust_level >= #{trust_level.to_i} AND u2.silenced_till IS NULL
         GROUP BY invited_by_id
         HAVING COUNT(*) >= #{count.to_i}
-      ) AND u.active AND NOT u.blocked AND u.id > 0 AND
+      ) AND u.active AND u.silenced_till IS NULL AND u.id > 0 AND
         (:backfill OR u.id IN (:user_ids) )
     "
   end

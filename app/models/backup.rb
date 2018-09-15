@@ -1,3 +1,4 @@
+require 'disk_space'
 require "azure"
 
 class Backup
@@ -39,7 +40,8 @@ class Backup
 
   def after_remove_hook
     remove_from_s3 if SiteSetting.enable_s3_backups? && !SiteSetting.s3_disable_cleanup?
-    remove_from_azure if SiteSEttings.enable_azure_backups?
+    remove_from_azure if SiteSettings.enable_azure_backups?
+    DiskSpace.reset_cached_stats unless SiteSetting.enable_s3_backups? || SiteSettings.enable_azure_backups?
   end
 
   def s3_bucket
@@ -50,7 +52,7 @@ class Backup
 
   def s3
     require "s3_helper" unless defined? S3Helper
-    @s3_helper ||= S3Helper.new(s3_bucket)
+    @s3_helper ||= S3Helper.new(s3_bucket, '', S3Helper.s3_options(SiteSetting))
   end
 
   def upload_to_s3

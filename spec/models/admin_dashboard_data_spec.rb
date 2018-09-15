@@ -15,6 +15,9 @@ describe AdminDashboardData do
 
       AdminDashboardData.fetch_problems
       expect(called).to eq(true)
+
+      AdminDashboardData.fetch_problems(check_force_https: true)
+      expect(called).to eq(true)
     end
 
     it 'calls the passed method' do
@@ -281,6 +284,32 @@ describe AdminDashboardData do
     end
   end
 
+  describe 'force_https_check' do
+    subject { described_class.new(check_force_https: true).force_https_check }
+
+    it 'returns nil if force_https site setting enabled' do
+      SiteSetting.force_https = true
+      expect(subject).to be_nil
+    end
+
+    it 'returns nil if force_https site setting not enabled' do
+      SiteSetting.force_https = false
+      expect(subject).to eq(I18n.t('dashboard.force_https_warning'))
+    end
+  end
+
+  describe 'ignore force_https_check' do
+    subject { described_class.new(check_force_https: false).force_https_check }
+
+    it 'returns nil' do
+      SiteSetting.force_https = true
+      expect(subject).to be_nil
+
+      SiteSetting.force_https = false
+      expect(subject).to be_nil
+    end
+  end
+
   describe 'stats cache' do
     include_examples 'stats cachable'
   end
@@ -307,4 +336,19 @@ describe AdminDashboardData do
     end
   end
 
+  describe '#out_of_date_themes' do
+    let(:remote) { RemoteTheme.create!(remote_url: "https://github.com/org/testtheme") }
+    let!(:theme) { Fabricate(:theme, remote_theme: remote, name: "Test< Theme") }
+
+    it "outputs correctly formatted html" do
+      remote.update!(local_version: "old version", remote_version: "new version", commits_behind: 2)
+      dashboard_data = described_class.new
+      expect(dashboard_data.out_of_date_themes).to eq(
+        I18n.t("dashboard.out_of_date_themes") + "<ul><li><a href=\"/admin/customize/themes/#{theme.id}\">Test&lt; Theme</a></li></ul>"
+      )
+
+      remote.update!(local_version: "new version", commits_behind: 0)
+      expect(dashboard_data.out_of_date_themes).to eq(nil)
+    end
+  end
 end

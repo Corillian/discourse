@@ -1,6 +1,7 @@
 task 'assets:precompile:before' do
 
   require 'uglifier'
+  require 'open3'
 
   unless %w{profile production}.include? Rails.env
     raise "rake assets:precompile should only be run in RAILS_ENV=production, you are risking unminified assets"
@@ -93,7 +94,6 @@ def compress_ruby(from, to)
   data = File.read("#{assets_path}/#{from}")
 
   uglified, map = Uglifier.new(comments: :none,
-                               screw_ie8: true,
                                source_map: {
                                  filename: File.basename(from),
                                  output_filename: File.basename(to)
@@ -109,15 +109,36 @@ def compress_ruby(from, to)
 end
 
 def gzip(path)
-  STDERR.puts "gzip #{path}"
-  STDERR.puts `gzip -f -c -9 #{path} > #{path}.gz`
+  STDERR.puts "gzip -f -c -9 #{path} > #{path}.gz"
+  STDERR.puts `gzip -f -c -9 #{path} > #{path}.gz`.strip
+  raise "gzip compression failed: exit code #{$?.exitstatus}" if $?.exitstatus != 0
+end
+
+if ENV['COMPRESS_BROTLI']&.to_i == 1
+  # different brotli versions use different parameters
+  ver_out, _ver_err, ver_status = Open3.capture3('brotli --version')
+  if !ver_status.success?
+    # old versions of brotli don't respond to --version
+    def brotli_command(path)
+      "brotli --quality 11 --input #{path} --output #{path}.br"
+    end
+  elsif ver_out >= "brotli 1.0.0"
+    def brotli_command(path)
+      "brotli -f --quality=11 #{path} --output=#{path}.br"
+    end
+  else
+    # not sure what to do here, not expecting this
+    raise "cannot determine brotli version"
+  end
 end
 
 def brotli(path)
   if ENV['COMPRESS_BROTLI']&.to_i == 1
-    STDERR.puts "brotli #{path}"
-    STDERR.puts `brotli --quality 11 --input #{path} --output #{path}.br`
-    STDERR.puts `chmod +r #{path}.br`
+    STDERR.puts brotli_command(path)
+    STDERR.puts `#{brotli_command(path)}`
+    raise "brotli compression failed: exit code #{$?.exitstatus}" if $?.exitstatus != 0
+    STDERR.puts `chmod +r #{path}.br`.strip
+    raise "chmod failed: exit code #{$?.exitstatus}" if $?.exitstatus != 0
   end
 end
 
@@ -158,9 +179,10 @@ task 'assets:precompile' => 'assets:precompile:before' do
           if File.exists?(_path)
             STDERR.puts "Skipping: #{file} already compressed"
           else
-            STDERR.puts "Compressing: #{file}"
-
             proc.call do
+              start = Time.now
+              STDERR.puts "#{start} Compressing: #{file}"
+
               # We can specify some files to never minify
               unless (ENV["DONT_MINIFY"] == "1") || to_skip.include?(info['logical_path'])
                 FileUtils.mv(path, _path)
@@ -171,6 +193,9 @@ task 'assets:precompile' => 'assets:precompile:before' do
               info["mtime"] = File.mtime(path).iso8601
               gzip(path)
               brotli(path)
+
+              STDERR.puts "Done compressing #{file} : #{(Time.now - start).round(2)} secs"
+              STDERR.puts
             end
           end
       end

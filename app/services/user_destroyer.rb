@@ -80,7 +80,15 @@ class UserDestroyer
             end
           end
 
-          StaffActionLogger.new(@actor == user ? Discourse.system_user : @actor).log_user_deletion(user, opts.slice(:context))
+          unless opts[:quiet]
+            if @actor == user
+              deleted_by = Discourse.system_user
+              opts[:context] = I18n.t("staff_action_logs.user_delete_self", url: opts[:context])
+            else
+              deleted_by = @actor
+            end
+            StaffActionLogger.new(deleted_by).log_user_deletion(user, opts.slice(:context))
+          end
           MessageBus.publish "/file-change", ["refresh"], user_ids: [u.id]
         end
       end

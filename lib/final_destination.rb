@@ -1,40 +1,72 @@
-require "socket"
-require "ipaddr"
+require 'socket'
+require 'ipaddr'
 require 'excon'
 require 'rate_limiter'
+require 'url_helper'
 
 # Determine the final endpoint for a Web URI, following redirects
 class FinalDestination
 
-  attr_reader :status, :cookie, :status_code
+  def self.clear_https_cache!(domain)
+    key = redis_https_key(domain)
+    $redis.without_namespace.del(key)
+  end
+
+  def self.cache_https_domain(domain)
+    key = redis_https_key(domain)
+    $redis.without_namespace.setex(key, "1", 1.day.to_i).present?
+  end
+
+  def self.is_https_domain?(domain)
+    key = redis_https_key(domain)
+    $redis.without_namespace.get(key).present?
+  end
+
+  def self.redis_https_key(domain)
+    "HTTPS_DOMAIN_#{domain}"
+  end
+
+  attr_reader :status, :cookie, :status_code, :ignored
 
   def initialize(url, opts = nil)
     @url = url
-    @uri =
-      begin
-        URI(escape_url) if @url
-      rescue URI::InvalidURIError
-      end
+    @uri = uri(escape_url) if @url
 
     @opts = opts || {}
     @force_get_hosts = @opts[:force_get_hosts] || []
     @opts[:max_redirects] ||= 5
-    @opts[:lookup_ip] ||= lambda do |host|
-      begin
-        IPSocket::getaddress(host)
-      rescue SocketError
-        nil
+    @opts[:lookup_ip] ||= lambda { |host| FinalDestination.lookup_ip(host) }
+
+    @ignored = @opts[:ignore_hostnames] || []
+
+    ignore_redirects = [Discourse.base_url_no_prefix]
+
+    if @opts[:ignore_redirects]
+      ignore_redirects.concat(@opts[:ignore_redirects])
+    end
+
+    ignore_redirects.each do |ignore_redirect|
+      ignore_redirect = uri(ignore_redirect)
+      if ignore_redirect.present? && ignore_redirect.hostname
+        @ignored << ignore_redirect.hostname
       end
     end
-    @ignored = [Discourse.base_url_no_prefix] + (@opts[:ignore_redirects] || [])
+
     @limit = @opts[:max_redirects]
     @status = :ready
     @http_verb = @force_get_hosts.any? { |host| hostname_matches?(host) } ? :get : :head
     @cookie = nil
+    @limited_ips = []
+    @verbose = @opts[:verbose] || false
+    @timeout = @opts[:timeout] || nil
   end
 
   def self.connection_timeout
     20
+  end
+
+  def timeout
+    @timeout || FinalDestination.connection_timeout
   end
 
   def redirected?
@@ -44,50 +76,97 @@ class FinalDestination
   def request_headers
     result = {
       "User-Agent" => "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
-      "Accept" => "text/html",
+      "Accept" => "*/*",
       "Host" => @uri.hostname
     }
 
-    result['cookie'] = @cookie if @cookie
+    result['Cookie'] = @cookie if @cookie
 
     result
   end
 
   def small_get(headers)
     Net::HTTP.start(@uri.host, @uri.port, use_ssl: @uri.is_a?(URI::HTTPS)) do |http|
-      http.open_timeout = FinalDestination.connection_timeout
-      http.read_timeout = FinalDestination.connection_timeout
+      http.open_timeout = timeout
+      http.read_timeout = timeout
+      http.request_get(@uri.request_uri, headers)
+    end
+  end
 
-      request = Net::HTTP::Get.new(@uri.request_uri, headers)
-      http.request(request) do |response|
-        return response
+  # this is a new interface for simply getting
+  # N bytes accounting for all internal logic
+  def get(uri = @uri, redirects = @limit, extra_headers: {}, &blk)
+    raise "Must specify block" unless block_given?
+
+    if uri && uri.port == 80 && FinalDestination.is_https_domain?(uri.hostname)
+      uri.scheme = "https"
+      uri = URI(uri.to_s)
+    end
+
+    return nil unless validate_uri
+
+    result, (location, cookie) = safe_get(uri, &blk)
+
+    if result == :redirect && (redirects == 0 || !location)
+      return nil
+    end
+
+    if result == :redirect
+      old_port = uri.port
+      location = "#{uri.scheme}://#{uri.host}#{location}" if location[0] == "/"
+      uri = uri(location)
+
+      # https redirect, so just cache that whole new domain is https
+      if old_port == 80 && uri&.port == 443 && (URI::HTTPS === uri)
+        FinalDestination.cache_https_domain(uri.hostname)
       end
+
+      return nil if !uri
+
+      extra = nil
+      extra = { 'Cookie' => cookie } if cookie
+
+      get(uri, redirects - 1, extra_headers: extra, &blk)
+    elsif result == :ok
+      uri.to_s
+    else
+      nil
     end
   end
 
   def resolve
+    if @uri && @uri.port == 80 && FinalDestination.is_https_domain?(@uri.hostname)
+      @uri.scheme = "https"
+      @uri = URI(@uri.to_s)
+    end
+
     if @limit < 0
       @status = :too_many_redirects
+      log(:warn, "FinalDestination could not resolve URL (too many redirects): #{@uri}") if @verbose
+      return nil
+    end
+
+    unless validate_uri
+      log(:warn, "FinalDestination could not resolve URL (invalid URI): #{@uri}") if @verbose
       return nil
     end
 
     @ignored.each do |host|
-      if hostname_matches?(host)
+      if @uri&.hostname&.match?(host)
         @status = :resolved
         return @uri
       end
     end
 
-    return nil unless validate_uri
     headers = request_headers
     response = Excon.public_send(@http_verb,
       @uri.to_s,
-      read_timeout: FinalDestination.connection_timeout,
+      read_timeout: timeout,
       headers: headers
     )
 
     location = nil
-    headers = nil
+    response_headers = nil
 
     response_status = response.status.to_i
 
@@ -95,8 +174,8 @@ class FinalDestination
     when 200
       @status = :resolved
       return @uri
-    when 405, 409, 501
-      get_response = small_get(headers)
+    when 400, 405, 406, 409, 501
+      get_response = small_get(request_headers)
 
       response_status = get_response.code.to_i
       if response_status == 200
@@ -104,37 +183,42 @@ class FinalDestination
         return @uri
       end
 
-      headers = {}
+      response_headers = {}
       if cookie_val = get_response.get_fields('set-cookie')
-        headers['set-cookie'] = cookie_val.join
+        response_headers[:cookies] = cookie_val
       end
 
-      # TODO this is confusing why grap location for anything not
-      # between 300-400 ?
       if location_val = get_response.get_fields('location')
-        headers['location'] = location_val.join
+        response_headers[:location] = location_val.join
       end
     end
 
-    unless headers
-      headers = {}
-      response.headers.each do |k, v|
-        headers[k.to_s.downcase] = v
-      end
+    unless response_headers
+      response_headers = {
+        cookies: response.data[:cookies] || response.headers[:"set-cookie"],
+        location: response.headers[:location]
+      }
     end
 
     if (300..399).include?(response_status)
-      location = headers["location"]
+      location = response_headers[:location]
     end
 
-    if set_cookie = headers["set-cookie"]
-      @cookie = set_cookie
+    if cookies = response_headers[:cookies]
+      @cookie = Array.wrap(cookies).map { |c| c.split(';').first.strip }.join('; ')
     end
 
     if location
+      old_port = @uri.port
       location = "#{@uri.scheme}://#{@uri.host}#{location}" if location[0] == "/"
-      @uri = URI(location) rescue nil
+      @uri = uri(location)
       @limit -= 1
+
+      # https redirect, so just cache that whole new domain is https
+      if old_port == 80 && @uri.port == 443 && (URI::HTTPS === @uri)
+        FinalDestination.cache_https_domain(@uri.hostname)
+      end
+
       return resolve
     end
 
@@ -142,8 +226,10 @@ class FinalDestination
     @status = :failure
     @status_code = response.status
 
+    log(:warn, "FinalDestination could not resolve URL (status #{response.status}): #{@uri}") if @verbose
     nil
   rescue Excon::Errors::Timeout
+    log(:warn, "FinalDestination could not resolve URL (timeout): #{@uri}") if @verbose
     nil
   end
 
@@ -162,22 +248,20 @@ class FinalDestination
   end
 
   def hostname_matches?(url)
-    @uri && url.present? && @uri.hostname == (URI(url) rescue nil)&.hostname
+    url = uri(url)
+    @uri && url.present? && @uri.hostname == url&.hostname
   end
 
   def is_dest_valid?
-
     return false unless @uri && @uri.host
 
     # Whitelisted hosts
-    return true if hostname_matches?(SiteSetting.s3_cdn_url) ||
+    return true if hostname_matches?(SiteSetting.Upload.s3_cdn_url) ||
       hostname_matches?(GlobalSetting.try(:cdn_url)) ||
       hostname_matches?(Discourse.base_url_no_prefix)
 
     if SiteSetting.whitelist_internal_hosts.present?
-      SiteSetting.whitelist_internal_hosts.split('|').each do |h|
-        return true if @uri.hostname.downcase == h.downcase
-      end
+      return true if SiteSetting.whitelist_internal_hosts.split("|").any? { |h| h.downcase == @uri.hostname.downcase }
     end
 
     address_s = @opts[:lookup_ip].call(@uri.hostname)
@@ -191,8 +275,9 @@ class FinalDestination
     end
 
     # Rate limit how often this IP can be crawled
-    unless @opts[:skip_rate_limit]
-      RateLimiter.new(nil, "crawl-destination-ip:#{address_s}", 100, 1.hour).performed!
+    if !@opts[:skip_rate_limit] && !@limited_ips.include?(address)
+      @limited_ips << address
+      RateLimiter.new(nil, "crawl-destination-ip:#{address_s}", 1000, 1.hour).performed!
     end
 
     true
@@ -201,7 +286,7 @@ class FinalDestination
   end
 
   def escape_url
-    TopicEmbed.escape_uri(
+    UrlHelper.escape_uri(
       CGI.unescapeHTML(@url),
       Regexp.new("[^#{URI::PATTERN::UNRESERVED}#{URI::PATTERN::RESERVED}#]")
     )
@@ -212,8 +297,18 @@ class FinalDestination
       SiteSetting.blacklist_ip_blocks.split('|').map { |r| IPAddr.new(r) rescue nil }.compact
   end
 
+  def log(log_level, message)
+    return if @status_code == 404
+
+    Rails.logger.public_send(
+      log_level,
+      "#{RailsMultisite::ConnectionManagement.current_db}: #{message}"
+    )
+  end
+
   def self.standard_private_ranges
     @private_ranges ||= [
+      IPAddr.new('0.0.0.0/8'),
       IPAddr.new('127.0.0.1'),
       IPAddr.new('172.16.0.0/12'),
       IPAddr.new('192.168.0.0/16'),
@@ -223,7 +318,84 @@ class FinalDestination
   end
 
   def self.lookup_ip(host)
-    IPSocket::getaddress(host)
+    if Rails.env.test?
+      "1.1.1.1"
+    else
+      IPSocket::getaddress(host)
+    end
+  rescue SocketError
+    nil
+  end
+
+  protected
+
+  def safe_get(uri)
+    result = nil
+    unsafe_close = false
+
+    safe_session(uri) do |http|
+      headers = request_headers.merge(
+        'Accept-Encoding' => 'gzip',
+        'Host' => uri.host
+      )
+
+      req = Net::HTTP::Get.new(uri.request_uri, headers)
+
+      http.request(req) do |resp|
+        if Net::HTTPRedirection === resp
+          result = :redirect, [resp['location'], resp['Set-Cookie']]
+        end
+
+        if Net::HTTPSuccess === resp
+          resp.decode_content = true
+          resp.read_body do |chunk|
+            read_next = true
+
+            catch(:done) do
+              if read_next
+                read_next = false
+                yield resp, chunk, uri
+                read_next = true
+              end
+            end
+
+            # no clean way of finishing abruptly cause
+            # response likes reading till the end
+            if !read_next
+              unsafe_close = true
+              http.finish
+              raise StandardError
+            end
+          end
+          result = :ok
+        else
+          catch(:done) do
+            yield resp, nil, nil
+          end
+        end
+      end
+    end
+
+    result
+  rescue StandardError
+    unsafe_close ? :ok : raise
+  end
+
+  def safe_session(uri)
+    Net::HTTP.start(uri.host, uri.port, use_ssl: (uri.scheme == "https")) do |http|
+      http.read_timeout = timeout
+      http.open_timeout = timeout
+      yield http
+    end
+  end
+
+  private
+
+  def uri(location)
+    begin
+      URI.parse(location)
+    rescue URI::Error
+    end
   end
 
 end

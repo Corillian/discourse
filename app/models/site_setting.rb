@@ -27,15 +27,10 @@ class SiteSetting < ActiveRecord::Base
     end
   end
 
-  # `current` hash is not populated everytime when load a site setting
-  # in order to support locale default. Instead, we simply `refresh!` once.
-  # This should only affects the spec in which you should populate `current`
-  refresh!
-
   client_settings << :available_locales
 
   def self.available_locales
-    LocaleSiteSetting.values.map { |e| e[:value] }.join('|')
+    LocaleSiteSetting.values.to_json
   end
 
   def self.topic_title_length
@@ -43,7 +38,7 @@ class SiteSetting < ActiveRecord::Base
   end
 
   def self.private_message_title_length
-    min_private_message_title_length..max_topic_title_length
+    min_personal_message_title_length..max_topic_title_length
   end
 
   def self.post_length
@@ -55,7 +50,7 @@ class SiteSetting < ActiveRecord::Base
   end
 
   def self.private_message_post_length
-    min_private_message_post_length..max_post_length
+    min_personal_message_post_length..max_post_length
   end
 
   def self.top_menu_items
@@ -82,7 +77,7 @@ class SiteSetting < ActiveRecord::Base
 
     host = URI.parse(src).host
     return !(setting.split('|').include?(host))
-  rescue URI::InvalidURIError
+  rescue URI::Error
     return true
   end
 
@@ -118,6 +113,66 @@ class SiteSetting < ActiveRecord::Base
   def self.attachment_filename_blacklist_regex
     @attachment_filename_blacklist_regex ||= Regexp.union(SiteSetting.attachment_filename_blacklist.split("|"))
   end
+
+  # helpers for getting s3 settings that fallback to global
+  class Upload
+    def self.s3_cdn_url
+      SiteSetting.enable_s3_uploads ? SiteSetting.s3_cdn_url : GlobalSetting.s3_cdn_url
+    end
+
+    def self.s3_region
+      SiteSetting.enable_s3_uploads ? SiteSetting.s3_region : GlobalSetting.s3_region
+    end
+
+    def self.s3_upload_bucket
+      SiteSetting.enable_s3_uploads ? SiteSetting.s3_upload_bucket : GlobalSetting.s3_bucket
+    end
+
+    def self.s3_endpoint
+      SiteSetting.enable_s3_uploads ? SiteSetting.s3_endpoint : GlobalSetting.s3_endpoint
+    end
+
+    def self.s3_force_path_style
+      SiteSetting.enable_s3_uploads ? SiteSetting.s3_force_path_style : GlobalSetting.s3_force_path_style
+    end
+
+    def self.enable_s3_uploads
+      SiteSetting.enable_s3_uploads || GlobalSetting.use_s3?
+    end
+
+    def self.s3_base_url
+      path = self.s3_upload_bucket.split("/", 2)[1]
+      "#{self.absolute_base_url}#{path ? '/' + path : ''}"
+    end
+
+    def self.absolute_base_url
+      url_basename = SiteSetting.s3_endpoint.split('/')[-1]
+      bucket = SiteSetting.enable_s3_uploads ? Discourse.store.s3_bucket_name : GlobalSetting.s3_bucket_name
+
+      # cf. http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+      if SiteSetting.s3_endpoint == "https://s3.amazonaws.com"
+        if SiteSetting.Upload.s3_region == 'cn-north-1' || SiteSetting.Upload.s3_region == 'cn-northwest-1'
+          "//#{bucket}.s3.#{SiteSetting.Upload.s3_region}.amazonaws.com.cn"
+        else
+          "//#{bucket}.s3.dualstack.#{SiteSetting.Upload.s3_region}.amazonaws.com"
+        end
+      elsif SiteSetting.s3_force_path_style
+        "//#{url_basename}/#{bucket}"
+      else
+        "//#{bucket}.#{url_basename}"
+      end
+    end
+  end
+
+  def self.Upload
+    SiteSetting::Upload
+  end
+
+  def self.shared_drafts_enabled?
+    c = SiteSetting.shared_drafts_category
+    c.present? && c.to_i != SiteSetting.uncategorized_category_id.to_i
+  end
+
 end
 
 # == Schema Information

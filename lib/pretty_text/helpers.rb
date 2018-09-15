@@ -22,13 +22,21 @@ module PrettyText
       return "" unless user.present?
 
       # TODO: Add support for ES6 and call `avatar-template` directly
-      if !user.uploaded_avatar_id
-        avatar_template = User.default_template(username)
-      else
-        avatar_template = user.avatar_template
-      end
+      UrlHelper.schemaless(UrlHelper.absolute(user.avatar_template))
+    end
 
-      UrlHelper.schemaless UrlHelper.absolute avatar_template
+    def lookup_primary_user_group(username)
+      return "" unless username
+      user = User.find_by(username_lower: username.downcase)
+      return "" unless user.present?
+
+      user.primary_group.try(:name) || ""
+    end
+
+    # Overwrite this in a plugin to change how markdown can format
+    # usernames on the server side
+    def format_username(username)
+      username
     end
 
     def mention_lookup(name)
@@ -55,13 +63,18 @@ module PrettyText
       end
 
       if map.length > 0
-        reverse_map = map.invert
+        reverse_map = {}
+
+        map.each do |key, value|
+          reverse_map[value] ||= []
+          reverse_map[value] << key
+        end
 
         Upload.where(sha1: map.values).pluck(:sha1, :url).each do |row|
           sha1, url = row
 
-          if short_url = reverse_map[sha1]
-            result[short_url] = url
+          if short_urls = reverse_map[sha1]
+            short_urls.each { |short_url| result[short_url] = url }
           end
         end
       end
@@ -69,8 +82,8 @@ module PrettyText
       result
     end
 
-    def lookup_inline_onebox(url)
-      InlineOneboxer.lookup(url)
+    def lookup_inline_onebox(url, opts = {})
+      InlineOneboxer.lookup(url, opts)
     end
 
     def get_topic_info(topic_id)
@@ -91,7 +104,8 @@ module PrettyText
 
       if !is_tag && category = Category.query_from_hashtag_slug(text)
         [category.url_with_id, text]
-      elsif is_tag && tag = Tag.find_by_name(text.gsub!("#{tag_postfix}", ''))
+      elsif (!is_tag && tag = Tag.find_by(name: text)) ||
+            (is_tag && tag = Tag.find_by(name: text.gsub!("#{tag_postfix}", '')))
         ["#{Discourse.base_url}/tags/#{tag.name}", text]
       else
         nil

@@ -2,16 +2,18 @@
 // Discourse header
 // --------------------------------------------------
 
-@media only screen and (max-width: 320px) {
+#site-text-logo {
+  font-size: $font-up-3;
+}
+@include breakpoint(mobile-small) {
   #site-text-logo {
-    font-size: 18px;
+    font-size: $font-up-2;
   }
 }
 
 .d-header {
-
   #site-logo {
-    max-width: 130px;
+    max-width: 9.2857em;
   }
 
   // some protection for text-only site titles
@@ -29,23 +31,23 @@
   }
 
   button.sign-up-button {
-    display:none;
+    display: none;
   }
 }
 
 .d-header-icons {
-  .badge-notification {
-    top: -5px;
-    color: $secondary;
+  .d-icon {
+    line-height: $line-height-medium;
   }
-
   .active .icon {
-    &:after { margin-top: -1px; }
+    &:after {
+      margin-top: -1px;
+    }
   }
 }
 
 #main-outlet {
-  padding-top: 60px;
+  padding-top: 4.2857em;
 }
 
 .search-link .badge-category {
@@ -53,5 +55,5 @@
 }
 
 .search-link .topic-statuses .topic-status i {
-  font-size: 1em;
+  font-size: $font-0;
 }

@@ -1,4 +1,6 @@
+# frozen_string_literal: true
 class ApplicationRequest < ActiveRecord::Base
+
   enum req_type: %i(http_total
                     http_2xx
                     http_background
@@ -11,29 +13,10 @@ class ApplicationRequest < ActiveRecord::Base
                     page_view_logged_in_mobile
                     page_view_anon_mobile)
 
-  cattr_accessor :autoflush, :autoflush_seconds, :last_flush
-  # auto flush if backlog is larger than this
-  self.autoflush = 2000
-
-  # auto flush if older than this
-  self.autoflush_seconds = 5.minutes
-  self.last_flush = Time.now.utc
+  include CachedCounting
 
   def self.increment!(type, opts = nil)
-    key = redis_key(type)
-    val = $redis.incr(key).to_i
-    # 3.days, see: https://github.com/rails/rails/issues/21296
-    $redis.expire(key, 259200)
-
-    autoflush = (opts && opts[:autoflush]) || self.autoflush
-    if autoflush > 0 && val >= autoflush
-      write_cache!
-      return
-    end
-
-    if (Time.now.utc - last_flush).to_i > autoflush_seconds
-      write_cache!
-    end
+    perform_increment!(redis_key(type), opts)
   end
 
   def self.write_cache!(date = nil)
@@ -47,26 +30,17 @@ class ApplicationRequest < ActiveRecord::Base
 
     date = date.to_date
 
-    # this may seem a bit fancy but in so it allows
-    # for concurrent calls without double counting
     req_types.each do |req_type, _|
-      key = redis_key(req_type, date)
-      val = $redis.get(key).to_i
+      val = get_and_reset(redis_key(req_type, date))
 
       next if val == 0
 
-      new_val = $redis.incrby(key, -val).to_i
-
-      if new_val < 0
-        # undo and flush next time
-        $redis.incrby(key, val)
-        next
-      end
-
       id = req_id(date, req_type)
-
       where(id: id).update_all(["count = count + ?", val])
     end
+  rescue Redis::CommandError => e
+    raise unless e.message =~ /READONLY/
+    nil
   end
 
   def self.clear_cache!(date = nil)

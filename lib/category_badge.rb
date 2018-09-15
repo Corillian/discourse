@@ -79,7 +79,7 @@ module CategoryBadge
 
     # category name
     class_names = 'badge-category clear-badge'
-    description = category.description_text ? "title='#{category.description_text.html_safe}'" : ''
+    description = category.description_text ? "title='#{category.description_text}'" : ''
     category_url = opts[:absolute_url] ? "#{Discourse.base_url_no_prefix}#{category.url}" : category.url
 
     extra_span_classes =
@@ -88,19 +88,24 @@ module CategoryBadge
         when :bar
           'color: #222222; padding: 3px; vertical-align: text-top; margin-top: -3px; display: inline-block;'
         when :box
-          "color: #{category.text_color}; #{show_parent ? 'margin-left: 5px; ' : ''} position: relative; padding: 0 5px; margin-top: 2px;"
+          "color: ##{category.text_color}; #{show_parent ? 'margin-left: 5px; ' : ''} position: relative; padding: 0 5px; margin-top: 2px;"
         when :bullet
           'color: #222222; vertical-align: text-top; line-height: 1; margin-left: 4px; padding-left: 2px; display: inline;'
         when :none
           ''
         end + 'max-width: 150px; overflow: hidden; text-overflow: ellipsis;'
+      elsif (SiteSetting.category_style).to_sym == :box
+        "color: ##{category.text_color}"
       else
         ''
       end
     result << "<span style='#{extra_span_classes}' data-drop-close='true' class='#{class_names}'
                  #{description}>"
 
-    result << category.name.html_safe << '</span>'
-    "<a class='badge-wrapper #{extra_classes}' href='#{category_url}'" + (opts[:inline_style] ? inline_badge_wrapper_style : '') + ">#{result}</a>"
+    result << ERB::Util.html_escape(category.name) << '</span>'
+
+    result = "<a class='badge-wrapper #{extra_classes}' href='#{category_url}'" + (opts[:inline_style] ? inline_badge_wrapper_style : '') + ">#{result}</a>"
+
+    result.html_safe
   end
 end

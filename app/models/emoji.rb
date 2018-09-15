@@ -1,6 +1,6 @@
 class Emoji
   # update this to clear the cache
-  EMOJI_VERSION = "5"
+  EMOJI_VERSION = "6"
 
   FITZPATRICK_SCALE ||= [ "1f3fb", "1f3fc", "1f3fd", "1f3fe", "1f3ff" ]
 
@@ -23,6 +23,10 @@ class Emoji
 
   def self.aliases
     Discourse.cache.fetch(cache_key("aliases_emojis")) { db['aliases'] }
+  end
+
+  def self.searchAliases
+    Discourse.cache.fetch(cache_key("search_aliases_emojis")) { db['searchAliases'] }
   end
 
   def self.custom
@@ -59,11 +63,9 @@ class Emoji
   end
 
   def self.clear_cache
-    Discourse.cache.delete(cache_key("custom_emojis"))
-    Discourse.cache.delete(cache_key("standard_emojis"))
-    Discourse.cache.delete(cache_key("aliases_emojis"))
-    Discourse.cache.delete(cache_key("all_emojis"))
-    Discourse.cache.delete(cache_key("tonable_emojis"))
+    %w{custom standard aliases search_aliases all tonable}.each do |key|
+      Discourse.cache.delete(cache_key("#{key}_emojis"))
+    end
   end
 
   def self.db_file

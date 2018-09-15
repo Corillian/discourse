@@ -27,25 +27,22 @@ describe TopicLink do
 
   describe 'external links' do
     before do
-      post = Fabricate(:post, raw: "
-http://a.com/
-http://b.com/b
-http://#{'a' * 200}.com/invalid
-http://b.com/#{'a' * 500}
-                        ", user: user, topic: topic)
+      post = Fabricate(:post, raw: <<~RAW, user: user, topic: topic)
+        http://a.com/
+        https://b.com/b
+        http://#{'a' * 200}.com/invalid
+        //b.com/#{'a' * 500}
+      RAW
 
       TopicLink.extract_from(post)
     end
 
     it 'works' do
-      # has the forum topic links
-      expect(topic.topic_links.count).to eq(3)
-
-      # works with markdown links
-      expect(topic.topic_links.exists?(url: "http://a.com/")).to eq(true)
-
-      #works with markdown links followed by a period
-      expect(topic.topic_links.exists?(url: "http://b.com/b")).to eq(true)
+      expect(topic.topic_links.pluck(:url)).to contain_exactly(
+        "http://a.com/",
+        "https://b.com/b",
+        "//b.com/#{'a' * 500}"[0...TopicLink.max_url_length]
+      )
     end
 
   end
@@ -169,6 +166,14 @@ http://b.com/#{'a' * 500}
       end
     end
 
+    context "email address" do
+      it "does not extract a link" do
+        post = topic.posts.create(user: user, raw: "Valid email: foo@bar.com\n\nInvalid email: rfc822;name@domain.com")
+        TopicLink.extract_from(post)
+        expect(topic.topic_links).to be_blank
+      end
+    end
+
     context "mail link" do
       let(:post) { topic.posts.create(user: user, raw: "[email]bar@example.com[/email]") }
 
@@ -230,7 +235,6 @@ http://b.com/#{'a' * 500}
       end
 
     end
-
   end
 
   describe 'internal link from pm' do
@@ -314,16 +318,20 @@ http://b.com/#{'a' * 500}
 
       it 'has the correct results' do
         TopicLink.extract_from(post)
-        topic_link = post.topic.topic_links.first
-        TopicLinkClick.create(topic_link: topic_link, ip_address: '192.168.1.1')
+        topic_link_first = post.topic.topic_links.first
+        TopicLinkClick.create!(topic_link: topic_link_first, ip_address: '192.168.1.1')
+        TopicLinkClick.create!(topic_link: topic_link_first, ip_address: '192.168.1.2')
+        topic_link_second = post.topic.topic_links.second
+        TopicLinkClick.create!(topic_link: topic_link_second, ip_address: '192.168.1.1')
 
         expect(counts_for[post.id]).to be_present
-        expect(counts_for[post.id].find { |l| l[:url] == 'http://google.com' }[:clicks]).to eq(0)
-        expect(counts_for[post.id].first[:clicks]).to eq(1)
+        expect(counts_for[post.id].first[:clicks]).to eq(2)
+        expect(counts_for[post.id].second[:clicks]).to eq(1)
 
         array = TopicLink.topic_map(Guardian.new, post.topic_id)
-        expect(array.length).to eq(6)
-        expect(array[0]["clicks"]).to eq(1)
+        expect(array.length).to eq(2)
+        expect(array[0].clicks).to eq(2)
+        expect(array[1].clicks).to eq(1)
       end
 
       it 'secures internal links correctly' do
@@ -333,6 +341,7 @@ http://b.com/#{'a' * 500}
         url = "http://#{test_uri.host}/t/topic-slug/#{secret_topic.id}"
         post = Fabricate(:post, raw: "hello test topic #{url}")
         TopicLink.extract_from(post)
+        TopicLinkClick.create!(topic_link: post.topic.topic_links.first, ip_address: '192.168.1.1')
 
         expect(TopicLink.topic_map(Guardian.new, post.topic_id).count).to eq(1)
         expect(TopicLink.counts_for(Guardian.new, post.topic, [post]).length).to eq(1)
@@ -381,6 +390,11 @@ http://b.com/#{'a' * 500}
         result = TopicLink.duplicate_lookup(post.topic)
         expect(result).to eq({})
       end
+    end
+
+    it "works with invalid link target" do
+      post = Fabricate(:post, raw: '<a href="http:geturl">http:geturl</a>', user: user, topic: topic, cook_method: Post.cook_methods[:raw_html])
+      expect { TopicLink.extract_from(post) }.to_not raise_error
     end
   end
 

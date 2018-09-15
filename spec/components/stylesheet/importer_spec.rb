@@ -20,12 +20,17 @@ describe Stylesheet::Importer do
   end
 
   it "applies S3 CDN to background category images" do
+    SiteSetting.s3_use_iam_profile = true
+    SiteSetting.s3_upload_bucket = 'test'
+    SiteSetting.s3_region = 'ap-southeast-2'
     SiteSetting.s3_cdn_url = "https://s3.cdn"
+
+    SiteSetting.enable_s3_uploads = true
 
     background = Fabricate(:upload_s3)
     category = Fabricate(:category, uploaded_background: background)
 
-    expect(compile_css("category_backgrounds")).to include("body.category-#{category.full_slug}{background-image:url(https://s3.cdn/uploads")
+    expect(compile_css("category_backgrounds")).to include("body.category-#{category.full_slug}{background-image:url(https://s3.cdn/original")
   end
 
 end

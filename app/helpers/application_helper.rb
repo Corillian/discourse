@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'current_user'
 require 'canonical_url'
 require_dependency 'guardian'
@@ -52,15 +53,42 @@ module ApplicationHelper
     end
   end
 
+  def is_brotli_req?
+    ENV["COMPRESS_BROTLI"] == "1" &&
+    request.env["HTTP_ACCEPT_ENCODING"] =~ /br/
+  end
+
   def preload_script(script)
     path = asset_path("#{script}.js")
 
-    if  GlobalSetting.cdn_url &&
-        GlobalSetting.cdn_url.start_with?("https") &&
-        ENV["COMPRESS_BROTLI"] == "1" &&
-        request.env["HTTP_ACCEPT_ENCODING"] =~ /br/
-      path.gsub!("#{GlobalSetting.cdn_url}/assets/", "#{GlobalSetting.cdn_url}/brotli_asset/")
+    if GlobalSetting.use_s3? && GlobalSetting.s3_cdn_url
+      if GlobalSetting.cdn_url
+        path = path.gsub(GlobalSetting.cdn_url, GlobalSetting.s3_cdn_url)
+      else
+        # we must remove the subfolder path here, assets are uploaded to s3
+        # without it getting involved
+        if ActionController::Base.config.relative_url_root
+          path = path.sub(ActionController::Base.config.relative_url_root, "")
+        end
+
+        path = "#{GlobalSetting.s3_cdn_url}#{path}"
+      end
+
+      if is_brotli_req?
+        path = path.gsub(/\.([^.]+)$/, '.br.\1')
+      end
+
+    elsif GlobalSetting.cdn_url&.start_with?("https") && is_brotli_req?
+      path = path.gsub("#{GlobalSetting.cdn_url}/assets/", "#{GlobalSetting.cdn_url}/brotli_asset/")
     end
+
+    if Rails.env == "development"
+      if !path.include?("?")
+        # cache breaker for mobile iOS
+        path = path + "?#{Time.now.to_f}"
+      end
+    end
+
 "<link rel='preload' href='#{path}' as='script'/>
 <script src='#{path}'></script>".html_safe
   end
@@ -155,10 +183,8 @@ module ApplicationHelper
     ["ar", "ur", "fa_IR", "he"].include? I18n.locale.to_s
   end
 
-  def user_locale
-    locale = current_user.locale if current_user && SiteSetting.allow_user_locale
-    # changing back to default shoves a blank string there
-    locale.present? ? locale : SiteSetting.default_locale
+  def html_lang
+    SiteSetting.default_locale.sub("_", "-")
   end
 
   # Creates open graph and twitter card meta data
@@ -202,10 +228,9 @@ module ApplicationHelper
 
     [:url, :title, :description].each do |property|
       if opts[property].present?
-        escape = (property != :image)
         content = (property == :url ? opts[property] : gsub_emoji_to_unicode(opts[property]))
-        result << tag(:meta, { property: "og:#{property}", content: content }, nil, escape)
-        result << tag(:meta, { name: "twitter:#{property}", content: content }, nil, escape)
+        result << tag(:meta, { property: "og:#{property}", content: content }, nil, true)
+        result << tag(:meta, { name: "twitter:#{property}", content: content }, nil, true)
       end
     end
 
@@ -214,6 +239,10 @@ module ApplicationHelper
       result << tag(:meta, name: 'twitter:data1', value: "#{opts[:read_time]} mins 🕑")
       result << tag(:meta, name: 'twitter:label2', value: I18n.t("likes"))
       result << tag(:meta, name: 'twitter:data2', value: "#{opts[:like_count]} ❤")
+    end
+
+    if opts[:published_time]
+      result << tag(:meta, property: 'article:published_time', content: opts[:published_time])
     end
 
     if opts[:ignore_canonical]
@@ -242,7 +271,7 @@ module ApplicationHelper
   end
 
   def application_logo_url
-    @application_logo_url ||= (mobile_view? && SiteSetting.mobile_logo_url) || SiteSetting.logo_url
+    @application_logo_url ||= (mobile_view? && SiteSetting.mobile_logo_url).presence || SiteSetting.logo_url
   end
 
   def login_path
@@ -308,7 +337,7 @@ module ApplicationHelper
     erbs = ApplicationHelper.all_connectors.select { |c| c =~ matcher }
     return "" if erbs.blank?
 
-    result = ""
+    result = +""
     erbs.each { |erb| result << render(file: erb) }
     result.html_safe
   end
@@ -325,12 +354,22 @@ module ApplicationHelper
     end
   end
 
-  def theme_key
+  def theme_ids
     if customization_disabled?
       nil
     else
-      request.env[:resolved_theme_key]
+      request.env[:resolved_theme_ids]
     end
+  end
+
+  def scheme_id
+    return if theme_ids.blank?
+    theme = Theme.find_by(id: theme_ids.first)
+    theme&.color_scheme_id
+  end
+
+  def current_homepage
+    current_user&.user_option&.homepage || SiteSetting.anonymous_homepage
   end
 
   def build_plugin_html(name)
@@ -338,18 +377,28 @@ module ApplicationHelper
     DiscoursePluginRegistry.build_html(name, controller) || ""
   end
 
+  # If there is plugin HTML return that, otherwise yield to the template
+  def replace_plugin_html(name)
+    if (html = build_plugin_html(name)).present?
+      html
+    else
+      yield
+      nil
+    end
+  end
+
   def theme_lookup(name)
-    lookup = Theme.lookup_field(theme_key, mobile_view? ? :mobile : :desktop, name)
+    lookup = Theme.lookup_field(theme_ids, mobile_view? ? :mobile : :desktop, name)
     lookup.html_safe if lookup
   end
 
   def discourse_stylesheet_link_tag(name, opts = {})
-    if opts.key?(:theme_key)
-      key = opts[:theme_key] unless customization_disabled?
+    if opts.key?(:theme_ids)
+      ids = opts[:theme_ids] unless customization_disabled?
     else
-      key = theme_key
+      ids = theme_ids
     end
 
-    Stylesheet::Manager.stylesheet_link_tag(name, 'all', key)
+    Stylesheet::Manager.stylesheet_link_tag(name, 'all', ids)
   end
 end

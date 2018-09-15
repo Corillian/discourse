@@ -1,7 +1,7 @@
 require 'digest/sha1'
 require 'fileutils'
 require_dependency 'plugin/metadata'
-require_dependency 'plugin/auth_provider'
+require_dependency 'auth'
 
 class Plugin::CustomEmoji
   def self.cache_key
@@ -29,6 +29,8 @@ class Plugin::Instance
    :color_schemes,
    :initializers,
    :javascripts,
+   :locales,
+   :service_workers,
    :styles,
    :themes].each do |att|
     class_eval %Q{
@@ -90,9 +92,38 @@ class Plugin::Instance
     end
   end
 
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
+  def add_report(name, &block)
+    reloadable_patch do |plugin|
+      Report.add_report(name, &block)
+    end
+  end
+
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
+  def replace_flags
+    settings = ::FlagSettings.new
+    yield settings
+
+    reloadable_patch do |plugin|
+      ::PostActionType.replace_flag_settings(settings)
+    end
+  end
+
+  def whitelist_flag_post_custom_field(field)
+    reloadable_patch do |plugin|
+      ::FlagQuery.register_plugin_post_custom_field(field, plugin) # plugin.enabled? is checked at runtime
+    end
+  end
+
   def whitelist_staff_user_custom_field(field)
     reloadable_patch do |plugin|
-      ::User.register_plugin_staff_custom_field(field, plugin) if plugin.enabled?
+      ::User.register_plugin_staff_custom_field(field, plugin) # plugin.enabled? is checked at runtime
+    end
+  end
+
+  def register_editable_user_custom_field(field)
+    reloadable_patch do |plugin|
+      ::User.register_plugin_editable_user_custom_field(field, plugin) # plugin.enabled? is checked at runtime
     end
   end
 
@@ -103,9 +134,16 @@ class Plugin::Instance
     end
   end
 
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
   def add_body_class(class_name)
     reloadable_patch do |plugin|
-      ::ApplicationHelper.extra_body_classes << class_name if plugin.enabled?
+      ::ApplicationHelper.extra_body_classes << class_name
+    end
+  end
+
+  def rescue_from(exception, &block)
+    reloadable_patch do |plugin|
+      ::ApplicationController.rescue_from(exception, &block)
     end
   end
 
@@ -155,27 +193,33 @@ class Plugin::Instance
     end
   end
 
+  # Add a post_custom_fields_whitelister block to the TopicView, respecting if the plugin is enabled
   def topic_view_post_custom_fields_whitelister(&block)
     reloadable_patch do |plugin|
-      ::TopicView.add_post_custom_fields_whitelister(&block) if plugin.enabled?
+      ::TopicView.add_post_custom_fields_whitelister do |user|
+        plugin.enabled? ? block.call(user) : []
+      end
     end
   end
 
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
   def add_preloaded_group_custom_field(field)
     reloadable_patch do |plugin|
-      ::Group.preloaded_custom_field_names << field if plugin.enabled?
+      ::Group.preloaded_custom_field_names << field
     end
   end
 
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
   def add_preloaded_topic_list_custom_field(field)
     reloadable_patch do |plugin|
-      ::TopicList.preloaded_custom_fields << field if plugin.enabled?
+      ::TopicList.preloaded_custom_fields << field
     end
   end
 
+  # Add a permitted_create_param to Post, respecting if the plugin is enabled
   def add_permitted_post_create_param(name)
     reloadable_patch do |plugin|
-      ::Post.permitted_create_params << name if plugin.enabled?
+      ::Post.plugin_permitted_create_params[name] = plugin
     end
   end
 
@@ -261,27 +305,31 @@ class Plugin::Instance
     end
   end
 
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
   def register_category_custom_field_type(name, type)
     reloadable_patch do |plugin|
-      Category.register_custom_field_type(name, type) if plugin.enabled?
+      Category.register_custom_field_type(name, type)
     end
   end
 
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
   def register_topic_custom_field_type(name, type)
     reloadable_patch do |plugin|
-      ::Topic.register_custom_field_type(name, type) if plugin.enabled?
+      ::Topic.register_custom_field_type(name, type)
     end
   end
 
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
   def register_post_custom_field_type(name, type)
     reloadable_patch do |plugin|
-      ::Post.register_custom_field_type(name, type) if plugin.enabled?
+      ::Post.register_custom_field_type(name, type)
     end
   end
 
+  # Applies to all sites in a multisite environment. Ignores plugin.enabled?
   def register_group_custom_field_type(name, type)
     reloadable_patch do |plugin|
-      ::Group.register_custom_field_type(name, type) if plugin.enabled?
+      ::Group.register_custom_field_type(name, type)
     end
   end
 
@@ -303,6 +351,14 @@ class Plugin::Instance
     javascripts << js
   end
 
+  # @option opts [String] :name
+  # @option opts [String] :nativeName
+  # @option opts [String] :fallbackLocale
+  # @option opts [Hash] :plural
+  def register_locale(locale, opts = {})
+    locales << [locale, opts]
+  end
+
   def register_custom_html(hash)
     DiscoursePluginRegistry.custom_html ||= {}
     DiscoursePluginRegistry.custom_html.merge!(hash)
@@ -313,8 +369,20 @@ class Plugin::Instance
   end
 
   def register_asset(file, opts = nil)
-    full_path = File.dirname(path) << "/assets/" << file
+    if opts && opts == :vendored_core_pretty_text
+      full_path = DiscoursePluginRegistry.core_asset_for_name(file)
+    else
+      full_path = File.dirname(path) << "/assets/" << file
+    end
+
     assets << [full_path, opts]
+  end
+
+  def register_service_worker(file, opts = nil)
+    service_workers << [
+      File.join(File.dirname(path), 'assets', file),
+      opts
+    ]
   end
 
   def register_color_scheme(name, colors)
@@ -325,6 +393,10 @@ class Plugin::Instance
     seed_data[key] = value
   end
 
+  def register_seed_path_builder(&block)
+    DiscoursePluginRegistry.register_seed_path_builder(&block)
+  end
+
   def register_emoji(name, url)
     Plugin::CustomEmoji.register(name, url)
   end
@@ -332,38 +404,6 @@ class Plugin::Instance
   def automatic_assets
     css = styles.join("\n")
     js = javascripts.join("\n")
-
-    auth_providers.each do |auth|
-
-      auth_json = auth.to_json
-      hash = Digest::SHA1.hexdigest(auth_json)
-      js << <<JS
-define("discourse/initializers/login-method-#{hash}",
-  ["discourse/models/login-method", "exports"],
-  function(module, __exports__) {
-    "use strict";
-    __exports__["default"] = {
-      name: "login-method-#{hash}",
-      after: "inject-objects",
-      initialize: function(container) {
-        if (Ember.testing) { return; }
-
-        var authOpts = #{auth_json};
-        authOpts.siteSettings = container.lookup('site-settings:main');
-        module.register(authOpts);
-      }
-    };
-  });
-JS
-
-      if auth.glyph
-        css << ".btn-social.#{auth.name}:before{ content: '#{auth.glyph}'; }\n"
-      end
-
-      if auth.background_color
-        css << ".btn-social.#{auth.name}{ background: #{auth.background_color}; }\n"
-      end
-    end
 
     # Generate an IIFE for the JS
     js = "(function(){#{js}})();" if js.present?
@@ -400,6 +440,9 @@ JS
     end
 
     register_assets! unless assets.blank?
+    register_locales!
+    register_service_workers!
+    register_auth_providers!
 
     seed_data.each do |key, value|
       DiscoursePluginRegistry.register_seed_data(key, value)
@@ -432,11 +475,25 @@ JS
   end
 
   def auth_provider(opts)
-    provider = Plugin::AuthProvider.new
+    provider = Auth::AuthProvider.new
 
-    Plugin::AuthProvider.auth_attributes.each do |sym|
+    Auth::AuthProvider.auth_attributes.each do |sym|
       provider.send "#{sym}=", opts.delete(sym)
     end
+
+    after_initialize do
+      begin
+        provider.authenticator.enabled?
+      rescue NotImplementedError
+        provider.authenticator.define_singleton_method(:enabled?) do
+          Rails.logger.warn("#{provider.authenticator.class.name} should define an `enabled?` function. Patching for now.")
+          return SiteSetting.send(provider.enabled_setting) if provider.enabled_setting
+          Rails.logger.warn("#{provider.authenticator.class.name} has not defined an enabled_setting. Defaulting to true.")
+          true
+        end
+      end
+    end
+
     auth_providers << provider
   end
 
@@ -448,6 +505,18 @@ JS
   # This is a very rough initial implementation
   def gem(name, version, opts = {})
     PluginGem.load(path, name, version, opts)
+  end
+
+  def hide_plugin
+    Discourse.hidden_plugins << self
+  end
+
+  def enabled_site_setting_filter(filter = nil)
+    if filter
+      @enabled_setting_filter = filter
+    else
+      @enabled_setting_filter
+    end
   end
 
   def enabled_site_setting(setting = nil)
@@ -468,6 +537,7 @@ JS
 
   def javascript_includes
     assets.map do |asset, opts|
+      next if opts == :vendored_core_pretty_text
       next if opts == :admin
       next unless asset =~ DiscoursePluginRegistry::JS_REGEX
       asset
@@ -497,6 +567,53 @@ JS
     end
   end
 
+  def register_service_workers!
+    service_workers.each do |asset, opts|
+      DiscoursePluginRegistry.register_service_worker(asset, opts)
+    end
+  end
+
+  def register_auth_providers!
+    auth_providers.each do |auth_provider|
+      DiscoursePluginRegistry.register_auth_provider(auth_provider)
+    end
+  end
+
+  def register_locales!
+    root_path = File.dirname(@path)
+
+    locales.each do |locale, opts|
+      opts = opts.dup
+      opts[:client_locale_file] = File.join(root_path, "config/locales/client.#{locale}.yml")
+      opts[:server_locale_file] = File.join(root_path, "config/locales/server.#{locale}.yml")
+      opts[:js_locale_file] = File.join(root_path, "assets/locales/#{locale}.js.erb")
+
+      locale_chain = opts[:fallbackLocale] ? [locale, opts[:fallbackLocale]] : [locale]
+      lib_locale_path = File.join(root_path, "lib/javascripts/locale")
+
+      path = File.join(lib_locale_path, "message_format")
+      opts[:message_format] = find_locale_file(locale_chain, path)
+      opts[:message_format] = JsLocaleHelper.find_message_format_locale(locale_chain, false) unless opts[:message_format]
+
+      path = File.join(lib_locale_path, "moment_js")
+      opts[:moment_js] = find_locale_file(locale_chain, path)
+      opts[:moment_js] = JsLocaleHelper.find_moment_locale(locale_chain) unless opts[:moment_js]
+
+      if valid_locale?(opts)
+        DiscoursePluginRegistry.register_locale(locale, opts)
+        Rails.configuration.assets.precompile << "locales/#{locale}.js"
+      else
+        msg = "Invalid locale! #{opts.inspect}"
+        # The logger isn't always present during boot / parsing locales from plugins
+        if Rails.logger.present?
+          Rails.logger.error(msg)
+        else
+          puts msg
+        end
+      end
+    end
+  end
+
   private
 
   def write_asset(path, contents)
@@ -518,4 +635,18 @@ JS
     yield plugin
   end
 
+  def valid_locale?(custom_locale)
+    File.exist?(custom_locale[:client_locale_file]) &&
+      File.exist?(custom_locale[:server_locale_file]) &&
+      File.exist?(custom_locale[:js_locale_file]) &&
+      custom_locale[:message_format] && custom_locale[:moment_js]
+  end
+
+  def find_locale_file(locale_chain, path)
+    locale_chain.each do |locale|
+      filename = File.join(path, "#{locale}.js")
+      return [locale, filename] if File.exist?(filename)
+    end
+    nil
+  end
 end

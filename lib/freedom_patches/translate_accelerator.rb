@@ -39,6 +39,15 @@ module I18n
         if @loaded_locales.empty?
           # load all rb files
           I18n.backend.load_translations(I18n.load_path.grep(/\.rb$/))
+
+          # load plural rules from plugins
+          DiscoursePluginRegistry.locales.each do |plugin_locale, options|
+            if options[:plural]
+              I18n.backend.store_translations(plugin_locale,
+                i18n: { plural: options[:plural] }
+              )
+            end
+          end
         end
 
         # load it
@@ -61,7 +70,7 @@ module I18n
       target = opts[:backend] || backend
       results = opts[:overridden] ? {} : target.search(config.locale, query)
 
-      regexp = /#{query}/i
+      regexp = /#{Regexp.escape(query)}/i
       (overrides_by_locale(locale) || {}).each do |k, v|
         results.delete(k)
         results[k] = v if (k =~ regexp || v =~ regexp)

@@ -2,16 +2,26 @@ require "rails_helper"
 require_dependency "plugin_store"
 
 describe PluginStore do
+  let(:store) { PluginStore.new("my_plugin_2") }
+
   def set(k, v)
     PluginStore.set("my_plugin", k, v)
+    store.set(k, v)
   end
 
   def get(k)
-    PluginStore.get("my_plugin", k)
+    value = PluginStore.get("my_plugin", k)
+    value == store.get(k) ? value : "values mismatch"
+  end
+
+  def get_all(k)
+    value = PluginStore.get_all("my_plugin", k)
+    value == store.get_all(k) ? value : "values mismatch"
   end
 
   def remove_row(k)
     PluginStore.remove("my_plugin", k)
+    store.remove(k)
   end
 
   it "sets strings correctly" do
@@ -36,6 +46,18 @@ describe PluginStore do
 
     set("hello", nil)
     expect(get("hello")).to eq(nil)
+  end
+
+  it "gets all requested values" do
+    set("hello_str", "world")
+    set("hello_int", 1)
+    set("hello_bool", true)
+
+    expect(get_all(["hello_str", "hello_int", "hello_bool"])).to eq({
+      "hello_str": "world",
+      "hello_int": 1,
+      "hello_bool": true,
+    }.stringify_keys)
   end
 
   it "handles hashes correctly" do

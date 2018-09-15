@@ -1,5 +1,8 @@
 export default Discourse.Route.extend({
   redirect() {
-    this.replaceWith('adminFlags.postsActive');
+    let segment = this.siteSettings.flags_default_topics
+      ? "topics"
+      : "postsActive";
+    this.replaceWith(`adminFlags.${segment}`);
   }
 });

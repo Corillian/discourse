@@ -3,8 +3,17 @@ template = <<~HBS
   {{a}}
   {{{htmlValue}}}
   {{#if state.category}}
-    {{attach widget="category-display" attrs=(hash category=state.category)}}
+    {{attach widget="category-display" attrs=(hash category=state.category someNumber=123 someString="wat")}}
   {{/if}}
+  {{#each transformed.something as |s|}}
+    {{s.wat}}
+  {{/each}}
+
+  {{attach widget=settings.widgetName}}
+
+  {{#unless settings.hello}}
+    XYZ
+  {{/unless}}
 HBS
 
 ctx = MiniRacer::Context.new(timeout: 15000)
