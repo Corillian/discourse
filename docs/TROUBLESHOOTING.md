@@ -4,13 +4,13 @@ Are you having trouble setting up Discourse? Here are some basic things to check
 reaching out to the community for help:
 
 
-1. Are you running Ruby 2.4 or later?
+1. Are you running Ruby 2.5 or later?
 
-   Discourse is designed for Ruby 2.4 or later. We recommend 2.4.4 p296 or later. You can check your version by typing
+   Discourse is designed for Ruby 2.5 or later. We recommend 2.5.2 or later. You can check your version by typing
    `ruby -v` and checking the response.
 
 
-2. Are you on Postgres 9.3 or later with HSTORE enabled?
+2. Are you on Postgres 10 or later with HSTORE enabled?
 
    You can check your postgres version by typing `psql --version`. To see if hstore is
    installed, open a session to postgres and type `\dx` and see if hstore is listed.

@@ -1,5 +1,4 @@
 /* hide the reply border above the time gap notices */
-
 .time-gap + .topic-post article {
   border-top: none;
 }
@@ -259,7 +258,7 @@ a.reply-to-tab {
   margin: 0 auto;
 }
 
-#suggested-topics {
+.suggested-topics {
   clear: left;
   padding: 20px 0 15px 0;
   th.views,
@@ -298,12 +297,15 @@ span.post-count {
 
 // mobile has no fixed width on topic-body so overflow: hidden causes problems
 .topic-body {
-  overflow: inherit;
+  overflow: visible;
+  .cooked {
+    overflow: visible;
+  }
 }
 
-// instead, for mobile we set overflow hidden on the cooked part of post body
+// instead, for mobile we set overflow hidden on the post's #main-outlet
 // this prevents image overflow on deeply nested blockquotes, lists, etc
-.cooked {
+[class*="archetype-"] #main-outlet {
   overflow: hidden;
 }
 
@@ -314,10 +316,6 @@ span.post-count {
 
 iframe {
   max-width: 100%;
-}
-
-.extra-info {
-  display: none;
 }
 
 .open > .dropdown-menu {
@@ -425,21 +423,24 @@ span.highlighted {
     line-height: $line-height-medium;
     display: flex;
     flex-wrap: wrap;
+
     .full-name {
       font-weight: bold;
+    }
+
+    .first {
       order: 1;
     }
-    .staff-notes-icon {
-      order: 2;
-      margin-left: 4px;
-    }
+
     .poster-icon {
       order: 2;
     }
-    .username {
+
+    .second {
       order: 3;
       flex-basis: 100%;
     }
+
     .user-title {
       order: 4;
       flex-basis: 100%;

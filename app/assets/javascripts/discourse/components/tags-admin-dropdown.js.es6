@@ -1,31 +1,46 @@
-import { iconHTML } from "discourse-common/lib/icon-library";
-import DropdownButton from "discourse/components/dropdown-button";
-import computed from "ember-addons/ember-computed-decorators";
+import DropdownSelectBoxComponent from "select-kit/components/dropdown-select-box";
 
-export default DropdownButton.extend({
-  buttonExtraClasses: "no-text",
-  title: "",
-  text: iconHTML("bars") + " " + iconHTML("caret-down"),
-  classNames: ["tags-admin-menu"],
+export default DropdownSelectBoxComponent.extend({
+  pluginApiIdentifiers: ["tags-admin-dropdown"],
+  classNames: "tags-admin-dropdown",
+  showFullTitle: false,
+  allowInitialValueMutation: false,
+  headerIcon: ["bars", "caret-down"],
 
-  @computed()
-  dropDownContent() {
+  autoHighlight() {},
+
+  computeContent() {
     const items = [
       {
         id: "manageGroups",
-        title: I18n.t("tagging.manage_groups"),
+        name: I18n.t("tagging.manage_groups"),
         description: I18n.t("tagging.manage_groups_description"),
         icon: "wrench"
+      },
+      {
+        id: "uploadTags",
+        name: I18n.t("tagging.upload"),
+        description: I18n.t("tagging.upload_description"),
+        icon: "upload"
+      },
+      {
+        id: "deleteUnusedTags",
+        name: I18n.t("tagging.delete_unused"),
+        description: I18n.t("tagging.delete_unused_description"),
+        icon: "trash"
       }
     ];
+
     return items;
   },
 
   actionNames: {
-    manageGroups: "showTagGroups"
+    manageGroups: "showTagGroups",
+    uploadTags: "showUploader",
+    deleteUnusedTags: "deleteUnused"
   },
 
-  clicked(id) {
-    this.sendAction("actionNames." + id);
+  mutateValue(id) {
+    this.sendAction(`actionNames.${id}`);
   }
 });

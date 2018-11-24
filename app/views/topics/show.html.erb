@@ -104,16 +104,6 @@
 
 <% if @topic_view.print %>
   <% content_for :after_body do %>
-      <style media="print">
-        /* For readability */
-        a, a:visited {
-          color: #0088cc !important;
-        }
-      </style>
-      <script>
-        document.addEventListener("DOMContentLoaded", function() {
-          window.print();
-        });
-      </script>
+      <%= preload_script('print-page') %>
   <% end %>
 <% end %>

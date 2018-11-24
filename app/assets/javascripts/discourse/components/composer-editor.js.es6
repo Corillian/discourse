@@ -53,10 +53,15 @@ export default Ember.Component.extend({
   _xhr: null,
   shouldBuildScrollMap: true,
   scrollMap: null,
+  uploadFilenamePlaceholder: null,
 
-  @computed
-  uploadPlaceholder() {
-    return `[${I18n.t("uploading")}]() `;
+  @computed("uploadFilenamePlaceholder")
+  uploadPlaceholder(uploadFilenamePlaceholder) {
+    const clipboard = I18n.t("clipboard");
+    const filename = uploadFilenamePlaceholder
+      ? uploadFilenamePlaceholder
+      : clipboard;
+    return `[${I18n.t("uploading_filename", { filename })}]() `;
   },
 
   @computed("composer.requiredCategoryMissing")
@@ -216,6 +221,53 @@ export default Ember.Component.extend({
         lastShownAt: lastValidatedAt
       });
     }
+  },
+
+  _setUploadPlaceholderSend(data) {
+    const filename = this._filenamePlaceholder(data);
+    this.set("uploadFilenamePlaceholder", filename);
+
+    // when adding two separate files with the same filename search for matching
+    // placeholder already existing in the editor ie [Uploading: test.png...]
+    // and add order nr to the next one: [Uplodading: test.png(1)...]
+    const regexString = `\\[${I18n.t("uploading_filename", {
+      filename: filename + "(?:\\()?([0-9])?(?:\\))?"
+    })}\\]\\(\\)`;
+    const globalRegex = new RegExp(regexString, "g");
+    const matchingPlaceholder = this.get("composer.reply").match(globalRegex);
+    if (matchingPlaceholder) {
+      // get last matching placeholder and its consecutive nr in regex
+      // capturing group and apply +1 to the placeholder
+      const lastMatch = matchingPlaceholder[matchingPlaceholder.length - 1];
+      const regex = new RegExp(regexString);
+      const orderNr = regex.exec(lastMatch)[1]
+        ? parseInt(regex.exec(lastMatch)[1]) + 1
+        : 1;
+      data.orderNr = orderNr;
+      const filenameWithOrderNr = `${filename}(${orderNr})`;
+      this.set("uploadFilenamePlaceholder", filenameWithOrderNr);
+    }
+  },
+
+  _setUploadPlaceholderDone(data) {
+    const filename = this._filenamePlaceholder(data);
+    const filenameWithSize = `${filename} (${data.total})`;
+    this.set("uploadFilenamePlaceholder", filenameWithSize);
+
+    if (data.orderNr) {
+      const filenameWithOrderNr = `${filename}(${data.orderNr})`;
+      this.set("uploadFilenamePlaceholder", filenameWithOrderNr);
+    } else {
+      this.set("uploadFilenamePlaceholder", filename);
+    }
+  },
+
+  _filenamePlaceholder(data) {
+    return data.files[0].name.replace(/\u200B-\u200D\uFEFF]/g, "");
+  },
+
+  _resetUploadFilenamePlaceholder() {
+    this.set("uploadFilenamePlaceholder", null);
   },
 
   _enableAdvancedEditorPreviewSync() {
@@ -542,33 +594,34 @@ export default Ember.Component.extend({
   },
 
   _resetUpload(removePlaceholder) {
-    if (this._validUploads > 0) {
-      this._validUploads--;
-    }
-    if (this._validUploads === 0) {
-      this.setProperties({
-        uploadProgress: 0,
-        isUploading: false,
-        isCancellable: false
-      });
-    }
-    if (removePlaceholder) {
-      this.appEvents.trigger(
-        "composer:replace-text",
-        this.get("uploadPlaceholder"),
-        ""
-      );
-    }
+    Ember.run.next(() => {
+      if (this._validUploads > 0) {
+        this._validUploads--;
+      }
+      if (this._validUploads === 0) {
+        this.setProperties({
+          uploadProgress: 0,
+          isUploading: false,
+          isCancellable: false
+        });
+      }
+      if (removePlaceholder) {
+        this.appEvents.trigger(
+          "composer:replace-text",
+          this.get("uploadPlaceholder"),
+          ""
+        );
+      }
+      this._resetUploadFilenamePlaceholder();
+    });
   },
 
   _bindUploadTarget() {
     this._unbindUploadTarget(); // in case it's still bound, let's clean it up first
-
     this._pasted = false;
 
     const $element = this.$();
     const csrf = this.session.get("csrfToken");
-    const uploadPlaceholder = this.get("uploadPlaceholder");
 
     $element.fileupload({
       url: Discourse.getURL(
@@ -595,12 +648,23 @@ export default Ember.Component.extend({
     });
 
     $element.on("fileuploadsubmit", (e, data) => {
+      const max = this.siteSettings.simultaneous_uploads;
+
+      // Limit the number of simultaneous uploads
+      if (max > 0 && data.files.length > max) {
+        bootbox.alert(
+          I18n.t("post.errors.too_many_dragged_and_dropped_files", { max })
+        );
+        return false;
+      }
+
       // Look for a matching file upload handler contributed from a plugin
       const matcher = handler => {
         const ext = handler.extensions.join("|");
         const regex = new RegExp(`\\.(${ext})$`, "i");
         return regex.test(data.files[0].name);
       };
+
       const matchingHandler = uploadHandlers.find(matcher);
       if (data.files.length === 1 && matchingHandler) {
         matchingHandler.method(data.files[0]);
@@ -637,7 +701,13 @@ export default Ember.Component.extend({
     $element.on("fileuploadsend", (e, data) => {
       this._pasted = false;
       this._validUploads++;
-      this.appEvents.trigger("composer:insert-text", uploadPlaceholder);
+
+      this._setUploadPlaceholderSend(data);
+
+      this.appEvents.trigger(
+        "composer:insert-text",
+        this.get("uploadPlaceholder")
+      );
 
       if (data.xhr && data.originalFiles.length === 1) {
         this.set("isCancellable", true);
@@ -647,13 +717,13 @@ export default Ember.Component.extend({
 
     $element.on("fileuploaddone", (e, data) => {
       let upload = data.result;
-
+      this._setUploadPlaceholderDone(data);
       if (!this._xhr || !this._xhr._userCancelled) {
         const markdown = getUploadMarkdown(upload);
         cacheShortUploadUrl(upload.short_url, upload.url);
         this.appEvents.trigger(
           "composer:replace-text",
-          uploadPlaceholder.trim(),
+          this.get("uploadPlaceholder").trim(),
           markdown
         );
         this._resetUpload(false);
@@ -663,6 +733,7 @@ export default Ember.Component.extend({
     });
 
     $element.on("fileuploadfail", (e, data) => {
+      this._setUploadPlaceholderDone(data);
       this._resetUpload(true);
 
       const userCancelled = this._xhr && this._xhr._userCancelled;
@@ -715,7 +786,7 @@ export default Ember.Component.extend({
 
           // The paste doesn't finish immediately and we don't have any onpaste
           // event, so wait for 100ms which _should_ be enough time.
-          setTimeout(() => {
+          Ember.run.later(() => {
             const pastedImg = contentEditableDiv.find("img");
 
             if (pastedImg.length === 1) {

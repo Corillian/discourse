@@ -121,6 +121,12 @@ class Plugin::Instance
     end
   end
 
+  def whitelist_public_user_custom_field(field)
+    reloadable_patch do |plugin|
+      ::User.register_plugin_public_custom_field(field, plugin) # plugin.enabled? is checked at runtime
+    end
+  end
+
   def register_editable_user_custom_field(field)
     reloadable_patch do |plugin|
       ::User.register_plugin_editable_user_custom_field(field, plugin) # plugin.enabled? is checked at runtime
@@ -460,7 +466,12 @@ class Plugin::Instance
     Rake.add_rakelib(File.dirname(path) + "/lib/tasks")
 
     # Automatically include migrations
-    Rails.configuration.paths["db/migrate"] << File.dirname(path) + "/db/migrate"
+    migration_paths = Rails.configuration.paths["db/migrate"]
+    migration_paths << File.dirname(path) + "/db/migrate"
+
+    unless Discourse.skip_post_deployment_migrations?
+      migration_paths << "#{File.dirname(path)}/#{Discourse::DB_POST_MIGRATE_PATH}"
+    end
 
     public_data = File.dirname(path) + "/public"
     if Dir.exists?(public_data)
@@ -486,9 +497,9 @@ class Plugin::Instance
         provider.authenticator.enabled?
       rescue NotImplementedError
         provider.authenticator.define_singleton_method(:enabled?) do
-          Rails.logger.warn("#{provider.authenticator.class.name} should define an `enabled?` function. Patching for now.")
+          Discourse.deprecate("#{provider.authenticator.class.name} should define an `enabled?` function. Patching for now.")
           return SiteSetting.send(provider.enabled_setting) if provider.enabled_setting
-          Rails.logger.warn("#{provider.authenticator.class.name} has not defined an enabled_setting. Defaulting to true.")
+          Discourse.deprecate("#{provider.authenticator.class.name} has not defined an enabled_setting. Defaulting to true.")
           true
         end
       end

@@ -188,7 +188,7 @@ pl_PL:
     topic_admin_menu: "akcje administratora"
     wizard_required: "Witaj na Twoim na nowym forum Discourse! Zacznijmy od <a href='%{url}' data-auto-route='true'>kreatora ustawień</a> ✨"
     emails_are_disabled: "Wysyłanie e-maili zostało globalnie wyłączone przez administrację. Powiadomienia e-mail nie będą dostarczane."
-    bootstrap_mode_enabled: "Aby ułatwić uruchomienie Twojej strony, jesteś w trybie bootstrap. Wszyscy nowi użytkownicy otrzymają poziom zaufania 1 i będą otrzymywać codzienne wiadomości e-mail. To zostanie automatyczonie wyłączone, kiedy %{min_users}osób dołączy."
+    bootstrap_mode_enabled: "Aby ułatwić uruchomienie Twojej strony, jesteś w trybie bootstrap. Wszyscy nowi użytkownicy otrzymają poziom zaufania 1 i będą otrzymywać codzienne wiadomości e-mail z podsumowaniem aktywności na forum. To zostanie automatycznie wyłączone, kiedy %{min_users} osób dołączy."
     bootstrap_mode_disabled: "Tryb bootstrap zostanie wyłączony w ciągu 24 godzin."
     themes:
       default_description: "Domyślny"
@@ -285,12 +285,8 @@ pl_PL:
         bookmark: "Kliknij, aby dodać pierwszy wpis tematu do zakładek"
         unbookmark: "Kliknij, aby usunąć wszystkie zakładki z tego tematu"
     bookmarks:
-      not_logged_in: "przykro nam, ale należy się zalogować, aby dodawać zakładki"
       created: "zakładka dodana"
-      not_bookmarked: "wpis przeczytany: kliknij, aby dodać zakładkę"
-      last_read: "to ostatni przeczytany przez ciebie wpis: kliknij, aby dodać zakładkę"
       remove: "Usuń zakładkę"
-      confirm_clear: "Czy na pewno chcesz usunąć wszystkie zakładki ustawione w tym temacie?"
     drafts:
       remove: "Usuń"
     topic_count_latest:
@@ -315,7 +311,6 @@ pl_PL:
     saved: "Zapisano!"
     upload: "Dodaj"
     uploading: "Wysyłam…"
-    uploading_filename: "Wysyłanie {{filename}}..."
     uploaded: "Wgrano!"
     pasting: "Wklejanie..."
     enable: "Włącz"
@@ -459,7 +454,6 @@ pl_PL:
         title: "Grupy"
         all: "Wszystkie grupy"
         empty: "Nie ma widocznych grup"
-        owner_groups: "Grupy, które do mnie należą"
         close_groups: "Zamknięte grupy"
         closed: "Zamknięta"
         public: "Publiczna"
@@ -579,7 +573,6 @@ pl_PL:
       topics_entered: "wprowadzone tematy:"
       post_count: "# wpisów"
       confirm_delete_other_accounts: "Czy na pewno chcesz usunąć wybrane konta?"
-      powered_by: "obsługiwane przez <a href='https://ipinfo.io'>ipinfo.io</a>"
     user_fields:
       none: "(wybierz opcję)"
     user:
@@ -661,7 +654,6 @@ pl_PL:
       watched_first_post_tags: "Oglądasz pierwszy post"
       watched_first_post_tags_instructions: "Zostaniesz powiadomiony tylko o pierwszym wpisie w każdym nowym temacie oznaczonym tymi tagami."
       muted_categories: "Wyciszone"
-      muted_categories_instructions: "Nie będziesz powiadamiany o nowych tematach w tych kategoriach. Nie pojawią się na liście nieprzeczytanych."
       no_category_access: "Jako moderator masz limitowany dostęp do kategorii, możliwość zapisu jest wyłączona."
       delete_account: "Usuń moje konto"
       delete_account_confirm: "Czy na pewno chcesz usunąć swoje konto? To nieodwracalne!"
@@ -723,12 +715,8 @@ pl_PL:
         disable: "Wyłącz dwuskładnikowe uwierzytelnianie"
         confirm_password_description: "Potwierdź swoje hasło, aby kontynuować"
         label: "Kod"
-        enable_description: |
-          Zeskanuj ten kod QR za pomocą wspieranej aplikacji (<a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank">Android</a> – <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank">iOS</a>– <a href="https://www.microsoft.com/en-us/store/p/authenticator/9wzdncrfj3rj" target='_blank'>Windows Phone</a>) i podaj swój kod uwierzytelniający.
         disable_description: "Podaj kod uwierzytelniający ze swojej aplikacji"
         show_key_description: "Wpisz ręcznie"
-        extended_description: |
-          Dwuskładnikowe uwierzytelnianie zwiększa bezpieczeństwo twojego konta dzięki wymogowi podawanie jednorazowego tokenu oprócz twego hasła przy każdej próbie zalogowania. Tokeny można generować na urządzeniach z systemem <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target='_blank'>Android</a>, <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a> lub <a href="https://www.microsoft.com/en-us/store/p/authenticator/9wzdncrfj3rj" target='_blank'>Windows Phone</a>.
       change_about:
         title: "Zmień O mnie"
         error: "Wystąpił błąd podczas zmiany tej wartości."
@@ -817,7 +805,6 @@ pl_PL:
         always: "zawsze"
         never: "nigdy"
       email_digests:
-        title: "Gdy nie odwiedzam strony, wysyłaj e-mail podsumowujący z popularnymi tematami i odpowiedziami."
         every_30_minutes: "co 30 minut"
         every_hour: "co godzinę"
         daily: "codziennie"
@@ -1007,9 +994,6 @@ pl_PL:
       enabled: "Strona jest w trybie tylko-do-odczytu. Możesz nadal przeglądać serwis, ale operacje takie jak postowanie, lajkowanie i inne są wyłączone."
       login_disabled: "Logowanie jest zablokowane, gdy strona jest w trybie tylko do odczytu."
       logout_disabled: "Wylogowanie jest zablokowane gdy strona jest w trybie tylko do odczytu."
-    too_few_topics_and_posts_notice: "Pora <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>rozruszać dyskusję!</a> Aktualnie istnieje <strong>%{currentTopics} / %{requiredTopics}</strong> tematów i <strong>%{currentPosts} / %{requiredPosts}</strong> wpisów. Odwiedzający potrzebują więcej tematów i konwersacji do czytania i pisania na ich temat."
-    too_few_topics_notice: "Pora <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>rozruszać dyskusję!</a> Aktualnie istnieje <strong>%{currentTopics} / %{requiredTopics}</strong> tematów. Odwiedzający potrzebują więcej tematów i konwersacji do czytania i pisania na ich temat."
-    too_few_posts_notice: "Pora <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>rozruszać dyskusję!</a> Aktualnie istnieje <strong>%{currentPosts} / %{requiredPosts}</strong> wpisów. Odwiedzający potrzebują więcej tematów i konwersacji do czytania i pisania na ich temat."
     logs_error_rate_notice:
       reached: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> osiągnął ustawiony limit %{siteSettingRate}."
       exceeded: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> przekroczył ustawiony limit %{siteSettingRate}."
@@ -1083,7 +1067,7 @@ pl_PL:
       complete_email_found: "Znaleziono konto przypisane do adresu <b>%{email}</b>,  wkrótce otrzymasz email z instrukcjami opisującymi reset hasła."
       complete_username_not_found: "Nie znaleziono konta o nazwie <b>%{username}</b>"
       complete_email_not_found: "Nie znaleziono konta przypisanego do <b>%{email}</b>"
-      help: "Email nie dotarł? Upewnij się najpierw czy sprawdziłeś folder spam.<p>Nie jesteś pewny jaki email został użyty? Wprowadz adres tutaj, a dowiemy się czy taki istnieje.</p><p>Jeśli nie masz już dostępu do adresu email zapisanego na twoim koncie, skontaktuj się z <a href='/about'>naszym pomocnym zespołem.</a></p>"
+      help: "Email nie dotarł? Upewnij się najpierw czy sprawdziłeś folder spam.<p>Nie jesteś pewny jaki email został użyty? Wprowadz adres tutaj, a dowiemy się czy taki istnieje.</p><p>Jeśli nie masz już dostępu do adresu email zapisanego na twoim koncie, skontaktuj się z <a href='%{basePath}/about'>naszym pomocnym zespołem.</a></p>"
       button_ok: "OK"
       button_help: "Pomoc"
     login:
@@ -1278,7 +1262,6 @@ pl_PL:
       link_description: "wprowadź tutaj opis odnośnika"
       link_dialog_title: "Wstaw odnośnik"
       link_optional_text: "opcjonalny tytuł"
-      link_url_placeholder: "http://example.com"
       quote_title: "Cytat"
       quote_text: "Cytat"
       code_title: "Tekst sformatowany"
@@ -1557,7 +1540,7 @@ pl_PL:
       toggle_information: "przełącz szczegóły tematu"
       read_more_in_category: "Chcesz przeczytać więcej? Przeglądaj inne tematy w {{catLink}} lub {{latestLink}}."
       read_more: "Chcesz przeczytać więcej? {{catLink}} lub {{latestLink}}."
-      read_more_MF: "Masz do zobaczenia { UNREAD, plural, =0 {} one { is <a href='/unread'>1 nieprzeczytany</a> } other { are <a href='/unread'># nieprzeczytanych</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{and } false {is } other{}} <a href='/new'>1 nowy</a> temat} other { {BOTH, select, true{and } false {are } other{}} <a href='/new'># nowych</a> tematów} }, lub {CATEGORY, select, true {przeglądaj inne tematy w {catLink}} false {{latestLink}} other {}}"
+      read_more_MF: "Masz do zobaczenia { UNREAD, plural, =0 {} one { is <a href='{basePath}/unread'>1 nieprzeczytany</a> } other { are <a href='{basePath}/unread'># nieprzeczytanych</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{and } false {is } other{}} <a href='{basePath}/new'>1 nowy</a> temat} other { {BOTH, select, true{and } false {are } other{}} <a href='{basePath}/new'># nowych</a> tematów} }, lub {CATEGORY, select, true {przeglądaj inne tematy w {catLink}} false {{latestLink}} other {}}"
       browse_all_categories: Przeglądaj wszystkie kategorie
       view_latest_topics: pokaż aktualne tematy
       suggest_create_topic: "Może rozpoczniesz temat?"
@@ -1644,7 +1627,7 @@ pl_PL:
           "2_8": 'Widzisz ilość nowych odpowiedzi, ponieważ śledzisz kategorię wątku.'
           "2_4": 'Widzisz ilość nowych odpowiedzi, ponieważ wypowiedziałeś się w tym wątku.'
           "2_2": 'Widzisz ilość nowych odpowiedzi, ponieważ śledzisz ten wątek.'
-          "2": 'Widzisz ilość nowych odpowiedzi, ponieważ przeczytałeś <a href="/u/{{username}}/preferences">ten wątek</a>.'
+          "2": 'Widzisz ilość nowych odpowiedzi, ponieważ przeczytałeś <a href="{{basePath}}/u/{{username}}/preferences">ten wątek</a>.'
           "1_2": 'Dostaniesz powiadomienie jedynie, gdy ktoś wspomni twoją @nazwę lub odpowie na twój wpis.'
           "1": 'Dostaniesz powiadomienie jedynie, gdy ktoś wspomni twoją @nazwę lub odpowie na twój wpis.'
           "0_7": 'Ignorujesz wszystkie powiadomienia z tej kategorii.'
@@ -1801,16 +1784,9 @@ pl_PL:
         action: "scal wybrane posty"
         error: "Wystąpił błąd podczas łączenia wybranych postów"
       change_owner:
-        title: "Zmień właściciela wpisów"
         action: "zmień właściciela"
         error: "Wystąpił błąd podczas zmiany właściciela wpisów."
-        label: "Nowy właściciel wpisów"
         placeholder: "nazwa nowego właściciela"
-        instructions:
-          one: "Wybierz nowego właściciela wpisu autorstwa <b>{{old_user}}</b>."
-          few: "Wybierz nowego właściciela dla {{count}} wpisów autorstwa <b>{{old_user}}</b>."
-          many: "Wybierz nowego właściciela dla {{count}} wpisów autorstwa <b>{{old_user}}</b>."
-          other: "Wybierz nowego właściciela dla {{count}} wpisów autorstwa <b>{{old_user}}</b>."
       change_timestamp:
         title: "zmień znacznik czasu"
         action: "zmień znacznik czasu"
@@ -1886,7 +1862,6 @@ pl_PL:
         upload: "Przepraszamy, wystąpił błąd podczas wczytywania Twojego pliku. Proszę, spróbuj ponownie."
         file_too_large: "Przepraszamy, ale plik jest za duży (maksymalny rozmiar to {{max_size_kb}}kb). Załaduj plik na zewnętrzny serwer plików i dodaj udostępniony link."
         too_many_uploads: "Przepraszamy, ale możesz wgrać tylko jeden plik naraz."
-        too_many_dragged_and_dropped_files: "Przepraszamy, ale możesz wgrać tylko 10 plików naraz."
         upload_not_authorized: "Przepraszamy, plik który próbujesz wgrać jest nie dozwolony (dozwolone rozszerzenia: {{authorized_extensions}})."
         image_upload_not_allowed_for_new_user: "Przepraszamy, ale nowi użytkownicy nie mogą wgrywać obrazów."
         attachment_upload_not_allowed_for_new_user: "Przepraszamy, ale nowi użytkownicy nie mogą wgrywać załączników."
@@ -2370,7 +2345,6 @@ pl_PL:
         this_week: "Tydzień"
         today: "Dzisiaj"
         other_periods: "zobacz najważniejsze"
-    browser_update: 'Niestety <a href="http://www.discourse.org/faq/#browser">twoja przeglądarka jest zbyt przestarzała, aby obsłużyć ten serwis</a>. Prosimy <a href="http://browsehappy.com">zaktualizuj swoją przeglądarkę</a>.'
     permission_types:
       full: "tworzyć / odpowiadać / przeglądać"
       create_post: "odpowiadać / przeglądać"
@@ -2543,8 +2517,6 @@ pl_PL:
           bookmarks: "Nie ma więcej dodanych tematów do zakładek."
           search: "Nie znaleziono więcej wyników wyszukiwania."
     invite:
-      custom_message: "Stwórz bardziej osobiste zaproszenie dodając"
-      custom_message_link: "niestandardowa wiadomość"
       custom_message_placeholder: "Wpisz swoją niestandardową wiadomość"
       custom_message_template_forum: "Hej, należy dołączyć do tego forum!"
       custom_message_template_topic: "Hej, pomyślałem że spodoba Ci się ten temat !"
@@ -2852,7 +2824,6 @@ pl_PL:
         import: "Import"
         delete: "Usuń"
         delete_confirm: "Usunąć ten motyw?"
-        about: "Zmień arkusze stylów CSS i nagłówki HTML w witrynie. Dodaj własne ustawienie aby rozpocząć."
         color: "Kolor"
         opacity: "Widoczność"
         copy: "Kopiuj"
@@ -2891,7 +2862,6 @@ pl_PL:
           upload_file_tip: "Wybierz plik do wysłania (png, woff2, itp.)"
           variable_name: "Nazwa zmiennej SCSS:"
           upload: "Plik"
-          child_themes_check: "Motyw importuje zawartość innych motywów"
           css_html: "Własny CSS/HTML"
           edit_css_html: "Edytuj CSS/HTML"
           edit_css_html_help: "Nie modyfikowałeś CSS ani HTML"
@@ -3068,7 +3038,6 @@ pl_PL:
           filter: "Filtruj:"
           title: "Działania obsługi"
           clear_filters: "Pokaż wszystko"
-          staff_user: "Użytkownik obsługi"
           target_user: "Użytkownik będący Obiektem"
           subject: "Temat"
           when: "Kiedy"

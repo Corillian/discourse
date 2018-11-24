@@ -940,6 +940,16 @@ describe Post do
   describe "cooking" do
     let(:post) { Fabricate.build(:post, post_args.merge(raw: "please read my blog http://blog.example.com")) }
 
+    it "should unconditionally follow links for staff" do
+
+      SiteSetting.tl3_links_no_follow = true
+      post.user.trust_level = 1
+      post.user.moderator = true
+      post.save
+
+      expect(post.cooked).not_to match(/nofollow/)
+    end
+
     it "should add nofollow to links in the post for trust levels below 3" do
       post.user.trust_level = 2
       post.save
@@ -958,6 +968,38 @@ describe Post do
       post.user.trust_level = 3
       post.save
       expect(post.cooked).to match(/nofollow noopener/)
+    end
+
+    describe 'mentions' do
+      let(:group) do
+        Fabricate(:group,
+          mentionable_level: Group::ALIAS_LEVELS[:members_mods_and_admins]
+        )
+      end
+
+      describe 'when user can not mention a group' do
+        it "should not create the mention" do
+          post = Fabricate(:post, raw: "hello @#{group.name}")
+
+          expect(post.cooked).to eq(
+            %Q|<p>hello <span class="mention">@#{group.name}</span></p>|
+          )
+        end
+      end
+
+      describe 'when user can mention a group' do
+        before do
+          group.add(post.user)
+        end
+
+        it 'should create the mention' do
+          post.update!(raw: "hello @#{group.name}")
+
+          expect(post.cooked).to eq(
+            %Q|<p>hello <a class="mention-group" href="/groups/#{group.name}">@#{group.name}</a></p>|
+          )
+        end
+      end
     end
   end
 

@@ -34,7 +34,7 @@ gem 'redis-namespace'
 
 gem 'active_model_serializers', '~> 0.8.3'
 
-gem 'onebox', '1.8.60'
+gem 'onebox', '1.8.68'
 
 gem 'http_accept_language', '~>2.0.5', require: false
 
@@ -189,10 +189,11 @@ if ENV["IMPORT"] == "1"
   gem 'mysql2'
   gem 'redcarpet'
   gem 'sqlite3', '~> 1.3.13'
-  gem 'ruby-bbcode-to-md', github: 'nlalonde/ruby-bbcode-to-md'
+  gem 'ruby-bbcode-to-md', git: 'https://github.com/nlalonde/ruby-bbcode-to-md'
   gem 'reverse_markdown'
   gem 'tiny_tds'
 end
 
 gem 'webpush', require: false
 gem 'colored2', require: false
+gem 'maxminddb'

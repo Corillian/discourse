@@ -1,10 +1,10 @@
 import MultiSelectComponent from "select-kit/components/multi-select";
-import Tags from "select-kit/mixins/tags";
+import TagsMixin from "select-kit/mixins/tags";
 import renderTag from "discourse/lib/render-tag";
 import computed from "ember-addons/ember-computed-decorators";
 const { get, isEmpty, run, makeArray } = Ember;
 
-export default MultiSelectComponent.extend(Tags, {
+export default MultiSelectComponent.extend(TagsMixin, {
   pluginApiIdentifiers: ["tag-group-chooser"],
   classNames: ["tag-group-chooser", "tag-chooser"],
   isAsync: true,
@@ -87,12 +87,6 @@ export default MultiSelectComponent.extend(Tags, {
     results = results.map(result => {
       return { id: result.text, name: result.text, count: result.count };
     });
-
-    // if forbidden we probably have an existing tag which is not in the list of
-    // returned tags, so we manually add it at the top
-    if (json.forbidden) {
-      results.unshift({ id: json.forbidden, name: json.forbidden, count: 0 });
-    }
 
     return results;
   }

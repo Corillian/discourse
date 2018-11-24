@@ -52,17 +52,36 @@ export default Ember.Mixin.create({
       return false;
     }
 
+    const toLowerCaseOrUndefined = string => {
+      return string === undefined ? undefined : string.toLowerCase();
+    };
+
     const inCollection = this.get("collectionComputedContent")
-      .map(c => get(c, "id"))
+      .map(c => toLowerCaseOrUndefined(get(c, "id")))
       .includes(term);
 
     const inSelection = this.get("selection")
-      .map(s => get(s, "value").toLowerCase())
+      .map(s => toLowerCaseOrUndefined(get(s, "value")))
       .includes(term);
     if (inCollection || inSelection) {
       return false;
     }
 
     return true;
+  },
+
+  createContentFromInput(input) {
+    // See lib/discourse_tagging#clean_tag.
+    var content = input
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[\/\?#\[\]@!\$&'\(\)\*\+,;=\.%\\`^\s|\{\}"<>]+/g, "")
+      .substring(0, this.siteSettings.max_tag_length);
+
+    if (this.siteSettings.force_lowercase_tags) {
+      content = content.toLowerCase();
+    }
+
+    return content;
   }
 });

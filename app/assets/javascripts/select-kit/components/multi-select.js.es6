@@ -39,7 +39,9 @@ export default SelectKitComponent.extend({
   @on("didRender")
   _setChoicesMaxWidth() {
     const width = this.$body().outerWidth(false);
-    this.$(".choices").css({ maxWidth: width, width });
+    if (width > 0) {
+      this.$(".choices").css({ maxWidth: width });
+    }
   },
 
   @on("didReceiveAttrs")
@@ -259,6 +261,11 @@ export default SelectKitComponent.extend({
       );
       this._boundaryActionHandler("onSelectNone");
       this.clearSelection();
+      return;
+    }
+
+    if (computedContentItem.__sk_row_type === "noopRow") {
+      this._boundaryActionHandler("onSelect", computedContentItem.value);
       return;
     }
 

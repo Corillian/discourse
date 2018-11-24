@@ -246,8 +246,17 @@ describe Search do
 
     context 'search within topic' do
 
-      def new_post(raw, topic)
+      def new_post(raw, topic = nil)
+        topic ||= Fabricate(:topic)
         Fabricate(:post, topic: topic, topic_id: topic.id, user: topic.user, raw: raw)
+      end
+
+      it 'works in Chinese' do
+        SiteSetting.search_tokenize_chinese_japanese_korean = true
+        post = new_post('I am not in English 何点になると思いますか')
+
+        results = Search.execute('何点になると思', search_context: post.topic)
+        expect(results.posts.map(&:id)).to eq([post.id])
       end
 
       it 'displays multiple results within a topic' do
@@ -407,6 +416,7 @@ describe Search do
     end
 
     let!(:tag) { Fabricate(:tag) }
+    let!(:uppercase_tag) { Fabricate(:tag, name: "HeLlO") }
     let(:tag_group) { Fabricate(:tag_group) }
     let(:category) { Fabricate(:category) }
 
@@ -415,13 +425,16 @@ describe Search do
         SiteSetting.tagging_enabled = true
 
         post = Fabricate(:post, raw: 'I am special post')
-        DiscourseTagging.tag_topic_by_names(post.topic, Guardian.new(Fabricate.build(:admin)), [tag.name])
+        DiscourseTagging.tag_topic_by_names(post.topic, Guardian.new(Fabricate.build(:admin)), [tag.name, uppercase_tag.name])
         post.topic.save
 
         # we got to make this index (it is deferred)
         Jobs::ReindexSearch.new.rebuild_problem_posts
 
         result = Search.execute(tag.name)
+        expect(result.posts.length).to eq(1)
+
+        result = Search.execute("hElLo")
         expect(result.posts.length).to eq(1)
 
         SiteSetting.tagging_enabled = false
@@ -822,9 +835,10 @@ describe Search do
       expect(Search.execute("sams post #sub-category").posts.length).to eq(1)
 
       # tags
-      topic.tags = [Fabricate(:tag, name: 'alpha'), Fabricate(:tag, name: 'привет')]
+      topic.tags = [Fabricate(:tag, name: 'alpha'), Fabricate(:tag, name: 'привет'), Fabricate(:tag, name: 'HeLlO')]
       expect(Search.execute('this is a test #alpha').posts.map(&:id)).to eq([post.id])
       expect(Search.execute('this is a test #привет').posts.map(&:id)).to eq([post.id])
+      expect(Search.execute('this is a test #hElLo').posts.map(&:id)).to eq([post.id])
       expect(Search.execute('this is a test #beta').posts.size).to eq(0)
     end
 
@@ -894,6 +908,22 @@ describe Search do
         expect(Search.execute('tags:eggs -tags:lunch,sandwiches').posts)
           .to contain_exactly(post1, post2)
       end
+
+      it 'orders posts correctly when combining tags with categories or terms' do
+        cat1 = Fabricate(:category, name: 'food')
+        topic6 = Fabricate(:topic, tags: [tag1, tag2], category: cat1)
+        topic7 = Fabricate(:topic, tags: [tag1, tag2, tag3], category: cat1)
+        post7 = Fabricate(:post, topic: topic6, raw: "Wakey, wakey, eggs and bakey.", like_count: 5)
+        post8 = Fabricate(:post, topic: topic7, raw: "Bakey, bakey, eggs to makey.", like_count: 2)
+
+        expect(Search.execute('bakey tags:lunch order:latest').posts.map(&:id))
+          .to eq([post8.id, post7.id])
+        expect(Search.execute('#food tags:lunch order:latest').posts.map(&:id))
+          .to eq([post8.id, post7.id])
+        expect(Search.execute('#food tags:lunch order:likes').posts.map(&:id))
+          .to eq([post7.id, post8.id])
+      end
+
     end
 
     it "can find posts which contains filetypes" do
@@ -915,12 +945,18 @@ describe Search do
     end
   end
 
-  it 'can parse complex strings using ts_query helper' do
-    str = " grigio:babel deprecated? "
-    str << "page page on Atmosphere](https://atmospherejs.com/grigio/babel)xxx: aaa.js:222 aaa'\"bbb"
+  context '#ts_query' do
+    it 'can parse complex strings using ts_query helper' do
+      str = " grigio:babel deprecated? "
+      str << "page page on Atmosphere](https://atmospherejs.com/grigio/babel)xxx: aaa.js:222 aaa'\"bbb"
 
-    ts_query = Search.ts_query(term: str, ts_config: "simple")
-    DB.exec("SELECT to_tsvector('bbb') @@ " << ts_query)
+      ts_query = Search.ts_query(term: str, ts_config: "simple")
+      expect { DB.exec("SELECT to_tsvector('bbb') @@ " << ts_query) }.to_not raise_error
+
+      ts_query = Search.ts_query(term: "foo.bar/'&baz", ts_config: "simple")
+      expect { DB.exec("SELECT to_tsvector('bbb') @@ " << ts_query) }.to_not raise_error
+      expect(ts_query).to include("baz")
+    end
   end
 
   context '#word_to_date' do
@@ -999,21 +1035,42 @@ describe Search do
     end
   end
 
-  context 'diacritics' do
+  context 'ignore_diacritics' do
+    before { SiteSetting.search_ignore_accents = true }
+    let!(:post1) { Fabricate(:post, raw: 'สวัสดี Rágis hello') }
+
+    it ('allows strips correctly') do
+      results = Search.execute('hello', type_filter: 'topic')
+      expect(results.posts.length).to eq(1)
+
+      results = Search.execute('ragis', type_filter: 'topic')
+      expect(results.posts.length).to eq(1)
+
+      results = Search.execute('Rágis', type_filter: 'topic', include_blurbs: true)
+      expect(results.posts.length).to eq(1)
+
+      # TODO: this is a test we need to fix!
+      #expect(results.blurb(results.posts.first)).to include('Rágis')
+
+      results = Search.execute('สวัสดี', type_filter: 'topic')
+      expect(results.posts.length).to eq(1)
+    end
+  end
+
+  context 'include_diacritics' do
+    before { SiteSetting.search_ignore_accents = false }
     let!(:post1) { Fabricate(:post, raw: 'สวัสดี Régis hello') }
 
     it ('allows strips correctly') do
       results = Search.execute('hello', type_filter: 'topic')
       expect(results.posts.length).to eq(1)
 
-      # TODO when we add diacritic support we should return 1 here
       results = Search.execute('regis', type_filter: 'topic')
       expect(results.posts.length).to eq(0)
 
       results = Search.execute('Régis', type_filter: 'topic', include_blurbs: true)
       expect(results.posts.length).to eq(1)
 
-      # this is a test we got to keep working
       expect(results.blurb(results.posts.first)).to include('Régis')
 
       results = Search.execute('สวัสดี', type_filter: 'topic')

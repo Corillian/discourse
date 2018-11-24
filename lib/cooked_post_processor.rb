@@ -60,12 +60,7 @@ class CookedPostProcessor
 
   def post_process_images
     extract_images.each do |img|
-      src = img["src"].sub(/^https?:/i, "")
-      if large_images.include?(src)
-        add_large_image_placeholder!(img)
-      elsif broken_images.include?(src)
-        add_broken_image_placeholder!(img)
-      else
+      unless add_image_placeholder!(img)
         limit_size!(img)
         convert_to_link!(img)
       end
@@ -88,6 +83,18 @@ class CookedPostProcessor
         end
       end
     end
+  end
+
+  def add_image_placeholder!(img)
+    src = img["src"].sub(/^https?:/i, "")
+
+    if large_images.include?(src)
+      return add_large_image_placeholder!(img)
+    elsif broken_images.include?(src)
+      return add_broken_image_placeholder!(img)
+    end
+
+    false
   end
 
   def add_large_image_placeholder!(img)
@@ -127,6 +134,7 @@ class CookedPostProcessor
     end
 
     img.remove
+    true
   end
 
   def add_broken_image_placeholder!(img)
@@ -136,6 +144,7 @@ class CookedPostProcessor
     img.remove_attribute("src")
     img.remove_attribute("width")
     img.remove_attribute("height")
+    true
   end
 
   def large_images
@@ -231,6 +240,10 @@ class CookedPostProcessor
     end
   end
 
+  def add_to_size_cache(url, w, h)
+    @size_cache[url] = [w, h]
+  end
+
   def get_size(url)
     return @size_cache[url] if @size_cache.has_key?(url)
 
@@ -285,9 +298,18 @@ class CookedPostProcessor
 
     if upload = Upload.get_from_url(src)
       upload.create_thumbnail!(width, height, crop)
+
+      each_responsive_ratio do |ratio|
+        resized_w = (width * ratio).to_i
+        resized_h = (height * ratio).to_i
+
+        if upload.width && resized_w <= upload.width
+          upload.create_thumbnail!(resized_w, resized_h, crop)
+        end
+      end
     end
 
-    add_lightbox!(img, original_width, original_height, upload)
+    add_lightbox!(img, original_width, original_height, upload, cropped: crop)
   end
 
   def is_a_hyperlink?(img)
@@ -299,7 +321,16 @@ class CookedPostProcessor
     false
   end
 
-  def add_lightbox!(img, original_width, original_height, upload = nil)
+  def each_responsive_ratio
+    SiteSetting
+      .responsive_post_image_sizes
+      .split('|')
+      .map(&:to_f)
+      .sort
+      .each { |r| yield r if r > 1 }
+  end
+
+  def add_lightbox!(img, original_width, original_height, upload, cropped: false)
     # first, create a div to hold our lightbox
     lightbox = create_node("div", "lightbox-wrapper")
     img.add_next_sibling(lightbox)
@@ -320,13 +351,28 @@ class CookedPostProcessor
 
     if upload
       thumbnail = upload.thumbnail(w, h)
+      if thumbnail && thumbnail.filesize.to_i < upload.filesize
+        img["src"] = thumbnail.url
 
-      img["src"] =
-        if thumbnail && thumbnail.filesize.to_i < upload.filesize
-          upload.thumbnail(w, h).url
-        else
-          upload.url
+        srcset = +""
+
+        each_responsive_ratio do |ratio|
+          resized_w = (w * ratio).to_i
+          resized_h = (h * ratio).to_i
+
+          if !cropped && upload.width && resized_w > upload.width
+            cooked_url = UrlHelper.cook_url(upload.url)
+            srcset << ", #{cooked_url} #{ratio.to_s.sub(/\.0$/, "")}x"
+          elsif t = upload.thumbnail(resized_w, resized_h)
+            cooked_url = UrlHelper.cook_url(t.url)
+            srcset << ", #{cooked_url} #{ratio.to_s.sub(/\.0$/, "")}x"
+          end
+
+          img["srcset"] = "#{UrlHelper.cook_url(img["src"])}#{srcset}" if srcset.present?
         end
+      else
+        img["src"] = upload.url
+      end
     end
 
     # then, some overlay informations
@@ -400,8 +446,13 @@ class CookedPostProcessor
       next if img["src"].blank?
 
       src = img["src"].sub(/^https?:/i, "")
+      parent = img.parent
+      img_classes = (img["class"] || "").split(" ")
+      link_classes = ((parent&.name == "a" && parent["class"]) || "").split(" ")
 
-      if large_images.include?(src) || broken_images.include?(src)
+      if img_classes.include?("onebox") || link_classes.include?("onebox")
+        next if add_image_placeholder!(img)
+      elsif large_images.include?(src) || broken_images.include?(src)
         img.remove
         next
       end
@@ -416,7 +467,7 @@ class CookedPostProcessor
 
       next if img["class"]&.include?('onebox-avatar')
 
-      parent_class = img.parent && img.parent["class"]
+      parent_class = parent && parent["class"]
       width = img["width"].to_i
       height = img["height"].to_i
 

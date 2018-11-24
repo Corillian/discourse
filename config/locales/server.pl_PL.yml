@@ -112,10 +112,6 @@ pl_PL:
     embed:
       load_from_remote: "Wystąpił błąd podczas wczytywania tego wpisu."
     site_settings:
-      min_username_length_exists: "Nie możesz ustawić najkrótszej długości nazwy użytkownika powyżej najkrótszej nazwy użytkownika."
-      min_username_length_range: "Nie możesz ustawić minimum powyżej maksimum."
-      max_username_length_exists: "Nie możesz ustawić maksymalnej długości nazwy użytkownika poniżej najdłuższej nazwy użytkownika."
-      max_username_length_range: "Nie możesz ustawić maksimum poniżej minimum."
       default_categories_already_selected: "Nie możesz wybrać kategorii użytej w innej liście."
       s3_upload_bucket_is_required: "Nie możesz wysyłać na S3 jeżeli nie podasz 's3_upload_bucket'."
   activemodel:
@@ -123,7 +119,7 @@ pl_PL:
       <<: *errors
   invite:
     not_found: "Link do zaproszenia nie istnieje. Skontaktuj się z administratorem strony"
-    user_exists: "Nie ma potrzeby zapraszania <b>%{email}</b>, <a href='/u/%{username}/summary'>obecnie posiada konto!"
+    user_exists: "Nie ma potrzeby zapraszania <b>%{email}</b>, <a href='%{base_path}/u/%{username}/summary'>obecnie posiada konto!"
   bulk_invite:
     file_should_be_csv: "Wgrywany plik powinien być formatu csv."
     error: "Wystąpił błąd podczas wgrywania tego pliku. Spróbuj ponownie później."
@@ -251,7 +247,7 @@ pl_PL:
 
       - Postaraj się umieścić słowa kluczowe w tytule, dzięki czemu inni będą mogli łatwo *wyszukać* temat. Przypisz go do kategorii o pokrewnej tematyce.
 
-      Aby dowiedzieć się więcej, [zobacz przewodnik społeczności](/guidelines). Ten panel pojawi się tylko przy pierwszym %{education_posts_text}.
+      Aby dowiedzieć się więcej, [zobacz przewodnik społeczności](%{base_path}/guidelines). Ten panel pojawi się tylko przy pierwszym %{education_posts_text}.
 
 
     'new-reply': |
@@ -263,16 +259,16 @@ pl_PL:
 
       - Konstruktywna krytyka jest mile widziana, ale krytykujemy *pomysły*, a nie ludzi.
 
-      Więcej informacji znajdziesz [w przewodniku społeczności](/guidelines).
+      Więcej informacji znajdziesz [w przewodniku społeczności](%{base_path}/guidelines).
       Ten panel pojawi się tylko przy pisaniu pierwszych %{education_posts_text}.
     avatar: |
-      ###Co z Twoim zdjęciem profilowym?
+      ### Co powiesz na dodanie awatara?
 
-      Opublikowałeś parę tematów i odpowiedzi , lecz Twoje zdjęcie profilowe nie jest tak unikalne jak Ty – To tylko litera.
+      Opublikowałeś parę tematów i odpowiedzi, lecz Twoje zdjęcie profilowe nie jest tak unikalne jak Ty – To tylko litera.
 
-      Czy rozważyłeś  **[odwiedzenie swojego profilu](%{profile_path})** i dodanie zdjęcia które Cię reprezentuje ?
+      Czy rozważyłeś  **[odwiedzenie swojego profilu](%{profile_path})** i dodanie zdjęcia które Cię reprezentuje?
 
-      Łatwiej jest prowadzić dyskusję i znaleźć interesujące osoby podczas rozmowy kiedy każdy ma wyjątkowe zdjęcie profilowe !
+      Łatwiej jest prowadzić dyskusję i znaleźć interesujące osoby podczas rozmowy kiedy każdy ma wyjątkowe zdjęcie profilowe!
     sequential_replies: |
       ### Pomyśl o odpowiadaniu na kilka postów jednocześnie
 
@@ -294,7 +290,7 @@ pl_PL:
 
       Czy myślałeś o odpowiedzi do *innych* osób w dyskusji? Dobra dyskusja pozwala wypowiedzieć się wielu osobom z różnymi opiniami.
 
-      Jeżeli chcesz kontynuować dowolnie długą dyskusję z konkretnym użytkownikiem możesz [wysłać prywatną wiadomość](/u/%{reply_username}).
+      Jeżeli chcesz kontynuować dowolnie długą dyskusję z konkretnym użytkownikiem możesz [wysłać prywatną wiadomość](%{base_path}/u/%{reply_username}).
     too_many_replies: |
       ### Osiągnąłeś limit odpowiedzi w tym temacie
 
@@ -358,7 +354,7 @@ pl_PL:
             word:
               too_many: "Za długi opis akcji"
   user_profile:
-    no_info_me: "<div class='missing-profile'>pole \"O mnie\" w profilu jest obecnie puste, <a href='/u/%{username_lower}/preferences/about-me'>Czy chcesz je wypełnić?</a></div>"
+    no_info_me: "<div class='missing-profile'>pole \"O mnie\" w profilu jest obecnie puste, <a href='%{base_path}/u/%{username_lower}/preferences/about-me'>Czy chcesz je wypełnić?</a></div>"
     no_info_other: "<div class='missing-profile'>%{name} jeszcze nie podał swojego opisu w profilu</div>"
   vip_category_name: "Salon"
   vip_category_description: "Kategoria wyłącznie dla członków o poziomie zaufania 3 lub wyższym."
@@ -367,7 +363,7 @@ pl_PL:
   staff_category_name: "Zespół"
   staff_category_description: "Ukryta kategoria dla rozmów zespołu. Tematy są widoczne tylko dla adminów i moderatorów."
   assets_topic_title: "Zasoby wyglądu strony"
-  assets_topic_body: "Ten wpis (widoczny tylko dla administratorów) służy zapisywaniu obrazków i plików służących do zmianu wyglądu strony. Nie kasuj go!\n\n\nOto jak to zrobić:\n\n\n1. Odpowieź w tym wpisie.\n2. Załaduj wszystkie pliki, których chcesz użyć jako logotypy, favikony itp. (Użyj przycisku uploadowania na pasku narzędzi w edytorze wpisu albo przeciągnij obrazki do treści).\n3. Naciśnij odpowiedź, żeby ją opublikować.\n4. Naciśnij prawym przyciskiem myszki na obrazku, żeby zapisać link do obrazka albo naciśnij przycisk edycji, żeby zobaczyć link w treści wpisu.\n5. Wklej te linki w [ustawieniach strony](/admin/site_settings/category/required).\n\n\nJeżeli chcesz uploadować inne typy plików, zedytuj `dozwolone rozszerzenia` [ustawieniach plików](/admin/site_settings/category/files)."
+  assets_topic_body: "Ten wpis (widoczny tylko dla administratorów) służy zapisywaniu obrazków i plików służących do zmianu wyglądu strony. Nie kasuj go!\n\n\nOto jak to zrobić:\n\n\n1. Odpowieź w tym wpisie.\n2. Załaduj wszystkie pliki, których chcesz użyć jako logotypy, favikony itp. (Użyj przycisku uploadowania na pasku narzędzi w edytorze wpisu albo przeciągnij obrazki do treści).\n3. Naciśnij odpowiedź, żeby ją opublikować.\n4. Naciśnij prawym przyciskiem myszki na obrazku, żeby zapisać link do obrazka albo naciśnij przycisk edycji, żeby zobaczyć link w treści wpisu.\n5. Wklej te linki w [ustawieniach strony](%{base_path}/admin/site_settings/category/required).\n\n\nJeżeli chcesz uploadować inne typy plików, zedytuj `dozwolone rozszerzenia` [ustawieniach plików](%{base_path}/admin/site_settings/category/files)."
   discourse_welcome_topic:
     title: "Witaj w Discourse"
     body: |2
@@ -381,7 +377,7 @@ pl_PL:
         - Dlaczego powinni tutaj przychodzić?
         - Gdzie mogą przeczytać więcej (link, zasoby, itp.)?
 
-        <img src="/images/welcome/discourse-edit-post-animated.gif" width="508" height="106">
+        <img src="%{base_path}/images/welcome/discourse-edit-post-animated.gif" width="508" height="106">
 
         Rozważ zamknięcie tego tematu poprzez administracyjny :wrench: (w prawym górnym i dolnym rogu), aby zapobiec niepotrzebnym odpowiedziom do ogłoszenia.
   lounge_welcome:
@@ -597,8 +593,6 @@ pl_PL:
       email_body: "%{link}\n\n%{message}"
     inappropriate:
       title: 'Niewłaściwe'
-      description: 'Ten wpis zawiera treści które umiarkowana osoba może uznać za wulgarne, obraźliwe lub naruszające <a href="/guidelines">wytyczne społeczności</a>.'
-      short_description: 'Naruszenie  <a href="/guidelines">naszych wytycznych dla społeczności </a>'
       long_form: 'oflagowano jako niewłaściwe'
     notify_user:
       title: 'Wyślij @{{username}} wiadomość'
@@ -641,11 +635,9 @@ pl_PL:
       long_form: 'oflagowano jako spam'
     inappropriate:
       title: 'Niewłaściwe'
-      description: 'Ten temat zawiera treści jakie rozsądna osoba może uznać za agresywne, obraźliwe,  lub sprzeczne z <a href="/guidelines">wytycznymi społeczności</a>.'
       long_form: 'oflagowano jako niewłaściwe'
     notify_moderators:
       title: "Coś innego"
-      description: 'Ten wpis wymaga interwencji moderatora z uwagi na niezgodność z <a href="/guidelines">wytycznymi społeczności</a>, <a href="%{tos_url}">warunkami użytkowania</a> lub z innego, niewymienionego tu powodu.'
       long_form: 'oznaczył to dla uwagi moderatora'
       email_title: 'Temat "%{title}" wymaga uwagi moderatora'
       email_body: "%{link}\n\n%{message}"
@@ -825,27 +817,18 @@ pl_PL:
   dashboard:
     rails_env_warning: "Twój serwer działa w trybie %{env}"
     host_names_warning: "Twój plik config/database.yml używa domyślnej nazwy serwera localhost. Zmień go by używał nazwy serwera Twojej strony."
-    gc_warning: 'Twój serwer wykorzystuje domyślne ustawienia odśmiecacza ruby, który nie da Ci optymalnej wydajności. Przeczytaj ten temat o optymalizacji wydajności: <a href="http://meta.discourse.org/t/tuning-ruby-and-rails-for-discourse/4126" target="_blank">Tuning Ruby and Rails for Discourse</a>.'
     sidekiq_warning: 'Sidekiq nie działa. Wiele zadań, takich jak wysyłanie emaili, jest wykonywane asynchronicznie przez sidekiqa. Zagwarantuj, że przynajmniej jeden proces sidekiqa działa. <a href="https://github.com/mperham/sidekiq" target="_blank">Dowiedz się więcej o Sidekiqu</a>.'
     queue_size_warning: 'Liczba oczekujących zadań wynosi %{queue_size}, to dużo. Może to wskazywać na problem z procesem (procesami) Sidekiq, lub możesz potrzebować więcej pracowników Sidekiq.'
     memory_warning: 'Twój serwer działa z mniej niż 1 GB pamięci całkowitej. Przynajmniej 1 GB pamięci jest zalecany.'
-    google_oauth2_config_warning: 'Serwer został skonfigurowany, aby umożliwić rejestracje i logowanie za pomocą Google OAuth2 (enable_google_oauth2_logins), ale id klienta oraz tajne wartości klienta nie są ustawione. Przejdź do <a href="/admin/site_settings">strony ustawień</a> i zaktualizuj ustawienia, <a href="https://meta.discourse.org/t/configuring-google-login-for-discourse/15858" target="_blank"> Zobacz przewodnik, aby dowiedzieć się więcej</a>.'
-    facebook_config_warning: 'Serwer jest skonfigurowany by pozwalać na rejestrację i logowanie za pomocą Facebooka (enable_facebook_logins), ale identyfikator i sekret aplikacji nie są ustawione. Przejdź do <a href="/admin/site_settings">ustawień serwisu</a> i zmień ustawienia. <a href="https://meta.discourse.org/t/configuring-facebook-login-for-discourse/13394" target="_blank">Zobacz ten poradnik by dowiedzieć się więcej</a>.'
-    twitter_config_warning: 'Serwer jest skonfigurowany by pozwalać na rejestrację i logowanie za pomocą Twittera (enable_twitter_logins), ale klucz i sekret nie są ustawione. Przejdź do <a href="/admin/site_settings">ustawień serwisu</a> i zmień ustawienia. <a href="https://meta.discourse.org/t/configuring-twitter-login-for-discourse/13395" target="_blank">Zobacz ten poradnik by dowiedzieć się więcej</a>.'
-    github_config_warning: 'Serwer jest skonfigurowany by pozwalać na rejestrację i logowanie za pomocą GitHuba (enable_github_logins), ale id klienta i sekret nie są ustawione. Przejdź do <a href="/admin/site_settings">ustawień serwisu</a> i zmień ustawienia. <a href="https://meta.discourse.org/t/configuring-github-login-for-discourse/13745" target="_blank">Zobacz ten poradnik by dowiedzieć się więcej</a>.'
-    s3_config_warning: 'Serwer został skonfigurowany aby przesyłać pliki do s2, ale przynajmniej jeden z następujących parametrów nie został ustawiony: s3_access_key_id_, s3_secret_access_key, s3_use_iam_profile, lub s3_upload bucket. Przejdź do <a href="/admin/site_settings">Strony ustawień</a> i zaktualizuj ustawienia, <a href="http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank"> Zobacz "Jak ustawić przesyłanie obrazu do S3" aby dowiedzieć się więcej</a>,'
-    s3_backup_config_warning: 'Serwer jest skonfigurowany tak, aby wysyłać kopie zapasowe do s3, ale jedno z ustawień nie jest ustawione prawidłowo: s3_access_key_id, s3_secret_access_key or s3_backup_bucket. Idź do <a href="/admin/site_settings"> ustawień strony </a> i zaktualizuj ustawienia. <a href="http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank"> Zobacz Jak ustawić wysyłanie zdjęć do S3 </a>.'
-    image_magick_warning: 'Serwer jest skonfigurowany by tworzyć miniaturki dużych obrazów, ale ImageMagick nie jest zainstalowany. Zainstaluj ImageMagick za pomocą ulubionego menedżera pakietów lub <a href="http://www.imagemagick.org/script/binary-releases.php" target="_blank">pobierz najnowszą wersję</a>.'
-    failing_emails_warning: '%{num_failed_jobs} prac emailowych nie powiodło się. Sprawdź plik app.yml i upewnij się, że ustawienia serwera poczty są poprawne. <a href="/sidekiq/retries" target="_blank">Zobacz nieudane prace w Sidekiqu</a>.'
     subfolder_ends_in_slash: "Twoje ustawienie podfolderu jest niepoprawne; DISCOURSE_RELATIVE_URL_ROOT kończy się slashem."
     email_polling_errored_recently:
-      one: "Email polling wygenerował 1 błąd w przeciągu ostatniej doby. Więcej szczegółów w <a href='/logs' target='_blank'>logach</a>."
-      few: "Email polling wygenerował %{count} błędy w przeciągu ostatniej doby. Więcej szczegółów w <a href='/logs' target='_blank'>logach</a>."
-      many: "Email polling wygenerował %{count} błędów w przeciągu ostatniej doby. Więcej szczegółów w <a href='/logs' target='_blank'>logach</a>."
-      other: "Email polling wygenerował %{count} błędów w przeciągu ostatniej doby. Więcej szczegółów w <a href='/logs' target='_blank'>logach</a>."
-    bad_favicon_url: "Nie można załadować favikony. Sprawdź ustawiony favicon_url w <a href='/admin/site_settings'>Ustawieniach Strony</a>."
-    poll_pop3_timeout: "Połączenie z serwerem POP3 zostało zerwane. Przychodząca wiadomość mogła nie zostać odebrany. Proszę sprawdź swoje <a href='/admin/site_settings/category/email'ustawienia POP3</a> i dostawcę usług."
-    poll_pop3_auth_error: "Połączenie z serwerem POP3 nie powiodło się przez błąd uwierzytelnienia. Proszę sprawdź swoje <a href='/admin/site_settings/category/email'>ustawienia POP3</a>."
+      one: "Email polling wygenerował 1 błąd w przeciągu ostatniej doby. Więcej szczegółów w <a href='%{base_path}/logs' target='_blank'>logach</a>."
+      few: "Email polling wygenerował %{count} błędy w przeciągu ostatniej doby. Więcej szczegółów w <a href='%{base_path}/logs' target='_blank'>logach</a>."
+      many: "Email polling wygenerował %{count} błędów w przeciągu ostatniej doby. Więcej szczegółów w <a href='%{base_path}/logs' target='_blank'>logach</a>."
+      other: "Email polling wygenerował %{count} błędów w przeciągu ostatniej doby. Więcej szczegółów w <a href='%{base_path}/logs' target='_blank'>logach</a>."
+    bad_favicon_url: "Nie można załadować favikony. Sprawdź ustawiony favicon_url w <a href='%{base_path}/admin/site_settings'>Ustawieniach Strony</a>."
+    poll_pop3_timeout: "Połączenie z serwerem POP3 zostało zerwane. Przychodząca wiadomość mogła nie zostać odebrany. Proszę sprawdź swoje <a href='%{base_path}/admin/site_settings/category/email'ustawienia POP3</a> i dostawcę usług."
+    poll_pop3_auth_error: "Połączenie z serwerem POP3 nie powiodło się przez błąd uwierzytelnienia. Proszę sprawdź swoje <a href='%{base_path}/admin/site_settings/category/email'>ustawienia POP3</a>."
   site_settings:
     censored_words: "Wskazane słowa będą automatycznie zamieniane na  &#9632;&#9632;&#9632;&#9632;"
     delete_old_hidden_posts: "Automatycznie kasuj wpisy ukryte dłużej niż 30 dni."
@@ -870,15 +853,12 @@ pl_PL:
     educate_until_posts: "Wyświetlaj okno edukacyjne po rozpoczęciu pisania  dopóki nowy użytkownik nie napisze tylu wpisów."
     title: "Nazwa tej strony używana w tagu title."
     site_description: "Opis strony w jednym zdaniu, wykorzystywany w meta tagu description."
-    contact_email: "Adres email kogoś, z kim należy się kontaktować w kwestii serwisu. Istotne informacje z discourse.org dotyczące krytycznych aktualizacji mogą być wysyłane pod ten adres."
-    contact_url: "URL kontaktowy dla tego serwisu. Używany na podstronie /about."
     crawl_images: "Pobieraj grafiki ze zdalnych URLi aby ustawić poprawną wysokość i szerokość w tagu img."
     download_remote_images_to_local: "Pobieraj zdalne grafiki i twórz ich lokalne kopie aby zapobiegać uszkodzonym/brakującym obrazkom na stronach."
     download_remote_images_threshold: "Minimalna ilość wolnego miejsca na dysku wymagana przez funkcję pobierania zdalnych grafik (w procentach)"
     download_remote_images_max_days_old: "Nie pobieraj zdalnych obrazów dla postów które mają więcej niż n dni."
     disabled_image_download_domains: "Zdalne grafiki z tych domen nie będą pobierane."
     editing_grace_period: "Przez (n) sekund po utworzeniu nowego wpisu jego kolejne edycje nie będą tworzyć nowych wersji w historii wpisu."
-    post_edit_time_limit: "Autor może edytować lub usunąć swój wpis przez tyle minut po jego utworzeniu. Ustawienie 0 oznacza 'zawsze'."
     edit_history_visible_to_public: "Pozwól wszystkim przeglądać poprzednie wersje edytowanych wpisów. Gdy wyłączone, jedynie obsługa/staff może."
     delete_removed_posts_after: "Wpisy usunięte przez autora będą automatycznie zlikwidowane po (n) godzinach. Jeżeli liczba godzin będzie wynosić 0, to zostaną usunięte natychmiast. "
     max_image_width: "Maksymalna szerokość miniaturki grafiki we wpisie. "
@@ -894,14 +874,10 @@ pl_PL:
     inline_onebox_domains_whitelist: "Lista domen, które będą zamknięte w miniaturze jeśli zostały zalinkowane bez tytułu."
     enable_inline_onebox_on_all_domains: "Zignoruj inline_onebox_domain_whitelist strony ustawień i zezwól na wstawki onebox we wszystkich domenach."
     max_oneboxes_per_post: "Masymalna ilość oneboxów w poście."
-    logo_url: "Zdjęcie logo w lewym górnym rogu twojej strony powinno mieć kształt szerokiego prostokąta. Jeśli zostawisz miejsce puste, wyświetlany będzie tytuł strony."
     digest_logo_url: "Alternatywne logo używane w biuletynie email. Powinno mieć kształt szerokiego prostokąta. Nie powinno być obrazkiem SVG. Jeśli puste, zostanie użyta wartość z pola `logo_url`."
-    logo_small_url: "Małe logo w lewym górnym rogu strony widoczne przy przewijaniu. Powinno mieć kwadratowy kształt. Jeśli zostawisz to pole puste zamiast logo pojawi się symbol strony domowej."
-    favicon_url: "Favicon serwisu. Więcej informacji: http://pl.wikipedia.org/wiki/Favicon Żeby działało poprawnie poprzez CDN musi być obrazem png"
     apple_touch_icon_url: "Ikona używana przez urządzenia Apple. Rekomendowany wymiar to 144px na 144px."
     notification_email: "Adres z którego wysyłane będą wszystkie istotne emaile systemowe.\nKonieczna jest poprawna konfiguracja rekordów SPF, DKIM oraz zwrotnego PTR użytej domeny."
     email_custom_headers: "A pipe-delimited list of custom email headers"
-    email_subject: "Możliwość dostosowania formatu tematów maili. Szczegóły: https://meta.discourse.org/t/customize-subject-format-for-standard-emails/20801"
     force_https: "Wymuś używanie wyłącznie HTTPS na stronie. UWAGA: NIE włączaj tego dopóki nie zweryfikujesz, że HTTPS jest w pełni skonfigurowany i działa absolutnie wszędzie! Czy sprawdziłeś swoje CDN, loginy z portali społecznościowych i wszystkie zewnętrzne loga / zależności żeby być pewnym, że są kompatybilne z HTTPS?"
     same_site_cookies: "Używaj tych samych plików cookies, eliminują one wszystkie wektory Cross Site Request Forgery na wspieranych przeglądarkach (Lax lub Strict). Ostrzeżenie: Przeglądarka Strict działa jedynie na stronach, które wymagają logowania oraz używają SSO."
     summary_score_threshold: "Minimalny wynik wpisu wymagany do umieszczenia go w 'Podsumowaniu tematu'"
@@ -928,11 +904,7 @@ pl_PL:
     must_approve_users: "Zespół musi zaakceptować wszystkie nowe konta zanim uzyskają dostęp do serwisu. UWAGA: włączenie tego dla już udostępnionej strony sprawi, że zostanie odebrany dostęp wszystkim istniejącym użytkownikom spoza zespołu."
     pending_users_reminder_delay: "Powiadomić moderatorów jeżeli nowi użytkownicy czekali na zatwierdzenie dłużej niż his mamy godzin. Ustaw -1 aby wyłączyć powiadomienia. "
     maximum_session_age: "Użytkownik zostanie zalogowany przez n godzin od czasu ostatniej wizyty."
-    ga_universal_tracking_code: "Identyfikator Google Universal Analytics (analytics.js), np: UA-12345678-9; zobacz http://google.com/analytics"
-    ga_universal_domain_name: "Domena dla Google Universal Analytics (analytics.js), np: mysite.com; zobacz http://google.com/analytics"
-    ga_universal_auto_link_domains: "Włącz Google Universal Analytics (analytics.js) śledzenie wielu domen. Linki wychodzące do tych domen będą miały dodane id klienta. Zobacz poradnik Google's Cross-Domain Tracking."
     gtm_container_id: "Kontener menadżera tagów Google np: GTM-ABCDEF"
-    enable_escaped_fragments: "Odwołuj się do API Google Ajax-Crawling jeżeli nie wykryto żadnego robota internetowego. Sprawdź https://developers.google.com/webmasters/ajax-crawling/docs/learn-more"
     allow_moderators_to_create_categories: "Zezwól moderatorom na tworzenie nowych kategorii"
     cors_origins: "Dozwolone źródła dla zapytać cross-origin (CORS). Każde źródło musi zawierać http:// lub https://. Zmienna środowiskowa DISCOURSE_ENABLE_CORS musi być ustawiona na true żeby włączyć CORS."
     use_admin_ip_whitelist: "Administratorzy mogą się logować tylko z adresów IP zdefiniowanych w liście Screened IPs (Admin > Logi > Screened Ips)."
@@ -961,7 +933,6 @@ pl_PL:
     email_domains_blacklist: "Lista rozdzielonych pionową kreską domen e-mail, z których użytkownicy nie mogą się rejestrować. Przykład: mailinator.com|trashmail.net"
     email_domains_whitelist: "Lista rozdzielonych pionową kreską domen e-mail, z których użytkownicy MUSZĄ się rejestrować. UWAGA: Użytkownicy z domenami e-mail innymi niż wypisane nie będą dopuszczeni!"
     log_out_strict: "Po wylogowaniu wyloguj WSZYSTKIE sesje użytkownika na wszystkich urządzeniach."
-    version_checks: "Odpytuj Discourse Hub o aktualizacje i wyświetlaj wiadomości o nowej wersji w panelu /admin"
     new_version_emails: "Wyślij email na adres contact_email, kiedy nowa wersja Discourse będzie dostępna."
     invite_expiry_days: "Jak długo klucz zaproszenie użytkownika jest ważny, w dniach."
     invite_only: "Rejestracja jest wyłączona. Nowi użytkownicy muszą zostać zaproszeni przez administrację."
@@ -974,38 +945,26 @@ pl_PL:
     password_unique_characters: "Minimalna ilość różnych znaków, które muszą być w haśle."
     block_common_passwords: "Nie zezwalaj na hasła znajdujące się w grupie 10 000 najpopularniejszych haseł."
     enable_sso: "Włącz pojedyncze logowanie przez zewnętrzną stronę (UWAGA: ADRESY E-MAIL UŻYTKOWNIKÓW *MUSZĄ* BYĆ ZATWIERDZONE PRZEZ ZEWNĘTRZNĄ STRONĘ!)"
-    verbose_sso_logging: "Log więcej diagnostyk związanych z SSO do /logs"
-    enable_sso_provider: "Zaimplementuj protokół dostawcy Discourse SSO w endpoint /session/sso_provider, wymaga ustawienia sso_secret"
     sso_url: "URL endpoint pojedynczego logowania (musi zawierać http:// lub https://)"
     sso_secret: "Tajny ciąg znaków używany, aby kryptograficznie uwierzytelnić informacje SSO, powinien mieć 10 lub więcej znaków."
     sso_overrides_bio: "Nadpisuje biografię użytkownika w jego profilu i uniemożliwia mu zmianę biografii."
     sso_overrides_email: "Nadpisuje lokalny email poprzez zewnętrzną witrynę email z SSO przy każdym logowaniu, aby zapobiec lokalnym zmianom. (Ostrzeżenie: rozbieżności mogą pojawić się w związku z normalizacją lokalnym emaili)."
     sso_overrides_username: "Nadpisuje lokalne nazwy użytkowników z pomocą nazw użytkowników z zewnętrznej strony przez SSO przy każdym logowaniu i zapobiega lokalnym zmianom. (Ostrzeżenie: rozbieżności mogą pojawić się w związku z różnicami w długością/wymaganiami nazwy użytkownika)"
     sso_overrides_name: "Nadpisuje lokalną pełną nazwę za pomocą pełnych nazw z zewnętrznej strony przez SSO przy każdym logowaniu i zapobiega lokalnym zmianom."
-    sso_overrides_avatar: "Nadpisuje avatar użytkownika z pomocą avatarów z zewnętrznych stron poprzez SSO. Jeśli włączone, wyłączanie allow_uploaded_avatars wysoce polecane"
     sso_not_approved_url: "Przekieruj niezatwierdzone konta SSO na ten URL"
     sso_allows_all_return_paths: "Nie ograniczaj domen dla return_paths dostarczanych przez SSO (domyślnie zwracana ścieżka musi być na aktualnej stronie)"
     allow_new_registrations: "Zezwól na rejestrację nowych użytkowników. Odznacz opcję żeby uniemożliwić rejestrację nowych kont."
     enable_signup_cta: "Pokazuj wiadomość dla powracających użytkowników anonimowych, zachęcającą ich do założenia konta."
     enable_yahoo_logins: "Włącz autoryzację Yahoo"
-    enable_google_oauth2_logins: "Włącz uwierzytelnienie za pomocą Google Oauth2. Jest to metoda uwierzytelniania, którą Google obecnie wspiera. Wymaga klucza i sekretu."
     google_oauth2_client_id: "Client ID twojej aplikacji w Google"
     google_oauth2_client_secret: "Client Secret twojej aplikacji w Google"
-    enable_twitter_logins: "Włącz autoryzację Twitter, wymagane twitter_consumer_key oraz twitter_consumer_secret"
     enable_instagram_logins: "Włącz uwierzytelnienie za pomocą Instagramu, wymaga instagram_consumer_key i instagram_consumer_secret."
     instagram_consumer_key: "Klucz konsumenta dla uwierzytelnienia Instragram"
     instagram_consumer_secret: "Sekret konsumenta dla uwierzytelnienia Instragram"
-    enable_facebook_logins: "Enable Facebook authentication, requires facebook_app_id and facebook_app_secret"
-    facebook_app_id: "App id for Facebook authentication, registered at https://developers.facebook.com/apps"
-    facebook_app_secret: "App secret for Facebook authentication, registered at https://developers.facebook.com/apps"
-    enable_github_logins: "Włacz autoryzację Github, wymagane github_client_id oraz github_client_secret"
-    github_client_id: "Client id dla autoryzacji Github, zarejestrowany w https://github.com/settings/applications"
-    github_client_secret: "Client secret dla autoryzacji Github, zarejestrowany w https://github.com/settings/applications"
     readonly_mode_during_backup: "Włącz tryb tylko do odczytu podczas wykonywania kopii zapasowej"
     allow_restore: "Dopuść przywracanie, które może zamienić WSZYSTKIE dane strony! Zostaw fałsz, chyba że planujesz przywrócić kopię zapasową"
     maximum_backups: "Maksymalna liczba kopii zapasowych do przechowywania na dysku. Starsze kopie zapasowe zostaną automatycznie usunięte."
     automatic_backups_enabled: "Uruchom automatyczne kopie zapasowe zgodnie z ustawioną częstotliwością kopii"
-    enable_s3_backups: "Wysyłaj kopie zapasowe do S3 kiedy gotowe. WAŻNE: wymaga poprawnych poświadczeń S3 wprowadzonych w ustawieniach Plików."
     s3_backup_bucket: "Zdalne wiadro do przechowywania kopii zapasowych. UWAGA: Upewnij się, że jest to wiadro prywatne."
     s3_disable_cleanup: "Dezaktywuj usuwanie kopii zapasowych z S3 kiedy usunięte lokalnie."
     backup_time_of_day: "Godzina (UTC) wykonania kopii zapasowej."
@@ -1098,7 +1057,6 @@ pl_PL:
     title_min_entropy: "Minimalna entropia tytułu wątku (liczba różnych znaków, zaleca się więcej dla języków innych niż angielski)."
     body_min_entropy: "Minimalna entropia treści posta (liczba różnych znaków, zaleca się więcej dla języków innych niż angielski)."
     allow_uppercase_posts: "Zezwól na same wielkie litery w tytule tematu lub treści postu."
-    title_fancy_entities: "Convert common ASCII characters to fancy HTML entities in topic titles, ala SmartyPants http://daringfireball.net/projects/smartypants/"
     min_title_similar_length: "Minimalna długość tytułu zanim zostanie sprawdzony z podobnymi tematami."
     min_body_similar_length: "Minimalna długość treści posta zanim zostanie sprawdzony z podobnymi tematami."
     desktop_category_page_style: "Styl wizualny dla strony kategorii."
@@ -1142,8 +1100,8 @@ pl_PL:
     auto_respond_to_flag_actions: "Włącz automatyczną odpowiedź, w czasie pozbywania się flagi."
     min_first_post_typing_time: "Minimalny czas w milisekundach, w którym użytkownik musi napisać post, jeśli próg nie zostanie osiągnięty post zostanie automatycznie dostosowany w zależności od kolejki zatwierdzania potrzeb. Ustaw 0, aby wyłączyć (nie polecane)"
     reply_by_email_enabled: "Włącz możliwość odpowiadania na wpisy poprzez email."
-    reply_by_email_address: "Template for reply by email incoming email address, for example: %{reply_key}@reply.example.com or replies+%{reply_key}@example.com"
-    alternative_reply_by_email_addresses: "Lista alternatywnych szablonów do odpowiedzi przez adres email. Przykład: %{reply_key}@reply.example.com|replies+%{reply_key}@example.com"
+    reply_by_email_address: "Template for reply by email incoming email address, for example: %%{reply_key}@reply.example.com or replies+%%{reply_key}@example.com"
+    alternative_reply_by_email_addresses: "Lista alternatywnych szablonów do odpowiedzi przez adres email. Przykład: %%{reply_key}@reply.example.com|replies+%%{reply_key}@example.com"
     strip_images_from_short_emails: "Pasek zdjęć z emaila o rozmiarze mniejszym niż 2800 bajtów"
     short_email_length: "Długość krótkiego emaila w bajtach"
     display_name_on_email_from: "Wyświetl pełne nazwy na emailach z pól"
@@ -1176,7 +1134,6 @@ pl_PL:
     pop3_polling_host: "Host do przeglądania cyklicznego emaila poprzez POP3."
     pop3_polling_username: "Nazwa użytkownika dla konta POP3 do przeglądania cyklicznego emaila."
     pop3_polling_password: "Hasło dla konta POP3 do przeglądania cyklicznego maila."
-    log_mail_processing_failures: "Zapisuj wszystkie błędy w przetwarzaniu emaili na http://yoursitename.com/logs"
     email_in_min_trust: "Minimalny poziom zaufania, który musi posiadać użytkownik, aby móc dodawać nowe posty w tematach poprzez email."
     email_prefix: "Etykieta używana w temacie emaili. Domyślnie będzie ustawiana jako \"tytuł\", w przypadku braku ustawienia."
     email_site_title: "Tytuł strony używany jako nadawca emaili ze strony. Domyślnie ustawiony jako \"tytuł\", w przypadku braku ustawienia. Jeśli twój \"tytuł\" zawiera znaki, które nie są dozwolone przez ciągi znaków nadawcy emaila, użyj tego ustawienia."
@@ -1235,7 +1192,6 @@ pl_PL:
     default_code_lang: "Domyślny język programowania syntax podświetlający zastosowany do bloków kodu GitHub (lang-auto, ruby, python etc.)"
     warn_reviving_old_topic_age: "Kiedy ktoś rozpoczyna udziela odpowiedzi na dany temat, w którym ostatnia odpowiedź jest starsza niż tak wiele dni, wyświetlone zostanie ostrzeżenie. Wyłącz tą ustawienia ustawiając 0."
     autohighlight_all_code: "Narzuć dodawanie podświetlenia kodu do wszystkich bloków kodu, w przypadku gdy nie jest dokładnie określony język."
-    highlighted_languages: "Uwzględniona reguły podświetlania syntax. (Ostrzeżenie: uwzględnianie zbyt wielu języków może mieć wpływ na działanie) zobacz demo: https://highlightjs.org/static/demo/"
     embed_truncate: "Okrój osadzone posty."
     allowed_href_schemes: "Projekty dozwolone w linkach jako dodatek do http i https."
     embed_post_limit: "Maksymalna liczba postów do osadzenia."
@@ -1310,8 +1266,8 @@ pl_PL:
       invalid_string_min_max: "Musi być między %{min} i %{max} znaków."
       invalid_string_min: "Musi być co najmniej %{min} znaków."
       invalid_string_max: "Musi być nie więcej niż %{max} znaków."
-      invalid_reply_by_email_address: "Wartość musi zawierać '%{reply_key}' i musi być inna niż mail z powiadomieniem."
-      invalid_alternative_reply_by_email_addresses: "Wszystkie wartości muszą zawierać '%{reply_key}' i być inne niż w emailu powiadamiającym."
+      invalid_reply_by_email_address: "Wartość musi zawierać '%%{reply_key}' i musi być inna niż mail z powiadomieniem."
+      invalid_alternative_reply_by_email_addresses: "Wszystkie wartości muszą zawierać '%%{reply_key}' i być inne niż w emailu powiadamiającym."
       pop3_polling_host_is_empty: "Musisz ustawić 'pop3 polling host' przed włączeniem przeglądania cyklicznego POP3."
       pop3_polling_username_is_empty: "Musisz ustawić 'pop3 polling username' przed włączeniem przeglądania cyklicznego POP3."
       pop3_polling_password_is_empty: "Musisz ustawić 'pop3 polling password' przed włączeniem przeglądania cyklicznego POP3."
@@ -1535,7 +1491,7 @@ pl_PL:
     subject_template: "[%{site_name}] dostępna aktualizacja"
   flag_reasons:
     off_topic: "Twój post został oznaczony jako **nie na temat**: społeczność uważa, że nie pasuje do wątku, w którym został dodany, biorąc pod uwagę jego tytuł i treść pierwszego posta."
-    inappropriate: "Twój wpis został oznaczony jako  **nieodpowiedni**: społeczność uznała, że zbyt agresywny lub niezgodny z [jej wytycznymi](/guidelines)."
+    inappropriate: "Twój wpis został oznaczony jako  **nieodpowiedni**: społeczność uznała, że zbyt agresywny lub niezgodny z [jej wytycznymi](%{base_path}/guidelines)."
     spam: "Twój post został oznaczony jako **spam**: społeczność czuje, że jest to reklama, czyli coś nadmiernie promującego, a nie użytecznego czy odnoszącego się do tematu."
     notify_moderators: "Twój post został oznaczony jako **do uwagi moderatora**: społeczność czuje, że post wymaga ręcznej interwencji członka personelu."
   flags_dispositions:
@@ -1647,14 +1603,6 @@ pl_PL:
 
     csv_export_succeeded:
       title: "Eksport CSV udany "
-      text_body_template: |
-        Eksport danych zakończył się sukcesem! :dvd:
-
-        <a class="attachment" href="%{download_link}">%{file_name}</a> (%{file_size})
-
-        Powyższy link będzie aktywny przez 48 godzin.
-
-        Dane są skompresowane do archiwum gzip. Jeśli archiwum nie rozpakowuje się samo gdy je otwierasz, użyj narzędzi zalecanych tutaj: http://www.gzip.org/#faq4
     csv_export_failed:
       title: "Eksport CSV nieudany "
       subject_template: "Nieudany eksport danych"
@@ -2124,7 +2072,6 @@ pl_PL:
 
   terms_of_service:
     title: "Warunki użytkowania serwisu"
-    signup_form_message: 'Przeczytałem i zgadzam się z <a href="/tos" target="_blank">Regulaminem Serwisu</a>.'
   deleted: 'usunięte'
   image: "obraz"
   upload:
@@ -2143,8 +2090,8 @@ pl_PL:
   avatar:
     missing: "Przepraszamy, nie możemy odnaleźć żadnego avatara przypisanego do tego konta email. Spróbuj załadować go ponownie"
   flag_reason:
-    sockpuppet: "Nowy użytkownik stworzył temat, a inny nowy użytkownik z tym samym adresem IP (%{ip_address}) odpowiedział. <a href='/admin/site_settings/category/spam'>'flag_sockpuppets'</a> ustawienia strony."
-    spam_hosts: "Ten nowy użytkownik próbował stworzyć wiele postów z linkami do tej samej domeny (%{domain}). Zobacz <a href='/admin/site_settings/category/spam'>`newuser_spam_host_threshold</a> ustawienia strony."
+    sockpuppet: "Nowy użytkownik stworzył temat, a inny nowy użytkownik z tym samym adresem IP (%{ip_address}) odpowiedział. <a href='%{base_path}/admin/site_settings/category/spam'>'flag_sockpuppets'</a> ustawienia strony."
+    spam_hosts: "Ten nowy użytkownik próbował stworzyć wiele postów z linkami do tej samej domeny (%{domain}). Zobacz <a href='%{base_path}/admin/site_settings/category/spam'>`newuser_spam_host_threshold</a> ustawienia strony."
   color_schemes:
     base_theme_name: "Podstawa"
     dark: "Ciemny motyw"
@@ -2253,13 +2200,13 @@ pl_PL:
 
       ## [Zasilana dzięki Tobie](#power)
 
-      Ta strona jest utrzymywana przez [przyjazną obsługę](/o nas) i *Ciebie*, społeczność. Jeśli posiadasz jeszcze jakieś pytania dotyczące poruszania się po forum, tworzenia nowych wątków [Opinie](/c/site-feedback) po prostu się odezwij! Jeśli wystąpi sytuacja krytyczna lub po prostu nagły problem, który nie możesz zostać rozwiązany przez oflagowanie skontaktuj się z obsługą poprzez [strona obsługi](/about).
+      Ta strona jest utrzymywana przez [przyjazną obsługę](%{base_path}/o nas) i *Ciebie*, społeczność. Jeśli posiadasz jeszcze jakieś pytania dotyczące poruszania się po forum, tworzenia nowych wątków [Opinie](%{base_path}/c/site-feedback) po prostu się odezwij! Jeśli wystąpi sytuacja krytyczna lub po prostu nagły problem, który nie możesz zostać rozwiązany przez oflagowanie skontaktuj się z obsługą poprzez [strona obsługi](%{base_path}/about).
 
       <a name="tos"></a>
 
       ## [Warunki](#tos)
 
-      Tak, język prawniczy jest nudny, ale musimy chronić siebie &ndash; a więc też Ciebie i twoje informacje &ndash;; przed nieprzyjaznymi ludźmi. Mamy [Warunki obsługi[(/tos) opisujące twoje (i nasze) zachowanie i prawa związane z treścią, prywatnością i prawami. Aby korzystać z tej usługi, musisz zgodzić się na ich przestrzeganie [TOS](/tos).
+      Tak, język prawniczy jest nudny, ale musimy chronić siebie &ndash; a więc też Ciebie i twoje informacje &ndash;; przed nieprzyjaznymi ludźmi. Mamy [Warunki obsługi[(/tos) opisujące twoje (i nasze) zachowanie i prawa związane z treścią, prywatnością i prawami. Aby korzystać z tej usługi, musisz zgodzić się na ich przestrzeganie [TOS](%{base_path}/tos).
   tos_topic:
     title: "Warunki użytkowania"
   privacy_topic:
@@ -2583,17 +2530,16 @@ pl_PL:
           contact_email:
             label: "E-mail"
             placeholder: "name@example.com"
-            description: "Adres email osoby lub grupy odpowiedzialnej za tą społeczność. Używany dla krytycznych powiadomień jak na przykład nieobsłużone oflagowania, aktualizację bezpieczeństwa i na <a href='/about' target='_blank'>stronie o Tobie</a> dla szybkiego kontaktu."
+            description: "Adres email osoby lub grupy odpowiedzialnej za tą społeczność. Używany dla krytycznych powiadomień jak na przykład nieobsłużone oflagowania, aktualizację bezpieczeństwa i na <a href='%{base_path}/about' target='_blank'>stronie o Tobie</a> dla szybkiego kontaktu."
           contact_url:
             label: "Strona kontaktowa"
-            placeholder: "http://www.example.com/contact-us"
-            description: "Ogólna strona kontaktowa do ciebie i twojej organizacja. Będzie wyświetlane na <a href='/about' target='_blank'>twojej stronie </a>."
+            description: "Ogólna strona kontaktowa do ciebie i twojej organizacja. Będzie wyświetlane na <a href='%{base_path}/about' target='_blank'>twojej stronie </a>."
           site_contact:
             label: "Automatyczne wiadomości"
             description: "Wszystkie automatyczne wiadomości prywatne Discourse będą wysyłane z tego użytkownika, jak na przykład ostrzeżenia o flagach i powiadomienia ukończenia backupu."
       corporate:
         title: "Organizacja"
-        description: "Te nazwy zostaną wpisane w twojej <a href='/privacy' target='blank'>Polityce Prywatności</a> i <a href='/tos' target='blank'>Warunków korzystania z usług</a>, są to tematy, które możesz edytować w kategorii obsługa. Jeśli nie posiadasz firmy, możesz pominąć ten krok."
+        description: "Te nazwy zostaną wpisane w twojej <a href='%{base_path}/privacy' target='blank'>Polityce Prywatności</a> i <a href='%{base_path}/tos' target='blank'>Warunków korzystania z usług</a>, są to tematy, które możesz edytować w kategorii obsługa. Jeśli nie posiadasz firmy, możesz pominąć ten krok."
         fields:
           company_short_name:
             label: "Nazwa organizacji (krótka)"
@@ -2646,6 +2592,3 @@ pl_PL:
         description: "Już prawie koniec! Teraz zaprośmy trochę ludzi, aby rozwinąć twoją społeczność i pomóc <a href='https://blog.discourse.org/2014/08/building-a-discourse-community/' target='blank'>zasiać nowe dyskusje</a> poprzez interesujące tematy i odpowiedzi."
       finished:
         title: "Twój Discourse jest Gotowy!"
-        description: |
-          <p>Jeśli kiedykolwiek będziesz chciał dokonać zmian w tych ustawieniach, przejdź <a href='/admin' target='_blank'>do sekcji admina</a>; znajdziesz ją obok ikony klucza w menu witryny.</p>
-          <p>Baw się dobrze i powodzenia <a href='https://blog.discourse.org/2014/08/building-a-discourse-community/' target='_blank'>w budowaniu nowej społeczności!</a></p>

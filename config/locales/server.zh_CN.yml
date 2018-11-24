@@ -27,7 +27,7 @@ zh_CN:
   topics: "主题列表"
   posts: "帖子"
   loading: "载入中"
-  powered_by_html: '采用 <a href="http://www.discourse.org">Discourse</a>，启用 JavaScript 以获得最佳体验'
+  powered_by_html: '由 <a href="http://www.discourse.org">Discourse</a> 强力驱动；启用 JavaScript 以获得最佳体验'
   log_in: "登录"
   submit: "提交"
   purge_reason: "自动删除废弃，停用账户"
@@ -108,10 +108,6 @@ zh_CN:
     embed:
       load_from_remote: "载入帖子时出错了。"
     site_settings:
-      min_username_length_exists: "不能将用户名长度下限设置为一个大于当前最短的用户名的值。"
-      min_username_length_range: "不能将最小值设置为一个大于最大值的值。"
-      max_username_length_exists: "不能将用户名长度上限设置为一个小于当前最长的用户名的值。"
-      max_username_length_range: "不能将最大值设置为一个小于最小值的值。"
       default_categories_already_selected: "不能选择一个已经用于另一个列表的分类。"
       s3_upload_bucket_is_required: "你没有填写“s3_upload_bucket”，不能开启上传至 S3。"
   activemodel:
@@ -119,7 +115,7 @@ zh_CN:
       <<: *errors
   invite:
     not_found: "你的邀请码不正确。请联系网站管理员。"
-    user_exists: "不需要邀请<b>%{email}</b>，他们<a href='/u/%{username}/summary'>已经有帐号了！</a>"
+    user_exists: "不需要邀请<b>%{email}</b>，他们<a href='%{base_path}/u/%{username}/summary'>已经有帐号了！</a>"
   bulk_invite:
     file_should_be_csv: "上传的文件应为 csv 格式。"
     error: "上传文件的时候出错了。请重试。"
@@ -149,7 +145,7 @@ zh_CN:
     configure: "配置嵌入"
     more_replies:
       other: "%{count} 个更多回复"
-    loading: "正在载入讨论中..."
+    loading: "讨论载入中…"
     permalink: "永久链接"
     imported_from: "这是一个已从原 %{link} 中分离的主题"
     in_reply_to: "▶ %{username}"
@@ -221,7 +217,7 @@ zh_CN:
       invalid_incoming_email: "“%{email}”不是有效邮箱地址。"
       email_already_used_in_group: "“%{email}”已经被群组“%{group_name}”使用了。"
       email_already_used_in_category: "“%{email}”已经被分类“%{category_name}”使用了。"
-      cant_allow_membership_requests: "对没有拥有者的小组，你无法批准成员请求。"
+      cant_allow_membership_requests: "对没有拥有者的群组，你无法批准成员请求。"
     default_names:
       everyone: "任何人"
       admins: "管理面板"
@@ -238,15 +234,15 @@ zh_CN:
     until_posts:
       other: "%{count} 个帖子"
     'new-topic': |
-      欢迎来到%{site_name} &mdash; **衷心感谢你参与讨论！**
+      欢迎来到 %{site_name} &mdash; **衷心感谢你参与讨论！**
 
-      - 标题念出来后听着有趣么？是否清晰明了？
+      - 标题是否清晰明了地描述了主题？看起来有意思么？
 
-      - 谁会对它感兴趣？它为什么有价值？你期望从社区中获得什么样的回应？
+      - 谁会感兴趣？它为什么重要？你期望从社区中获得什么样的回应？
 
-      - 选择常用的词句以便别人能找到你的主题。如果想要把主题和类似主题放在一起，选择一个分类。
+      - 选择常用的词句以便别人能找到你的主题。若想要给主题和类似主题分组，选择一个分类。
 
-      更多的帮助信息，[请查看我们的社区准则](/guidelines)。此信息面板只在你发布前 %{education_posts_text}时显示。
+      更多的帮助信息，[请查看我们的社区准则](%{base_path}/guidelines)。此信息面板只在你发布前 %{education_posts_text}时显示。
     'new-reply': |
       欢迎来到%{site_name} &mdash; **感谢你的贡献！**
 
@@ -256,11 +252,11 @@ zh_CN:
 
       - 欢迎有建设性的批评，但是请批判观点，而不是人身攻击。
 
-      欲查看更多，[请查看我们的社区准则](/guidelines)。此信息面板只会在你发表前 %{education_posts_text}时显示。
+      欲查看更多，[请查看我们的社区准则](%{base_path}/guidelines)。此信息面板只会在你发表前 %{education_posts_text}时显示。
     avatar: |
       ### 想更改你的头像吗?
 
-      你已经发表和回复了几个主题，但你的头像并不像你自己一样独一无二 – 它仅仅是一个字母.
+      你已经发表和回复了几个主题，但你的头像并不像你自己一样独一无二——它仅仅是一个字母。
 
       你想过更改你的头像 **[查看你的个人资料](%{profile_path})** 并上传一张代表你自己的照片吗?
 
@@ -286,7 +282,7 @@ zh_CN:
 
       你打算回复下这个讨论里的其他人吗？杰出的讨论需要多种声音和多个角度。
 
-      如果你想要继续长篇大论，[考虑发私信吧](/u/%{reply_username})。
+      如果你想要继续长篇大论，[考虑发私信吧](%{base_path}/u/%{reply_username})。
     too_many_replies: |
       ### 你发表的回复数量已经达到了上限。
 
@@ -354,7 +350,7 @@ zh_CN:
             word:
               too_many: "对该操作敏感词过多"
   user_profile:
-    no_info_me: "<div class='missing-profile'>你的个人主页中的关于我部分目前还是空白，<a href='/u/%{username_lower}/preferences/about-me'>你想要补些什么吗？</a></div>"
+    no_info_me: "<div class='missing-profile'>你的个人主页中的关于我部分目前还是空白，<a href='%{base_path}/u/%{username_lower}/preferences/about-me'>你想要补些什么吗？</a></div>"
     no_info_other: "<div class='missing-profile'>%{name} 尚未在他们的资料中的关于我部分填写任何信息</div>"
   vip_category_name: "贵宾室"
   vip_category_description: "信任等级3的用户参与讨论的分类。"
@@ -363,7 +359,7 @@ zh_CN:
   staff_category_name: "管理人员"
   staff_category_description: "管理人员可见的分类。只有管理员和版主才能阅览主题。"
   assets_topic_title: "站点设计资源"
-  assets_topic_body: "这是一个永久主题，仅对管理人员可见，用于存储论坛设计使用的图像和文件。请勿删除！\n\n\n详细教程：\n\n\n1. 回复这个主题。\n2. 在此上传你想用作站点标志、图标等的所有图片。（使用帖子编辑器工具栏中的上传图标，或者拖放、粘贴图片。）\n3. 提交你的回复以发布。\n4. 在你的新帖子里右键点击图片获得这些已上传图片的路径，或者点击编辑按钮来编辑帖子并获得到这些图片的路径。复制这些图片路径。\n5. 粘贴这些图像的路径到[基础设置](/admin/site_settings/category/required)。\n\n\n如果你需要启用不同的文件类型上传，在[文件设置](/admin/site_settings/category/files)中编辑 `authorized_extensions`。"
+  assets_topic_body: "这是一个永久主题，仅对管理人员可见，用于存储论坛设计使用的图像和文件。请勿删除！\n\n\n详细教程：\n\n\n1. 回复这个主题。\n2. 在此上传你想用作站点标志、图标等的所有图片。（使用帖子编辑器工具栏中的上传图标，或者拖放、粘贴图片。）\n3. 提交你的回复以发布。\n4. 在你的新帖子里右键点击图片获得这些已上传图片的路径，或者点击编辑按钮来编辑帖子并获得到这些图片的路径。复制这些图片路径。\n5. 粘贴这些图像的路径到[基础设置](%{base_path}/admin/site_settings/category/required)。\n\n\n如果你需要启用不同的文件类型上传，在[文件设置](%{base_path}/admin/site_settings/category/files)中编辑 `authorized_extensions`。"
   discourse_welcome_topic:
     title: "欢迎来到 Discourse"
     body: |2
@@ -377,7 +373,7 @@ zh_CN:
         - 为什么他们要来这？
         - 他们能在哪里阅读更多的内容（链接、资源等）？
 
-        <img src="/images/welcome/discourse-edit-post-animated.gif" width="508" height="106">
+        <img src="%{base_path}/images/welcome/discourse-edit-post-animated.gif" width="508" height="106">
 
         你可能想要在管理 :wrench: （右上角）中关闭这个主题，这样回复就不会积压在这个通告下。
   lounge_welcome:
@@ -518,8 +514,6 @@ zh_CN:
       email_body: "%{link}\n\n%{message}"
     inappropriate:
       title: '不当内容'
-      description: '此帖内容包含对他人的攻击、侮辱、仇视语言或违反了<a href="/guidelines">我们的社区准则</a>。'
-      short_description: '违反了<a href="/guidelines">我们的社群指引</a>'
       long_form: '标记为不当内容'
     notify_user:
       title: '给@{{username}}发送一条私信'
@@ -562,11 +556,9 @@ zh_CN:
       long_form: '标记为垃圾'
     inappropriate:
       title: '不当内容'
-      description: '此主题内容包含对他人的攻击、侮辱、仇视语言或违反了<a href="/guidelines">我们的社区准则</a>。'
       long_form: '标记为不当内容'
     notify_moderators:
       title: "其他内容"
-      description: '此帖需要版主依据<a href="/guidelines">社区准则</a>、<a href="/tos">服务条款（TOS）</a>或其它未列出的原因来给予关注。'
       long_form: '标记为需版主注意'
       email_title: '“{title}”主题需要你的关注'
       email_body: "%{link}\n\n%{message}"
@@ -759,24 +751,15 @@ zh_CN:
   dashboard:
     rails_env_warning: "你的服务器运行在 %{env} 模式。"
     host_names_warning: "你的 config/database.yml 文件使用的是缺省的 localhost 主机名。请更改成你的站点主机名。"
-    gc_warning: '你的服务器使用的是缺省的 ruby 垃圾回收参数，这个配置无法提供最高性能。请阅读此性能调优文档：<a href="http://meta.discourse.org/t/tuning-ruby-and-rails-for-discourse/4126">Tuning Ruby and Rails for Discourse</a>。'
     sidekiq_warning: 'Sidekiq 不在运行。很多任务，例如发送电子邮件，是异步的被 sidekiq 调度执行的。请确保至少运行一个 sidekiq 进程。<a href="https://github.com/mperham/sidekiq" target="_blank">了解 Sidekiq</a>。'
     queue_size_warning: '队列中有较多任务，为 %{queue_size} 个。这可能是因为 Sidekiq 进程的问题导致，或者需要更多的 Sidekiq 进程。'
     memory_warning: '你的服务器环境内存少于 1GB，我们建议至少要有 1GB 内存。'
-    google_oauth2_config_warning: '服务器允许使用 Google Oauth2 登录（enable_google_oauth2_logins），但是 client id 和 client secret 没有被设定。 到<a href="/admin/site_settings">站点设置</a>更新此设定。 <a href="https://meta.discourse.org/t/configuring-google-login-for-discourse/15858" target="_blank">参考设定指南</a>。'
-    facebook_config_warning: '服务器允许使用 Facebook 帐号登录（enable_facebook_logins），但是 app id 和 app secret 没有被设定。 到<a href="/admin/site_settings">站点设置</a>更新此设定。<a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide#enable-facebook-logins" target="_blank">参考设定指南</a>。'
-    twitter_config_warning: '服务器允许使用 Twitter 账号登录（enable_twitter_logins），但是 key 和 secret 没有被设定。 到<a href="/admin/site_settings">站点设置</a>更新此设定。<a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide#enable-twitter-logins" target="_blank">参考设定指南</a>。'
-    github_config_warning: '服务器允许使用 GitHub 账号登录（enable_github_logins），但是 client id 和 secret 没有被设定。 到<a href="/admin/site_settings">站点设置</a>更新此设定。<a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide" target="_blank">参考设定指南</a>。'
-    s3_config_warning: '服务器被配置为上传文件到 s3，但是以下的值中有未被设定的项目：s3_access_key_id、s3_secret_access_key、s3_use_iam_profile 或 s3_upload_bucket。到<a href="/admin/site_settings">站点设置</a>中更新设置。<a href="http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank">看看“参考如何设置图片上传至 S3？”以了解更多</a>。'
-    s3_backup_config_warning: '服务器被配置为上传备份到 s3，但是以下的值中有未被设定的项目：s3_access_key_id、s3_secret_access_key、s3_use_iam_profile 或 s3_backup_bucket。到<a href="/admin/site_settings">站点设置</a>中更新设置。<a href="http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank">看看“参考如何设置图片上传至 S3？”以了解更多</a>。'
-    image_magick_warning: '服务器被设置为给大图片创建缩略图，但是 ImageMagick 没有被安装。用你最喜爱的包管理器安装 ImageMagick 或<a href="http://www.imagemagick.org/script/binary-releases.php" target="_blank">下载最新版</a>。'
-    failing_emails_warning: '有 %{num_failed_jobs} 个邮件任务失败。请检查 app.yml 文件是否正确配置了邮件服务器。<a href="/sidekiq/retries" target="_blank">查看 Sidekiq 中失败的任务</a>。'
     subfolder_ends_in_slash: "你的子目录设置不正确；DISCOURSE_RELATIVE_URL_ROOT以斜杠结尾。"
     email_polling_errored_recently:
-      other: "邮件轮询在过去的 24 小时内出现了 %{count} 个错误。看一看<a href='/logs' target='_blank'>日志</a>寻找详情。"
-    bad_favicon_url: "网站图标无法载入。检查<a href='/admin/site_settings'>站点设置</a>中的 favicon_url。"
-    poll_pop3_timeout: "至 POP3 服务器的连接超时。无法获取进站邮件。请检查<a href='/admin/site_settings/category/email'>POP3 设置</a>和服务商。"
-    poll_pop3_auth_error: "至 POP3 服务器的连接验证失败。请检查<a href='/admin/site_settings/category/email'>POP3 设置</a>。"
+      other: "邮件轮询在过去的 24 小时内出现了 %{count} 个错误。看一看<a href='%{base_path}/logs' target='_blank'>日志</a>寻找详情。"
+    bad_favicon_url: "网站图标无法载入。检查<a href='%{base_path}/admin/site_settings'>站点设置</a>中的 favicon_url。"
+    poll_pop3_timeout: "至 POP3 服务器的连接超时。无法获取进站邮件。请检查<a href='%{base_path}/admin/site_settings/category/email'>POP3 设置</a>和服务商。"
+    poll_pop3_auth_error: "至 POP3 服务器的连接验证失败。请检查<a href='%{base_path}/admin/site_settings/category/email'>POP3 设置</a>。"
   site_settings:
     censored_words: "将被自动替换为 &#9632;&#9632;&#9632;&#9632;"
     delete_old_hidden_posts: "自动删除被隐藏超过 30 天的帖子。"
@@ -801,15 +784,12 @@ zh_CN:
     educate_until_posts: "当用户开始键入他们的前几个（n）新帖子时，在编辑器上显示教育面板弹窗。"
     title: "站点名字，用于 title 标签。"
     site_description: "用一句话描述这个论坛，用于 meta description 标签。"
-    contact_email: "本站负责人的电子邮件地址。用于紧急事项的通知，以及作为 /about 页面中的紧急联系人。"
-    contact_url: "联系 URL。作为 /about 页面中的紧急联系方式。"
     crawl_images: "允许从第三方 URL 获取图片来插入宽、高数值"
     download_remote_images_to_local: "下载一份主题中链接的外部图片到本地；以防图片损坏。"
     download_remote_images_threshold: "本地最小可用下载外部图片到本地的空间（百分比）"
     download_remote_images_max_days_old: "不下载超过 n 天的帖子中的远程图片。"
     disabled_image_download_domains: "域名列表，链接到这些站点的图片不会被下载。用 | 分割。"
     editing_grace_period: "在 (n) 秒之内，对帖子的编辑不生成帖子历史。"
-    post_edit_time_limit: "作者可以在发布帖子后的(n)分钟内编辑或删除他们的帖子。设置 0 为永远。"
     edit_history_visible_to_public: "允许任何人查看编辑过的帖子的老版本。当禁用时，只有管理人员才能查看浏览。"
     delete_removed_posts_after: "帖子被作者删除，将在(n)小时后被自动删除。"
     max_image_width: "帖子中图片允许的最大缩略图宽度"
@@ -826,16 +806,10 @@ zh_CN:
     inline_onebox_domains_whitelist: "若链接不带标题会以微型形式被 Onebox 的域名列表。"
     enable_inline_onebox_on_all_domains: "忽略  inline_onebox_domain_whitelist 站点设定并在所有域允许一致 Onebox 。"
     max_oneboxes_per_post: "帖子中最多的 Onebox 数量。"
-    logo_url: "在你站点左上角出现的小号标志图片，应为一个长方形。如果留空，将显示站点标题文字。"
     digest_logo_url: "邮件摘要中使用的标志图像。应为长方形。不能使用 SVG 图片。如果留空，将使用 `logo_url`。"
-    logo_small_url: "在你站点左上角的小号标志图片，应为正方形，当滚动时才可见。如果留空，将显示主页图标。"
-    favicon_url: "你的站点图标（favicon），参考 http://zh.wikipedia.org/wiki/Favicon，如果要正确地通过 CDN 分发，它必须是 png 图片"
-    mobile_logo_url: "站点移动版本的自定义标志 url。如果留空，则使用`logo_url`。例如: http://example.com/uploads/default/logo.png"
-    large_icon_url: "Android 上用于标志和启动屏图标。推荐 512px x 512px 大小。"
     apple_touch_icon_url: "Apple 触摸设备使用的图标。推荐 144x144 大小。"
     notification_email: "这个表格：被用于发送所有重要系统邮件的邮箱地址。指定的域名必须正确设置 SPF、DKIM 和反向 PTR 记录以发送邮件。"
     email_custom_headers: "一个逗号分离的自定义邮件头部"
-    email_subject: "标准邮件的自定义主题格式。参见 https://meta.discourse.org/t/customize-subject-format-for-standard-emails/20801"
     force_https: "强制使用 https。警告：开启前必须确认 HTTPS 已经配置并能够正常使用！你检查了 CDN、第三方登录和站外的 logo / 依赖是否支持 HTTPS 了吗？"
     same_site_cookies: "使用同样的站点 cookies，他们消除了所有支持跨域请求策略向量（Lax 或 Strict）。警告：Strictk 只在强制登录并使用 SSO 的站点才有用。"
     summary_score_threshold: "将一个帖子包含在'摘要模式'中所需的最小分值"
@@ -867,11 +841,7 @@ zh_CN:
     must_approve_users: "新用户在被允许访问站点前需要由管理人员批准。警告：在运行的站点中启用将解除所有非管理人员用户的访问权限！"
     pending_users_reminder_delay: "如果新用户等待批准时间超过此小时设置则通知版主。设置 -1 关闭通知。"
     maximum_session_age: "用户自访问后可维持登录 n 小时"
-    ga_universal_tracking_code: "Google 通用分析追踪代码（analytics.js）追踪代码，例如：UA-12345678-9；参考 http://google.com/analytics"
-    ga_universal_domain_name: "Google 通用分析域名（analytics.js）追踪代码，例如：mysite.com；参考 http://google.com/analytics"
-    ga_universal_auto_link_domains: "启用Google通用数据分析（analytics.js）跨域跟踪。发送到这些域的链接将添加客户端标识。请参阅Google的跨域跟踪指南。"
     gtm_container_id: "Google Tag Manager 容器 id。例如：GTM-ABCDEF"
-    enable_escaped_fragments: "如未侦测到爬虫回退到使用 Google Ajax-Crawling API。参见 https://developers.google.com/webmasters/ajax-crawling/docs/learn-more"
     allow_moderators_to_create_categories: "允许版主创建新的分类"
     cors_origins: "允许跨源请求（CORS）。每个源必须包括 http:// 或 https://。DISCOURSE_ENABLE_CORS 环境变量必须设置为 true 才能启用 CORS 政策。"
     use_admin_ip_whitelist: "当目前的IP刚好处于IP段禁止名单(Admin > Logs > Screened Ips)中的时候，只有管理员才可登入。"
@@ -894,7 +864,7 @@ zh_CN:
     top_page_default_timeframe: "顶部查看页面的默认时间表"
     show_email_on_profile: "在用户页面显示用户的邮件地址（只有用户和管理人员可见）"
     prioritize_username_in_ux: "在用户页、用户卡片和帖子上优先显示用户名（未选时，昵称将先显示）"
-    email_token_valid_hours: "“忘记密码”/“激活账户”令牌有效的小时数(n)。"
+    email_token_valid_hours: "“忘记密码”/“激活账户”令牌有效的小时数。"
     enable_badges: "启用徽章系统"
     enable_whispers: "允许管理人员在主题中私密交流。"
     allow_index_in_robots_txt: "在 robots.txt 中详细指出这个站点允许被网页搜索引擎检索。"
@@ -902,51 +872,38 @@ zh_CN:
     email_domains_whitelist: "用管道符“|”分隔的电子邮箱域名的列表，用户必须使用这些邮箱域名注册。警告：用户使用不包含在这个列表里的邮箱域名，将无法成功注册。"
     hide_email_address_taken: "通过邮件地址注册账户或忘记密码时不反馈用户账户是否存在的信息。"
     log_out_strict: "退出时，退出用户所有设备的会话"
-    version_checks: "访问 Discourse Hub 来检查版本更新，并在管理面板 /admin 显示新版本信息"
     new_version_emails: "当新版本发布时，发送一封邮件至 contact_email 设置的地址。"
     invite_expiry_days: "多少天以内用户的邀请码是有效的"
     invite_only: "公开注册已被禁用，所有新用户必须由管理人员邀请进来。"
     login_required: "需要验证才能继续在该站阅读，不允许匿名访问。"
-    min_username_length: "最小用户名长度。警告：如果任何现存的用户或小组名字长度比这短，站点将无法正常工作！"
-    max_username_length: "最大用户名长度。警告：如果任何现存的用户或小组名字长度比这长，站点将无法正常工作！"
+    min_username_length: "最小用户名长度。警告：如果任何现存的用户或群组名字长度比这短，站点将无法正常工作！"
+    max_username_length: "最大用户名长度。警告：如果任何现存的用户或群组名字长度比这长，站点将无法正常工作！"
     reserved_usernames: "不可注册的用户名。通配符 * 能用来匹配字符 0 到多次。"
     min_password_length: "最小密码长度。"
     min_admin_password_length: "管理员最短密码长度"
     password_unique_characters: "密码中必须包含几个不同的字符。"
     block_common_passwords: "不允许使用 10,000 个最常用的密码。"
     enable_sso: "启用通过外部站点单点登录（警告：用户的邮件地址必须被外部站点验证！）"
-    verbose_sso_logging: "将 SSO 日志详情记录至 /logs"
-    enable_sso_provider: "在 /session/sso_provider endpoint 实现 Discourse SSO 提供方协议，要求设置 sso_secret"
     sso_url: "单点登录 URL 入口点（必须包含 http:// 或 https://）"
     sso_secret: "秘密字符串，用于验证秘密的 SSO 信息，请保证是 10 个字符或者更长"
     sso_overrides_bio: "在用户页面中覆盖用户的个人信息并禁止用户修改"
     sso_overrides_email: "每一次登录时，用 SSO 信息中的外部站点的邮件地址覆盖本地邮件地址，并且阻止本地的邮件地址修改。（警告：因格本地邮件的正规化，邮件地址可能会有所差异）"
     sso_overrides_username: "每一次登录时，用 SSO 信息中的外部站点的用户名覆盖本地用户名，并且阻止本地的用户名修改。（警告：因格本地用户名的长度和其他要求，用户名可能会有所差异）"
     sso_overrides_name: "每一次登录时，用 SSO 信息中的外部站点的全名覆盖本地全名，并且阻止本地的全名修改。"
-    sso_overrides_avatar: "用单点登录信息中的外部站点头像覆盖用户头像。如果启用，强烈建议禁用 allow_uploaded_avatars"
     sso_not_approved_url: "重定向未受许可的单点登录账号至这个 URL"
     sso_allows_all_return_paths: "不限制 SSO 提供的 return_paths 中的域名（默认情况下返回地址必须位于当前站点）"
     allow_new_registrations: "允许新用户注册。取消选择将阻止任何人创建一个新账户。"
     enable_signup_cta: "显示推荐创建账户的提示给那些回访的未注册用户。"
     enable_yahoo_logins: "启用 Yahoo 帐号验证登录"
-    enable_google_oauth2_logins: "启用 Google Oauth2 验证。这是目前 Google 推荐的验证方案。需要 key 和 secret。"
     google_oauth2_client_id: "Google 应用的 Client ID"
     google_oauth2_client_secret: "Google 应用的 Client secret"
-    enable_twitter_logins: "启用 Twitter 帐号验证登录，需要 twitter_consumer_key 和 twitter_consumer_secret"
     enable_instagram_logins: "启用 Instagram 验证，需要 instagram_consumer_key 和 instagram_consumer_secret"
     instagram_consumer_key: "Instagram 验证的 Consumer key"
     instagram_consumer_secret: "Instagram 验证的 Consumer secret"
-    enable_facebook_logins: "启用 Facebook 帐号验证登录，需要 facebook_app_id 和 facebook_app_secret"
-    facebook_app_id: "Facebook 帐号验证的应用帐号（App id），到 https://developers.facebook.com/apps 来注册获取"
-    facebook_app_secret: "Facebook 帐号验证的应用密码（App secret），到 https://developers.facebook.com/apps 来注册获取"
-    enable_github_logins: "启用 Github 帐号验证登录，需要 github_client_id 和 github_client_secret"
-    github_client_id: "Github 帐号验证的客户端帐号（Client id），到 https://github.com/settings/applications 来注册获取"
-    github_client_secret: "Github 帐号验证的客户端密码（Client secret），到 https://github.com/settings/applications 来注册获取"
     readonly_mode_during_backup: "备份时启用只读模式"
     allow_restore: "允许导入数据，这将能替换所有全站数据！除非你计划导入数据，否则请保持设置为 false"
     maximum_backups: "磁盘保存的最大备份数量。老的备份将自动删除"
     automatic_backups_enabled: "按照定义的备份频率运行自动备份计划"
-    enable_s3_backups: "当完成备份后上传备份到 S3。重要：需要在文件设置中填写有效的 S3 验证资料。"
     s3_backup_bucket: "远端备份 bucket。警告：确认它使私有的 bucket。"
     s3_disable_cleanup: "当在本地删除备份时不删除 S3 上的备份。"
     backup_time_of_day: "备份的 UTC 时间"
@@ -1038,10 +995,9 @@ zh_CN:
     email_posts_context: "在通知邮件中包含的作为上下文的回复数量。"
     flush_timings_secs: "向服务器刷新时间数据的频率，以秒为单位。"
     title_max_word_length: "在主题的标题中，允许的词语长度的最大字符数。"
-    title_min_entropy: "在主题的标题中，允许的最低熵值（单个字符）。"
-    body_min_entropy: "在一个帖子内文中，允许的最低熵值（单个字符）。"
+    title_min_entropy: "在主题的标题中，允许的最低熵值（不同字符，非英语字符算作多个）。"
+    body_min_entropy: "在一个帖子内文中，允许的最低熵值（不同字符数，非英语字符算作多个）。"
     allow_uppercase_posts: "允许标题和内容全大写"
-    title_fancy_entities: "转换主题标题中的 HTML 实体，参考：SmartyPants http://daringfireball.net/projects/smartypants/"
     min_title_similar_length: "开始检查相似主题的帖子标题的最小长度。"
     min_body_similar_length: "开始检查相似主题的帖子内容的最小长度。"
     desktop_category_page_style: "/categories 页面的视觉样式。"
@@ -1089,8 +1045,8 @@ zh_CN:
     auto_silence_first_post_regex: "检查用户首贴的大小写不相关的正则表达式。如匹配，用户将被禁言并送至审核队列。例子：raging|a[bc]a 将匹配 raging、aba 或者 aca，因此禁言该用户。只对首贴有效。"
     flags_default_topics: "在管理栏目中默认显示被标记的主题"
     reply_by_email_enabled: "启用通过邮件回复。"
-    reply_by_email_address: "通过邮件回复的回复地址模板，例如：%{reply_key}@reply.example.com 或 replies+%{reply_key}@example.com"
-    alternative_reply_by_email_addresses: "通过邮件回复的回复地址模板，例如：%{reply_key}@reply.example.com|replies+%{reply_key}@example.com"
+    reply_by_email_address: "通过邮件回复的回复地址模板，例如：%%{reply_key}@reply.example.com 或 replies+%%{reply_key}@example.com"
+    alternative_reply_by_email_addresses: "通过邮件回复的回复地址模板，例如：%%{reply_key}@reply.example.com|replies+%%{reply_key}@example.com"
     strip_images_from_short_emails: "忽略邮件中小于 2800 字节的图片"
     short_email_length: "短邮件地址长度（以比特作为单位）"
     display_name_on_email_from: "在邮件的来自栏显示昵称"
@@ -1123,7 +1079,6 @@ zh_CN:
     pop3_polling_host: "需用 POP3 向该地址轮询电子邮件的主机。"
     pop3_polling_username: "轮询 POP3 账户所用的用户名。"
     pop3_polling_password: "轮询 POP3 账户所用的密码。"
-    log_mail_processing_failures: "记录所有邮件失败处理日志至 http://yoursitename.com/logs"
     email_in: "允许用户通过邮件发表新主题（需要手动或 pop3 轮询）。在每一个分类的“设置”标签页配置地址。"
     email_in_min_trust: "能通过邮件发表新主题的最低用户信任等级。"
     email_prefix: "邮件主题中使用的 [标签]。留空将缺省使用 'title'。"
@@ -1176,7 +1131,7 @@ zh_CN:
     read_time_word_count: "一分钟阅读的词的数量，用于估计阅读时间。"
     topic_page_title_includes_category: "主题页面标题包含分类名。"
     native_app_install_banner: "邀請常客安裝 Discourse 本机应用程序"
-    share_anonymized_statistics: "分享匿名使用数据。"
+    share_anonymized_statistics: "分享匿名化的使用数据。"
     auto_handle_queued_age: "此设定天数后自动处理待审核的记录。标记将被忽略。队列中的帖子及用户将被拒绝。设为 0 将禁用此功能。"
     max_prints_per_hour_per_user: "/print 页面的每小时最大展示量（设置为 0 禁用）"
     full_name_required: "全名是用户个人信息的必填项。"
@@ -1187,7 +1142,6 @@ zh_CN:
     default_code_lang: "默认语法高亮语言，使用 GitHub 代码块（lang-auto、ruby、python或者其他等等。）"
     warn_reviving_old_topic_age: "当有人开始回复最后一贴超过一定天数前的主题时，将有一个警告显示，不鼓励他们复活一个老的讨论。将其设置为 0 以禁用。"
     autohighlight_all_code: "即使未显式设定语言，仍为所有预编排代码块应用语法高亮。"
-    highlighted_languages: "包含语法高亮规则。（警告：包含太多的语言可能影响性能）见：https://highlightjs.org/static/demo/ 查看演示"
     embed_truncate: "截断嵌入的帖子。"
     allowed_href_schemes: "除了 http 和 https 外允许的链接协议。"
     embed_post_limit: "嵌入帖子的最大数量。"
@@ -1264,8 +1218,8 @@ zh_CN:
       invalid_string_min_max: "必须在 %{min} 和 %{max} 字内。"
       invalid_string_min: "必须超过 %{min} 个字符。"
       invalid_string_max: "必须不超过 %{max} 个字符。"
-      invalid_reply_by_email_address: "值必须包含 '%{reply_key' 并且要与通知邮件不同。"
-      invalid_alternative_reply_by_email_addresses: "必须包括 “%{reply_key}” 并与通知邮件地址不同。"
+      invalid_reply_by_email_address: "值必须包含 '%%{reply_key' 并且要与通知邮件不同。"
+      invalid_alternative_reply_by_email_addresses: "必须包括 “%%{reply_key}” 并与通知邮件地址不同。"
       pop3_polling_host_is_empty: "在启用 POP3 轮询前，你必须设置 'pop3 polling host'。"
       pop3_polling_username_is_empty: "在启用 POP3 轮询前，你必须设置 'pop3 polling username'。"
       pop3_polling_password_is_empty: "在启用 POP3 轮询前，你必须设置 'pop3 polling password'。"
@@ -1410,7 +1364,7 @@ zh_CN:
       same_ip_address: "同一IP地址(%{ip_address})如其他用户"
   flags_reminder:
     flags_were_submitted:
-      other: "标志已经提交%{count}小时前。[请审核他们](/admin/flags)。"
+      other: "标志已经提交%{count}小时前。[请审核他们](%{base_path}/admin/flags)。"
     subject_template:
       other: "%{count} 个标记需要被处理"
   unsubscribe_mailer:
@@ -1427,9 +1381,9 @@ zh_CN:
       如果你想要继续收到邮件更新，你可以忽略这封邮件。
   invite_mailer:
     title: "要求发件人"
-    subject_template: "%{inviter_name} 邀请您参与 '%{topic_title}' 于 %{site_domain_name}"
+    subject_template: "%{inviter_name} 邀请你参与 '%{topic_title}' 于 %{site_domain_name}"
     text_body_template: |
-      %{inviter_name} 邀请您参与讨论
+      %{inviter_name} 邀请你参与讨论
 
       > **%{topic_title}**
       >
@@ -1439,14 +1393,14 @@ zh_CN:
 
       > %{site_title} -- %{site_description}
 
-      如果您感兴趣，点击以下链接:
+      如果你感兴趣，点击以下链接:
 
       %{invite_link}
   custom_invite_mailer:
     title: "自定义邀请发件人"
-    subject_template: "%{inviter_name} 邀请您加入 '%{topic_title}' 于 %{site_domain_name}"
+    subject_template: "%{inviter_name}邀请你加入'%{topic_title}'于%{site_domain_name}"
     text_body_template: |
-      %{inviter_name} 邀请您参与讨论
+      %{inviter_name} 邀请你参与讨论
 
       > **%{topic_title}**
       >
@@ -1460,27 +1414,27 @@ zh_CN:
 
       > %{user_custom_message}
 
-      如果您感兴趣，点击以下链接:
+      如果你感兴趣，点击以下链接:
 
       %{invite_link}
   invite_forum_mailer:
     title: "邀请论坛发件人"
-    subject_template: "%{inviter_name} 邀请您加入 %{site_domain_name}"
+    subject_template: "%{inviter_name}邀请你加入%{site_domain_name}"
     text_body_template: |
-      %{inviter_name} 邀请您加入
+      %{inviter_name} 邀请你加入
 
       > **%{site_title}**
       >
       > %{site_description}
 
-      如果您感兴趣，点击以下链接:
+      如果你感兴趣，点击以下链接:
 
       %{invite_link}
   custom_invite_forum_mailer:
     title: "自定义论坛邀请发件人"
-    subject_template: "%{inviter_name} 邀请您加入 %{site_domain_name}"
+    subject_template: "%{inviter_name}邀请你加入%{site_domain_name}"
     text_body_template: |
-      %{inviter_name} 邀请您加入
+      %{inviter_name} 邀请你加入
 
       > **%{site_title}**
       >
@@ -1490,7 +1444,7 @@ zh_CN:
 
       > %{user_custom_message}
 
-      如果您感兴趣，点击以下链接:
+      如果你感兴趣，点击以下链接:
 
       %{invite_link}
   invite_password_instructions:
@@ -1527,38 +1481,12 @@ zh_CN:
   new_version_mailer:
     title: "新版本发件人"
     subject_template: "[%{email_prefix}] 新 Discourse 版本可供升级"
-    text_body_template: |
-      哇哦，有新版本的 [Discourse](http://www.discourse.org) 可以升级！
-
-      你的版本：%{installed_version}
-      新的版本：**%{new_version}**
-
-      - 浏览器访问**[一键更新工具](%{base_url}/admin/upgrade)**升级。
-
-      - 查看 [发行注记（英文）](https://meta.discourse.org/tags/release-notes) 或查看 [GitHub 改动日志](https://github.com/discourse/discourse/commits/master)中更新的内容。
-
-      - 访问 [meta.discourse.org（英文）](https://meta.discourse.org) 获取 Discourse 的最新资讯、讨论和支持。也可访问 [meta.discoursecn.org 非官方的中文支持论坛](https://meta.discoursecn.org) 获得支持。
   new_version_mailer_with_notes:
     title: "带注解的新版本发件人"
     subject_template: "[%{email_prefix}] 可以升级"
-    text_body_template: |
-      哇哦，有新版本的 [Discourse](http://www.discourse.org) 可以升级！
-
-      你的版本：%{installed_version}
-      新的版本：**%{new_version}**
-
-      - 浏览器访问**[一键更新工具](%{base_url}/admin/upgrade)**升级。
-
-      - 查看 [发行注记（英文）](https://meta.discourse.org/tags/release-notes) 或查看 [GitHub 改动日志](https://github.com/discourse/discourse/commits/master)中更新的内容。
-
-      - 访问 [meta.discourse.org（英文）](https://meta.discourse.org) 获取 Discourse 的最新资讯、讨论和支持。也可访问 [meta.discoursecn.org 非官方的中文支持论坛](https://meta.discoursecn.org) 获得支持。
-
-      ### 发行注记
-
-      %{notes}
   flag_reasons:
     off_topic: "你的帖子被标记为 **偏离主题**：鉴于当前的主题标题和第一个帖子，社区成员们感觉它不适合处于这个主题中。"
-    inappropriate: "你的帖子被标记为 **不恰当**：社区成员感觉它有冒犯或者侮辱的意味，亦或是它违反了[社区准则](/guidelines)。"
+    inappropriate: "你的帖子被标记为 **不恰当**：社区成员感觉它有冒犯或者侮辱的意味，亦或是它违反了[社区准则](%{base_path}/guidelines)。"
     spam: "你的帖子被标记为 **广告**：社区成员觉得它是广告，像是在过度地推广着什么，而不是预期中与主题有关的内容。"
     notify_moderators: "你的帖子被标记为 **需要版主关注**：社区成员认为帖子需要管理人员介入。"
   flags_dispositions:
@@ -1666,14 +1594,6 @@ zh_CN:
         ```
     csv_export_succeeded:
       title: "成功导致CSV格式"
-      text_body_template: |
-        数据成功出成功！:dvd:
-
-        <a class="attachment" href="%{download_link}">%{file_name}</a>（%{file_size}）
-
-        以上的下载链接将在 48 小时后失效。
-
-        数据由 gzip 压缩打包。如果双击无法打开压缩文件，用这里推荐的工具：http://www.gzip.org/#faq4
     csv_export_failed:
       title: "导致CSV失败"
       subject_template: "数据导出失败"
@@ -1831,7 +1751,7 @@ zh_CN:
       text_body_template: |
         我们非常抱歉，但是你发送至%{destination}（名为%{former_title}）的邮件出问题了。
 
-        在处理您的电子邮件时出现无法识别的错误，它并未发布。你可以再试一次，或者[联系管理人员](%{base_url}/about)。
+        在处理你的电子邮件时出现无法识别的错误，它并未发布。你可以再试一次，或者[联系管理人员](%{base_url}/about)。
     email_error_notification:
       title: "邮件错误提醒"
       subject_template: "[%{email_prefix}] 电子邮件错误 -- POP 验证错误"
@@ -1880,14 +1800,6 @@ zh_CN:
     spam_post_blocked:
       title: "垃圾帖子被封锁"
       subject_template: "新用户 %{username} 因重复发布链接而被禁止发表相关帖子"
-      text_body_template: |
-        这是自动发出的消息。
-
-        新用户[%{username}](%{base_url}%{user_url})试图创建多个链接至 %{domains} 的帖子，但这些帖子因为反垃圾策略而被阻挡了。用户仍能够发表不包含到 %{domains} 的帖子。
-
-        请[审核该用户](%{user_url})。
-
-        该阈值可以通过站点设置中的 `newuser_spam_host_threshold` 和 `white_listed_spam_host_domains` 更改。
     unsilenced:
       title: "解除禁言"
       subject_template: "账户不再被挂起"
@@ -1986,7 +1898,7 @@ zh_CN:
 
       > %{site_title} -- %{site_description}
     user_invited_to_private_message_pm_group:
-      title: "用户邀请小组至私信"
+      title: "用户邀请群组至私信"
       subject_template: "[%{email_prefix}] %{username}邀请 @%{group_name} 加入消息交流：“%{topic_title}”"
       text_body_template: |
         %{header_instructions}
@@ -2077,7 +1989,7 @@ zh_CN:
 
         %{respond_instructions}
     user_group_mentioned:
-      title: "用户小组提及"
+      title: "用户群组提及"
       subject_template: "[%{email_prefix}] %{topic_title}"
       text_body_template: |
         %{header_instructions}
@@ -2270,7 +2182,6 @@ zh_CN:
       你需要一个账号。请创建一个账号或者登录以继续。
   terms_of_service:
     title: "服务条款"
-    signup_form_message: '我已经阅读并接受 <a href="/tos" target="_blank">服务条款</a>。'
   deleted: '已删除'
   image: "图片"
   upload:
@@ -2291,8 +2202,8 @@ zh_CN:
   avatar:
     missing: "抱歉，我们没法找到与你邮件地址关联的头像。你能再上传一次试试吗？"
   flag_reason:
-    sockpuppet: "新用户创建了主题，而另一个新用户以同一个 IP 在该主题回复。查看站点设置的 <a href='/admin/site_settings/category/spam'>`flag_sockpuppets`</a>。"
-    spam_hosts: "新用户试图在多个创建帖子中发表链接到同一个域名的内容。查看站点设置的 <a href='/admin/site_settings/category/spam'>`newuser_spam_host_threshold`</a>。"
+    sockpuppet: "新用户创建了主题，而另一个新用户以同一个 IP 在该主题回复。查看站点设置的 <a href='%{base_path}/admin/site_settings/category/spam'>`flag_sockpuppets`</a>。"
+    spam_hosts: "新用户试图在多个创建帖子中发表链接到同一个域名的内容。查看站点设置的 <a href='%{base_path}/admin/site_settings/category/spam'>`newuser_spam_host_threshold`</a>。"
   color_schemes:
     base_theme_name: "基础"
     dark: "暗色方案"
@@ -2399,13 +2310,13 @@ zh_CN:
 
       ## [有你参与](#power)
 
-      这个站点由[一群友善的管理人员](/about)、你和社群一起运营。如果你对这里的事情仍有疑问，在[站点反馈](/c/site-feedback)分类新建一个主题并且开始讨论！如果遇到了重要或紧急的事情，并且不能用站务分类的主题或标记解决，通过[管理人员页面](/about)联系我们。
+      这个站点由[一群友善的管理人员](%{base_path}/about)、你和社群一起运营。如果你对这里的事情仍有疑问，在[站点反馈](%{base_path}/c/site-feedback)分类新建一个主题并且开始讨论！如果遇到了重要或紧急的事情，并且不能用站务分类的主题或标记解决，通过[管理人员页面](%{base_path}/about)联系我们。
 
       <a name="tos"></a>
 
       ## [使用条款](#tos)
 
-      是的，法律很无聊，但是我们必须保护我们自己 &ndash; 引申开来，你和你的数据 &ndash; 用于针对不友好的家伙们。我们有一个[使用条款](/tos)描述你的（以及我们）关于内容、隐私和法律的行为和权力。要使用我们的服务，你必须同意遵守[使用条款](/tos)。
+      是的，法律很无聊，但是我们必须保护我们自己 &ndash; 引申开来，你和你的数据 &ndash; 用于针对不友好的家伙们。我们有一个[使用条款](%{base_path}/tos)描述你的（以及我们）关于内容、隐私和法律的行为和权力。要使用我们的服务，你必须同意遵守[使用条款](%{base_path}/tos)。
   tos_topic:
     title: "服务条款"
   privacy_topic:
@@ -2740,17 +2651,16 @@ zh_CN:
           contact_email:
             label: "邮件"
             placeholder: "name@example.com"
-            description: "社区的负责人或小组的邮件地址。将用来接收关于未处理标记和安全更新的紧急通知，并显示在<a href='/about' target='_blank'>关于页面</a>上作为紧急联系的方式。"
+            description: "社区的负责人或群组的邮件地址。将用来接收关于未处理标记和安全更新的紧急通知，并显示在<a href='%{base_path}/about' target='_blank'>关于页面</a>上作为紧急联系的方式。"
           contact_url:
             label: "网页"
-            placeholder: "http://www.example.com/contact-us"
-            description: "你或者你的组织平时用于联络的网页。将被显示在<a href='/about' target='_blank'>关于页面</a>中。"
+            description: "你或者你的组织平时用于联络的网页。将被显示在<a href='%{base_path}/about' target='_blank'>关于页面</a>中。"
           site_contact:
             label: "自动私信"
             description: "所有 Discourse 自动发送的私信将以该用户的名义发送，比如标志警告和备份完成通知。"
       corporate:
         title: "组织"
-        description: "这些名字将显示于<a href='/privacy' target='blank'>隐私策略</a>和<a href='/tos' target='blank'>服务条款</a>中，你可以随时在工作人员分类中编辑他们。如果你没有公司，现在你可以跳过这个步骤。"
+        description: "这些名字将显示于<a href='%{base_path}/privacy' target='blank'>隐私策略</a>和<a href='%{base_path}/tos' target='blank'>服务条款</a>中，你可以随时在工作人员分类中编辑他们。如果你没有公司，现在你可以跳过这个步骤。"
         fields:
           company_short_name:
             label: "公司名（短）"
@@ -2803,6 +2713,3 @@ zh_CN:
         description: "你快做完啦！让我们邀请一些工作人员来帮助你创建一些有趣的主题和回复来<a href='https://blog.discourse.org/2014/08/building-a-discourse-community/' target='blank'>启动你的讨论</a>以开始社区之旅。"
       finished:
         title: "你的 Discourse 已经准备就绪！"
-        description: |
-          <p>如果你觉得需要修改这些设置，访问<a href='/admin' target='_blank'>管理员分块</a>；你可以在站点菜单找到扳手图标旁找到。</p>
-          <p>祝你玩得开心，还有祝你<a href='https://blog.discourse.org/2014/08/building-a-discourse-community/' target='_blank'>建设新社区好运！</a></p>

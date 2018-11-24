@@ -118,11 +118,11 @@ de:
       email: 'diesen Link per E-Mail senden'
     action_codes:
       public_topic: "hat das Thema öffentlich gemacht, %{when}"
-      private_topic: "hat dieses Thema in eine Nachricht umgewandelt %{when}"
+      private_topic: "hat dieses Thema in eine Nachricht umgewandelt, %{when}"
       split_topic: "Thema aufgeteilt, %{when}"
       invited_user: "%{who} eingeladen, %{when}"
       invited_group: "%{who} eingeladen, %{when}"
-      user_left: "%{who} hat sich selbst von dieser Nachricht entfernt %{when}"
+      user_left: "%{who} hat sich selbst von dieser Nachricht entfernt, %{when}"
       removed_user: "%{who} entfernt, %{when}"
       removed_group: "%{who} entfernt, %{when}"
       autobumped: "Thema wurde automatisch nach oben geschoben, %{when}"
@@ -145,8 +145,8 @@ de:
         enabled: 'sichtbar gemacht, %{when}'
         disabled: 'unsichtbar gemacht, %{when}'
       banner:
-        enabled: 'hat dieses Banner erstellt %{when}. Es wird oberhalb jeder Seite angezeigt, bis es vom Benutzer weggeklickt wird.'
-        disabled: 'hat dieses Banner entfernt %{when}. Es wird nicht mehr oberhalb jeder Seite angezeigt.'
+        enabled: 'hat dieses Banner erstellt, %{when}. Es wird oberhalb jeder Seite angezeigt, bis es vom Benutzer weggeklickt wird.'
+        disabled: 'hat dieses Banner entfernt, %{when}. Es wird nicht mehr oberhalb jeder Seite angezeigt.'
     topic_admin_menu: "Thema administrieren"
     wizard_required: "Willkommen bei deinem neuen Discourse! Lass uns mit dem <a href='%{url}' data-auto-route='true'>Setup-Assistenten</a> ✨ starten"
     emails_are_disabled: "Die ausgehende E-Mail-Kommunikation wurde von einem Administrator global deaktiviert. Es werden keinerlei Benachrichtigungen per E-Mail verschickt."
@@ -245,12 +245,10 @@ de:
         bookmark: "Klicke hier, um ein Lesezeichen auf den ersten Beitrag in diesem Thema zu setzen."
         unbookmark: "Klicke hier, um alle Lesezeichen in diesem Thema zu entfernen."
     bookmarks:
-      not_logged_in: "Entschuldige, du musst angemeldet sein, um ein Lesezeichen setzen zu können."
       created: "du hast ein Lesezeichen zu diesem Beitrag hinzugefügt"
-      not_bookmarked: "Du hast diesen Beitrag gelesen. Klicke, um ein Lesezeichen zu setzen."
-      last_read: "Das ist der letzte Beitrag, den du gelesen hast. Klicke, um ein Lesezeichen zu setzen."
+      not_bookmarked: "Lesezeichen auf diesen Beitrag setzen"
       remove: "Lesezeichen entfernen"
-      confirm_clear: "Bist du sicher, dass du alle Lesezeichen in diesem Thema entfernen möchtest?"
+      confirm_clear: "Bist du sicher, dass du alle Lesezeichen in diesem Thema entfernen möchtest? "
     drafts:
       resume: "Fortsetzen"
       remove: "Entfernen"
@@ -273,7 +271,8 @@ de:
     saved: "Gespeichert!"
     upload: "Hochladen"
     uploading: "Wird hochgeladen…"
-    uploading_filename: "{{filename}} wird hochgeladen…"
+    uploading_filename: "wird hochgeladen: {{filename}}..."
+    clipboard: "Zwischenablage"
     uploaded: "Hochgeladen!"
     pasting: "Einfügen..."
     enable: "Aktivieren"
@@ -356,6 +355,7 @@ de:
         make_user_group_owner: "Zum Eigentümer machen"
         remove_user_as_group_owner: "Eigentümerrechte entziehen"
     groups:
+      member_added: "Hinzugefügt"
       add_members:
         title: "Mitglieder hinzufügen"
         description: "Verwalte die Mitgliedschaft in dieser Gruppe"
@@ -521,7 +521,7 @@ de:
       topic_stat_sentence:
         one: "%{count} neues Thema seit 1 %{unit}."
         other: "%{count} neue Themen seit 1 %{unit}."
-      more: " (%{count} weitere) …"
+      n_more: "Kategorien (%{count} weitere) ..."
     ip_lookup:
       title: IP-Adressen-Abfrage
       hostname: Hostname
@@ -537,7 +537,7 @@ de:
       topics_entered: "betrachtete Themen"
       post_count: "# Beiträge"
       confirm_delete_other_accounts: "Bist du sicher, dass du diese Konten löschen willst?"
-      powered_by: "powered by <a href='https://ipinfo.io'>ipinfo.io</a>"
+      powered_by: "verwendet <a href='https://maxmind.com'>MaxMindDB</a>"
       copied: "kopiert"
     user_fields:
       none: "(wähle eine Option aus)"
@@ -556,6 +556,7 @@ de:
       private_messages: "Nachrichten"
       activity_stream: "Aktivität"
       preferences: "Einstellungen"
+      profile_hidden: "Das öffentliche Profil des Benutzers ist ausgeblendet."
       expand_profile: "Erweitern"
       collapse_profile: "Zuklappen"
       bookmarks: "Lesezeichen"
@@ -622,7 +623,7 @@ de:
       watched_first_post_tags: "Ersten Beitrag beobachten"
       watched_first_post_tags_instructions: "Du erhältst eine Benachrichtigung für den ersten Beitrag in jedem neuen Thema mit diesen Schlagwörtern."
       muted_categories: "Stummgeschaltet"
-      muted_categories_instructions: "Du erhältst keine Benachrichtigungen über neue Themen in dieser Kategorie und die Themen werden auch nicht in der Liste der aktuellen Themen erscheinen."
+      muted_categories_instructions: "Du erhältst keine Benachrichtigungen über neue Themen in dieser Kategorie und die Themen werden auch nicht in der Liste der Kategorien oder der aktuellen Themen erscheinen."
       no_category_access: "Moderaturen haben eingeschränkte Kategorien-Berechtigungen, Speichern ist nicht verfügbar."
       delete_account: "Lösche mein Benutzerkonto"
       delete_account_confirm: "Möchtest du wirklich dein Benutzerkonto permanent löschen? Diese Aktion kann nicht rückgängig gemacht werden!"
@@ -639,7 +640,7 @@ de:
       automatically_unpin_topics: "Angeheftete Themen automatisch loslösen, wenn ich deren letzten Beitrag gelesen habe."
       apps: "Apps"
       revoke_access: "Entziehe Zugriffsrecht"
-      undo_revoke_access: "Entziehe Zugriffsrecht widerrufen"
+      undo_revoke_access: "Zugriffsrecht wiederherstellen"
       api_approved: "Genehmigt:"
       api_last_used_at: "Zuletzt benutzt am:"
       theme: "Design"
@@ -696,15 +697,16 @@ de:
       second_factor:
         title: "Zwei-Faktor-Authentifizierung"
         disable: "Zwei-Faktor-Authentifizierung deaktivieren"
-        enable: "<a href>Zwei-Faktor-Authentifizierung</a> aktivieren, um das Benutzerkonto besser zu schützen"
+        enable: "Zwei-Faktor-Authentifizierung aktivieren, um das Benutzerkonto besser zu schützen"
         confirm_password_description: "Bitte bestätige dein Passwort um fortzufahren"
         label: "Code"
+        rate_limit: "Bitte warte ein wenig, bevor du es mit einem anderen Authentifizierungscode versuchst."
         enable_description: |
-          Scanne diesen QR-Code in einer unterstützten App (<a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank">Android</a> – <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank">iOS</a> – <a href="https://www.microsoft.com/en-us/store/p/authenticator/9wzdncrfj3rj" target='_blank'>Windows Phone</a>) und gib’ deinen Authentifizierungscode ein.
+          Scanne diesen QR-Code in einer unterstützten App (<a href="https://www.google.com/search?q=authenticator+apps+for+android" target="_blank">Android</a> – <a href="https://www.google.com/search?q=authenticator+apps+for+ios" target="_blank">iOS</a>) und gib’ deinen Authentifizierungscode ein.
         disable_description: "Bitte gib den Authentifizierungscode aus deiner App ein."
         show_key_description: "Manuell eingeben"
         extended_description: |
-          Zwei-Faktor-Authentifizierung (2FA) sichert dein Konto zusätzlich ab, indem sie zusätzlich zu deinem Passwort einen einmalig gültigen Code anfordert. Codes können auf <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target='_blank'>Android</a>-, <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a>- und <a href="https://www.microsoft.com/en-us/store/p/authenticator/9wzdncrfj3rj" target='_blank'>Windows Phone</a>-Geräten generiert werden.
+          Zwei-Faktor-Authentifizierung (2FA) sichert dein Konto zusätzlich ab, indem sie zusätzlich zu deinem Passwort einen einmalig gültigen Code anfordert. Codes können auf <a href="https://www.google.com/search?q=authenticator+apps+for+android" target='_blank'>Android-</a> und <a href="https://www.google.com/search?q=authenticator+apps+for+ios">iOS-</a>-Geräten generiert werden.
         oauth_enabled_warning: "Beachte bitte, dass soziale Anmelde-Methoden deaktiviert werden, sobald die Zwei-Faktor-Authentifizierung für dein Konto aktiviert ist."
       change_about:
         title: "„Über mich“ ändern"
@@ -724,7 +726,7 @@ de:
         title: "Ändere dein Profilbild"
         gravatar: "<a href='//gravatar.com/emails' target='_blank'>Gravatar</a>, basierend auf"
         gravatar_title: "Ändere deinen Avatar auf der Gravatar-Webseite"
-        gravatar_failed: "Konnte Gravatar nicht abrufen. Ist mit dieser E-Mail-Adresse eines verknüpft?"
+        gravatar_failed: "Wir konnten kein Gravatar für diese E-Mail-Adresse finden."
         refresh_gravatar_title: "Deinen Gravatar aktualisieren"
         letter_based: "ein vom System zugewiesenes Profilbild"
         uploaded_avatar: "Eigenes Bild"
@@ -782,16 +784,18 @@ de:
         title: "Wiederholung des Passworts"
       auth_tokens:
         title: "Kürzlich benutzte Geräte"
-        title_logs: "Authentifizierungs-Logs"
-        ip_address: "IP Adresse"
-        created: "Erzeugt"
-        first_seen: "Erstmalig gesehen"
-        last_seen: "Zuletzt gesehen"
-        operating_system: "Betriebssystem"
-        location: "Ort"
-        action: "Aktion"
-        login: "Einloggen"
-        logout: "Überall ausloggen"
+        ip: "IP"
+        details: "Details"
+        log_out_all: "Überall abmelden"
+        active: "gerade aktiv"
+        not_you: "Das bist nicht du?"
+        show_all: "Alle anzeigen ({{count}})"
+        show_few: "Weniger anzeigen"
+        was_this_you: "Warst das du?"
+        was_this_you_description: "Wenn du das gewesen bist, empfehlen wir dir, dein Passwort zu ändern und dich überall abzumelden."
+        browser_and_device: "{{browser}} auf {{device}}"
+        secure_account: "Mein Konto absichern"
+        latest_post: "Dein letzter Beitrag…"
       last_posted: "Letzter Beitrag"
       last_emailed: "Letzte E-Mail"
       last_seen: "Zuletzt gesehen"
@@ -800,6 +804,7 @@ de:
       location: "Wohnort"
       website: "Website"
       email_settings: "E-Mail"
+      hide_profile_and_presence: "Blende mein öffentliches Profil und Anwesenheitsfunktionen aus"
       like_notification_frequency:
         title: "Benachrichtigung für erhaltene Likes anzeigen"
         always: "immer"
@@ -812,7 +817,7 @@ de:
         always: "immer"
         never: "nie"
       email_digests:
-        title: "Sende mir eine E-Mail-Zusammenfassung mit beliebten Themen und Antworten, wenn ich länger nicht hier war:"
+        title: "Wenn ich nicht vorbeischaue, sende mir eine E-Mail-Zusammenfassung beliebter Themen und Antworten"
         every_30_minutes: "alle 30 Minuten"
         every_hour: "stündlich"
         daily: "täglich"
@@ -987,9 +992,9 @@ de:
       enabled: "Diese Website befindet sich im Nur-Lesen-Modus. Du kannst weiterhin Inhalte lesen, aber das Erstellen von Beiträgen, Vergeben von Likes und Durchführen einiger weiterer Aktionen ist derzeit nicht möglich."
       login_disabled: "Die Anmeldung ist deaktiviert während sich die Website im Nur-Lesen-Modus befindet."
       logout_disabled: "Die Abmeldung ist deaktiviert während sich die Website im Nur-Lesen-Modus befindet."
-    too_few_topics_and_posts_notice: "Lass' <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>die Diskussionen starten!</a> Es existieren bisher <strong>%{currentTopics} von %{requiredTopics}</strong> benötigten Themen und <strong>%{currentPosts} von %{requiredPosts}</strong> benötigten Beiträgen. Neue Besucher benötigen bestehende Konversationen, die sie lesen und auf die sie antworten können."
-    too_few_topics_notice: "Lass' <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>die Diskussionen starten!</a> Es existieren bisher <strong>%{currentTopics} von %{requiredTopics}</strong> benötigten Themen. Neue Besucher benötigen bestehende Konversationen, die sie lesen und auf die sie antworten können."
-    too_few_posts_notice: "Lass' <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>die Diskussionen starten!</a> Es existieren bisher <strong>%{currentPosts} von %{requiredPosts}</strong> benötigten Beiträgen. Neue Besucher benötigen bestehende Konversationen, die sie lesen und auf die sie antworten können."
+    too_few_topics_and_posts_notice: "Lass' <a href='https://blog.discourse.org/2014/08/building-a-discourse-community/'>die Diskussionen starten!</a> Es existieren bisher <strong>%{currentTopics} von %{requiredTopics}</strong> benötigten Themen und <strong>%{currentPosts} von %{requiredPosts}</strong> benötigten Beiträgen. Neue Besucher benötigen bestehende Konversationen, die sie lesen und auf die sie antworten können."
+    too_few_topics_notice: "Lass' <a href='https://blog.discourse.org/2014/08/building-a-discourse-community/'>die Diskussionen starten!</a> Es existieren bisher <strong>%{currentTopics} von %{requiredTopics}</strong> benötigten Themen. Neue Besucher benötigen bestehende Konversationen, die sie lesen und auf die sie antworten können."
+    too_few_posts_notice: "Lass' <a href='https://blog.discourse.org/2014/08/building-a-discourse-community/'>die Diskussionen starten!</a> Es existieren bisher <strong>%{currentPosts} von %{requiredPosts}</strong> benötigten Beiträgen. Neue Besucher benötigen bestehende Konversationen, die sie lesen und auf die sie antworten können."
     logs_error_rate_notice:
       reached: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> hat die eingestellte Grenze für die Site von %{siteSettingRate} erreicht."
       exceeded: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> hat die eingestellte Grenze für die Site von %{siteSettingRate} überschritten."
@@ -1065,7 +1070,7 @@ de:
       complete_email_found: "Wir haben ein zu <b>%{email}</b> gehörendes Benutzerkonto gefunden. Du solltest in Kürze eine E-Mail mit Anweisungen zum Zurücksetzen deines Passwortes erhalten."
       complete_username_not_found: "Es gibt kein Konto mit dem Benutzernamen <b>%{username}</b>"
       complete_email_not_found: "Es gibt kein Benutzerkonto für <b>%{email}</b>"
-      help: "E-Mail nicht angekommen? Bitte prüfe zuerst deinen Spam-Ordner. <p>Nicht sicher, welche E-Mail-Adresse du verwendet hast? Gib eine E-Mail-Adresse ein und wir werden dir sagen, ob sie hier existiert.</p><p>Falls du keinen Zugriff mehr auf die hinterlegte E-Mail-Adresse deines Kontos hast, kontaktiere bitte <a href='/about'>unser hilfsbereites Team. </a></p>"
+      help: "E-Mail nicht angekommen? Bitte prüfe zuerst deinen Spam-Ordner. <p>Nicht sicher, welche E-Mail-Adresse du verwendet hast? Gib eine E-Mail-Adresse ein und wir werden dir sagen, ob sie hier existiert.</p><p>Falls du keinen Zugriff mehr auf die hinterlegte E-Mail-Adresse deines Kontos hast, kontaktiere bitte <a href='%{basePath}/about'>unser hilfsbereites Team. </a></p>"
       button_ok: "OK"
       button_help: "Hilfe"
     email_login:
@@ -1165,6 +1170,8 @@ de:
       categories_with_featured_topics: "Kategorien mit empfohlenen Themen"
       categories_and_latest_topics: "Kategorien und aktuelle Themen"
       categories_and_top_topics: "Kategorien und angesagte Themen"
+      categories_boxes: "Boxen mit Unterkategorien"
+      categories_boxes_with_topics: "Spalten mit hervorgehobenen Themen"
     shortcut_modifier_key:
       shift: 'Umschalt'
       ctrl: 'Strg'
@@ -1241,6 +1248,7 @@ de:
         category_missing: "Du musst eine Kategorie auswählen"
         tags_missing: "Du musst mindestens %{count} Schlagwörter wählen."
       save_edit: "Speichern"
+      overwrite_edit: "Bearbeitung überschreiben"
       reply_original: "Auf das ursprünglichen Thema antworten"
       reply_here: "Hier antworten"
       reply: "Antworten"
@@ -1279,7 +1287,7 @@ de:
       link_description: "gib hier eine Link-Beschreibung ein"
       link_dialog_title: "Link einfügen"
       link_optional_text: "Optionaler Titel"
-      link_url_placeholder: "http://example.com"
+      link_url_placeholder: "https://example.com"
       quote_title: "Zitat"
       quote_text: "Zitat"
       code_title: "Vorformatierter Text"
@@ -1294,6 +1302,8 @@ de:
       help: "Hilfe zur Markdown-Formatierung"
       collapse: "Editor minimieren"
       abandon: "Editor schließen und Entwurf verwerfen"
+      enter_fullscreen: "Vollbild-Editor öffnen"
+      exit_fullscreen: "Vollbild-Editor verlassen"
       modal_ok: "OK"
       modal_cancel: "Abbrechen"
       cant_send_pm: "Entschuldige, aber du kannst keine Nachricht an %{username} senden."
@@ -1327,7 +1337,7 @@ de:
           desc: "Entwerfe ein Thema, das nur für das Team sichtbar ist."
         toggle_topic_bump:
           label: "Bump des Themas umschalten"
-          desc: "Antworten ohne das Bump-Datum des Themas zu ändern."
+          desc: "Antworten ohne das Datum der neuesten Antwort zu ändern"
     notifications:
       tooltip:
         regular:
@@ -1579,7 +1589,7 @@ de:
       toggle_information: "Details zum Thema ein- oder ausblenden"
       read_more_in_category: "Möchtest du mehr lesen? Entdecke andere Themen in {{catLink}} oder {{latestLink}}."
       read_more: "Möchtest du mehr lesen? {{catLink}} oder {{latestLink}}."
-      read_more_MF: "Du {UNREAD, plural, =0 {} one {hast <a href='/unread'>ein ungelesenes</a> Thema } other {hast <a href='/unread'># ungelesene</a> Themen } } {NEW, plural, =0 {} one { {BOTH, select, true{und } false {hast } other{}} <a href='/new'>ein neues</a> Thema} other { {BOTH, select, true{und } false {hast } other{}} <a href='/new'># neue</a> Themen} }. Oder {CATEGORY, select, true {entdecke andere Themen in {catLink}} false {{latestLink}} other {}}"
+      read_more_MF: "Du {UNREAD, plural, =0 {} one {hast <a href='{basePath}/unread'>ein ungelesenes</a> Thema } other {hast <a href='{basePath}/unread'># ungelesene</a> Themen } } {NEW, plural, =0 {} one { {BOTH, select, true{und } false {hast } other{}} <a href='{basePath}/new'>ein neues</a> Thema} other { {BOTH, select, true{und } false {hast } other{}} <a href='{basePath}/new'># neue</a> Themen} }. Oder {CATEGORY, select, true {entdecke andere Themen in {catLink}} false {{latestLink}} other {}}"
       browse_all_categories: Alle Kategorien durchsehen
       view_latest_topics: aktuelle Themen anzeigen
       suggest_create_topic: "Möchtest du ein neues Thema erstellen?"
@@ -1669,7 +1679,7 @@ de:
           "2_8": 'Du wirst eine Anzahl neuer Antworten sehen, weil du diese Kategorie verfolgst.'
           "2_4": 'Du wirst eine Anzahl neuer Antworten sehen, weil du einen Beitrag in diesem Thema geschrieben hast.'
           "2_2": 'Du wirst eine Anzahl neuer Antworten sehen, weil du dieses Thema verfolgst.'
-          "2": 'Du wirst eine Anzahl neuer Antworten sehen, weil du <a href="/u/{{username}}/preferences">dieses Thema gelesen hast</a>.'
+          "2": 'Du wirst eine Anzahl neuer Antworten sehen, weil du <a href="{{basePath}}/u/{{username}}/preferences">dieses Thema gelesen hast</a>.'
           "1_2": 'Du wirst benachrichtigt, wenn jemand deinen @Namen erwähnt oder auf deinen Beitrag antwortet.'
           "1": 'Du wirst benachrichtigt, wenn jemand deinen @Namen erwähnt oder auf deinen Beitrag antwortet.'
           "0_7": 'Du ignorierst alle Benachrichtigungen dieser Kategorie.'
@@ -1818,15 +1828,13 @@ de:
         action: "ausgewählte Beiträge zusammenführen"
         error: "Es gab einen Fehler beim Zusammenführen der ausgewählten Beiträge."
       change_owner:
-        title: "Eigentümer der Beiträge ändern"
+        title: "Eigentümer ändern"
         action: "Eigentümer ändern"
         error: "Beim Ändern des Eigentümers der Beiträge ist ein Fehler aufgetreten."
-        label: "Neuer Eigentümer der Beiträge"
         placeholder: "Benutzername des neuen Eigentümers"
         instructions:
-          one: "Bitte wähle den neuen Eigentümer für den Beitrag von <b>{{old_user}}</b>."
-          other: "Bitte wähle den neuen Eigentümer für {{count}} Beiträge von <b>{{old_user}}</b>."
-        instructions_warn: "Bitte beachte, dass alle Benachrichtigungen für diesen Beitrag nicht rückwirkend auf den neuen Benutzer übertragen werden."
+          one: "Bitte wähle einen neuen Eigentümer für den Beitrag von <b>@{{old_user}}</b>"
+          other: "Bitte wähle einen neuen Eigentümer für {{count}} Beiträge von <b>@{{old_user}}</b>"
       change_timestamp:
         title: "Zeitstempel ändern…"
         action: "Erstelldatum ändern"
@@ -1897,7 +1905,7 @@ de:
         upload: "Entschuldige, es gab einen Fehler beim Hochladen der Datei. Bitte versuche es noch einmal."
         file_too_large: "Entschuldige, diese Datei ist zu groß (maximal erlaubt sind {{max_size_kb}} KB). Wie wär’s, wenn du deine große Datei bei einem Filehosting-Dienst hochlädst und dann den Link teilst?"
         too_many_uploads: "Entschuldige, du darfst immer nur eine Datei hochladen."
-        too_many_dragged_and_dropped_files: "Entschuldige, du kannst nur 10 Dateien auf einmal hochladen."
+        too_many_dragged_and_dropped_files: "Entschuldige, du kannst nur {{max}} Dateien auf einmal hochladen."
         upload_not_authorized: "Entschuldigung, die Datei die du hochladen möchtest ist nicht erlaubt (erlaubte Dateiendungen sind: {{authorized_extensions}})."
         image_upload_not_allowed_for_new_user: "Entschuldige, neue Benutzer dürfen keine Bilder hochladen."
         attachment_upload_not_allowed_for_new_user: "Entschuldige, neue Benutzer dürfen keine Dateien hochladen."
@@ -2346,7 +2354,7 @@ de:
         this_week: "Woche"
         today: "Heute"
         other_periods: "zeige angesagte Themen:"
-    browser_update: '<a href="http://www.discourse.org/faq/#browser">Dein Webbrowser ist leider zu alt, um dieses Forum zu besuchen</a>. Bitte <a href="http://browsehappy.com">installiere einen neueren Browser</a>.'
+    browser_update: 'Leider <a href="https://www.discourse.org/faq/#browser">ist dein Browser zu alt, damit diese Seite richtig funktioniert</a>. Bitte <a href="https://browsehappy.com">aktualisiere deinen Browser</a>.'
     permission_types:
       full: "Erstellen / Antworten / Ansehen"
       create_post: "Antworten / Ansehen"
@@ -2389,6 +2397,7 @@ de:
       composing:
         title: 'Schreiben'
         return: '<b>shift</b>+<b>c</b> Zurück zum Editor'
+        fullscreen: '<b>Umschalt</b>+<b>F11</b> Vollbild-Editor'
       actions:
         title: 'Aktionen'
         bookmark_topic: '<b>f</b> Lesezeichen hinzufügen/entfernen'
@@ -2470,6 +2479,10 @@ de:
       sort_by_name: "Name"
       manage_groups: "Schlagwort-Gruppen verwalten"
       manage_groups_description: "Gruppen definieren, um Schlagwörter zu organisieren"
+      upload: "Schlagwärter hochladen"
+      upload_description: "Lade eine Textdatei hoch, um mehrere Schlagwörter auf einmal zu erstellen"
+      upload_instructions: "Eine pro Zeile, optional mit einer Schlagwortgruppe nach dem Schema 'schlagwort_name,schlagwort_gruppe'."
+      upload_successful: "Schlagwörter erfolgreich hochgeladen"
       filters:
         without_category: "%{filter} %{tag} Themen"
         with_category: "%{filter} %{tag} Themen in %{category}"
@@ -2529,8 +2542,7 @@ de:
           bookmarks: "Das waren alle Themen mit Lesezeichen."
           search: "Es gibt keine weiteren Suchergebnisse."
     invite:
-      custom_message: "Mache deine Einladung ein bisschen mehr persönlich, indem du etwas schreibst:"
-      custom_message_link: "persönliche Nachricht"
+      custom_message: "Gestalte deine Einladung etwas mehr persönlicher, in dem du eine <a href>eigene Nachricht</a> schreibst."
       custom_message_placeholder: "Gib deine persönliche Nachricht ein"
       custom_message_template_forum: "Hey, du solltest diesem Forum beitreten!"
       custom_message_template_topic: "Hey, ich dachte, dir könnte dieses Thema gefallen!"
@@ -2611,8 +2623,8 @@ de:
           total: "Gesamt aller Zeiten"
           no_data: "Keine Daten anzuzeigen."
           trending_search:
-            more: '<a href="/admin/logs/search_logs">Suchprotokoll</a>'
-            disabled: 'Der Bericht über beliebte Suchen ist deaktiviert. Aktiviere <a href="/admin/site_settings/category/all_results?filter=log%20search%20queries">Suchanfragen protokollieren</a>, um die Daten zu erheben.'
+            more: '<a href="%{basePath}/admin/logs/search_logs">Suchprotokoll</a>'
+            disabled: 'Der Bericht über beliebte Suchen ist deaktiviert. Aktiviere <a href="%{basePath}/admin/site_settings/category/all_results?filter=log%20search%20queries">Suchanfragen protokollieren</a>, um die Daten zu erheben.'
       commits:
         latest_changes: "Letzte Änderungen: bitte häufig updaten!"
         by: "von"
@@ -2677,6 +2689,19 @@ de:
         was_edited: "Beitrag wurde nach der ersten Meldung bearbeitet"
         previous_flags_count: "Dieses Thema wurde bereits {{count}} mal gemeldet."
         show_details: "Zeige Meldungsdetails"
+        user_percentage:
+          summary:
+            one: "{{agreed}}, {{disagreed}}, {{ignored}} ({{count}} Meldung insgesamt)"
+            other: "{{agreed}}, {{disagreed}}, {{ignored}} ({{count}} Meldungen insgesamt)"
+          agreed:
+            one: "{{count}}% akzeptiert"
+            other: "{{count}}% akzeptiert"
+          disagreed:
+            one: "{{count}}% abgelehnt"
+            other: "{{count}}% abgelehnt"
+          ignored:
+            one: "{{count}}% ignoriert"
+            other: "{{count}}% ignoriert"
         details: "Details"
         flagged_topics:
           topic: "Thema"
@@ -2883,6 +2908,7 @@ de:
           label: "Hochladen"
           title: "Eine Sicherung zu dieser Instanz hochladen"
           uploading: "Wird hochgeladen…"
+          uploading_progress: "Wird hochgeladen... {{progress}}%"
           success: "'{{filename}}' wurd erfolgreich hochgeladen. Die Datei wird nun verarbeitet. Es kann bis zu einer Minute dauern, bis sie in der Liste erscheint."
           error: "Beim Hochladen der Datei '{{filename}}' ist ein Fehler aufgetreten: {{message}}"
         operations:
@@ -2913,6 +2939,9 @@ de:
             label: "Zurücksetzen"
             title: "Die Datenbank auf den letzten funktionierenden Zustand zurücksetzen"
             confirm: "Möchtest du wirklich die Datenbank auf den letzten funktionierenden Stand zurücksetzen?"
+        location:
+          local: "Lokal"
+          s3: "Amazon S3"
       export_csv:
         success: "Der Export wurde gestartet. Du erhältst eine Nachricht, sobald der Vorgang abgeschlossen ist."
         failed: "Der Export ist fehlgeschlagen. Bitte überprüfe die Logs."
@@ -2939,7 +2968,6 @@ de:
         import: "Importieren"
         delete: "Löschen"
         delete_confirm: "Dieses Theme löschen?"
-        about: "Ändere die Stylesheets (CSS) und den HTML-Header auf der Website. Füge eine Anpassung hinzu, um zu starten."
         color: "Farbe"
         opacity: "Transparenz"
         copy: "Kopieren"
@@ -2959,13 +2987,19 @@ de:
           theme: "Theme"
           component: "Komponente"
           components: "Komponenten"
+          theme_name: "Theme-Name"
+          component_name: "Komponenten-Name"
+          themes_intro: "Wähle ein bestehendes Theme oder erstelle ein neues, um loszulegen"
+          beginners_guide_title: "Leitfaden für Einstieger zur Verwendung von Discourse-Themes"
+          developers_guide_title: "Leitfaden für Entwickler zur Verwendung von Discourse-Themes"
+          browse_themes: "Community-Themes durchsuchen"
           import_theme: "Design importieren"
           customize_desc: "Anpassen:"
           title: "Designs"
-          modal_title: "Erstelle Theme"
           create: "Erstelle"
           create_type: "Typ:"
           create_name: "Name:"
+          name_too_short: "Der Name muss mindestens 4 Zeichen lang sein."
           long_title: "Farben, CSS und HTML-Inhalte deiner Seite erweitern"
           edit: "Bearbeiten"
           edit_confirm: "Dies ist ein Remote-Theme, wenn du CSS/HTML bearbeitest, werden deine Änderungen zurückgesetzt, wenn du das Theme das nächste Mal aktualisierst."
@@ -2980,10 +3014,17 @@ de:
           color_scheme_select: "Wähle Farben für dieses Theme"
           custom_sections: "Benutzerdefinierte Abschnitte:"
           theme_components: "Theme-Komponenten"
-          switch_component: "Erzeuge Theme"
-          switch_component_alert: "Bist Du  sicher, dass Du diese Komponente in ein Theme konvertieren möchtest? Dies wird es zu einem unabhängigen Theme machen und es wird als Kind von allen Themes entfernt werden."
-          switch_theme: "Komponente erzeugen"
-          switch_theme_alert: "Bist Du sicher, dass Du dieses Theme zu einer Komponente konvertieren möchtest? Es will als Elternteil von all Komponenten entfernt werden."
+          convert: "Umwandeln"
+          convert_component_alert: "Bist Du sicher, dass du diese Komponente in ein Theme umwandeln möchtest? Sie wird als Komponente entfernt von %{relatives}."
+          convert_component_tooltip: "Wandle diese Komponente in ein Theme um"
+          convert_theme_alert: "Bist Du sicher, dass du dieses Theme in eine Komponente umwandeln möchtest? Sie wird als übergeordnetes Element entfernt von %{relatives}."
+          convert_theme_tooltip: "Wandle dieses Theme in eine Komponente um"
+          inactive_themes: "Inaktive Themes:"
+          broken_theme_tooltip: "Dieses Theme hat fehlerhaftes CSS, HTML oder YAML."
+          default_theme_tooltip: "Dieses Theme ist das Standardtheme der Seite."
+          updates_available_tooltip: "Updates sind verfügbar für dieses Theme"
+          and_x_more: "und {{count}} mehr."
+          collapse: Zuklappen
           uploads: "Uploads"
           no_uploads: "Du kannst Medieninhalte hochladen, die zu deinem Theme gehören, wie etwa Schriftarten und Bilder."
           add_upload: "Upload hinzufügen"
@@ -2995,7 +3036,10 @@ de:
             no_overwrite: "Ungültiger Variablenname. Darf keine existierende Variable überschreiben."
             must_be_unique: "Ungültiger Variablenname. Muss eindeutig sein."
           upload: "Hochladen"
-          child_themes_check: "Theme beinhaltet andere Kinder-Themes"
+          select_component: "Komponente auswählen..."
+          unsaved_changes_alert: "Du hast deine Änderungen noch nicht gespeichert, möchtest du sie verwerfen und weitermachen?"
+          discard: "Verwerfen"
+          stay: "Bleiben"
           css_html: "Benutzerdefiniertes CSS/HTML"
           edit_css_html: "Bearbeite CSS/HTML"
           edit_css_html_help: "Du hast kein CSS oder HTML bearbeitet"
@@ -3003,6 +3047,7 @@ de:
           import_web_tip: "Repository mit dem Theme"
           import_file_tip: ".dcstyle.json Datei mit dem Theme"
           is_private: "Theme ist in einem privaten Git-Repository"
+          remote_branch: "Branch-Name (optional)"
           public_key: "Gewähre dem folgenden öffentlichen Schlüssel den Zugriff auf das Repository:"
           about_theme: "Über das Theme"
           license: "Lizenz"
@@ -3019,6 +3064,7 @@ de:
             one: "Theme liegt 1 Commit zurück!"
             other: "Theme liegt {{count}} Commits zurück!"
           compare_commits: "(Siehe neue Beiträge)"
+          repo_unreachable: "Das Git-Repository dieses Themes konnte nicht kontaktiert werden. Fehlermeldung:"
           scss:
             text: "CSS"
             title: "Gib benutzerdefiniertes CSS ein, wir akzeptieren alle gültigen CSS und SCSS-Stile"
@@ -3180,7 +3226,7 @@ de:
           filter: "Filter:"
           title: "Team-Aktionen"
           clear_filters: "Alles anzeigen"
-          staff_user: "Team-Mitglied"
+          staff_user: "Benutzer"
           target_user: "Betroffener Benutzer"
           subject: "Objekt"
           when: "Wann"
@@ -3250,6 +3296,7 @@ de:
             change_badge: "Abzeichen ändern"
             delete_badge: "Abzeichen löschen"
             merge_user: "Benutzer zusammenführen"
+            entity_export: "Entität exportieren"
         screened_emails:
           title: "Gefilterte E-Mails"
           description: "Wenn jemand ein Konto erstellt, werden die folgenden E-Mail-Adressen überprüft und es wird die Anmeldung blockiert oder eine andere Aktion ausgeführt."
@@ -3633,6 +3680,8 @@ de:
           tags: "Schlagwörter"
           search: "Suche"
           groups: "Gruppen"
+        secret_list:
+          invalid_input: "Eingabefelder können nicht leer sein oder vertikale Balkenzeichen enthalten."
       badges:
         title: Abzeichen
         new_badge: Neues Abzeichen

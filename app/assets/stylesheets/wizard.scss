@@ -328,6 +328,11 @@ body.wizard {
     }
   }
 
+  .wizard-hidden-upload-field {
+    visibility: hidden;
+    position: absolute;
+  }
+
   .wizard-step-footer {
     display: flex;
     flex-direction: row;
@@ -365,7 +370,8 @@ body.wizard {
       margin-right: 0;
     }
 
-    button.wizard-btn.done {
+    button.wizard-btn.done,
+    button.wizard-btn.finish {
       color: #fff;
       background-color: #33b333;
 
@@ -535,7 +541,7 @@ body.wizard {
     margin: auto !important;
   }
   .wizard-step-form {
-    max-height: auto;
+    max-height: none;
   }
   .wizard-step-contents {
     min-height: auto !important;

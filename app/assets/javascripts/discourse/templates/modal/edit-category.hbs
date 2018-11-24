@@ -27,10 +27,10 @@
                  action="deleteCategory"
                  icon="trash-o"
                  label="category.delete"}}
-    {{else}}
+    {{else if model.id}}
       <div class="disable_info_wrap">
         {{d-button disabled=deleteDisabled
-                   class="disable-no-hover"
+                   class="btn-default disable-no-hover"
                    action="toggleDeleteTooltip"
                    icon="question-circle"
                    label="category.delete"}}

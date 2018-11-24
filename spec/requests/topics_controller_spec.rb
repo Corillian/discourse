@@ -529,6 +529,44 @@ RSpec.describe TopicsController do
       end
     end
 
+    context 'for last post only' do
+
+      it 'should allow you to retain topic timing but remove last post only' do
+        post1 = create_post
+        topic = post1.topic
+
+        post2 = create_post(topic_id: topic.id)
+
+        PostTiming.create!(topic: topic, user: user, post_number: 1, msecs: 100)
+        PostTiming.create!(topic: topic, user: user, post_number: 2, msecs: 100)
+
+        TopicUser.create!(
+          topic: topic,
+          user: user,
+          last_read_post_number: 2,
+          highest_seen_post_number: 2
+        )
+
+        sign_in(user)
+
+        delete "/t/#{topic.id}/timings.json?last=1"
+
+        expect(PostTiming.where(topic: topic, user: user, post_number: 2).exists?).to eq(false)
+        expect(PostTiming.where(topic: topic, user: user, post_number: 1).exists?).to eq(true)
+
+        expect(TopicUser.where(topic: topic, user: user, last_read_post_number: 1, highest_seen_post_number: 1).exists?).to eq(true)
+
+        PostDestroyer.new(Fabricate(:admin), post2).destroy
+
+        delete "/t/#{topic.id}/timings.json?last=1"
+
+        expect(PostTiming.where(topic: topic, user: user, post_number: 1).exists?).to eq(false)
+        expect(TopicUser.where(topic: topic, user: user, last_read_post_number: nil, highest_seen_post_number: nil).exists?).to eq(true)
+
+      end
+
+    end
+
     context 'when logged in' do
       before do
         @user = sign_in(Fabricate(:user))
@@ -1057,6 +1095,18 @@ RSpec.describe TopicsController do
       end.to change(TopicViewItem, :count).by(1)
     end
 
+    it 'records a view to invalid post_number' do
+      user = Fabricate(:user)
+
+      expect do
+        get "/t/#{topic.slug}/#{topic.id}/#{256**4}", params: {
+          u: user.username
+        }
+        expect(response.status).to eq(200)
+      end.to change { IncomingLink.count }.by(1)
+
+    end
+
     it 'records incoming links' do
       user = Fabricate(:user)
 
@@ -1405,6 +1455,17 @@ RSpec.describe TopicsController do
         get "/t/#{topic.id}.json"
         expect(response.status).to eq(200)
         expect(response.headers['Discourse-Readonly']).to eq('true')
+      end
+    end
+
+    describe "image only topic" do
+      it "uses image alt tag for meta description" do
+        post = Fabricate(:post, raw: "![image_description|690x405](upload://sdtr5O5xaxf0iEOxICxL36YRj86.png)")
+
+        get post.topic.url
+
+        body = response.body
+        expect(body).to have_tag(:meta, with: { name: 'description', content: '[image_description]' })
       end
     end
   end

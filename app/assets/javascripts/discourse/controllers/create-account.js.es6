@@ -9,6 +9,7 @@ import UsernameValidation from "discourse/mixins/username-validation";
 import NameValidation from "discourse/mixins/name-validation";
 import UserFieldsValidation from "discourse/mixins/user-fields-validation";
 import { userPath } from "discourse/lib/url";
+import { findAll } from "discourse/models/login-method";
 
 export default Ember.Controller.extend(
   ModalFunctionality,
@@ -146,13 +147,13 @@ export default Ember.Controller.extend(
       );
     }.property("accountEmail", "authOptions.email", "authOptions.email_valid"),
 
-    authProviderDisplayName(provider) {
-      switch (provider) {
-        case "Google_oauth2":
-          return "Google";
-        default:
-          return provider;
-      }
+    authProviderDisplayName(providerName) {
+      const matchingProvider = findAll().find(provider => {
+        return provider.name === providerName;
+      });
+      return matchingProvider
+        ? matchingProvider.get("prettyName")
+        : providerName;
     },
 
     prefillUsername: function() {
@@ -175,6 +176,11 @@ export default Ember.Controller.extend(
         this.fetchExistingUsername();
       }
     }.observes("emailValidation", "accountEmail"),
+
+    // Determines whether at least one login button is enabled
+    hasAtLeastOneLoginButton: function() {
+      return findAll(this.siteSettings).length > 0;
+    }.property(),
 
     @on("init")
     fetchConfirmationValue() {
@@ -260,12 +266,12 @@ export default Ember.Controller.extend(
                 this.get("rejectedPasswords").pushObject(attrs.accountPassword);
               }
               this.set("formSubmitted", false);
-              $.cookie("destination_url", null);
+              $.removeCookie("destination_url");
             }
           },
           () => {
             this.set("formSubmitted", false);
-            $.cookie("destination_url", null);
+            $.removeCookie("destination_url");
             return this.flash(I18n.t("create_account.failed"), "error");
           }
         );

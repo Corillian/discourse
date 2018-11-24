@@ -71,7 +71,7 @@ export default Ember.Component.extend({
 
   @computed()
   allTimezones() {
-    return _.map(moment.tz.names(), z => z);
+    return moment.tz.names();
   },
 
   @observes(
@@ -98,26 +98,20 @@ export default Ember.Component.extend({
     const timezones = this.get("timezones");
     const timeInferred = time ? false : true;
     const toTimeInferred = toTime ? false : true;
+    const timezone = this.get("currentUserTimezone");
 
     let dateTime;
     if (!timeInferred) {
-      dateTime = moment
-        .tz(`${date} ${time}`, this.get("currentUserTimezone"))
-        .utc();
+      dateTime = moment.tz(`${date} ${time}`, timezone).utc();
     } else {
-      dateTime = moment.tz(date, this.get("currentUserTimezone")).utc();
+      dateTime = moment.tz(date, timezone).utc();
     }
 
     let toDateTime;
     if (!toTimeInferred) {
-      toDateTime = moment
-        .tz(`${toDate} ${toTime}`, this.get("currentUserTimezone"))
-        .utc();
+      toDateTime = moment.tz(`${toDate} ${toTime}`, timezone);
     } else {
-      toDateTime = moment
-        .tz(toDate, this.get("currentUserTimezone"))
-        .endOf("day")
-        .utc();
+      toDateTime = moment.tz(toDate, timezone).endOf("day");
     }
 
     let config = {
@@ -125,11 +119,17 @@ export default Ember.Component.extend({
       dateTime,
       recurring,
       format,
-      timezones
+      timezones,
+      timezone
     };
 
-    config.time = dateTime.format(this.timeFormat);
-    config.toTime = toDateTime.format(this.timeFormat);
+    if (!timeInferred) {
+      config.time = dateTime.format(this.timeFormat);
+    }
+
+    if (!toTimeInferred) {
+      config.toTime = toDateTime.format(this.timeFormat);
+    }
 
     if (toDate) {
       config.toDate = toDateTime.format(this.dateFormat);

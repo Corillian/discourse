@@ -15,6 +15,7 @@ class Badge < ActiveRecord::Base
   GreatPost = 8
   Autobiographer = 9
   Editor = 10
+  WikiEditor = 48
 
   FirstLike = 11
   FirstShare = 12
@@ -159,6 +160,15 @@ class Badge < ActiveRecord::Base
     SQL
   end
 
+  def self.i18n_name(name)
+    name.downcase.tr(' ', '_')
+  end
+
+  def self.display_name(name)
+    key = "badges.#{i18n_name(name)}.name"
+    I18n.t(key, default: name)
+  end
+
   def awarded_for_trust_level?
     id <= 4
   end
@@ -191,8 +201,7 @@ class Badge < ActiveRecord::Base
   end
 
   def display_name
-    key = "badges.#{i18n_name}.name"
-    I18n.t(key, default: self.name)
+    self.class.display_name(name)
   end
 
   def long_description
@@ -230,9 +239,8 @@ class Badge < ActiveRecord::Base
   end
 
   def i18n_name
-    self.name.downcase.tr(' ', '_')
+    @i18n_name ||= self.class.i18n_name(name)
   end
-
 end
 
 # == Schema Information

@@ -1,11 +1,11 @@
 import ComboBox from "select-kit/components/combo-box";
-import Tags from "select-kit/mixins/tags";
+import TagsMixin from "select-kit/mixins/tags";
 import { default as computed } from "ember-addons/ember-computed-decorators";
 import renderTag from "discourse/lib/render-tag";
 import { escapeExpression } from "discourse/lib/utilities";
 const { get, isEmpty, run, makeArray } = Ember;
 
-export default ComboBox.extend(Tags, {
+export default ComboBox.extend(TagsMixin, {
   allowContentReplacement: true,
   headerComponent: "mini-tag-chooser/mini-tag-chooser-header",
   pluginApiIdentifiers: ["mini-tag-chooser"],
@@ -191,12 +191,6 @@ export default ComboBox.extend(Tags, {
     results = results.map(result => {
       return { id: result.text, name: result.text, count: result.count };
     });
-
-    // if forbidden we probably have an existing tag which is not in the list of
-    // returned tags, so we manually add it at the top
-    if (json.forbidden) {
-      results.unshift({ id: json.forbidden, name: json.forbidden, count: 0 });
-    }
 
     return results;
   },

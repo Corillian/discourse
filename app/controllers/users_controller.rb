@@ -53,14 +53,18 @@ class UsersController < ApplicationController
       include_inactive: current_user.try(:staff?) || (current_user && SiteSetting.show_inactive_accounts)
     )
 
-    user_serializer = UserSerializer.new(@user, scope: guardian, root: 'user')
+    user_serializer = nil
+    if guardian.can_see_profile?(@user)
+      user_serializer = UserSerializer.new(@user, scope: guardian, root: 'user')
+      # TODO remove this options from serializer
+      user_serializer.omit_stats = true
 
-    # TODO remove this options from serializer
-    user_serializer.omit_stats = true
-
-    topic_id = params[:include_post_count_for].to_i
-    if topic_id != 0
-      user_serializer.topic_post_count = { topic_id => Post.secured(guardian).where(topic_id: topic_id, user_id: @user.id).count }
+      topic_id = params[:include_post_count_for].to_i
+      if topic_id != 0
+        user_serializer.topic_post_count = { topic_id => Post.secured(guardian).where(topic_id: topic_id, user_id: @user.id).count }
+      end
+    else
+      user_serializer = HiddenProfileSerializer.new(@user, scope: guardian, root: 'user')
     end
 
     if !params[:skip_track_visit] && (@user != current_user)
@@ -204,8 +208,15 @@ class UsersController < ApplicationController
     end
   end
 
+  def profile_hidden
+    render nothing: true
+  end
+
   def summary
     user = fetch_user_from_params(include_inactive: current_user.try(:staff?) || (current_user && SiteSetting.show_inactive_accounts))
+
+    raise Discourse::NotFound unless guardian.can_see_profile?(user)
+
     summary = UserSummary.new(user, guardian)
     serializer = UserSummarySerializer.new(summary, scope: guardian)
     render_json_dump(serializer)
@@ -258,8 +269,6 @@ class UsersController < ApplicationController
     usernames -= groups
     usernames.each(&:downcase!)
 
-    # Create a New Topic Scenario is not supported (per conversation with codinghorror)
-    # https://meta.discourse.org/t/taking-another-1-7-release-task/51986/7
     cannot_see = []
     topic_id = params[:topic_id]
     unless topic_id.blank?
@@ -442,12 +451,11 @@ class UsersController < ApplicationController
     token = params[:token]
 
     if EmailToken.valid_token_format?(token)
-      @user =
-        if request.put?
-          EmailToken.confirm(token)
-        else
-          EmailToken.confirmable(token)&.user
-        end
+      @user = if request.put?
+        EmailToken.confirm(token)
+      else
+        EmailToken.confirmable(token)&.user
+      end
 
       if @user
         secure_session["password-#{token}"] = @user.id
@@ -457,9 +465,15 @@ class UsersController < ApplicationController
       end
     end
 
-    totp_enabled = @user&.totp_enabled?
+    second_factor_token = params[:second_factor_token]
+    second_factor_method = params[:second_factor_method].to_i
 
-    if !totp_enabled || @user.authenticate_second_factor(params[:second_factor_token], params[:second_factor_method].to_i)
+    if second_factor_token.present? && second_factor_token[/\d{6}/] && UserSecondFactor.methods[second_factor_method]
+      RateLimiter.new(nil, "second-factor-min-#{request.remote_ip}", 3, 1.minute).performed!
+      second_factor_authenticated = @user&.authenticate_second_factor(second_factor_token, second_factor_method)
+    end
+
+    if second_factor_authenticated || !@user&.totp_enabled?
       secure_session["second-factor-#{token}"] = "true"
     end
 
@@ -468,13 +482,10 @@ class UsersController < ApplicationController
     if !@user
       @error = I18n.t('password_reset.no_token')
     elsif request.put?
-      @invalid_password = params[:password].blank? || params[:password].length > User.max_password_length
-
       if !valid_second_factor
-        RateLimiter.new(nil, "second-factor-min-#{request.remote_ip}", 3, 1.minute).performed!
         @user.errors.add(:user_second_factors, :invalid)
         @error = I18n.t('login.invalid_second_factor_code')
-      elsif @invalid_password
+      elsif @invalid_password = params[:password].blank? || params[:password].size > User.max_password_length
         @user.errors.add(:password, :invalid)
       else
         @user.password = params[:password]
@@ -484,6 +495,11 @@ class UsersController < ApplicationController
           Invite.invalidate_for_email(@user.email) # invite link can't be used to log in anymore
           secure_session["password-#{token}"] = nil
           secure_session["second-factor-#{token}"] = nil
+          UserHistory.create!(
+            target_user: @user,
+            acting_user: @user,
+            action: UserHistory.actions[:change_password]
+          )
           logon_after_password_reset
         end
       end
@@ -527,15 +543,24 @@ class UsersController < ApplicationController
             }
           end
         else
-          render json: {
-            is_developer: UsernameCheckerService.is_developer?(@user.email),
-            admin: @user.admin?,
-            second_factor_required: !valid_second_factor,
-            backup_enabled: @user.backup_codes_enabled?
-          }
+          if @error || @user&.errors&.any?
+            render json: {
+              message: @error,
+              errors: @user&.errors&.to_hash
+            }
+          else
+            render json: {
+              is_developer: UsernameCheckerService.is_developer?(@user.email),
+              admin: @user.admin?,
+              second_factor_required: !valid_second_factor,
+              backup_enabled: @user.backup_codes_enabled?
+            }
+          end
         end
       end
     end
+  rescue RateLimiter::LimitExceeded => e
+    render_rate_limit_error(e)
   end
 
   def confirm_email_token
@@ -865,15 +890,18 @@ class UsersController < ApplicationController
       end
     end
 
-    user.uploaded_avatar_id = upload_id
+    upload = Upload.find_by(id: upload_id)
+
+    # old safeguard
+    user.create_user_avatar unless user.user_avatar
+
+    guardian.ensure_can_pick_avatar!(user.user_avatar, upload)
 
     if AVATAR_TYPES_WITH_UPLOAD.include?(type)
-      # make sure the upload exists
-      unless Upload.where(id: upload_id).exists?
+
+      if !upload
         return render_json_error I18n.t("avatar.missing")
       end
-
-      user.create_user_avatar unless user.user_avatar
 
       if type == "gravatar"
         user.user_avatar.gravatar_upload_id = upload_id
@@ -882,6 +910,7 @@ class UsersController < ApplicationController
       end
     end
 
+    user.uploaded_avatar_id = upload_id
     user.save!
     user.user_avatar.save!
 
@@ -1104,13 +1133,18 @@ class UsersController < ApplicationController
     user = fetch_user_from_params
     guardian.ensure_can_edit!(user)
 
-    UserAuthToken.where(user_id: user.id).each(&:destroy!)
+    if params[:token_id]
+      token = UserAuthToken.find_by(id: params[:token_id], user_id: user.id)
+      # The user should not be able to revoke the auth token of current session.
+      raise Discourse::InvalidParameters.new(:token_id) if guardian.auth_token == token.auth_token
+      UserAuthToken.where(id: params[:token_id], user_id: user.id).each(&:destroy!)
+    else
+      UserAuthToken.where(user_id: user.id).each(&:destroy!)
+    end
 
     MessageBus.publish "/file-change", ["refresh"], user_ids: [user.id]
 
-    render json: {
-      success: true
-    }
+    render json: success_json
   end
 
   private

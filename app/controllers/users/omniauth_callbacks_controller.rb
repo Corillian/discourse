@@ -33,7 +33,9 @@ class Users::OmniauthCallbacksController < ApplicationController
 
     origin = request.env['omniauth.origin']
 
-    if cookies[:destination_url].present?
+    if SiteSetting.enable_sso_provider && payload = cookies.delete(:sso_payload)
+      origin = session_sso_provider_url + "?" + payload
+    elsif cookies[:destination_url].present?
       origin = cookies[:destination_url]
       cookies.delete(:destination_url)
     end
@@ -65,7 +67,7 @@ class Users::OmniauthCallbacksController < ApplicationController
       if (provider && provider.full_screen_login) || cookies['fsl']
         cookies.delete('fsl')
         cookies['_bypass_cache'] = true
-        flash[:authentication_data] = @auth_result.to_client_hash.to_json
+        cookies[:authentication_data] = @auth_result.to_client_hash.to_json
         redirect_to @origin
       else
         respond_to do |format|

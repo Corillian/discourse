@@ -16,7 +16,7 @@ const rawOpts = {
     enable_markdown_linkify: true,
     markdown_linkify_tlds: "com"
   },
-  censoredWords: "shucks|whiz|whizzer|a**le|badword*",
+  censoredWords: "shucks|whiz|whizzer|a**le|badword*|shuck$|café|$uper",
   getURL: url => url
 };
 
@@ -435,16 +435,9 @@ QUnit.test("Quotes", assert => {
 });
 
 QUnit.test("Mentions", assert => {
-  const alwaysTrue = {
-    mentionLookup: function() {
-      return "user";
-    }
-  };
-
-  assert.cookedOptions(
+  assert.cooked(
     "Hello @sam",
-    alwaysTrue,
-    '<p>Hello <a class="mention" href="/u/sam">@sam</a></p>',
+    '<p>Hello <span class="mention">@sam</span></p>',
     "translates mentions to links"
   );
 
@@ -454,9 +447,8 @@ QUnit.test("Mentions", assert => {
     "it doesn't do mentions within links"
   );
 
-  assert.cookedOptions(
+  assert.cooked(
     "[@codinghorror](https://twitter.com/codinghorror)",
-    alwaysTrue,
     '<p><a href="https://twitter.com/codinghorror">@codinghorror</a></p>',
     "it doesn't do link mentions within links"
   );
@@ -557,17 +549,9 @@ QUnit.test("Mentions", assert => {
     "handles mentions separated by a slash."
   );
 
-  assert.cookedOptions(
-    "@eviltrout",
-    alwaysTrue,
-    '<p><a class="mention" href="/u/eviltrout">@eviltrout</a></p>',
-    "it doesn't onebox mentions"
-  );
-
-  assert.cookedOptions(
+  assert.cooked(
     "<small>a @sam c</small>",
-    alwaysTrue,
-    '<p><small>a <a class="mention" href="/u/sam">@sam</a> c</small></p>',
+    '<p><small>a <span class="mention">@sam</span> c</small></p>',
     "it allows mentions within HTML tags"
   );
 });
@@ -959,6 +943,25 @@ QUnit.test("censoring", assert => {
     "<p>I have a pen, I have an ■■■■■</p>",
     "it escapes regexp chars"
   );
+
+  assert.cooked(
+    "Aw shuck$, I can't fix the problem with money",
+    "<p>Aw ■■■■■■, I can't fix the problem with money</p>",
+    "it works for words ending in non-word characters"
+  );
+
+  assert.cooked(
+    "Let's go to a café today",
+    "<p>Let's go to a ■■■■ today</p>",
+    "it works for words ending in accented characters"
+  );
+
+  assert.cooked(
+    "Discourse is $uper amazing",
+    "<p>Discourse is ■■■■■ amazing</p>",
+    "it works for words starting with non-word characters"
+  );
+
   assert.cooked(
     "No badword or apple here plz.",
     "<p>No ■■■■■■■ or ■■■■■ here plz.</p>",

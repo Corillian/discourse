@@ -60,6 +60,7 @@ end
 # let's not run seed_fu every test
 SeedFu.quiet = true if SeedFu.respond_to? :quiet
 
+SiteSetting.max_consecutive_replies = 0
 SiteSetting.automatically_download_gravatars = false
 
 SeedFu.seed
@@ -162,6 +163,9 @@ RSpec.configure do |config|
     # very expensive IO operations
     SiteSetting.automatically_download_gravatars = false
 
+    # it makes hard to test
+    SiteSetting.max_consecutive_replies = 0
+
     Discourse.clear_readonly!
     Sidekiq::Worker.clear_all
 
@@ -187,7 +191,7 @@ RSpec.configure do |config|
   end
 
   class TestCurrentUserProvider < Auth::DefaultCurrentUserProvider
-    def log_on_user(user, session, cookies)
+    def log_on_user(user, session, cookies, opts = {})
       session[:current_user_id] = user.id
       super
     end
@@ -278,4 +282,19 @@ def file_from_fixtures(filename, directory = "images")
   FileUtils.mkdir_p("#{Rails.root}/tmp/spec") unless Dir.exists?("#{Rails.root}/tmp/spec")
   FileUtils.cp("#{Rails.root}/spec/fixtures/#{directory}/#{filename}", "#{Rails.root}/tmp/spec/#{filename}")
   File.new("#{Rails.root}/tmp/spec/#{filename}")
+end
+
+def has_trigger?(trigger_name)
+  DB.exec(<<~SQL) != 0
+    SELECT 1
+    FROM INFORMATION_SCHEMA.TRIGGERS
+    WHERE trigger_name = '#{trigger_name}'
+  SQL
+end
+
+def silence_stdout
+  STDOUT.stubs(:write)
+  yield
+ensure
+  STDOUT.unstub(:write)
 end

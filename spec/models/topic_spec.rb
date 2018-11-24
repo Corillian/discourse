@@ -296,10 +296,17 @@ describe Topic do
       expect(topic_image.fancy_title).to eq("Topic with &lt;img src=&lsquo;something&rsquo;&gt; image in its title")
     end
 
+    it "always escapes title" do
+      topic_script.title = topic_script.title + "x" * Topic.max_fancy_title_length
+      expect(topic_script.fancy_title).to eq(ERB::Util.html_escape(topic_script.title))
+      # not really needed, but just in case
+      expect(topic_script.fancy_title).not_to include("<script>")
+    end
+
   end
 
   context 'fancy title' do
-    let(:topic) { Fabricate.build(:topic, title: "\"this topic\" -- has ``fancy stuff''") }
+    let(:topic) { Fabricate.build(:topic, title: %{"this topic" -- has ``fancy stuff''}) }
 
     context 'title_fancy_entities disabled' do
       before do
@@ -319,7 +326,6 @@ describe Topic do
       it "converts the title to have fancy entities and updates" do
         expect(topic.fancy_title).to eq("&ldquo;this topic&rdquo; &ndash; has &ldquo;fancy stuff&rdquo;")
         topic.title = "this is my test hello world... yay"
-        topic.user.save!
         topic.save!
         topic.reload
         expect(topic.fancy_title).to eq("This is my test hello world&hellip; yay")
@@ -336,7 +342,7 @@ describe Topic do
       end
 
       it "works with long title that results in lots of entities" do
-        long_title = "NEW STOCK PICK: PRCT - LAST PICK UP 233%, NNCO.................................................................................................................................................................. ofoum"
+        long_title = "NEW STOCK PICK: PRCT - LAST PICK UP 233%, NNCO#{"." * 150} ofoum"
         topic.title = long_title
 
         expect { topic.save! }.to_not raise_error
@@ -1034,9 +1040,14 @@ describe Topic do
 
       it "resets the topic archetype" do
         topic.expects(:add_moderator_post)
-        MessageBus.expects(:publish).with("/site/banner", nil)
-        topic.remove_banner!(user)
+
+        message = MessageBus.track_publish do
+          topic.remove_banner!(user)
+        end.first
+
         expect(topic.archetype).to eq(Archetype.default)
+        expect(message.channel).to eq("/site/banner")
+        expect(message.data).to eq(nil)
       end
 
     end
@@ -2304,25 +2315,26 @@ describe Topic do
   end
 
   describe "#reset_bumped_at" do
-    it "ignores hidden and deleted posts when resetting the topic's bump date" do
-      post = create_post(created_at: 10.hours.ago)
-      topic = post.topic
+    it "ignores hidden, deleted, moderator and small action posts when resetting the topic's bump date" do
+      post1 = create_post(created_at: 10.hours.ago)
+      topic = post1.topic
 
       expect { topic.reset_bumped_at }.to_not change { topic.bumped_at }
 
-      post = Fabricate(:post, topic: topic, post_number: 2, created_at: 9.hours.ago)
+      post2 = Fabricate(:post, topic: topic, post_number: 2, created_at: 9.hours.ago)
       Fabricate(:post, topic: topic, post_number: 3, created_at: 8.hours.ago, deleted_at: 1.hour.ago)
       Fabricate(:post, topic: topic, post_number: 4, created_at: 7.hours.ago, hidden: true)
       Fabricate(:post, topic: topic, post_number: 5, created_at: 6.hours.ago, user_deleted: true)
       Fabricate(:post, topic: topic, post_number: 6, created_at: 5.hours.ago, post_type: Post.types[:whisper])
 
-      expect { topic.reset_bumped_at }.to change { topic.bumped_at }.to(post.reload.created_at)
+      expect { topic.reset_bumped_at }.to change { topic.bumped_at }.to(post2.reload.created_at)
 
-      post = Fabricate(:post, topic: topic, post_number: 7, created_at: 4.hours.ago, post_type: Post.types[:moderator_action])
-      expect { topic.reset_bumped_at }.to change { topic.bumped_at }.to(post.reload.created_at)
+      post3 = Fabricate(:post, topic: topic, post_number: 7, created_at: 4.hours.ago, post_type: Post.types[:regular])
+      expect { topic.reset_bumped_at }.to change { topic.bumped_at }.to(post3.reload.created_at)
 
-      post = Fabricate(:post, topic: topic, post_number: 8, created_at: 3.hours.ago, post_type: Post.types[:small_action])
-      expect { topic.reset_bumped_at }.to change { topic.bumped_at }.to(post.reload.created_at)
+      Fabricate(:post, topic: topic, post_number: 8, created_at: 3.hours.ago, post_type: Post.types[:small_action])
+      Fabricate(:post, topic: topic, post_number: 9, created_at: 2.hours.ago, post_type: Post.types[:moderator_action])
+      expect { topic.reset_bumped_at }.not_to change { topic.bumped_at }
     end
   end
 end

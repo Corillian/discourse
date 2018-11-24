@@ -103,6 +103,7 @@
   background-color: $secondary;
   background-clip: padding-box;
   box-shadow: shadow("modal");
+  padding: 1px;
 
   @media screen and (min-width: 475px) {
     min-width: 475px;
@@ -201,11 +202,7 @@
       width: 99%;
       height: 80px;
     }
-    label {
-      color: $primary;
-    }
     p {
-      color: darken($primary, 40%);
       font-size: $font-0;
     }
     .archetype-option {
@@ -269,8 +266,10 @@
   }
 
   section.field {
-    margin-bottom: 20px;
+    padding: 0.25em 0;
+    margin-bottom: 5px;
   }
+
   section.field .field-item {
     display: inline-block;
     margin-right: 10px;
@@ -369,18 +368,14 @@
 }
 
 .edit-category-modal {
-  input[type="number"] {
-    width: 50px;
+  input:not([type="checkbox"]),
+  .controls {
+    display: block;
+    margin-bottom: 0.5em;
   }
 
   .subcategory-list-style-field {
     margin-left: 16px;
-  }
-
-  .edit-category-tab-settings {
-    section.field {
-      margin-bottom: 10px;
-    }
   }
 
   .disable_info_wrap {
@@ -410,8 +405,12 @@
 
   section.minimum-required-tags {
     input[type="number"] {
-      width: 50px;
+      width: 5em;
     }
+  }
+
+  .add-permission {
+    margin-top: 12px;
   }
 }
 
@@ -468,7 +467,7 @@
 .change-timestamp,
 .poll-ui-builder {
   .date-picker {
-    width: 9em;
+    min-width: 8em;
   }
 
   #date-container {
@@ -492,6 +491,7 @@
 .flag-modal {
   max-height: 450px;
   .flag-action-type-details {
+    width: 100%;
     line-height: $line-height-large;
   }
 }
@@ -555,6 +555,23 @@
         margin: 0 0.5em;
         color: $primary-medium;
       }
+    }
+  }
+}
+
+// split topic modal
+.split-modal {
+  // move to existing topic
+  .existing-topic {
+    .radio {
+      flex-wrap: wrap;
+    }
+    .topic-title {
+      max-width: 90%;
+    }
+    .topic-categories {
+      width: 100%;
+      margin-left: 5px;
     }
   }
 }

@@ -238,12 +238,8 @@ pt:
         bookmark: "Clique para adicionar um marcador à primeira publicação neste tópico"
         unbookmark: "Clique para remover todos os marcadores deste tópico"
     bookmarks:
-      not_logged_in: "Pedimos desculpa, é necessário ter sessão iniciada para marcar publicações."
       created: "adicionou esta publicação aos marcadores"
-      not_bookmarked: "leu esta publicação; clique para adicioná-la aos marcadores"
-      last_read: "esta foi a última publicação que leu; clique para adicioná-la aos marcadores"
       remove: "Remover Marcador"
-      confirm_clear: "Tem a certeza que pretende eliminar todos os marcadores deste tópico?"
     preview: "pré-visualizar"
     cancel: "cancelar"
     save: "Guardar alterações"
@@ -251,7 +247,6 @@ pt:
     saved: "Guardado!"
     upload: "Carregar"
     uploading: "A carregar…"
-    uploading_filename: "A carregar {{filename}}..."
     uploaded: "Carregado!"
     enable: "Ativar "
     disable: "Desativar"
@@ -440,7 +435,6 @@ pt:
       topics_entered: "tópicos inseridos"
       post_count: "# publicações"
       confirm_delete_other_accounts: "Tem a certeza que quer apagar estas contas?"
-      powered_by: "desenvolvido por <a href='https://ipinfo.io'>ipinfo.io</a>"
     user_fields:
       none: "(selecione uma opção)"
     user:
@@ -515,7 +509,6 @@ pt:
       watched_first_post_tags: "A Vigiar a Primeira Resposta"
       watched_first_post_tags_instructions: "Será notificado acerca da primeira resposta em cada novo tópico nestas categorias."
       muted_categories: "Silenciado"
-      muted_categories_instructions: "Não será notificado de nada acerca de novos tópicos nestas categorias, e estes não irão aparecer nos recentes."
       delete_account: "Eliminar A Minha Conta"
       delete_account_confirm: "Tem a certeza que pretende eliminar a sua conta de forma permanente? Esta ação não pode ser desfeita!"
       deleted_yourself: "A sua conta foi eliminada com sucesso."
@@ -651,7 +644,6 @@ pt:
         always: "sempre"
         never: "nunca"
       email_digests:
-        title: "Quando eu não vier aqui, enviar-me uma mensagem resumo dos tópicos e respostas populares"
         every_30_minutes: "a cada 30 minutos"
         every_hour: "de hora em hora"
         daily: "diariamente"
@@ -822,9 +814,6 @@ pt:
       enabled: "Este site está no modo só de leitura. Por favor, continue a navegar, mas responder, gostar e outras ações estão de momento desativadas."
       login_disabled: "Enquanto o site se encontrar no modo só de leitura, a opção de iniciar a sessão está desativada."
       logout_disabled: "Enquanto o site se encontrar no modo só de leitura, a opção de terminar a sessão está desativada."
-    too_few_topics_and_posts_notice: "Vamos <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>começar esta discussão!</a> Atualmente existem <strong>%{currentTopics} / %{requiredTopics}</strong> tópicos e <strong>%{currentPosts} / %{requiredPosts}</strong> respostas. Os novos visitantes precisam de algumas conversações para poderem ler e responder."
-    too_few_topics_notice: "Vamos <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>começar esta discussão!</a> Atualmente existem <strong>%{currentTopics} / %{requiredTopics}</strong> tópios. Os novos visitantes precisam de algumas conversações para poderem ler e responder."
-    too_few_posts_notice: "Vamos <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>começar esta discussão!</a> Atualmente existem <strong>%{currentPosts} / %{requiredPosts}</strong> respostas. Os novos visitantes precisam de algumas conversações para poderem ler e responder."
     logs_error_rate_notice:
       reached: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> atingiu o limite definido nas configurações do site de %{siteSettingRate}."
       exceeded: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> excede o limite definido nas configurações do site de %{siteSettingRate}."
@@ -896,7 +885,7 @@ pt:
       complete_email_found: "Nós encontrámos uma conta que corresponde com <b>%{email}</b>, deverá receber em breve uma mensagem com as instruções para repor a sua palavra-passe."
       complete_username_not_found: "Nenhuma conta correspondente com o nome de utilizador <b>%{username}</b>"
       complete_email_not_found: "Nenhuma conta correspondente com <b>%{email}</b>"
-      help: "A mensagem não chega? Certifique-se de que verifica primeiro a sua pasta de spam.<p>Não tem a certeza de qual o endereço de e-mail que utilizou? Digite um endereço de e-mail e nós iremos dizer-lhe se ele existe aqui.</p><p>Se já não tiver acesso ao endereço de e-mail da sua conta, por favor, contacte <a href='/about'>a nossa equipa de apoio.</a></p>"
+      help: "A mensagem não chega? Certifique-se de que verifica primeiro a sua pasta de spam.<p>Não tem a certeza de qual o endereço de e-mail que utilizou? Digite um endereço de e-mail e nós iremos dizer-lhe se ele existe aqui.</p><p>Se já não tiver acesso ao endereço de e-mail da sua conta, por favor, contacte <a href='%{basePath}/about'>a nossa equipa de apoio.</a></p>"
       button_ok: "CONFIRMAR"
       button_help: "Ajuda"
     email_login:
@@ -1064,7 +1053,6 @@ pt:
       link_description: "insira aqui a descrição da hiperligação"
       link_dialog_title: "Inserir Hiperligação"
       link_optional_text: "título opcional"
-      link_url_placeholder: "http://example.com"
       quote_title: "Bloco de Citação"
       quote_text: "Bloco de Citação"
       code_title: "Texto pré-formatado"
@@ -1321,7 +1309,7 @@ pt:
       toggle_information: "alternar detalhes do tópico"
       read_more_in_category: "Pretende ler mais? Procure outros tópicos em {{catLink}} ou {{latestLink}}."
       read_more: "Pretende ler mais? {{catLink}} ou {{latestLink}}."
-      read_more_MF: "{ UNREAD, plural, =0 {} one { Existe <a href='/unread'>1 não lido </a> } other { Existem <a href='/unread'># não lidos</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{e } false {existe } other{}} <a href='/new'>1 novo</a> tópico} other { {BOTH, select, true{e } false {existem } other{}} <a href='/new'># novos</a> tópicos} } restantes, ou {CATEGORY, select, true {pesquise outros tópicos em {catLink}} false {{latestLink}} other {}}"
+      read_more_MF: "{ UNREAD, plural, =0 {} one { Existe <a href='{basePath}/unread'>1 não lido </a> } other { Existem <a href='{basePath}/unread'># não lidos</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{e } false {existe } other{}} <a href='{basePath}/new'>1 novo</a> tópico} other { {BOTH, select, true{e } false {existem } other{}} <a href='{basePath}/new'># novos</a> tópicos} } restantes, ou {CATEGORY, select, true {pesquise outros tópicos em {catLink}} false {{latestLink}} other {}}"
       browse_all_categories: Pesquisar em todas as categorias
       view_latest_topics: ver os tópicos mais recentes
       suggest_create_topic: "Porque não começar um tópico?"
@@ -1513,14 +1501,9 @@ pt:
         action: "juntar publicações selecionadas"
         error: "Ocorreu um erro ao juntar os tópicos selecionados."
       change_owner:
-        title: "Mudar Dono das Publicações"
         action: "mudar titularidade"
         error: "Ocorreu um erro na mudança de dono das publicações."
-        label: "Novo Dono das Publicações"
         placeholder: "nome de utilizador do novo proprietário"
-        instructions:
-          one: "Por favor seleccione o novo dono da publicação de <b>{{old_user}}</b>."
-          other: "Por favor selecione o novo dono das {{count}} publicações de <b>{{old_user}}</b>."
       change_timestamp:
         action: "alterar selo temporal"
         invalid_timestamp: "O selo temporal não pode ser no futuro."
@@ -1573,7 +1556,6 @@ pt:
         upload: "Pedimos desculpa, ocorreu um erro ao carregar esse ficheiro. Por favor, tente novamente."
         file_too_large: "Lamentamos mas esse ficheiro é demasiado grande (o tamanho máximo é de {{max_size_kb}}kb). Porque não carregar o seu ficheiro grande para um serviço de partilha na nuvem e depois partilhar o link?"
         too_many_uploads: "Pedimos desculpa, só pode carregar um ficheiro de cada vez."
-        too_many_dragged_and_dropped_files: "Lamentamos mas só pode carregar 10 ficheiros de cada vez."
         image_upload_not_allowed_for_new_user: "Pedimos desculpa, os novos utilizadores não podem carregar imagens."
         attachment_upload_not_allowed_for_new_user: "Pedimos desculpa, os novos utilizadores não podem carregar anexos."
         attachment_download_requires_login: "Desculpe, precisa de iniciar a sessão para transferir anexos."
@@ -1952,7 +1934,6 @@ pt:
         this_week: "Semana"
         today: "Hoje"
         other_periods: "ver topo"
-    browser_update: 'Infelizmente, <a href="http://www.discourse.org/faq/#browser">o seu navegador é demasiado antigo para funcionar com este sítio</a>. Por favor <a href="http://browsehappy.com">atualize o seu navegador</a>.'
     permission_types:
       full: "Criar / Responder / Ver"
       create_post: "Responder / Ver"
@@ -2113,8 +2094,6 @@ pt:
           bookmarks: "Não há mais tópicos marcados."
           search: "Não há mais resultados da pesquisa."
     invite:
-      custom_message: "Torne o seu convite mais pessoal escrevendo uma"
-      custom_message_link: "mensagem personalizada"
       custom_message_placeholder: "Insira a sua mensagem personalizada"
       custom_message_template_forum: "Olá, devia juntar-se a este fórum!"
       custom_message_template_topic: "Olá, achei que poderia gostar deste tópico!"
@@ -2386,7 +2365,6 @@ pt:
         new_style: "Novo Estilo"
         import: "Importar"
         delete: "Eliminar"
-        about: "Modificar folha de estilo CSS e cabeçalhos HTML no sítio. Adicionar personalização para iniciar."
         color: "Cor"
         opacity: "Opacidade"
         copy: "Copiar"
@@ -2519,7 +2497,6 @@ pt:
         staff_actions:
           title: "Ações do Pessoal"
           clear_filters: "Mostrar Tudo"
-          staff_user: "Utilizador do Pessoal"
           target_user: "Utilizador Destino"
           subject: "Assunto"
           when: "Quando"

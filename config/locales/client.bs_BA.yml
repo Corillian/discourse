@@ -184,6 +184,7 @@ bs_BA:
         eu_central_1: "EU (Frankfurt)"
         eu_west_1: "EU (Irska)"
         eu_west_2: "EU (London)"
+        eu_west_3: "EU (Pariz)"
         sa_east_1: "Južna Amerika (Sao Paulo)"
         us_east_1: "SAD Istok (Sjeverna Virdžinija)"
         us_east_2: "SAD Istok (Ohio)"
@@ -215,6 +216,7 @@ bs_BA:
     privacy_policy: "Izjava o privatnosti"
     privacy: "Privatnost"
     tos: "Uslovi korištenja"
+    rules: "Pravila"
     mobile_view: "Mobilni zaslon"
     desktop_view: "Standardni zaslon"
     you: "Vi"
@@ -263,12 +265,8 @@ bs_BA:
         bookmark: "Klikni kako bi dodao zabilješku na prvu objavu u temi"
         unbookmark: "Klikni da ukloniš sve zabilješke iz ove teme"
     bookmarks:
-      not_logged_in: "nažalost, morate biti ulogovani kako bi ste dodali oznaku zabilješke"
       created: "zabilježili ste ovu stranicu"
-      not_bookmarked: "pročitali ste objavu; kliknite kako bi ste je zabilježili"
-      last_read: "ovo je zadnja objava koju ste pročitali; kliknite kako bi ste je zabilježili"
       remove: "Ukloni zabilješku"
-      confirm_clear: "Jeste li sigurni da želite očistiti sve zabilješke iz ove kategorije?"
     topic_count_latest:
       one: "Pogledaj {{count}} novu ili ažuriranu temu"
       few: "Pogledaj {{count}} nove ili ažurirane teme"
@@ -288,7 +286,6 @@ bs_BA:
     saved: "Spremljeno!"
     upload: "Učitaj"
     uploading: "Učitava se..."
-    uploading_filename: "Učitavam {{filename}}..."
     uploaded: "Učitano!"
     pasting: "Lijepim..."
     enable: "Omogući"
@@ -435,7 +432,6 @@ bs_BA:
         all: "Sve grupe"
         empty: "Vidljive grupe još ne postoje."
         filter: "Filtriraj prema tipu grupe"
-        owner_groups: "Grupe koje sam ja vlasnik"
         close_groups: "Zatvorene grupe"
         automatic_groups: "Automatske grupe"
         automatic: "Automatsko"
@@ -555,7 +551,7 @@ bs_BA:
       topics_entered: "pogledano tema"
       post_count: "# postova"
       confirm_delete_other_accounts: "Jeste sigurni da želite da izbrišete ove račune?"
-      powered_by: "powered by <a href='https://ipinfo.io'>ipinfo.io</a>"
+      copied: "koprian"
     user_fields:
       none: "(odaberi opciju)"
     user:
@@ -639,7 +635,6 @@ bs_BA:
       watched_first_post_tags: "Prva objava"
       watched_first_post_tags_instructions: "Bit će te obavješteni o prvoj objavi u svakoj novoj temi sa ovim tagovima."
       muted_categories: "Utišan"
-      muted_categories_instructions: "Nećete biti obavješteni o bilo čemu što se odnosi na nove teme u ovim kategorijama, i neće biti prikazani u listi Novije."
       no_category_access: "Kao moderator imate ograničen pristup kategoriji, sačuvati je isključeno."
       delete_account: "Izbriši moj račun"
       delete_account_confirm: "Da li ste sigurni da želite zauvijek izbrisati vas račun? Ova radnja je kasnije nepovratna!"
@@ -699,15 +694,10 @@ bs_BA:
       second_factor:
         title: "Two Factor Authentication"
         disable: "Isključi two factor authentication"
-        enable: "Uključi <a href>two factor authentication</a> za pojačanu sigurnost korisničkih računa"
         confirm_password_description: "Molimo vas da potvrdite šifru kako bi nastavili"
         label: "Šifra"
-        enable_description: |
-          Skeniraj ovaj QR kod u podržanoj aplikaciji (<a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank">Android</a> – <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank">iOS</a> – <a href="https://www.microsoft.com/en-us/store/p/authenticator/9wzdncrfj3rj" target='_blank'>Windows Phone</a>) a potom unesite kod za ovjeru.
         disable_description: "Molimo da uneste kod za ovjeru autentičnosti sa vaše aplikacije"
         show_key_description: "Unesi manuelno"
-        extended_description: |
-          Two factor authentication (dvofaktorska ovjera autentičnosti) dodaje ekstra nivo sigurnosti vašem korisničkom računu tako što zahtjeva i jednokratni "token" (bon) pored vaše šifre. Bonovi se mogu generisati na  <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target='_blank'>Android</a>, <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a>, i <a href="https://www.microsoft.com/en-us/store/p/authenticator/9wzdncrfj3rj" target='_blank'>Windows Phone</a> uređajima.
         oauth_enabled_warning: "Imajte na umu da će ulogovanje korištenjem socijalnih mreža biti isključeno u momentu kad uključite two factor authentication (dvofaktorsku ovjeru autentičnosti) na vašem korisničkom računu."
       change_about:
         title: "Promjeni O meni"
@@ -726,7 +716,6 @@ bs_BA:
         title: "Promjeni sliku"
         gravatar: "<a href='//gravatar.com/emails' target='_blank'>Gravatar</a>, baziran na"
         gravatar_title: "Promjenite vaš avatar na Gravatar web stranici."
-        gravatar_failed: "Neuspješno učitavanje Gravatar-a. Postoji li uopšte Gravatar povezan na vašu email adresu?"
         refresh_gravatar_title: "Osvježi Gravatar"
         letter_based: "Avatar dodjeljen od sistema"
         uploaded_avatar: "Vaša slika"
@@ -795,7 +784,6 @@ bs_BA:
         always: "uvijek"
         never: "nikad"
       email_digests:
-        title: "Kada forum ne posjećujem, pošaljite mi e-mail sa Sažetkom popularnih tema i odgovora"
         every_30_minutes: "svakih 30. min"
         every_hour: "po satu"
         daily: "dnevno"
@@ -976,9 +964,6 @@ bs_BA:
       enabled: "Ovaj sajt je u read only mod-u: Dozvoljeno je čitati. Možete nastaviti sa pregledom, ali odgovaranje na objave, lajkanje i ostale akcije su isključene za sada."
       login_disabled: "Ulogovanje je isključeno jer je sajt u read only načinu rada."
       logout_disabled: "Odjava je isključena sve dok je sajt u read only tj. samo čitanje je dozvoljeno načinu rada."
-    too_few_topics_and_posts_notice: "Odpočnimo <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>sa diskusijom!</a> Trenutno postoje <strong>%{currentTopics} / %{requiredTopics}</strong> teme i <strong>%{currentPosts} / %{requiredPosts}</strong> objave. Novi posjetioci trebaju par novih diskusija za čitanje i shodne reakcije."
-    too_few_topics_notice: "Odpočnimo <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>sa diskusijom!</a> Trenutno postoje <strong>%{currentTopics} / %{requiredTopics}</strong> teme. Novi posjetioci trebaju par novih diskusija za čitanje i shodne reakcije."
-    too_few_posts_notice: "Odpočnimo <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>sa diskusijom!</a> Trenutno postoje <strong>%{currentPosts} / %{requiredPosts}</strong> objave. Novi posjetioci trebaju par novih diskusija za čitanje i shodne reakcije."
     logs_error_rate_notice:
       reached: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> dosegnut postavljeni limit sajta od %{siteSettingRate}."
       exceeded: "<b>%{relativeAge}</b> – <a href='%{url}' target='_blank'>%{rate}</a> prelazi postavljeni limit sajta od %{siteSettingRate}."
@@ -1052,7 +1037,7 @@ bs_BA:
       complete_email_found: "Našli smo nalog koji odgovara email-u <b>%{email}</b>, uskoro ćete primiti email koji će vam objasniti kako da resetujete vašu šifru."
       complete_username_not_found: "Nema naloga sa korisničkim imenom <b>%{username}</b>"
       complete_email_not_found: "Nema naloga sa email-om <b>%{email}</b>"
-      help: "Email još ne stiže? Prvo provjerite vaš spam folder u email pregledniku.<p>Niste sigurni koji email ste koristili? Unesite email adresu i mi ćemo vas obavjestiti da li ista postoji kod nas.</p><p>Ukoliko nemate više pristup vašoj email kojom ste registrovali korisnički račun, molimo vas da se obratite <a href='/about'>našim administratorima za pomoć.</a></p>"
+      help: "Email još ne stiže? Prvo provjerite vaš spam folder u email pregledniku.<p>Niste sigurni koji email ste koristili? Unesite email adresu i mi ćemo vas obavjestiti da li ista postoji kod nas.</p><p>Ukoliko nemate više pristup vašoj email kojom ste registrovali korisnički račun, molimo vas da se obratite <a href='%{basePath}/about'>našim administratorima za pomoć.</a></p>"
       button_ok: "OK"
       button_help: "Pomoć"
     email_login:
@@ -1257,7 +1242,6 @@ bs_BA:
       link_description: "ubaci opis linka"
       link_dialog_title: "Unesi Link"
       link_optional_text: "naslov neobavezan"
-      link_url_placeholder: "http://example.com"
       quote_title: "Blok Citat"
       quote_text: "Citat u bloku"
       code_title: "Formatiran Tekst"
@@ -1564,7 +1548,7 @@ bs_BA:
       toggle_information: "uključi detalje teme"
       read_more_in_category: "Želite da pročitate još? Pogledajte druge teme u kategoriji {{catLink}} ili {{latestLink}}."
       read_more: "Želite da pročitate još? {{catLink}} ili {{latestLink}}."
-      read_more_MF: "There { UNREAD, plural, =0 {} one { is <a href='/unread'>1 unread</a> } other { are <a href='/unread'># unread</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{and } false {is } other{}} <a href='/new'>1 new</a> topic} other { {BOTH, select, true{and } false {are } other{}} <a href='/new'># new</a> topics} } remaining, or {CATEGORY, select, true {browse other topics in {catLink}} false {{latestLink}} other {}}"
+      read_more_MF: "There { UNREAD, plural, =0 {} one { is <a href='{basePath}/unread'>1 unread</a> } other { are <a href='{basePath}/unread'># unread</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{and } false {is } other{}} <a href='{basePath}/new'>1 new</a> topic} other { {BOTH, select, true{and } false {are } other{}} <a href='{basePath}/new'># new</a> topics} } remaining, or {CATEGORY, select, true {browse other topics in {catLink}} false {{latestLink}} other {}}"
       browse_all_categories: Pogledajte sve Kategorije
       view_latest_topics: pogledaj posljednje teme
       suggest_create_topic: "Zašto ne kreirati novu temu?"
@@ -1653,7 +1637,7 @@ bs_BA:
           "2_8": 'Vidjeti će te broj novih odgovora jer pratite ovu kategoriju.'
           "2_4": 'Vidjeti će te broj novih odgovora jer ste objavili odgovor na ovu temu.'
           "2_2": 'Vidjeti će te broj novih odgovora jer pratite ovu temu.'
-          "2": 'Vidjeti će te broj novih odgovora jer ste <a href="/u/{{username}}/preferences">čitali ovu temu</a>.'
+          "2": 'Vidjeti će te broj novih odgovora jer ste <a href="{{basePath}}/u/{{username}}/preferences">čitali ovu temu</a>.'
           "1_2": 'Dobiti ćete notifikaciju kada neko spomene tvoje @name ili odgovori na tvoj post.'
           "1": 'Dobiti ćete notifikaciju kada neko spomene tvoje @name ili odgovori na tvoj post.'
           "0_7": 'Ignorišete sve notifikacije u ovoj kategoriji.'
@@ -1806,16 +1790,9 @@ bs_BA:
         action: "spoji izabrane postove"
         error: "Desila se greška prilikom spajanja označenih objava."
       change_owner:
-        title: "Change Owner of Posts"
         action: "change ownership"
         error: "There was an error changing the ownership of the posts."
-        label: "New Owner of Posts"
         placeholder: "username of new owner"
-        instructions:
-          one: "Molimo da odaberete novog vlasnika objave od starog korisnika <b>{{old_user}}</b>."
-          few: "Molimo da odaberete novog vlasnika za {{count}} objave od starog korisnika <b>{{old_user}}</b>."
-          other: "Molimo da odaberete novog vlasnika za {{count}} objava od starog korisnika <b>{{old_user}}</b>."
-        instructions_warn: "Imajte na umu da bilo koje obavijesti o ovoj objavi neće biti proslijeđene novom korisniku retroaktivno (naknadno). "
       change_timestamp:
         title: "Promijeni vremensku zabilješku..."
         action: "izmijeni vrijeme"
@@ -1893,7 +1870,6 @@ bs_BA:
         upload: "Sorry, there was an error uploading that file. Please try again."
         file_too_large: "Nažalost, taj fajl je prevelik (maksimalna veličina je {{max_size_kb}} kilobajta). Alternativno možete vaš preveliki fajl spremiti na neki od cloud sharing servisa, a potom ovdje objaviti link do tog fajla?"
         too_many_uploads: "Sorry, you can only upload one file at a time."
-        too_many_dragged_and_dropped_files: "Žao nam je, možete dizati samo 10 slika odjednom."
         upload_not_authorized: "Nažalost, fajl koji pokušavate da učitate nije dozvoljen za učitavanje (dozvoljene ekstenzije su: {{authorized_extensions}})."
         image_upload_not_allowed_for_new_user: "Sorry, new users can not upload images."
         attachment_upload_not_allowed_for_new_user: "Sorry, new users can not upload attachments."
@@ -2152,6 +2128,7 @@ bs_BA:
         title_in: "Kategorija - {{categoryName}}"
         help: "sve teme grupisane po kategoriji"
       unread:
+        title: "Nepročitanih"
         help: "teme koje trenutno pratite i motrite sa nepročitanim postovima"
       new:
         lower_title_with_count:
@@ -2185,7 +2162,6 @@ bs_BA:
           title: "Popularne Dnevno"
         all_time: "Sve vrijeme"
         today: "Danas"
-    browser_update: 'Nažalost, vaš internet browser je prestar za ovaj korišćenje ovog foruma</a>. Idite na i <a href="http://browsehappy.com">obnovite vaš browser</a>.'
     permission_types:
       full: "Kreiraj / Odgovori / Vidi"
       create_post: "Odgovori / Vidi"
@@ -2367,7 +2343,6 @@ bs_BA:
         new: "New"
         new_style: "New Style"
         delete: "Delete"
-        about: "Modify CSS stylesheets and HTML headers on the site. Add a customization to start."
         color: "Color"
         opacity: "Opacity"
         copy: "Copy"
@@ -2487,7 +2462,6 @@ bs_BA:
         staff_actions:
           title: "Staff Actions"
           clear_filters: "Show Everything"
-          staff_user: "Staff User"
           target_user: "Target User"
           subject: "Subject"
           when: "When"

@@ -287,12 +287,8 @@ sk:
         bookmark: "Kliknutím vložíte záložku na prvý príspevok tejto témy"
         unbookmark: "Kliknutím odstánite všetky záložky v tejto téme"
     bookmarks:
-      not_logged_in: "ľutujeme, pre pridanie záložky sa musíte prihlásiť"
       created: "záložka bola pridaná"
-      not_bookmarked: "príspevok je prečítaný, kliknite pre pridanie záložky"
-      last_read: "toto je posledný prečítaný príspevok, kliknite pre pridanie záložky"
       remove: "Odstrániť záložku"
-      confirm_clear: "Ste si istý že chcete odstrániť všetky záložky z tejto témy?"
     topic_count_latest:
       one: "Pozri si {{count}} novú alebo upravenú tému."
       few: "Pozri si {{count}} nových alebo upravených tém."
@@ -315,7 +311,6 @@ sk:
     saved: "Zmeny uložené."
     upload: "Upload"
     uploading: "Upload prebieha..."
-    uploading_filename: "Nahrávám {{filename}}..."
     uploaded: "Upload úspešne dokončený."
     pasting: "Vkladám..."
     enable: "Zapnúť"
@@ -465,7 +460,6 @@ sk:
         all: "Všetky skupiny"
         empty: "Nenašli sa viditeľné skupiny."
         filter: "Filtrovať podľa typu skupiny"
-        owner_groups: "Skupiny, ktorých som vlastníkom"
         close_groups: "Uzavreté skupina"
         automatic_groups: "Automatické skupiny"
         automatic: "Automaticky"
@@ -574,7 +568,6 @@ sk:
         few: "%{count} nové témy za posledných %{unit}."
         many: "%{count} nových tém za posledných %{unit}."
         other: "%{count} nových tém za posledných %{unit}."
-      more: "(%{count} viac) ..."
     ip_lookup:
       title: Vyhľadávanie podľa IP adresy
       hostname: Hostname
@@ -590,7 +583,6 @@ sk:
       topics_entered: "založených tém"
       post_count: "# príspevkov"
       confirm_delete_other_accounts: "Ste si istý že chcete zmazať tieto účty?"
-      powered_by: "Beží cez <a href='https://ipinfo.io'>ipinfo.io</a>"
     user_fields:
       none: "(vyberte možnosť)"
     user:
@@ -674,7 +666,6 @@ sk:
       watched_first_post_tags: "Sledovaný prvý príspevok"
       watched_first_post_tags_instructions: "Budete upozornený na prvý príspevok v každej novej téme s týmito štítkami."
       muted_categories: "Ignorované"
-      muted_categories_instructions: "Nebudete informovaný o udalostiach v nových témach týchto kategórií. Tieto témy sa zároveň nebudú zobrazovať v zozname posledných udalostí."
       no_category_access: "Ako moderátor máte obmedzený prístup ku kategóriám. Ukladanie nie je povolené."
       delete_account: "Vymazať môj účet"
       delete_account_confirm: "Ste si istý, že chcete permanentne vymazať váš účet? Táto akcia je nenávratná."
@@ -743,11 +734,8 @@ sk:
       second_factor:
         title: "Dvojfaktorová autentifikácia"
         disable: "Vypnúť dvojfaktorovú autentifikáciu"
-        enable: "Zapnúť <a href>dvojfaktorovú autentifikáciu</a> pre vylepšené zabezpečenie účtu"
         confirm_password_description: "Pre pokračovanie potvrďte svoje heslo prosím"
         label: "Kód"
-        enable_description: |
-          Oskentujte tento QR kód v podporovanej aplikácii (<a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank">Android</a> – <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank">iOS</a> – <a href="https://www.microsoft.com/en-us/store/p/authenticator/9wzdncrfj3rj" target='_blank'>Windows Phone</a>) a zadajte váš overovací kód.
         disable_description: "Prosím zadajte autentifikačný kód z vašej aplikácie"
         show_key_description: "Vložiť ručne"
       change_about:
@@ -836,7 +824,6 @@ sk:
         always: "vždy"
         never: "nikdy"
       email_digests:
-        title: "Keď nenavštevujem toto fórum, chcem dostať zhrnutie o populárnych témach a odpovediach emailom"
         every_30_minutes: "každých 30 mintút"
         every_hour: "každú hodinu"
         daily: "denne"
@@ -1008,9 +995,6 @@ sk:
       enabled: "Stránky sú v móde iba na čítanie. Prosím pokračujte v prezeraní, ale iné akcie, ako odpovedanie, dávanie páči sa mi alebo niektové ďalšie sú teraz vypnuté."
       login_disabled: "Keď je zapnutý mód iba na čítanie, prihlásenie nie je možné."
       logout_disabled: "Odhlásenie nie je možné, kým je stránka v móde iba na čítanie."
-    too_few_topics_and_posts_notice: "<a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>Začnime diskusiu!</a> Je tu <strong>%{currentTopics} / %{requiredTopics}</strong> tém a <strong>%{currentPosts} / %{requiredPosts}</strong> príspevkov. Noví návštevníci potrebujú mať témy, ktoré môžu čítať a na ktoré budú reagovať."
-    too_few_topics_notice: "<a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>Začnime diskusiu!</a> Je tu <strong>%{currentTopics} / %{requiredTopics}</strong> tém. Noví návštevníci potrebujú mať témy, ktoré môžu čítať a na ktoré budú reagovať."
-    too_few_posts_notice: "<a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>Začnime diskusiu!</a> Je tu <strong>%{currentPosts} / %{requiredPosts}</strong> príspevkov. Noví návštevníci potrebujú mať témy, ktoré môžu čítať a na ktoré budú reagovať."
     learn_more: "zistiť viac..."
     all_time: 'celkovo'
     all_time_desc: 'celkovo vytvorených tém'
@@ -1205,7 +1189,6 @@ sk:
       link_description: "tu zadaj popis odkazu"
       link_dialog_title: "Vložte hyperlink"
       link_optional_text: "nepovinný názov"
-      link_url_placeholder: "http://example.com"
       quote_title: "Úvodzovky"
       quote_text: "Úvodzovky"
       code_title: "Preformátovaný text"
@@ -1428,7 +1411,7 @@ sk:
       toggle_information: "zmeniť detaily témy"
       read_more_in_category: "Chcete si prečítať viac? Prezrite si témy v {{catLink}} alebo v {{latestLink}}."
       read_more: "Chcete si prečítať viac?  {{catLink}} alebo v {{latestLink}}."
-      read_more_MF: "Máte { UNREAD, plural, =0 {} one { <a href='/unread'>1 neprečítanú</a> } other { <a href='/unread'># neprečítané</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{a} false { } other{}} <a href='/new'>1 novú</a> tému} other { {BOTH, select, true{a } false {} other{}} <a href='/new'># nových</a> tém} } na prečítanie, prípadne {CATEGORY, select, true {si pozrite iné témy v  {catLink}} false {{latestLink}} other {}}"
+      read_more_MF: "Máte { UNREAD, plural, =0 {} one { <a href='{basePath}/unread'>1 neprečítanú</a> } other { <a href='{basePath}/unread'># neprečítané</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{a} false { } other{}} <a href='{basePath}/new'>1 novú</a> tému} other { {BOTH, select, true{a } false {} other{}} <a href='{basePath}/new'># nových</a> tém} } na prečítanie, prípadne {CATEGORY, select, true {si pozrite iné témy v  {catLink}} false {{latestLink}} other {}}"
       browse_all_categories: Prezrieť všetky kategórie
       view_latest_topics: zobraziť najnošie témy
       suggest_create_topic: "Čo tak vytvoriť novú tému?"
@@ -1631,16 +1614,9 @@ sk:
         title: "Spojiť označené príspevky"
         action: "spojiť označené príspevky"
       change_owner:
-        title: "Zmeň vlástníka príspevkov"
         action: "zmeň vlastníka"
         error: "Nastala chyba pri zmene vlastníka príspevkov."
-        label: "Príspevky nového vlastníka"
         placeholder: "používateľske meno nového vlastnika"
-        instructions:
-          one: "Prosím vyberte nového vlastníka  príspevku vytvoreného <b>{{old_user}}</b>."
-          few: "Prosím vyberte nového vlastníka {{count}}  príspevkov vytvorených <b>{{old_user}}</b>."
-          many: "Prosím vyberte nového vlastníka {{count}}  príspevkov vytvorených <b>{{old_user}}</b>."
-          other: "Prosím vyberte nového vlastníka {{count}}  príspevkov vytvorených <b>{{old_user}}</b>."
       change_timestamp:
         action: "nastavte časovú značku"
         invalid_timestamp: "Časová značka nemôže byť v budúcnosti. "
@@ -1711,7 +1687,6 @@ sk:
         upload: "Ľutujeme, pri nahrávaní súboru nastala chyba. Prosím, skúste znovu."
         file_too_large: "Ľutujeme, daný súbor je príliš veľký (maximálna veľkosť je {{max_size_kb}}kB). Čo takto nahrať ten súbor na zdielané cloudové úložisko a nazdielať odkaz?"
         too_many_uploads: "Ľutujeme, ale naraz je možné nahrať iba jeden súbor."
-        too_many_dragged_and_dropped_files: "Ľutujeme, ale naraz je možné nahrať iba 10 súborov."
         image_upload_not_allowed_for_new_user: "Ľutujeme, noví použivatelia nemôžu nahrávať obrázky."
         attachment_upload_not_allowed_for_new_user: "Ľutujeme, noví používatelia nemôžu nahrávať prílohy."
         attachment_download_requires_login: "Ľutujeme, pre stiahnutie príloh musíte byť prihlásený."
@@ -2116,7 +2091,6 @@ sk:
         this_week: "Týždeň"
         today: "Dnes"
         other_periods: "pozri hore"
-    browser_update: 'Ľutujeme, <a href="http://www.discourse.org/faq/#browser">Váš prehliadač je príliš starý na prácu na tejto stránke</a>. Prosím <a href="http://browsehappy.com">aktualizujte Váš prehliedač</a>.'
     permission_types:
       full: "Vytvor / Odpovedz / Zobraz"
       create_post: "Odpovedz / Zobraz"
@@ -2259,7 +2233,6 @@ sk:
           bookmarks: "Žiadne ďalšie zazáložkované témy."
           search: "Žiadne ďalšie výsledky vyhľadávania."
     invite:
-      custom_message_link: "vlastná správa"
       custom_message_placeholder: "Zadajte Vašu vlastnú správu"
   admin_js:
     type_to_filter: "zadajte, čo chcete filtrovať ..."
@@ -2476,7 +2449,6 @@ sk:
         new_style: "Nový štýl"
         import: "Import"
         delete: "Odstrániť"
-        about: "Upraviť CSS štýly a HTML hlavičky na stránke. Začnite pridaním úpravy."
         color: "Farba"
         opacity: "Nepriesvitnosť"
         copy: "Kopírovať"
@@ -2601,7 +2573,6 @@ sk:
         staff_actions:
           title: "Akcie personálu"
           clear_filters: "Ukázať všetko"
-          staff_user: "Člen redakcie"
           target_user: "Cieľový používateľ"
           subject: "Predmet"
           when: "Kedy"

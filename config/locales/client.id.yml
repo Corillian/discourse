@@ -151,7 +151,7 @@ id:
     generic_error: "Maaf, terjadi kesalahan."
     generic_error_with_reason: "Terjadi kesalahan: %{error}"
     sign_up: "Daftar"
-    log_in: "Log In"
+    log_in: "Masuk"
     age: "Umur"
     joined: "Bergabung"
     admin_title: "Admin"
@@ -210,12 +210,8 @@ id:
         bookmark: "Klik untuk membuat penandaan pos pertama di topik ini"
         unbookmark: "Klik untuk menghapus semua penandaan di topik ini"
     bookmarks:
-      not_logged_in: "Maaf, anda harus masuk untuk menandai post"
       created: "Anda telah menandai post ini"
-      not_bookmarked: "Anda telah membaca post ini; klik untuk menandainya"
-      last_read: "Ini adalah post terakhir yang anda baca; klik untuk menandainya"
       remove: "Hilangkan penandaan"
-      confirm_clear: "Apakah anda yakin ingin membersihkan semua penandaan dari topik ini?"
     preview: "pratinjau"
     cancel: "batal"
     save: "Simpan Perubahan"
@@ -223,7 +219,6 @@ id:
     saved: "Tersimpan!"
     upload: "Unggah"
     uploading: "Mengunggah..."
-    uploading_filename: "Sedang Mengunggah {{filename}}..."
     uploaded: "Sudah Diunggah!"
     pasting: "Menempelkan..."
     enable: "Aktifkan"
@@ -486,7 +481,6 @@ id:
       watched_categories: "Dilihat"
       tracked_categories: "Dilacak"
       muted_categories: "Diredam"
-      muted_categories_instructions: "Anda tidak akan diberitahu apapun tentang topik baru di kategori ini, dan mereka tidak akan muncul diterbarunya. "
       delete_account: "Hapus Akun Saya"
       delete_account_confirm: "Apakah Anda yakin untuk menghapus akun ini secara permanen? Perintah ini tidak dapat dibatalkan!"
       deleted_yourself: "Akun Anda telah sukses dihapus."
@@ -564,7 +558,7 @@ id:
         instructions: "Gambar latar belakang akan ditengahkan dan mempunyai lebar standar 590px"
       email:
         title: "Surel"
-        instructions: "Jangan pernah diperlihatkan ke khalayak umum"
+        instructions: "Tidak akan pernah diperlihatkan ke khalayak umum"
         ok: "Kami akan mengirimkan surel kepada anda untuk konfirmasi"
         invalid: "Silahkan masukkan alamat email yang valid"
         authenticated: "Email anda sudah dikonfirmasi oleh {{provider}}"
@@ -901,7 +895,6 @@ id:
         topic_name: "Nama Topik Baru"
         error: "Ada kesalahan dalam memindahkan posting sebagai topik baru"
       change_owner:
-        label: "Pemilik Posting Yang Baru"
         placeholder: "username pemilik yang baru"
     post:
       errors:

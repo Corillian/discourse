@@ -11,7 +11,9 @@ const CUSTOM_TYPES = [
   "value_list",
   "category",
   "uploaded_image_list",
-  "compact_list"
+  "compact_list",
+  "secret_list",
+  "upload"
 ];
 
 export default Ember.Mixin.create({

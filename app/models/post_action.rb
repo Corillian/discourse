@@ -143,7 +143,7 @@ class PostAction < ActiveRecord::Base
     result = unscoped.where(post_action_type_id: post_action_type)
     result = result.where('post_actions.created_at >= ?', opts[:start_date] || (opts[:since_days_ago] || 30).days.ago)
     result = result.where('post_actions.created_at <= ?', opts[:end_date]) if opts[:end_date]
-    result = result.joins(post: :topic).merge(Topic.in_category_and_categories(opts[:category_id])) if opts[:category_id]
+    result = result.joins(post: :topic).merge(Topic.in_category_and_subcategories(opts[:category_id])) if opts[:category_id]
     result.group('date(post_actions.created_at)')
       .order('date(post_actions.created_at)')
       .count
@@ -164,6 +164,9 @@ class PostAction < ActiveRecord::Base
       trigger_spam = true if action.post_action_type_id == PostActionType.types[:spam]
     end
 
+    # Update the flags_agreed user stat
+    UserStat.where(user_id: actions.map(&:user_id)).update_all("flags_agreed = flags_agreed + 1")
+
     DiscourseEvent.trigger(:confirmed_spam_post, post) if trigger_spam
 
     if actions.first.present?
@@ -183,8 +186,7 @@ class PostAction < ActiveRecord::Base
         PostActionType.notify_flag_type_ids
       end
 
-    actions = PostAction.where(post_id: post.id)
-      .where(post_action_type_id: action_type_ids)
+    actions = PostAction.active.where(post_id: post.id).where(post_action_type_id: action_type_ids)
 
     actions.each do |action|
       action.disagreed_at = Time.zone.now
@@ -193,6 +195,9 @@ class PostAction < ActiveRecord::Base
       action.save
       action.add_moderator_post_if_needed(moderator, :disagreed)
     end
+
+    # Update the flags_disagreed user stat
+    UserStat.where(user_id: actions.map(&:user_id)).update_all("flags_disagreed = flags_disagreed + 1")
 
     # reset all cached counters
     cached = {}
@@ -583,13 +588,19 @@ class PostAction < ActiveRecord::Base
 
       hide_post!(post, post_action_type, Post.hidden_reasons[:flagged_by_tl3_user])
 
-    elsif PostActionType.auto_action_flag_types.include?(post_action_type) &&
-          SiteSetting.flags_required_to_hide_post > 0
+    elsif PostActionType.auto_action_flag_types.include?(post_action_type)
 
-      _old_flags, new_flags = PostAction.flag_counts_for(post.id)
+      if acting_user.has_trust_level?(TrustLevel[4]) &&
+         post.user&.trust_level != TrustLevel[4]
 
-      if new_flags >= SiteSetting.flags_required_to_hide_post
-        hide_post!(post, post_action_type, guess_hide_reason(post))
+        hide_post!(post, post_action_type, Post.hidden_reasons[:flagged_by_tl4_user])
+      elsif SiteSetting.flags_required_to_hide_post > 0
+
+        _old_flags, new_flags = PostAction.flag_counts_for(post.id)
+
+        if new_flags >= SiteSetting.flags_required_to_hide_post
+          hide_post!(post, post_action_type, guess_hide_reason(post))
+        end
       end
     end
   end
@@ -615,7 +626,11 @@ class PostAction < ActiveRecord::Base
       options = {
         url: post.url,
         edit_delay: SiteSetting.cooldown_minutes_after_hiding_posts,
-        flag_reason: I18n.t("flag_reasons.#{post_action_type}", locale: SiteSetting.default_locale),
+        flag_reason: I18n.t(
+          "flag_reasons.#{post_action_type}",
+          locale: SiteSetting.default_locale,
+          base_path: Discourse.base_path
+        )
       }
 
       Jobs.enqueue_in(5.seconds, :send_system_message,

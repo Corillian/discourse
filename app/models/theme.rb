@@ -109,6 +109,7 @@ class Theme < ActiveRecord::Base
     Site.clear_anon_cache!
     clear_cache!
     ApplicationSerializer.expire_cache_fragment!("user_themes")
+    ColorScheme.hex_cache.clear
   end
 
   def self.clear_default!
@@ -402,6 +403,7 @@ end
 #  hidden           :boolean          default(FALSE), not null
 #  color_scheme_id  :integer
 #  remote_theme_id  :integer
+#  component        :boolean          default(FALSE), not null
 #
 # Indexes
 #

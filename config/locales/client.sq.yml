@@ -224,12 +224,8 @@ sq:
         bookmark: "Kliko për të shtuar tek të preferuarat e tua postimin e parë të kësaj teme."
         unbookmark: "Kliko për të hequr të preferuarat nga kjo temë"
     bookmarks:
-      not_logged_in: "ju duhet të jeni të identifikuar për të ruajtur temën."
       created: "ju ruajtët këtë temë tek të preferuarat tuaja"
-      not_bookmarked: "e keni lexuar këtë temë; klikoni për ta ruajtur tek të preferuarat"
-      last_read: "ky është postimi i fundit që keni lexuar; klikoni për t'a shtuar tek të preferuarat"
       remove: "Hiqeni nga të prefereruarat"
-      confirm_clear: "Jeni të sigurtë se doni të fshini të gjitha të preferuarat nga kjo temë?"
     preview: "shiko"
     cancel: "anulo"
     save: "Ruaj ndryshimet"
@@ -237,7 +233,6 @@ sq:
     saved: "U ruajtën!"
     upload: "Ngarko"
     uploading: "Duke ngarkuar..."
-    uploading_filename: "Duke ngarkuar {{filename}}..."
     uploaded: "U ngarkua!"
     enable: "Aktivizo"
     disable: "Çaktivizo"
@@ -475,7 +470,6 @@ sq:
       watched_first_post_tags: "Postimi i parë nën vëzhgim"
       watched_first_post_tags_instructions: "Ju do të njoftoheni vetëm për postimin e parë të çdo teme nën këto etiketa."
       muted_categories: "Pa njoftime"
-      muted_categories_instructions: "Ju nuk do të njoftoheni për asgjë nga temat e reja të këtyre kategorive, dhe këto tema nuk do të afishohen në faqen \"Më të fundit\" për ju. "
       delete_account: "Fshi llogarinë time"
       delete_account_confirm: "Jeni i sigurtë që dëshironi ta mbyllni përgjithmonë llogarinë tuaj? Ky veprim nuk mund të zhbëhet!"
       deleted_yourself: "Llogaria juaj u fshi me sukses."
@@ -610,7 +604,6 @@ sq:
         always: "gjithmonë"
         never: "asnjëherë"
       email_digests:
-        title: "Kur nuk vij shpesh në faqe, më dërgoni një përmbledhje me email të diskutimeve më popullore"
         every_30_minutes: "çdo 30 minuta"
         every_hour: "çdo orë"
         daily: "çdo ditë"
@@ -762,9 +755,6 @@ sq:
       enabled: "Faqja lejon vetëm leximet per momentin. Mund të vazhdoni të shfletoni, por përgjigjet, pëlqimet dhe veprime të tjera janë të çaktivizuara përkohësisht."
       login_disabled: "Nuk mund të hyni në faqe sepse faqja është përkohësisht në formatin vetëm-lexim."
       logout_disabled: "Nuk mund të shkëputeni nga faqja sepse faqja është përkohësisht në formatin vetëm-lexim."
-    too_few_topics_and_posts_notice: "Hajt ta nisim <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>mbarë diskutimin!</a> Keni krijuar <strong>%{currentTopics} / %{requiredTopics}</strong> tema dhe <strong>%{currentPosts} / %{requiredPosts}</strong> postime në faqe. Vizitorët e rinj të faqes kanë nevojë për diskutime në faqe. "
-    too_few_topics_notice: "Hajt ta nisim <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>mbarë diskutimin!</a> Keni krijuar <strong>%{currentTopics} / %{requiredTopics}</strong> tema. Vizitorët e rinj të faqes kanë nevojë për diskutime në faqe. "
-    too_few_posts_notice: "Hajt ta nisim <a href='http://blog.discourse.org/2014/08/building-a-discourse-community/'>mbarë diskutimin!</a> Keni krijuar <strong>%{currentPosts} / %{requiredPosts}</strong> postime në faqe. Vizitorët e rinj të faqes kanë nevojë për diskutime në faqe. "
     logs_error_rate_notice:
       rate:
         one: "1 gabim/%{duration}"
@@ -958,7 +948,6 @@ sq:
       link_description: "shkruaj përshkrimin e lidhjes këtu"
       link_dialog_title: "Vendosni një lidhje"
       link_optional_text: "titull fakultativ"
-      link_url_placeholder: "http://shembull.com"
       quote_title: "Citim"
       quote_text: "Citim"
       code_title: "Tekst i paraformatuar"
@@ -1135,7 +1124,7 @@ sq:
       toggle_information: "më shumë mbi temën"
       read_more_in_category: "Dëshironi të lexoni më shumë? Shfleto temat në {{catLink}} ose {{latestLink}}."
       read_more: "Dëshironi të lexoni më shumë? {{catLink}} ose {{latestLink}}."
-      read_more_MF: "Keni { UNREAD, plural, =0 {} one { <a href='/unread'>1 shkrim të palexuar</a> } other { <a href='/unread'># shkrime të palexuara</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{dhe } false {është } other{}} <a href='/new'>1 shkrim të ri</a>} other { {BOTH, select, true{dhe } false {} other{}} <a href='/new'># shkrime të reja</a>} } akoma, ose {CATEGORY, select, true {shiko temat e tjera në kategorinë {catLink}} false {{latestLink}} other {}}"
+      read_more_MF: "Keni { UNREAD, plural, =0 {} one { <a href='{basePath}/unread'>1 shkrim të palexuar</a> } other { <a href='{basePath}/unread'># shkrime të palexuara</a> } } { NEW, plural, =0 {} one { {BOTH, select, true{dhe } false {është } other{}} <a href='{basePath}/new'>1 shkrim të ri</a>} other { {BOTH, select, true{dhe } false {} other{}} <a href='{basePath}/new'># shkrime të reja</a>} } akoma, ose {CATEGORY, select, true {shiko temat e tjera në kategorinë {catLink}} false {{latestLink}} other {}}"
       browse_all_categories: Shfleto kategoritë
       view_latest_topics: shiko temat më të fundit
       suggest_create_topic: "Pse nuk hapni një temë të re?"
@@ -1169,7 +1158,7 @@ sq:
           "2_8": 'Ju do të shikoni numrin e përgjigjeve të reja sepse jeni duke gjurmuar këtë kategori. '
           "2_4": 'Ju do të shikoni numrin e përgjigjeve të reja sepse ju postuat një përgjigje në këtë temë. '
           "2_2": 'Ju do të shikoni numrin e përgjigjeve të reja sepse jeni duke gjurmuar këtë temë. '
-          "2": 'Ju do të shikoni numrin e përgjigjeve të reja sepse ju <a href="/u/{{username}}/preferences">lexuat këtë temë</a>.'
+          "2": 'Ju do të shikoni numrin e përgjigjeve të reja sepse ju <a href="{{basePath}}/u/{{username}}/preferences">lexuat këtë temë</a>.'
           "1_2": 'Ju do të njoftoheni nëse dikush përmend @emrin tuaj ose nëse dikush ju përgjigjet. '
           "1": 'Ju do të njoftoheni nëse dikush përmend @emrin tuaj ose nëse dikush ju përgjigjet. '
           "0_7": 'Ju nuk do të merrni asnjë njoftim për temat në këtë kategori. '
@@ -1304,10 +1293,8 @@ sq:
         action: "bashkoni postimet e përzgjedhura"
         error: "Ndodhi një gabim ndërsa po bashkoheshin postimet e përzgjedhura."
       change_owner:
-        title: "Ndrysho autorin e postimeve"
         action: "ndrysho zotëruesin"
         error: "Pati një gabim gjatë ndryshimit të autorit të postimeve."
-        label: "Autori i ri i postimeve"
         placeholder: "emri i përdoruesit të autorit"
       change_timestamp:
         action: "ndrysho datën"
@@ -1360,7 +1347,6 @@ sq:
         upload: "Na vjen keq, pati një gabim gjatë ngarkimit të skedarit. Provo përsëri. "
         file_too_large: "Na vjen keq, skedari është shumë i madh (maksimumi i lejuar është {{max_size_kb}}kb). Mund t'a vendosni këtë skedar të madh në një faqe tjetër dhe të vendosni këtu vetëm lidhjen."
         too_many_uploads: "Na vjen keq, por duhet t'i ngarkoni skedarët një nga një."
-        too_many_dragged_and_dropped_files: "Na vjen keq, po ju mund të ngarkoni vetëm 10 skedarë njëkohësisht. "
         image_upload_not_allowed_for_new_user: "Na vjen keq, anëtarët e rinj nuk mund të ngarkojnë skedarë. "
         attachment_upload_not_allowed_for_new_user: "Na vjen keq, anëtarët e rinj nuk mund të ngarkojnë skedarë. "
         attachment_download_requires_login: "Na vjen keq, duhet të identifikoheni për të shkarkuar një dokument. "
@@ -1721,7 +1707,6 @@ sq:
         this_week: "Këtë javë"
         today: "Sot"
         other_periods: "shiko më  populloret"
-    browser_update: 'Fatkeqësisht, <a href="http://www.discourse.org/faq/#browser">shfletuesi juaj është shumë i vjetër për këtë faqe</a>. Ju lutemi, <a href="http://browsehappy.com">azhornoni shfletuesin</a>.'
     permission_types:
       full: "Krijo / Përgjigju / Shiko"
       create_post: "Përgjigju / Shiko"
@@ -1881,8 +1866,6 @@ sq:
           bookmarks: "Nuk ka më tema të preferuara."
           search: "Kërkimi nuk ka më rezultate."
     invite:
-      custom_message: "Personalizojeni ftesën paksa duke shkruar një"
-      custom_message_link: "mesazh të veçantë"
       custom_message_placeholder: "Vendosni mesazhin"
       custom_message_template_forum: "Hej, hajde bashkoju këtij forumi!"
       custom_message_template_topic: "Hej, besoj se do të të pelqejë kjo temë!"
@@ -2059,7 +2042,6 @@ sq:
         new_style: "Veshje e Re"
         import: "Importo"
         delete: "Fshij"
-        about: "Modifiko faqet e stilit CSS dhe HTML në këtë faqe. Shto një personalizim për të filluar. "
         color: "Ngjyra"
         opacity: "Opaciteti"
         copy: "Kopjo"
@@ -2170,7 +2152,6 @@ sq:
         staff_actions:
           title: "Veprime Stafi"
           clear_filters: "Trego gjithshka"
-          staff_user: "Anëtari i stafit"
           target_user: "Anëtari i prekur"
           subject: "Subjekti"
           when: "Kur"

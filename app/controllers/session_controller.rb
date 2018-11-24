@@ -46,7 +46,7 @@ class SessionController < ApplicationController
     payload ||= request.query_string
 
     if SiteSetting.enable_sso_provider
-      sso = SingleSignOn.parse(payload, SiteSetting.sso_secret)
+      sso = SingleSignOn.parse(payload)
 
       if sso.return_sso_url.blank?
         render plain: "return_sso_url is blank, it must be provided", status: 400
@@ -108,6 +108,9 @@ class SessionController < ApplicationController
   def sso_login
     raise Discourse::NotFound.new unless SiteSetting.enable_sso
 
+    params.require(:sso)
+    params.require(:sig)
+
     sso = DiscourseSingleSignOn.parse(request.query_string)
     if !sso.nonce_valid?
       if SiteSetting.verbose_sso_logging
@@ -150,17 +153,28 @@ class SessionController < ApplicationController
           if SiteSetting.verbose_sso_logging
             Rails.logger.warn("Verbose SSO log: User was logged on #{user.username}\n\n#{sso.diagnostics}")
           end
-          log_on_user user
+          if user.id != current_user&.id
+            log_on_user user
+          end
         end
 
         # If it's not a relative URL check the host
         if return_path !~ /^\/[^\/]/
           begin
             uri = URI(return_path)
-            return_path = path("/") unless SiteSetting.sso_allows_all_return_paths || uri.host == Discourse.current_hostname
+            if (uri.hostname == Discourse.current_hostname)
+              return_path = uri.request_uri
+            elsif !SiteSetting.sso_allows_all_return_paths
+              return_path = path("/")
+            end
           rescue
             return_path = path("/")
           end
+        end
+
+        # never redirects back to sso in an sso loop
+        if return_path.start_with?(path("/session/sso"))
+          return_path = path("/")
         end
 
         redirect_to return_path

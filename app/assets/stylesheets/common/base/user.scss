@@ -81,11 +81,6 @@
     .details {
       background: rgba($secondary, 0.8);
 
-      blockquote {
-        background-color: $secondary-low;
-        border-left-color: $secondary-low;
-      }
-
       h1 {
         font-size: $font-up-5;
         font-weight: normal;
@@ -297,7 +292,6 @@
         width: auto;
         text-align: left;
         font-weight: normal;
-        float: auto;
       }
 
       .instructions {
@@ -313,10 +307,10 @@
 
 .user-field {
   .required {
-    text-align: top;
+    vertical-align: top;
     color: $danger;
     font-weight: bold;
-    font-size: $font-up-2;
+    margin-left: 0.25em;
   }
 }
 

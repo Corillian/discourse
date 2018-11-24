@@ -15,7 +15,7 @@
         {{#each group.buttons as |b|}}
           {{#if b.popupMenu}}
             {{toolbar-popup-menu-options
-              onPopupMenuAction=onPopupMenuAction
+              onSelect=onPopupMenuAction
               onExpand=(action b.action b)
               title=b.title
               headerIcon=b.icon
@@ -45,9 +45,7 @@
   </div>
 
   <div class="d-editor-preview-wrapper {{if forcePreview 'force-preview'}}">
-    <div class="d-editor-preview">
-      {{{preview}}}
-    </div>
+    <div class="d-editor-preview">{{{preview}}}</div>
     {{plugin-outlet name="editor-preview" classNames="d-editor-plugin"}}
   </div>
 </div>

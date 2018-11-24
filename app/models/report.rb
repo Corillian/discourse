@@ -188,7 +188,7 @@ class Report
       # given reports can be added by plugins we don’t want dashboard failures
       # on report computation, however we do want to log which report is provoking
       # an error
-      Rails.logger.error("Error while computing report `#{report.type}`: #{e.message}")
+      Rails.logger.error("Error while computing report `#{report.type}`: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
     report
@@ -673,8 +673,43 @@ class Report
       limit: report.limit || 8,
       category_id: report.category_id
     }
-    result = nil
+
     result = IncomingLinksReport.find(:top_traffic_sources, options)
+    report.data = result.data
+  end
+
+  def self.report_top_referrers(report)
+    report.modes = [:table]
+
+    report.labels = [
+      {
+        type: :user,
+        properties: {
+          username: :username,
+          id: :user_id,
+          avatar: :user_avatar_template,
+        },
+        title: I18n.t("reports.top_referrers.labels.user")
+      },
+      {
+        property: :num_clicks,
+        type: :number,
+        title: I18n.t("reports.top_referrers.labels.num_clicks")
+      },
+      {
+        property: :num_topics,
+        type: :number,
+        title: I18n.t("reports.top_referrers.labels.num_topics")
+      }
+    ]
+
+    options = {
+      end_date: report.end_date,
+      start_date: report.start_date,
+      limit: report.limit || 8
+    }
+
+    result = IncomingLinksReport.find(:top_referrers, options)
     report.data = result.data
   end
 
@@ -701,21 +736,10 @@ class Report
 
     report.modes = [:table]
 
-    select_sql = <<~SQL
-      lower(term) term,
-      COUNT(*) AS searches,
-      SUM(CASE
-               WHEN search_result_id IS NOT NULL THEN 1
-               ELSE 0
-           END) AS click_through,
-      COUNT(DISTINCT ip_address) AS unique_searches
-    SQL
-
-    trends = SearchLog.select(select_sql)
-      .where('created_at > ?  AND created_at <= ?', report.start_date, report.end_date)
-      .group('lower(term)')
-      .order('unique_searches DESC, click_through ASC, term ASC')
-      .limit(report.limit || 20).to_a
+    trends = SearchLog.trending_from(report.start_date,
+      end_date: report.end_date,
+      limit: report.limit
+    )
 
     trends.each do |trend|
       ctr =
@@ -1181,6 +1205,150 @@ class Report
     end
   end
 
+  def self.report_user_flagging_ratio(report)
+    report.data = []
+
+    report.modes = [:table]
+
+    report.dates_filtering = false
+
+    report.labels = [
+      {
+        type: :user,
+        properties: {
+          username: :username,
+          id: :user_id,
+          avatar: :avatar_template,
+        },
+        title: I18n.t("reports.user_flagging_ratio.labels.user")
+      },
+      {
+        type: :number,
+        property: :disagreed_flags,
+        title: I18n.t("reports.user_flagging_ratio.labels.disagreed_flags")
+      },
+      {
+        type: :number,
+        property: :agreed_flags,
+        title: I18n.t("reports.user_flagging_ratio.labels.agreed_flags")
+      },
+      {
+        type: :number,
+        property: :ignored_flags,
+        title: I18n.t("reports.user_flagging_ratio.labels.ignored_flags")
+      },
+      {
+        type: :number,
+        property: :score,
+        title: I18n.t("reports.user_flagging_ratio.labels.score")
+      },
+    ]
+
+    sql = <<~SQL
+      SELECT u.id,
+             u.username,
+             u.uploaded_avatar_id as avatar_id,
+             CASE WHEN u.silenced_till IS NOT NULL THEN 't' ELSE 'f' END as silenced,
+             us.flags_disagreed AS disagreed_flags,
+             us.flags_agreed AS agreed_flags,
+             us.flags_ignored AS ignored_flags,
+             ROUND((1-(us.flags_agreed::numeric / us.flags_disagreed::numeric)) *
+                   (us.flags_disagreed - us.flags_agreed)) AS score
+      FROM users AS u
+        INNER JOIN user_stats AS us ON us.user_id = u.id
+      WHERE u.id <> -1
+        AND flags_disagreed > flags_agreed
+      ORDER BY score DESC
+      LIMIT 100
+      SQL
+
+    DB.query(sql).each do |row|
+      flagger = {}
+      flagger[:user_id] = row.id
+      flagger[:username] = row.username
+      flagger[:avatar_template] = User.avatar_template(row.username, row.avatar_id)
+      flagger[:disagreed_flags] = row.disagreed_flags
+      flagger[:ignored_flags] = row.ignored_flags
+      flagger[:agreed_flags] = row.agreed_flags
+      flagger[:score] = row.score
+
+      report.data << flagger
+    end
+  end
+
+  def self.report_suspicious_logins(report)
+    report.modes = [:table]
+
+    report.labels = [
+      {
+        type: :user,
+        properties: {
+          username: :username,
+          id: :user_id,
+          avatar: :avatar_template,
+        },
+        title: I18n.t("reports.suspicious_logins.labels.user")
+      },
+      {
+        property: :client_ip,
+        title: I18n.t("reports.suspicious_logins.labels.client_ip")
+      },
+      {
+        property: :location,
+        title: I18n.t("reports.suspicious_logins.labels.location")
+      },
+      {
+        property: :browser,
+        title: I18n.t("reports.suspicious_logins.labels.browser")
+      },
+      {
+        property: :device,
+        title: I18n.t("reports.suspicious_logins.labels.device")
+      },
+      {
+        property: :os,
+        title: I18n.t("reports.suspicious_logins.labels.os")
+      },
+      {
+        type: :date,
+        property: :login_time,
+        title: I18n.t("reports.suspicious_logins.labels.login_time")
+      },
+    ]
+
+    report.data = []
+
+    sql = <<~SQL
+      SELECT u.id user_id, u.username, u.uploaded_avatar_id, t.client_ip, t.user_agent, t.created_at login_time
+      FROM user_auth_token_logs t
+      JOIN users u ON u.id = t.user_id
+      WHERE t.action = 'suspicious'
+        AND t.created_at >= :start_date
+        AND t.created_at <= :end_date
+    SQL
+
+    DB.query(sql, start_date: report.start_date, end_date: report.end_date).each do |row|
+      data = {}
+
+      ipinfo = DiscourseIpInfo.get(row.client_ip)
+      browser = BrowserDetection.browser(row.user_agent)
+      device = BrowserDetection.device(row.user_agent)
+      os = BrowserDetection.os(row.user_agent)
+
+      data[:username] = row.username
+      data[:user_id] = row.user_id
+      data[:avatar_template] = User.avatar_template(row.username, row.uploaded_avatar_id)
+      data[:client_ip] = row.client_ip.to_s
+      data[:location] = ipinfo[:location]
+      data[:browser] = I18n.t("user_auth_tokens.browser.#{browser}")
+      data[:device] = I18n.t("user_auth_tokens.device.#{device}")
+      data[:os] = I18n.t("user_auth_tokens.os.#{os}")
+      data[:login_time] = row.login_time
+
+      report.data << data
+    end
+  end
+
   private
 
   def hex_to_rgbs(hex_color)
@@ -1192,6 +1360,15 @@ class Report
   end
 
   def rgba_color(hex, opacity = 1)
+    if hex.size == 3
+      chars = hex.scan(/\w/)
+      hex = chars.zip(chars).flatten.join
+    end
+
+    if hex.size < 3
+      hex = hex.ljust(6, hex.last)
+    end
+
     rgbs = hex_to_rgbs(hex)
 
     "rgba(#{rgbs.join(',')},#{opacity})"

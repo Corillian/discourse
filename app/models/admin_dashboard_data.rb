@@ -102,7 +102,7 @@ class AdminDashboardData
                       :failing_emails_check,
                       :subfolder_ends_in_slash_check,
                       :pop3_polling_configuration, :email_polling_errored_recently,
-                      :out_of_date_themes,
+                      :out_of_date_themes, :unreachable_themes,
                       :azure_config_check
 
     add_problem_check do
@@ -124,7 +124,7 @@ class AdminDashboardData
   end
 
   def self.problem_message_check(i18n_key)
-    $redis.get(problem_message_key(i18n_key)) ? I18n.t(i18n_key) : nil
+    $redis.get(problem_message_key(i18n_key)) ? I18n.t(i18n_key, base_path: Discourse.base_path) : nil
   end
 
   def self.add_problem_message(i18n_key, expire_seconds = nil)
@@ -189,19 +189,27 @@ class AdminDashboardData
   end
 
   def google_oauth2_config_check
-    I18n.t('dashboard.google_oauth2_config_warning') if SiteSetting.enable_google_oauth2_logins && (SiteSetting.google_oauth2_client_id.blank? || SiteSetting.google_oauth2_client_secret.blank?)
+    if SiteSetting.enable_google_oauth2_logins && (SiteSetting.google_oauth2_client_id.blank? || SiteSetting.google_oauth2_client_secret.blank?)
+      I18n.t('dashboard.google_oauth2_config_warning', base_path: Discourse.base_path)
+    end
   end
 
   def facebook_config_check
-    I18n.t('dashboard.facebook_config_warning') if SiteSetting.enable_facebook_logins && (SiteSetting.facebook_app_id.blank? || SiteSetting.facebook_app_secret.blank?)
+    if SiteSetting.enable_facebook_logins && (SiteSetting.facebook_app_id.blank? || SiteSetting.facebook_app_secret.blank?)
+      I18n.t('dashboard.facebook_config_warning', base_path: Discourse.base_path)
+    end
   end
 
   def twitter_config_check
-    I18n.t('dashboard.twitter_config_warning') if SiteSetting.enable_twitter_logins && (SiteSetting.twitter_consumer_key.blank? || SiteSetting.twitter_consumer_secret.blank?)
+    if SiteSetting.enable_twitter_logins && (SiteSetting.twitter_consumer_key.blank? || SiteSetting.twitter_consumer_secret.blank?)
+      I18n.t('dashboard.twitter_config_warning', base_path: Discourse.base_path)
+    end
   end
 
   def github_config_check
-    I18n.t('dashboard.github_config_warning') if SiteSetting.enable_github_logins && (SiteSetting.github_client_id.blank? || SiteSetting.github_client_secret.blank?)
+    if SiteSetting.enable_github_logins && (SiteSetting.github_client_id.blank? || SiteSetting.github_client_secret.blank?)
+      I18n.t('dashboard.github_config_warning', base_path: Discourse.base_path)
+    end
   end
 
   def s3_config_check
@@ -209,8 +217,13 @@ class AdminDashboardData
     if !GlobalSetting.use_s3?
       bad_keys = (SiteSetting.s3_access_key_id.blank? || SiteSetting.s3_secret_access_key.blank?) && !SiteSetting.s3_use_iam_profile
 
-      return I18n.t('dashboard.s3_config_warning') if SiteSetting.enable_s3_uploads && (bad_keys || SiteSetting.s3_upload_bucket.blank?)
-      return I18n.t('dashboard.s3_backup_config_warning') if SiteSetting.enable_s3_backups && (bad_keys || SiteSetting.s3_backup_bucket.blank?)
+      if SiteSetting.enable_s3_uploads && (bad_keys || SiteSetting.s3_upload_bucket.blank?)
+        return I18n.t('dashboard.s3_config_warning', base_path: Discourse.base_path)
+      end
+
+      if SiteSetting.backup_location == BackupLocationSiteSetting::S3 && (bad_keys || SiteSetting.s3_backup_bucket.blank?)
+        return I18n.t('dashboard.s3_backup_config_warning', base_path: Discourse.base_path)
+      end
     end
     nil
   end
@@ -226,7 +239,7 @@ class AdminDashboardData
 
   def failing_emails_check
     num_failed_jobs = Jobs.num_email_retry_jobs
-    I18n.t('dashboard.failing_emails_warning', num_failed_jobs: num_failed_jobs) if num_failed_jobs > 0
+    I18n.t('dashboard.failing_emails_warning', num_failed_jobs: num_failed_jobs, base_path: Discourse.base_path) if num_failed_jobs > 0
   end
 
   def subfolder_ends_in_slash_check
@@ -239,7 +252,7 @@ class AdminDashboardData
 
   def email_polling_errored_recently
     errors = Jobs::PollMailbox.errors_in_past_24_hours
-    I18n.t('dashboard.email_polling_errored_recently', count: errors) if errors > 0
+    I18n.t('dashboard.email_polling_errored_recently', count: errors, base_path: Discourse.base_path) if errors > 0
   end
 
   def missing_mailgun_api_key
@@ -251,18 +264,31 @@ class AdminDashboardData
 
   def force_https_check
     return unless @opts[:check_force_https]
-    I18n.t('dashboard.force_https_warning') unless SiteSetting.force_https
+    I18n.t('dashboard.force_https_warning', base_path: Discourse.base_path) unless SiteSetting.force_https
   end
 
   def out_of_date_themes
     old_themes = RemoteTheme.out_of_date_themes
     return unless old_themes.present?
 
-    html = old_themes.map do |name, id|
+    themes_html_format(old_themes, "dashboard.out_of_date_themes")
+  end
+
+  def unreachable_themes
+    themes = RemoteTheme.unreachable_themes
+    return unless themes.present?
+
+    themes_html_format(themes, "dashboard.unreachable_themes")
+  end
+
+  private
+
+  def themes_html_format(themes, i18n_key)
+    html = themes.map do |name, id|
       "<li><a href=\"/admin/customize/themes/#{id}\">#{CGI.escapeHTML(name)}</a></li>"
     end.join("\n")
 
-    message = I18n.t("dashboard.out_of_date_themes")
+    message = I18n.t(i18n_key)
     message += "<ul>#{html}</ul>"
     message
   end

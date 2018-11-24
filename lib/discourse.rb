@@ -13,6 +13,7 @@ if Rails.env.development?
 end
 
 module Discourse
+  DB_POST_MIGRATE_PATH ||= "db/post_migrate"
 
   require 'sidekiq/exception_handler'
   class SidekiqExceptionHandler
@@ -285,6 +286,11 @@ module Discourse
     nil
   rescue ActionController::RoutingError
     nil
+  end
+
+  class << self
+    alias_method :base_path, :base_uri
+    alias_method :base_url_no_path, :base_url_no_prefix
   end
 
   READONLY_MODE_KEY_TTL  ||= 60
@@ -649,6 +655,10 @@ module Discourse
 
   def self.running_in_rack?
     ENV["DISCOURSE_RUNNING_IN_RACK"] == "1"
+  end
+
+  def self.skip_post_deployment_migrations?
+    ['1', 'true'].include?(ENV["SKIP_POST_DEPLOYMENT_MIGRATIONS"]&.to_s)
   end
 
 end

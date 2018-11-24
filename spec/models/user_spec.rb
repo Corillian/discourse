@@ -1378,7 +1378,7 @@ describe User do
       expect(user.title).to eq("bars and wats")
       expect(user.trust_level).to eq(1)
       expect(user.manual_locked_trust_level).to be_nil
-      expect(user.group_locked_trust_level).to eq(1)
+      expect(user.group_granted_trust_level).to eq(1)
     end
   end
 
@@ -1668,6 +1668,26 @@ describe User do
     end
   end
 
+  describe "#unread_notifications" do
+    before do
+      User.max_unread_notifications = 3
+    end
+
+    after do
+      User.max_unread_notifications = nil
+    end
+
+    it "limits to MAX_UNREAD_NOTIFICATIONS" do
+      user = Fabricate(:user)
+
+      4.times do
+        Notification.create!(user_id: user.id, notification_type: 1, read: false, data: '{}')
+      end
+
+      expect(user.unread_notifications).to eq(3)
+    end
+  end
+
   describe "#unstage" do
     let!(:staged_user) { Fabricate(:staged, email: 'staged@account.com', active: true, username: 'staged1', name: 'Stage Name') }
     let(:params) { { email: 'staged@account.com', active: true, username: 'unstaged1', name: 'Foo Bar' } }
@@ -1814,4 +1834,87 @@ describe User do
 
   end
 
+  describe '#match_title_to_primary_group_changes' do
+    let(:primary_group_a) { Fabricate(:group, title: 'A', users: [user]) }
+    let(:primary_group_b) { Fabricate(:group, title: 'B', users: [user]) }
+
+    it "updates user's title only when it is blank or matches the previous primary group" do
+      expect { user.update(primary_group: primary_group_a) }.to change { user.reload.title }.from(nil).to('A')
+      expect { user.update(primary_group: primary_group_b) }.to change { user.reload.title }.from('A').to('B')
+
+      user.update(title: 'Different')
+      expect { user.update(primary_group: primary_group_a) }.to_not change { user.reload.title }
+    end
+  end
+
+  describe '#title=' do
+    let(:badge) { Fabricate(:badge, name: 'Badge', allow_title: false) }
+
+    it 'sets badge_granted_title correctly' do
+      BadgeGranter.grant(badge, user)
+
+      user.update!(title: badge.name)
+      expect(user.user_profile.reload.badge_granted_title).to eq(false)
+
+      user.update!(title: 'Custom')
+      expect(user.user_profile.reload.badge_granted_title).to eq(false)
+
+      badge.update!(allow_title: true)
+      user.update!(title: badge.name)
+      expect(user.user_profile.reload.badge_granted_title).to eq(true)
+
+      user.update!(title: nil)
+      expect(user.user_profile.reload.badge_granted_title).to eq(false)
+    end
+  end
+
+  describe '#next_best_title' do
+    let(:group_a) { Fabricate(:group, title: 'Group A') }
+    let(:group_b) { Fabricate(:group, title: 'Group B') }
+    let(:group_c) { Fabricate(:group, title: 'Group C') }
+    let(:badge) { Fabricate(:badge, name: 'Badge', allow_title: true) }
+
+    it 'only includes groups with title' do
+      group_a.add(user)
+      expect(user.next_best_title).to eq('Group A')
+
+      group_a.update!(title: nil)
+      expect(user.next_best_title).to eq(nil)
+    end
+
+    it 'only includes badges that allow to be set as title' do
+      BadgeGranter.grant(badge, user)
+      expect(user.next_best_title).to eq('Badge')
+
+      badge.update!(allow_title: false)
+      expect(user.next_best_title).to eq(nil)
+    end
+
+    it "picks the next best title in the order: user's primary group, primary group, groups, and badges" do
+      group_a.add(user)
+      group_b.add(user)
+      group_c.add(user)
+      BadgeGranter.grant(badge, user)
+
+      group_a.update!(primary_group: true)
+      group_b.update!(primary_group: true)
+      user.update!(primary_group_id: group_a.id)
+      expect(user.next_best_title).to eq('Group A')
+
+      user.update!(primary_group_id: group_b.id)
+      expect(user.next_best_title).to eq('Group B')
+
+      group_b.remove(user)
+      expect(user.next_best_title).to eq('Group A')
+
+      group_a.remove(user)
+      expect(user.next_best_title).to eq('Group C')
+
+      group_c.remove(user)
+      expect(user.next_best_title).to eq('Badge')
+
+      BadgeGranter.revoke(UserBadge.find_by(user_id: user.id, badge_id: badge.id))
+      expect(user.next_best_title).to eq(nil)
+    end
+  end
 end

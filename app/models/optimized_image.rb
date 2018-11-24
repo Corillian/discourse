@@ -21,6 +21,7 @@ class OptimizedImage < ActiveRecord::Base
   end
 
   def self.create_for(upload, width, height, opts = {})
+
     return unless width > 0 && height > 0
     return if upload.try(:sha1).blank?
 
@@ -29,7 +30,7 @@ class OptimizedImage < ActiveRecord::Base
       upload.fix_image_extension
     end
 
-    if !upload.extension.match?(IM_DECODERS)
+    if !upload.extension.match?(IM_DECODERS) && upload.extension != "svg"
       if !opts[:raise_on_error]
         # nothing to do ... bad extension, not an image
         return
@@ -38,18 +39,23 @@ class OptimizedImage < ActiveRecord::Base
       end
     end
 
+    # prefer to look up the thumbnail without grabbing any locks
+    thumbnail = find_by(upload_id: upload.id, width: width, height: height)
+
+    # correct bad thumbnail if needed
+    if thumbnail && thumbnail.url.blank?
+      thumbnail.destroy!
+      thumbnail = nil
+    end
+
+    return thumbnail if thumbnail
+
     lock(upload.id, width, height) do
-      # do we already have that thumbnail?
+      # may have been generated since we got the lock
       thumbnail = find_by(upload_id: upload.id, width: width, height: height)
 
-      # make sure we have an url
-      if thumbnail && thumbnail.url.blank?
-        thumbnail.destroy
-        thumbnail = nil
-      end
-
       # return the previous thumbnail if any
-      return thumbnail unless thumbnail.nil?
+      return thumbnail if thumbnail
 
       # create the thumbnail otherwise
       original_path = Discourse.store.path_for(upload)
@@ -71,7 +77,7 @@ class OptimizedImage < ActiveRecord::Base
         temp_file = Tempfile.new(["discourse-thumbnail", extension])
         temp_path = temp_file.path
 
-        if extension =~ /\.svg$/i
+        if upload.extension == "svg"
           FileUtils.cp(original_path, temp_path)
           resized = true
         elsif opts[:crop]
@@ -81,7 +87,6 @@ class OptimizedImage < ActiveRecord::Base
         end
 
         if resized
-
           thumbnail = OptimizedImage.create!(
             upload_id: upload.id,
             sha1: Upload.generate_digest(temp_path),
@@ -394,6 +399,7 @@ end
 #  height    :integer          not null
 #  upload_id :integer          not null
 #  url       :string           not null
+#  filesize  :integer
 #
 # Indexes
 #

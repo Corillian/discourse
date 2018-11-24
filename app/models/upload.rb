@@ -15,11 +15,13 @@ class Upload < ActiveRecord::Base
   has_many :posts, through: :post_uploads
 
   has_many :optimized_images, dependent: :destroy
+  has_many :user_uploads, dependent: :destroy
 
   attr_accessor :for_group_message
   attr_accessor :for_theme
   attr_accessor :for_private_message
   attr_accessor :for_export
+  attr_accessor :for_site_setting
 
   validates_presence_of :filesize
   validates_presence_of :original_filename
@@ -30,6 +32,10 @@ class Upload < ActiveRecord::Base
     User.where(uploaded_avatar_id: self.id).update_all(uploaded_avatar_id: nil)
     UserAvatar.where(gravatar_upload_id: self.id).update_all(gravatar_upload_id: nil)
     UserAvatar.where(custom_upload_id: self.id).update_all(custom_upload_id: nil)
+  end
+
+  def to_s
+    self.url
   end
 
   def thumbnail(width = self.thumbnail_width, height = self.thumbnail_height)
@@ -168,6 +174,10 @@ class Upload < ActiveRecord::Base
     Digest::SHA1.file(path).hexdigest
   end
 
+  def self.extract_upload_url(url)
+    url.match(/(\/original\/\dX[\/\.\w]*\/([a-zA-Z0-9]+)[\.\w]*)/)
+  end
+
   def self.get_from_url(url)
     return if url.blank?
 
@@ -177,7 +187,7 @@ class Upload < ActiveRecord::Base
     end
 
     return if uri&.path.blank?
-    data = uri.path.match(/(\/original\/\dX[\/\.\w]*\/([a-zA-Z0-9]+)[\.\w]*)/)
+    data = extract_upload_url(uri.path)
     return if data.blank?
     sha1 = data[2]
     upload = nil
@@ -264,6 +274,8 @@ end
 #  origin            :string(1000)
 #  retain_hours      :integer
 #  extension         :string(10)
+#  thumbnail_width   :integer
+#  thumbnail_height  :integer
 #
 # Indexes
 #

@@ -1,6 +1,7 @@
 import { iconNode } from "discourse-common/lib/icon-library";
 import { addDecorator } from "discourse/widgets/post-cooked";
 import ComposerEditor from "discourse/components/composer-editor";
+import DiscourseBanner from "discourse/components/discourse-banner";
 import { addButton } from "discourse/widgets/post-menu";
 import { includeAttributes } from "discourse/lib/transform-post";
 import { addToolbarCallback } from "discourse/components/d-editor";
@@ -59,6 +60,7 @@ class PluginApi {
     opts = opts || {};
 
     if (this.container.cache[resolverName]) {
+      // eslint-disable-next-line no-console
       console.warn(
         `"${resolverName}" was already cached in the container. Changes won't be applied.`
       );
@@ -67,6 +69,7 @@ class PluginApi {
     const klass = this.container.factoryFor(resolverName);
     if (!klass) {
       if (!opts.ignoreMissing) {
+        // eslint-disable-next-line no-console
         console.warn(`"${resolverName}" was not found by modifyClass`);
       }
       return;
@@ -175,6 +178,7 @@ class PluginApi {
 
     if (!opts.onlyStream) {
       decorate(ComposerEditor, "previewRefreshed", callback);
+      decorate(DiscourseBanner, "didInsertElement", callback);
       decorate(
         this.container.factoryFor("component:user-stream").class,
         "didInsertElement",
@@ -684,6 +688,7 @@ class PluginApi {
    */
   addNavigationBarItem(item) {
     if (!item["name"]) {
+      // eslint-disable-next-line no-console
       console.warn(
         "A 'name' is required when adding a Navigation Bar Item.",
         item
@@ -804,6 +809,7 @@ function getPluginApi(version) {
     }
     return _pluginv01;
   } else {
+    // eslint-disable-next-line no-console
     console.warn(`Plugin API v${version} is not supported`);
   }
 }
@@ -841,6 +847,7 @@ export function resetPluginApi() {
 }
 
 export function decorateCooked() {
+  // eslint-disable-next-line no-console
   console.warn(
     "`decorateCooked` has been removed. Use `getPluginApi(version).decorateCooked` instead"
   );
