@@ -70,7 +70,7 @@ module FileStore
     end
 
     def absolute_base_url
-      "//#{azure_storage_account}.blob.core.windows.net/#{azure_container}"
+      @absolute_base_url ||= "//#{azure_storage_account}.blob.core.windows.net/#{azure_container}"
     end
 
     def external?
