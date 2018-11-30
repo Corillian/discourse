@@ -538,6 +538,7 @@ en:
           description: "You will never be notified of anything about new topics in this group."
       flair_url: "Avatar Flair Image"
       flair_url_placeholder: "(Optional) Image URL or Font Awesome class"
+      flair_url_description: "Use square images no smaller than 20px by 20px or FontAwesome icons (accepted formats: \"fa-icon\", \"far fa-icon\" or \"fab fa-icon\")."
       flair_bg_color: "Avatar Flair Background Color"
       flair_bg_color_placeholder: "(Optional) Hex color value"
       flair_color: "Avatar Flair Color"
@@ -581,9 +582,12 @@ en:
       topic_sentence:
         one: "1 topic"
         other: "%{count} topics"
-      topic_stat_sentence:
-        one: "%{count} new topic in the past %{unit}."
-        other: "%{count} new topics in the past %{unit}."
+      topic_stat_sentence_week:
+        one: "%{count} new topic in the past week."
+        other: "%{count} new topics in the past week."
+      topic_stat_sentence_month:
+        one: "%{count} new topic in the past month."
+        other: "%{count} new topics in the past month."
       n_more: "Categories (%{count} more) ..."
 
     ip_lookup:
@@ -1373,7 +1377,7 @@ en:
         title_too_long: "Title can't be more than {{max}} characters"
         post_missing: "Post can't be empty"
         post_length: "Post must be at least {{min}} characters"
-        try_like: 'Have you tried the <i class="fa fa-heart"></i> button?'
+        try_like: "Have you tried the {{heart}} button?"
         category_missing: "You must choose a category"
         tags_missing: "You must choose at least {{count}} tags"
 
@@ -2054,7 +2058,6 @@ en:
 
     post:
       quote_reply: "Quote"
-      edit: "<i class='fa fa-pencil'></i> {{link}} {{replyAvatar}} {{username}}"
       edit_reason: "Reason: "
       post_number: "post {{number}}"
       wiki_last_edited_on: "wiki last edited on"
@@ -2255,7 +2258,7 @@ en:
           revert: "Revert to this revision"
           edit_wiki: "Edit Wiki"
           edit_post: "Edit Post"
-          comparing_previous_to_current_out_of_total: "<strong>{{previous}}</strong> <i class='fa fa-arrows-h'></i> <strong>{{current}}</strong> / {{total}}"
+          comparing_previous_to_current_out_of_total: "<strong>{{previous}}</strong> {{icon}} <strong>{{current}}</strong> / {{total}}"
         displays:
           inline:
             title: "Show the rendered output with additions and removals inline"

@@ -48,6 +48,7 @@
   }
 
   $size: 50px;
+  $icon-size: $size / 1.8;
 
   .avatar-flair-image {
     width: $size;
@@ -56,9 +57,15 @@
   .avatar-flair {
     background-size: $size;
     height: $size;
+    width: $size;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    i {
-      font-size: $size !important;
+    .d-icon {
+      height: $icon-size;
+      width: $icon-size;
     }
   }
 }
@@ -86,7 +93,7 @@ table.group-manage-logs {
   .group-manage-logs-expand-details {
     cursor: pointer;
 
-    i {
+    .d-icon {
       color: blend-primary-secondary(50%);
     }
   }
@@ -117,7 +124,7 @@ table.group-members {
   }
 
   th.sortable {
-    i {
+    .d-icon {
       margin-left: 5px;
     }
 

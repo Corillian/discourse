@@ -210,6 +210,7 @@ en:
   provider_not_enabled: "You are not permitted to view the requested resource. The authentication provider is not enabled."
   provider_not_found: "You are not permitted to view the requested resource. The authentication provider does not exist."
   read_only_mode_enabled: "The site is in read only mode. Interactions are disabled."
+  invalid_grant_badge_reason_link: "External or invalid discourse link is not allowed in badge reason"
 
   reading_time: "Reading time"
   likes: "Likes"
@@ -1549,7 +1550,7 @@ en:
     title_min_entropy: "The minimum entropy (unique characters, non-english count for more) required for a topic title."
     body_min_entropy: "The minimum entropy (unique characters, non-english count for more) required for a post body."
     allow_uppercase_posts: "Allow all caps in a topic title or a post body."
-    max_consecutive_replies: "Force users to edit their last post instead of replying"
+    max_consecutive_replies: "Number of posts a user has to make in a row in a topic before being prevented from adding another reply."
 
     title_fancy_entities: "Convert common ASCII characters to fancy HTML entities in topic titles, ala SmartyPants <a href='https://daringfireball.net/projects/smartypants/' target='_blank'>https://daringfireball.net/projects/smartypants/</a>"
 
@@ -1752,7 +1753,7 @@ en:
     share_anonymized_statistics: "Share anonymized usage statistics."
 
     auto_handle_queued_age: "Automatically handle records that are waiting to be reviewed after this many days. Flags will be ignored. Queued posts and users will be rejected. Set to 0 to disable this feature."
-
+    svg_icon_subset: "Add additional FontAwesome 5 icons that you would like to include in your assets. Use prefix 'fa-' for solid icons, 'far-' for regular icons and 'fab-' for brand icons. "
     max_prints_per_hour_per_user: "Maximum number of /print page impressions (set to 0 to disable)"
 
     full_name_required: "Full name is a required field of a user's profile."
@@ -1863,6 +1864,8 @@ en:
 
     push_notifications_prompt: "Display user consent prompt."
     push_notifications_icon: "The badge icon that appears in the notification corner. Recommended size is 96px by 96px."
+
+    short_title: "The short title will be used on the user's home screen, launcher, or other places where space may be limited. A maximum of 12 characters is recommended."
 
     errors:
       invalid_email: "Invalid email address."
@@ -2699,6 +2702,15 @@ en:
         We’re sorry, but we’re having trouble reaching you via email. Our last few emails to you have all bounced back as undeliverable.
 
         Can you make sure [your email address](%{base_url}/my/preferences/email) is valid and working? You may also wish to add our email address to your address book / contact list to improve deliverability.
+
+    email_bounced: |
+      The message to %{email} bounced.
+
+      ### Details
+
+      ```text
+      %{raw}
+      ```
 
     too_many_spam_flags:
       title: "Too Many Spam Flags"

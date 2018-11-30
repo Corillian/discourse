@@ -186,15 +186,6 @@ export default Ember.Controller.extend({
     );
   },
 
-  @computed("model.whisper", "model.unlistTopic")
-  whisperOrUnlistTopicText(whisper, unlistTopic) {
-    if (whisper) {
-      return I18n.t("composer.whisper");
-    } else if (unlistTopic) {
-      return I18n.t("composer.unlist");
-    }
-  },
-
   @computed
   isStaffUser() {
     const currentUser = this.currentUser;
@@ -203,9 +194,13 @@ export default Ember.Controller.extend({
 
   canUnlistTopic: Em.computed.and("model.creatingTopic", "isStaffUser"),
 
-  @computed("canWhisper", "model.whisper")
-  showWhisperToggle(canWhisper, isWhisper) {
-    return canWhisper && !isWhisper;
+  @computed("canWhisper", "model.post")
+  showWhisperToggle(canWhisper, repliedToPost) {
+    const replyingToWhisper =
+      repliedToPost &&
+      repliedToPost.get("post_type") === this.site.post_types.whisper;
+
+    return canWhisper && !replyingToWhisper;
   },
 
   @computed("isStaffUser", "model.action")
@@ -229,7 +224,7 @@ export default Ember.Controller.extend({
     return option;
   },
 
-  @computed("model.composeState", "model.creatingTopic")
+  @computed("model.composeState", "model.creatingTopic", "model.post")
   popupMenuOptions(composeState) {
     if (composeState === "open" || composeState === "fullscreen") {
       let options = [];
