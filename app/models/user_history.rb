@@ -28,7 +28,7 @@ class UserHistory < ActiveRecord::Base
       notified_about_dominating_topic: 9,
       suspend_user: 10,
       unsuspend_user: 11,
-      facebook_no_email: 12,
+      facebook_no_email: 12, # not used anymore
       grant_badge: 13,
       revoke_badge: 14,
       auto_trust_level_change: 15,
@@ -232,9 +232,10 @@ end
 #
 # Indexes
 #
-#  index_user_histories_on_acting_user_id_and_action_and_id  (acting_user_id,action,id)
-#  index_user_histories_on_action_and_id                     (action,id)
-#  index_user_histories_on_category_id                       (category_id)
-#  index_user_histories_on_subject_and_id                    (subject,id)
-#  index_user_histories_on_target_user_id_and_id             (target_user_id,id)
+#  index_user_histories_on_acting_user_id_and_action_and_id        (acting_user_id,action,id)
+#  index_user_histories_on_action_and_id                           (action,id)
+#  index_user_histories_on_category_id                             (category_id)
+#  index_user_histories_on_subject_and_id                          (subject,id)
+#  index_user_histories_on_target_user_id_and_id                   (target_user_id,id)
+#  index_user_histories_on_topic_id_and_target_user_id_and_action  (topic_id,target_user_id,action)
 #

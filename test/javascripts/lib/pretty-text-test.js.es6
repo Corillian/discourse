@@ -621,6 +621,12 @@ QUnit.test("Category hashtags", assert => {
     '<p><small><span class="hashtag">#category-hashtag</span></small></p>',
     "it works between HTML tags"
   );
+
+  assert.cooked(
+    "Checkout #ụdị",
+    '<p>Checkout <span class="hashtag">#ụdị</span></p>',
+    "it works for non-english characters"
+  );
 });
 
 QUnit.test("Heading", assert => {
@@ -1351,6 +1357,20 @@ QUnit.test("emoji", assert => {
   assert.cooked(
     "8-)",
     `<p><img src="/images/emoji/emoji_one/sunglasses.png?v=${v}" title=":sunglasses:" class="emoji" alt=":sunglasses:"></p>`
+  );
+});
+
+QUnit.test("emoji - enable_inline_emoji_translation", assert => {
+  assert.cookedOptions(
+    "test:smile:test",
+    { siteSettings: { enable_inline_emoji_translation: false } },
+    `<p>test:smile:test</p>`
+  );
+
+  assert.cookedOptions(
+    "test:smile:test",
+    { siteSettings: { enable_inline_emoji_translation: true } },
+    `<p>test<img src="/images/emoji/emoji_one/smile.png?v=${v}" title=":smile:" class="emoji" alt=":smile:">test</p>`
   );
 });
 

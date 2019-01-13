@@ -4,12 +4,12 @@ import {
 } from "discourse/lib/utilities";
 import getUrl from "discourse-common/lib/get-url";
 
-export default Em.Mixin.create({
+export default Ember.Mixin.create({
   uploading: false,
   uploadProgress: 0,
 
   uploadDone() {
-    Em.warn("You should implement `uploadDone`");
+    Ember.warn("You should implement `uploadDone`");
   },
 
   validateUploadedFilesOptions() {
@@ -96,7 +96,9 @@ export default Em.Mixin.create({
     });
 
     $upload.on("fileuploadfail", (e, data) => {
-      displayErrorForUpload(data);
+      if (!data || (data && data.errorThrown !== "abort")) {
+        displayErrorForUpload(data);
+      }
       reset();
     });
   }.on("didInsertElement"),

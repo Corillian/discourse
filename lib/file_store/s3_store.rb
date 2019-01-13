@@ -12,17 +12,21 @@ module FileStore
     attr_reader :s3_helper
 
     def initialize(s3_helper = nil)
-      @s3_helper = s3_helper || S3Helper.new(s3_bucket, TOMBSTONE_PREFIX)
+      @s3_helper = s3_helper || S3Helper.new(s3_bucket,
+        Rails.configuration.multisite ? multisite_tombstone_prefix : TOMBSTONE_PREFIX
+      )
     end
 
     def store_upload(file, upload, content_type = nil)
       path = get_path_for_upload(upload)
-      store_file(file, path, filename: upload.original_filename, content_type: content_type, cache_locally: true)
+      url, upload.etag = store_file(file, path, filename: upload.original_filename, content_type: content_type, cache_locally: true)
+      url
     end
 
     def store_optimized_image(file, optimized_image, content_type = nil)
       path = get_path_for_optimized_image(optimized_image)
-      store_file(file, path, content_type: content_type)
+      url, optimized_image.etag = store_file(file, path, content_type: content_type)
+      url
     end
 
     # options
@@ -40,13 +44,14 @@ module FileStore
       }
       # add a "content disposition" header for "attachments"
       options[:content_disposition] = "attachment; filename=\"#{filename}\"" unless FileHelper.is_supported_image?(filename)
+
+      path.prepend(File.join(upload_path, "/")) if Rails.configuration.multisite
+
       # if this fails, it will throw an exception
+      path, etag = @s3_helper.upload(file, path, options)
 
-      path.prepend(File.join(upload_path, "/")) if RailsMultisite::ConnectionManagement.current_db != "default"
-      path = @s3_helper.upload(file, path, options)
-
-      # return the upload url
-      File.join(absolute_base_url, path)
+      # return the upload url and etag
+      return File.join(absolute_base_url, path), etag
     end
 
     def remove_file(url, path)
@@ -85,6 +90,10 @@ module FileStore
 
     def purge_tombstone(grace_period)
       @s3_helper.update_tombstone_lifecycle(grace_period)
+    end
+
+    def multisite_tombstone_prefix
+      File.join("uploads", "tombstone", RailsMultisite::ConnectionManagement.current_db, "/")
     end
 
     def path_for(upload)

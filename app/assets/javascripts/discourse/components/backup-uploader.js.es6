@@ -2,7 +2,7 @@ import { ajax } from "discourse/lib/ajax";
 import computed from "ember-addons/ember-computed-decorators";
 import UploadMixin from "discourse/mixins/upload";
 
-export default Em.Component.extend(UploadMixin, {
+export default Ember.Component.extend(UploadMixin, {
   tagName: "span",
 
   @computed("uploading", "uploadProgress")
@@ -17,7 +17,7 @@ export default Em.Component.extend(UploadMixin, {
   },
 
   uploadDone() {
-    this.sendAction("done");
+    this.done();
   },
 
   calculateUploadUrl() {
@@ -28,7 +28,8 @@ export default Em.Component.extend(UploadMixin, {
     return {
       type: "PUT",
       dataType: "xml",
-      autoUpload: false
+      autoUpload: false,
+      multipart: false
     };
   },
 

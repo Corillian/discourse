@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_dependency 'middleware/anonymous_cache'
-require_dependency 'method_profiler'
+require 'method_profiler'
+require 'middleware/anonymous_cache'
 
 class Middleware::RequestTracker
 
@@ -18,7 +18,7 @@ class Middleware::RequestTracker
 
     unless @patched_instrumentation
       MethodProfiler.patch(PG::Connection, [
-        :exec, :async_exec, :exec_prepared, :send_query_prepared, :query
+        :exec, :async_exec, :exec_prepared, :send_query_prepared, :query, :exec_params
       ], :sql)
 
       MethodProfiler.patch(Redis::Client, [

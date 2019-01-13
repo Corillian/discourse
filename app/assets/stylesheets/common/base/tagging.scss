@@ -80,7 +80,7 @@ $tag-color: $primary-medium;
   }
 
   .extra-info-wrapper & {
-    color: $header-primary !important;
+    color: $header-primary_high !important;
   }
 
   &.box {
@@ -124,15 +124,9 @@ $tag-color: $primary-medium;
 }
 
 .topic-list-item .discourse-tags {
-  display: block;
-  font-size: $font-down-2;
+  display: inline-flex;
   font-weight: normal;
-  clear: both;
-
-  .discourse-tag.box {
-    position: relative;
-    top: 2px;
-  }
+  font-size: $font-down-1;
 }
 
 .categories-list .topic-list-latest .discourse-tags {
@@ -154,15 +148,16 @@ $tag-color: $primary-medium;
 }
 
 .discourse-tag.bullet {
-  margin-right: 0.25em;
+  margin-right: 0.5em;
+  display: inline-flex;
+  align-items: center;
   &:before {
     background: $primary-low-mid;
     margin-right: 5px;
     position: relative;
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     display: inline-block;
-    vertical-align: middle;
     content: "";
   }
 }

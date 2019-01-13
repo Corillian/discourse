@@ -17,7 +17,6 @@ export default ComboBoxComponent.extend({
   tagName: "li",
   categoryStyle: Ember.computed.alias("siteSettings.category_style"),
   noCategoriesLabel: I18n.t("categories.no_subcategory"),
-  mutateAttributes() {},
   fullWidthOnMobile: true,
   caretDownIcon: "caret-right",
   caretUpIcon: "caret-down",
@@ -53,14 +52,7 @@ export default ComboBoxComponent.extend({
   },
 
   init() {
-    this._super();
-
-    if (this.get("category")) {
-      this.set("value", this.get("category.id"));
-    } else {
-      this.set("value", null);
-    }
-    if (!this.get("categories")) this.set("categories", []);
+    this._super(...arguments);
 
     this.get("rowComponentOptions").setProperties({
       hideParentCategory: this.get("subCategory"),
@@ -71,6 +63,11 @@ export default ComboBoxComponent.extend({
         (this.currentUser.get("staff") || this.currentUser.trust_level > 0)
       )
     });
+  },
+
+  didReceiveAttrs() {
+    if (!this.get("categories")) this.set("categories", []);
+    this.forceValue(this.get("category.id"));
   },
 
   @computed("content")
@@ -162,6 +159,16 @@ export default ComboBoxComponent.extend({
       }
 
       let results = Discourse.Category.search(filter);
+
+      if (!this.siteSettings.allow_uncategorized_topics) {
+        results = results.filter(result => {
+          return (
+            result.id !==
+            Discourse.Site.currentProp("uncategorized_category_id")
+          );
+        });
+      }
+
       results = results.sort((a, b) => {
         if (a.parent_category_id && !b.parent_category_id) {
           return 1;

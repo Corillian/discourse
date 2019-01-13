@@ -46,13 +46,10 @@ class Upload < ActiveRecord::Base
     thumbnail(width, height).present?
   end
 
-  def create_thumbnail!(width, height, crop = false)
+  def create_thumbnail!(width, height, opts = nil)
     return unless SiteSetting.create_thumbnails?
-
-    opts = {
-      allow_animation: SiteSetting.allow_animated_thumbnails,
-      crop: crop
-    }
+    opts ||= {}
+    opts[:allow_animation] = SiteSetting.allow_animated_thumbnails
 
     if get_optimized_image(width, height, opts)
       save(validate: false)
@@ -68,7 +65,8 @@ class Upload < ActiveRecord::Base
     opts = opts.merge(raise_on_error: true)
     begin
       OptimizedImage.create_for(self, width, height, opts)
-    rescue
+    rescue => ex
+      Rails.logger.info ex if Rails.env.development?
       opts = opts.merge(raise_on_error: false)
       if fix_image_extension
         OptimizedImage.create_for(self, width, height, opts)
@@ -127,8 +125,23 @@ class Upload < ActiveRecord::Base
         Discourse.store.download(self).path
       end
 
-    self.width, self.height = size = FastImage.new(path).size
-    self.thumbnail_width, self.thumbnail_height = ImageSizer.resize(*size)
+    begin
+      w, h = FastImage.new(path, raise_on_failure: true).size
+
+      self.width = w || 0
+      self.height = h || 0
+
+      self.thumbnail_width, self.thumbnail_height = ImageSizer.resize(w, h)
+
+      self.update_columns(
+        width: width,
+        height: height,
+        thumbnail_width: thumbnail_width,
+        thumbnail_height: thumbnail_height
+      )
+    rescue => e
+      Discourse.warn_exception(e, message: "Error getting image dimensions")
+    end
     nil
   end
 
@@ -276,9 +289,11 @@ end
 #  extension         :string(10)
 #  thumbnail_width   :integer
 #  thumbnail_height  :integer
+#  etag              :string
 #
 # Indexes
 #
+#  index_uploads_on_etag        (etag)
 #  index_uploads_on_extension   (lower((extension)::text))
 #  index_uploads_on_id_and_url  (id,url)
 #  index_uploads_on_sha1        (sha1) UNIQUE

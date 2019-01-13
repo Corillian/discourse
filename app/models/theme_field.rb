@@ -29,10 +29,17 @@ class ThemeField < ActiveRecord::Base
     @theme_var_type_ids ||= [2, 3, 4]
   end
 
+  def self.force_recompilation!
+    find_each do |field|
+      field.compiler_version = 0
+      field.ensure_baked!
+    end
+  end
+
   validates :name, format: { with: /\A[a-z_][a-z0-9_-]*\z/i },
                    if: Proc.new { |field| ThemeField.theme_var_type_ids.include?(field.type_id) }
 
-  COMPILER_VERSION = 5
+  COMPILER_VERSION = 6
 
   belongs_to :theme
 
@@ -171,10 +178,7 @@ COMPILED
       errors << e.message
     end
 
-    self.error = errors.join("\n").presence unless self.destroyed?
-    if will_save_change_to_error?
-      update_columns(error: self.error)
-    end
+    self.error = errors.join("\n").presence
   end
 
   def self.guess_type(name)
@@ -237,6 +241,8 @@ COMPILED
   end
 
   before_save do
+    validate_yaml!
+
     if will_save_change_to_value? && !will_save_change_to_value_baked?
       self.value_baked = nil
     end
@@ -245,10 +251,10 @@ COMPILED
   after_commit do
     ensure_baked!
     ensure_scss_compiles!
-    validate_yaml!
     theme.clear_cached_settings!
 
     Stylesheet::Manager.clear_theme_cache! if self.name.include?("scss")
+    CSP::Extension.clear_theme_extensions_cache! if name == 'yaml'
 
     # TODO message for mobile vs desktop
     MessageBus.publish "/header-change/#{theme.id}", self.value if theme && self.name == "header"

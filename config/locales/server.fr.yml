@@ -35,6 +35,7 @@ fr:
   anonymous: "Anonyme"
   remove_posts_deleted_by_author: "Supprimé par l'auteur"
   redirect_warning: "Nous n'avons pas été en mesure de vérifier que le lien que vous avez sélectionné a bien été posté sur le forum. Si vous souhaitez quand même continuer, sélectionnez le lien ci-dessous."
+  on_another_topic: "Sur un autre sujet"
   themes:
     bad_color_scheme: "Impossible de mettre à jour le thème, la palette de couleur est invalide"
     other_error: "Il y a eu un problème pendant la mise à jour du thème"
@@ -186,20 +187,17 @@ fr:
   provider_not_enabled: "Vous n'êtes pas autorisés à voir cette ressources. Le fournisseur d'authentification n'est pas activé."
   provider_not_found: "Vous n'êtes pas autorisés à voir cette ressources. Le fournisseur d'authentification n'existe pas."
   read_only_mode_enabled: "Le site est en mode lecture seule. Les interactions sont désactivées."
+  invalid_grant_badge_reason_link: "Lien discourse externe ou invalide pas permis dans la raison d'un badge"
   reading_time: "Temps de lecture"
   likes: "J'aime"
   too_many_replies:
     one: "Nous sommes désolés, mais les nouveaux utilisateurs sont temporairement limités à 1 réponse par sujet."
     other: "Nous sommes désolés, mais les nouveaux utilisateurs sont temporairement limités à %{count} réponses par sujet."
-  max_consecutive_replies:
-    one: "Pas plus qu'un message possible. Veuillez modifier votre réponse précédente, ou attendre que quelqu'un vous réponde."
-    other: "Seules %{count} messages de suite sont possible. Veuillez modifier votre réponse précédente, ou attendre que quelqu'un vous réponde."
   embed:
     start_discussion: "Démarrer la discussion"
     continue: "Continuer la discussion"
     error: "Erreur d'intégration"
     referer: "Référent :"
-    mismatch: "Le référent ne correspondait à aucun des hôtes suivants :"
     no_hosts: "Aucun hôte n'a été configuré pour l'intégration."
     configure: "Configurer l'intégration"
     more_replies:
@@ -880,7 +878,6 @@ fr:
         percent: Pourcentage
         day: Jour
     post_edits:
-      title: "Modifications de message"
       labels:
         post: Message
         editor: Éditeur
@@ -895,7 +892,6 @@ fr:
         ignored_flags: Signalements ignorés
         score: Score
     moderators_activity:
-      title: "Activité des modérateurs"
       labels:
         moderator: Modérateur
         flag_count: Signalements examinés
@@ -905,7 +901,6 @@ fr:
         pm_count: Messages privés créés
         revision_count: Révisions
     flags_status:
-      title: "Statut des signalements"
       values:
         agreed: Acceptés
         disagreed: Rejetés
@@ -925,22 +920,18 @@ fr:
       title: "Inscriptions"
       xaxis: "Jour"
       yaxis: "Nombre d'inscriptions"
-      description: "Nouvelles créations de compte pour cette période"
     new_contributors:
       title: "Nouveaux contributeurs"
       xaxis: "Jour"
       yaxis: "Nombre de nouveaux contributeurs"
-      description: "Nombre d'utilisateurs qui ont fait leur première contribution durant cette période"
     dau_by_mau:
       title: "DAU/MAU"
       xaxis: "Jour"
       yaxis: "DAU/MAU"
-      description: "Nombre d'utilisateurs qui se sont connectés dans la dernière journée, divisé par le nombre d'utilisateurs qui se sont connectés dans le dernier mois – en % qui représente le taux \"d'adhérence\" de la communauté. Viser > 30%."
     daily_engaged_users:
       title: "Utilisateurs impliqués au quotidien"
       xaxis: "Jour"
       yaxis: "Utilisateurs impliqués"
-      description: "Nombre d'utilisateurs ayant aimé ou publié un message dans les derniers 24h"
     profile_views:
       title: "Vues des profils d'utilisateurs"
       xaxis: "Jour"
@@ -949,7 +940,6 @@ fr:
       title: "Sujets"
       xaxis: "Jour"
       yaxis: "Nombre de nouveaux sujets"
-      description: "Nouveaux sujets crées pour cette période"
     posts:
       title: "Messages"
       xaxis: "Jour"
@@ -967,10 +957,6 @@ fr:
       title: "Signets"
       xaxis: "Jour"
       yaxis: "Nombre de nouveaux signets"
-    starred:
-      title: "Favoris"
-      xaxis: "Jour"
-      yaxis: "Nombre de nouveaux sujets favoris"
     users_by_trust_level:
       title: "Utilisateurs par niveau de confiance"
       xaxis: "Niveau de confiance"
@@ -989,7 +975,6 @@ fr:
         suspended: Suspendu
         silenced: Sous silence
     trending_search:
-      title: Recherche tendance
       labels:
         term: Terme
         searches: Recherches
@@ -1207,10 +1192,6 @@ fr:
     inline_onebox_domains_whitelist: "Une liste de domaines qui seront transformé en Onebox s'ils ont été liés sans titre"
     enable_inline_onebox_on_all_domains: "Ignorer le paramètre inline_onebox_domain_whitelist et permettre des onebox 'inline' pour tous les domaines."
     max_oneboxes_per_post: "Nombre maximum de Onebox dans un message."
-    logo: "L'image de votre logo situé en haut à gauche de votre site doit être de forme rectangulaire large. Si vous laissez ce champ vide, le nom de votre site apparaitra."
-    logo_small: "Le petit logo situé en haut à gauche de votre site doit être de forme carré. Si vous laissez ce champ vide, un logo de maison apparaîtra."
-    digest_logo: "L'image alternative de votre logo utilisée en haut du résumé par courriel de votre site. Elle devrait idéalement être en forme de large rectangle et ne pas être une image SVG. Si vide, `logo_url` sera utilisé."
-    mobile_logo: "Logo personnalisé utilisé sur la version mobile de votre site. Si non renseigné, `logo_url` sera utilisé, par exemple : https://example.com/uploads/default/logo.png"
     large_icon: "Image utilisée comme logo sur Android. Taille recommandée : 512 px par 512 px."
     favicon: "Un favicon pour votre site, voir <a href='https://en.wikipedia.org/wiki/Favicon' target='_blank'>https://fr.wikipedia.org/wiki/Favicon</a>, pour fonctionner correctement à travers un CDN il doit être PNG."
     apple_touch_icon: "Icône utilisée pour les appareils d'Apple. Taille recommandée 144 px par 144 px."
@@ -1621,6 +1602,7 @@ fr:
     native_app_install_banner: "Propose aux visiteurs réguliers d'installer l'application Discourse native."
     share_anonymized_statistics: "Partager les statistiques d'utilisation anonymes."
     auto_handle_queued_age: "Gérer automatiquement les documents qui attendent d'être examinés après ce nombre de jours. Les signalements seront ignorés. Les messages et les utilisateurs en file d'attente  seront rejetés. Réglez à 0 pour désactiver cette fonction."
+    svg_icon_subset: "Rajouter des icônes supplémentaires FontAwesome 5 que vous souhaitez inclure dans vos médias. Utiliser le préfixe 'fa-' pour les icônes solides, 'far-' pour les icônes normaux et 'fab-' pour les icônes de marque."
     max_prints_per_hour_per_user: "Nombre maximum d'accès à la page /print (mettre à 0 pour désactiver)"
     full_name_required: "Le nom complet est requis dans le profil utilisateur."
     enable_names: "Autoriser l'affichage des noms complets des utilisateurs dans leur profil, sur leur carte d'utilisateur et dans les courriels. Décocher pour cacher les noms complets partout."
@@ -1708,6 +1690,7 @@ fr:
     shared_drafts_category: "Activez la fonction Ébauches partagées en désignant une catégorie pour les ébauches de sujet. Les sujets dans cette catégorie ne figureront pas dans les listes de sujets des responsables."
     push_notifications_prompt: "Afficher la demande de consentement de l'utilisateur"
     push_notifications_icon: "L'icône de badge qui apparait dans le coin notifications. Taille recommandée: 96px x 96px."
+    short_title: "Le titre court sera utilisé sur la page d'accueil de l'utilisateur, dans le launcheur, ou d'autres endroits ou la place disponible est limitée. Maximum 12 caractères conseillé."
     errors:
       invalid_email: "Adresse de courriel invalide."
       invalid_username: "Il n'y a pas d'utilisateur ayant ce pseudo."
@@ -1774,13 +1757,6 @@ fr:
     errors:
       different_topics: "Des messages appartenant à différents sujets ne peuvent pas être fusionnés."
       different_users: "Des messages appartenant à différents utilisateurs ne peuvent pas être fusionnés."
-  move_posts:
-    new_topic_moderator_post:
-      one: "Un message a été déplacé vers un nouveau sujet : %{topic_link}"
-      other: "%{count} messages ont été déplacés vers un nouveau sujet : %{topic_link}"
-    existing_topic_moderator_post:
-      one: "Un message a été intégré dans un sujet existant : %{topic_link}"
-      other: "%{count} messages ont été intégrés dans un sujet existant : %{topic_link}"
   change_owner:
     post_revision_text: "Propriété transférée"
   topic_statuses:
@@ -1868,7 +1844,7 @@ fr:
     second_factor_title: "Authentification à deux facteurs"
     second_factor_description: "Veuillez saisir le code d'authentification requise de votre app :"
     second_factor_backup_description: "Veuillez entrer un de vos codes de secours :"
-    second_factor_backup_title: "Code de secours de l'authentification à deux étapes"
+    second_factor_backup_title: "Code de secours de l'authentification à deux facteurs"
     invalid_second_factor_code: "Code d'authentification invalide. Chaque code ne peut être utilisé qu'une fois."
     second_factor_toggle:
       totp: "Utilisez plutôt une application d'authentification"
@@ -1877,7 +1853,6 @@ fr:
     email:
       sent_test: "envoyé !"
       sent_test_disabled: "impossible d'envoyer, les courriels sont désactivés"
-      sent_test_disabled_for_non_staff: "impossible d'envoyer, les courriels sont désactivés sauf pour les responsables"
   user:
     deactivated: "A été désactivé à cause de trop de courriels rejetés vers '%{email}'."
     deactivated_by_staff: "Désactivé par un responsable"
@@ -4281,7 +4256,6 @@ fr:
             placeholder: "Un endroit de discussion pour Jeanne et ses amis"
       introduction:
         title: "Introduction"
-        disabled: "<p>Nous n'avons pas trouvé de sujet avec le titre “Welcome to Discourse”.</p> <ul> <li>Si vous avez modifié le titre, modifier le sujet pour modifier le texte d'introduction de votre site.</li> <li>Si vous avez supprimé ce sujet, créer un nouveau sujet avec le titre “Welcome to Discourse” comme titre. Le contenu du premier message est le message d'introduction de votre site.</li> </ul>"
         fields:
           welcome:
             label: "Sujet de bienvenue"
@@ -4340,10 +4314,8 @@ fr:
         fields:
           logo:
             label: "Logo principal"
-            description: "L'image logo du coin supérieur gauche de votre site. Utilisez une forme rectangulaire large."
           logo_small:
             label: "Logo compact"
-            description: "Une version compacte de votre logo qui est affichée dans le coin supérieur gauche de votre site quand vous défilez la page vers le bas. Utilisez une forme carrée."
       icons:
         title: "Icônes"
         fields:

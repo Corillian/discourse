@@ -55,6 +55,7 @@ en:
   anonymous: "Anonymous"
   remove_posts_deleted_by_author: "Deleted by author"
   redirect_warning: "We were unable to verify that the link you selected was actually posted to the forum. If you wish to proceed anyway, select the link below."
+  on_another_topic: "On another topic"
 
   themes:
     bad_color_scheme: "Can not update theme, invalid color scheme"
@@ -168,6 +169,7 @@ en:
       default_categories_already_selected: "You cannot select a category used in another list."
       s3_upload_bucket_is_required: "You cannot enable uploads to S3 unless you've provided the 's3_upload_bucket'."
       s3_backup_requires_s3_settings: "You cannot use S3 as backup location unless you've provided the '%{setting_name}'."
+      s3_bucket_reused: "You cannot use the same bucket for 's3_upload_bucket' and 's3_backup_bucket'. Choose a different bucket or use a different path for each bucket."
     conflicting_google_user_id: 'The Google Account ID for this account has changed; staff intervention is required for security reasons. Please contact staff and point them to <br><a href="https://meta.discourse.org/t/76575">https://meta.discourse.org/t/76575</a>'
 
   activemodel:
@@ -183,12 +185,14 @@ en:
 
       <p>Otherwise please <a href="%{base_url}/password-reset">Reset Password</a>.</p>
     user_exists: "There's no need to invite <b>%{email}</b>, they <a href='%{base_path}/u/%{username}/summary'>already have an account!</a>"
+    confirm_email: "<p>You’re almost done! We sent an activation mail to your email address. Please follow the instructions in the mail to activate your account.</p><p>If it doesn’t arrive, check your spam folder.</p>"
 
   bulk_invite:
     file_should_be_csv: "The uploaded file should be of csv format."
     error: "There was an error uploading that file. Please try again later."
 
   topic_invite:
+    failed_to_invite: "The user cannot be invited into this topic without a group membership in either one of the following groups: %{group_names}."
     user_exists: "Sorry, that user has already been invited. You may only invite a user to a topic once."
 
   backup:
@@ -220,15 +224,15 @@ en:
     other: "We're sorry, but new users are temporarily limited to %{count} replies in the same topic."
 
   max_consecutive_replies:
-    one: "No more than 1 reply is allowed. Please edit your previous reply instead, or wait for someone to reply to you."
-    other: "No more than %{count} consecutive replies are allowed. Please edit your previous reply instead, or wait for someone to reply to you."
+    one: "No consecutive replies are allowed. Please edit your previous reply, or wait for someone to reply to you."
+    other: "No more than %{count} consecutive replies are allowed. Please edit your previous reply, or wait for someone to reply to you."
 
   embed:
     start_discussion: "Start Discussion"
     continue: "Continue Discussion"
     error: "Error Embedding"
     referer: "Referer:"
-    mismatch: "The referer did not match any of the following hosts:"
+    mismatch: "The referer was either not sent, or did not match any of the following hosts:"
     no_hosts: "No hosts were set up for embedding."
     configure: "Configure Embedding"
     more_replies:
@@ -273,6 +277,7 @@ en:
   not_accepting_pms: "Sorry, %{username} is not accepting messages at the moment."
   max_pm_recepients: "Sorry, you can send a message to maximum %{recipients_limit} recipients."
   pm_reached_recipients_limit: "Sorry, you can't have more than %{recipients_limit} recipients in a message."
+  removed_direct_reply_full_quotes: "Automatically removed quote of whole previous post."
 
   just_posted_that: "is too similar to what you recently posted"
   invalid_characters: "contains invalid characters"
@@ -870,6 +875,7 @@ en:
     read: "read"
     read_write: "read/write"
     description: "\"%{application_name}\" is requesting the following access to your account:"
+    instructions: "We just generated a new user API key for you to use with \"%{application_name}\", please paste the following key into your application:"
     no_trust_level: "Sorry, you do not have the required trust level to access the user API"
     generic_error: "Sorry, we are unable to issue user API keys, this feature may be disabled by the site admin"
     scopes:
@@ -890,12 +896,13 @@ en:
         percent: Percent
         day: Day
     post_edits:
-      title: "Post edits"
+      title: "Post Edits"
       labels:
         post: Post
         editor: Editor
         author: Author
         edit_reason: Reason
+      description: "Number of new post edits."
     user_flagging_ratio:
       title: "User Flagging Ratio"
       labels:
@@ -904,8 +911,9 @@ en:
         disagreed_flags: Disagreed flags
         ignored_flags: Ignored flags
         score: Score
+      description: "List of users ordered by ratio of staff response to their flags (disagreed to agreed)."
     moderators_activity:
-      title: "Moderators activity"
+      title: "Moderator Activity"
       labels:
         moderator: Moderator
         flag_count: Flags reviewed
@@ -914,8 +922,9 @@ en:
         post_count: Posts created
         pm_count: PMs created
         revision_count: Revisions
+      description: List of moderator activity including flags reviewed, reading time, topics created, posts created, private messages created, and revisions.
     flags_status:
-      title: "Flags status"
+      title: "Flags Status"
       values:
         agreed: Agreed
         disagreed: Disagreed
@@ -927,39 +936,42 @@ en:
         poster: Poster
         flagger: Flagger
         time_to_resolution: Resolution time
+      description: "List of flags' statuses including type of flag, poster, flagger, and time to resolution."
     visits:
       title: "User Visits"
       xaxis: "Day"
       yaxis: "Number of visits"
+      description: "Number of all unique user visits."
     signups:
       title: "Signups"
       xaxis: "Day"
       yaxis: "Number of signups"
-      description: "New account registrations for this period"
+      description: "New account registrations for this period."
     new_contributors:
       title: "New Contributors"
       xaxis: "Day"
       yaxis: "Number of new contributors"
-      description: "Number of users who made their first post during this period"
+      description: "Number of users who made their first post during this period."
     dau_by_mau:
       title: "DAU/MAU"
       xaxis: "Day"
       yaxis: "DAU/MAU"
-      description: "No. of members that logged in in the last day divided by no of members that logged in in the last month – returns a % which indicates community 'stickiness'. Aim for >30%."
+      description: "Number of members that logged in in the last day divided by number of members that logged in in the last month – returns a % which indicates community 'stickiness'. Aim for >30%."
     daily_engaged_users:
       title: "Daily Engaged Users"
       xaxis: "Day"
       yaxis: "Engaged Users"
-      description: "Number of users that have liked or posted in the last day"
+      description: "Number of users that have liked or posted in the last day."
     profile_views:
       title: "User Profile Views"
       xaxis: "Day"
       yaxis: "Number of user profiles viewed"
+      description: "Total new views of user profiles."
     topics:
       title: "Topics"
       xaxis: "Day"
       yaxis: "Number of new topics"
-      description: "New topics created during this period"
+      description: "New topics created during this period."
     posts:
       title: "Posts"
       xaxis: "Day"
@@ -969,24 +981,24 @@ en:
       title: "Likes"
       xaxis: "Day"
       yaxis: "Number of new likes"
+      description: "Number of new likes."
     flags:
       title: "Flags"
       xaxis: "Day"
       yaxis: "Number of flags"
+      description: "Number of new flags."
     bookmarks:
       title: "Bookmarks"
       xaxis: "Day"
       yaxis: "Number of new bookmarks"
-    starred:
-      title: "Starred"
-      xaxis: "Day"
-      yaxis: "Number of new starred topics"
+      description: "Number of new topics and posts bookmarked."
     users_by_trust_level:
       title: "Users per Trust Level"
       xaxis: "Trust Level"
       yaxis: "Number of Users"
       labels:
         level: Level
+      description: "Number of users grouped by trust level."
     users_by_type:
       title: "Users per Type"
       xaxis: "Type"
@@ -998,40 +1010,49 @@ en:
         moderator: Moderator
         suspended: Suspended
         silenced: Silenced
+      description: "Number of users grouped by admin, moderator, suspended, and silenced."
     trending_search:
-      title: Trending search
+      title: Trending Search Terms
       labels:
         term: Term
         searches: Searches
         click_through: CTR
+      description: "Most popular search terms with their click-through rates."
     emails:
       title: "Emails Sent"
       xaxis: "Day"
       yaxis: "Number of Emails"
+      description: "Number of new emails sent."
     user_to_user_private_messages:
       title: "User-to-User (excluding replies)"
       xaxis: "Day"
       yaxis: "Number of messages"
+      description: "Number of newly initiated private messages."
     user_to_user_private_messages_with_replies:
       title: "User-to-User (with replies)"
       xaxis: "Day"
       yaxis: "Number of messages"
+      description: "Number of all new private messages and responses."
     system_private_messages:
       title: "System"
       xaxis: "Day"
       yaxis: "Number of messages"
+      description: "Number of private messages sent automatically by the System."
     moderator_warning_private_messages:
       title: "Moderator Warning"
       xaxis: "Day"
       yaxis: "Number of messages"
+      description: "Number of warnings sent by private messages from moderators."
     notify_moderators_private_messages:
       title: "Notify Moderators"
       xaxis: "Day"
       yaxis: "Number of messages"
+      description: "Number of times moderators have been privately notified by a flag."
     notify_user_private_messages:
       title: "Notify User"
       xaxis: "Day"
       yaxis: "Number of messages"
+      description: "Number of times users have been privately notified by a flag."
     top_referrers:
       title: "Top Referrers"
       xaxis: "User"
@@ -1041,6 +1062,7 @@ en:
         user: "User"
         num_clicks: "Clicks"
         num_topics: "Topics"
+      description: "Users listed by number of clicks on links they have shared."
     top_traffic_sources:
       title: "Top Traffic Sources"
       xaxis: "Domain"
@@ -1051,35 +1073,43 @@ en:
         domain: Domain
         num_clicks: Clicks
         num_topics: Topics
+      description: "External sources that have linked to this site the most."
     top_referred_topics:
       title: "Top Referred Topics"
       labels:
         num_clicks: "Clicks"
         topic: "Topic"
+      description: "Topics that have received the most clicks from external sources."
     page_view_anon_reqs:
       title: "Anonymous"
       xaxis: "Day"
       yaxis: "Anonymous Pageviews"
+      description: "Number of new page views by visitors not logged in to an account."
     page_view_logged_in_reqs:
       title: "Logged In"
       xaxis: "Day"
       yaxis: "Logged In Pageviews"
+      description: "Number of new pageviews from logged in users."
     page_view_crawler_reqs:
       title: "Web Crawlers"
       xaxis: "Day"
       yaxis: "Web Crawler Pageviews"
+      description: "Webcrawlers listed by number of new pageviews they have generated."
     page_view_total_reqs:
       title: "Pageviews"
       xaxis: "Day"
       yaxis: "Total Pageviews"
+      description: "Number of new pageviews from all visitors."
     page_view_logged_in_mobile_reqs:
       title: "Logged In Pageviews"
       xaxis: "Day"
       yaxis: "Mobile Logged In Pageviews"
+      description: "Number of new pageviews from users on mobile devices and logged in to an account."
     page_view_anon_mobile_reqs:
       title: "Anon Pageviews"
       xaxis: "Day"
       yaxis: "Mobile Anon Pageviews"
+      description: "Number of new pageviews from visitors on a mobile device who are not logged in."
     http_background_reqs:
       title: "Background"
       xaxis: "Day"
@@ -1108,19 +1138,23 @@ en:
       title: "Time to first response"
       xaxis: "Day"
       yaxis: "Average time (hours)"
+      description: "Average time  (in hours) of the first response to new topics."
     topics_with_no_response:
       title: "Topics with no response"
       xaxis: "Day"
       yaxis: "Total"
+      description: "Number of new topics created that did not receive a response."
     mobile_visits:
       title: "User Visits (mobile)"
       xaxis: "Day"
       yaxis: "Number of visits"
+      description: "Number of unique users who visited using a mobile device."
     web_crawlers:
       title: "Web Crawler Requests"
       labels:
         user_agent: "User Agent"
         page_views: "Pageviews"
+      description: "Number of new pageviews generated by all webcrawlers."
     suspicious_logins:
       title: "Suspicious Logins"
       labels:
@@ -1131,6 +1165,22 @@ en:
         device: Device
         os: Operating System
         login_time: Login Time
+      description: "Details of new logins that differ suspiciously from previous logins."
+    staff_logins:
+      title: "Staff Logins"
+      labels:
+        user: User
+        location: Location
+        login_at: Login at
+      description: "List of admin and moderator login times with locations."
+    top_uploads:
+      title: "Top Uploads"
+      labels:
+        filename: Filename
+        extension: Extension
+        author: Author
+        filesize: File size
+      description: "List all uploads by extension, filesize and author."
 
   dashboard:
     rails_env_warning: "Your server is running in %{env} mode."
@@ -1143,6 +1193,8 @@ en:
     facebook_config_warning: 'The server is configured to allow signup and log in with Facebook (enable_facebook_logins), but the app id and app secret values are not set. Go to <a href="%{base_path}/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://meta.discourse.org/t/configuring-facebook-login-for-discourse/13394" target="_blank">See this guide to learn more</a>.'
     twitter_config_warning: 'The server is configured to allow signup and log in with Twitter (enable_twitter_logins), but the key and secret values are not set. Go to <a href="%{base_path}/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://meta.discourse.org/t/configuring-twitter-login-for-discourse/13395" target="_blank">See this guide to learn more</a>.'
     github_config_warning: 'The server is configured to allow signup and log in with GitHub (enable_github_logins), but the client id and secret values are not set. Go to <a href="%{base_path}/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://meta.discourse.org/t/configuring-github-login-for-discourse/13745" target="_blank">See this guide to learn more</a>.'
+    pwa_config_icon_warning: 'The server is missing a proper large icon which allows users to add a homescreen shortcut to this site on Android devices. Go to <a href="%{base_path}/admin/site_settings/category/all_results?filter=large_icon">the Site Settings</a> and upload an icon of the recommended size.'
+    pwa_config_title_warning: 'The server is missing a short title which allows users to add a homescreen shortcut to this site on Android devices. Go to <a href="%{base_path}/admin/site_settings/category/all_results?filter=short_title">the Site Settings</a> and configure a title of the recommended length.'
     s3_config_warning: 'The server is configured to upload files to S3, but at least one the following setting is not set: s3_access_key_id, s3_secret_access_key, s3_use_iam_profile, or s3_upload_bucket. Go to <a href="%{base_path}/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank">See "How to set up image uploads to S3?" to learn more</a>.'
     s3_backup_config_warning: 'The server is configured to upload backups to S3, but at least one the following setting is not set: s3_access_key_id, s3_secret_access_key, s3_use_iam_profile, or s3_backup_bucket. Go to <a href="%{base_path}/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank">See "How to set up image uploads to S3?" to learn more</a>.'
     image_magick_warning: 'The server is configured to create thumbnails of large images, but ImageMagick is not installed. Install ImageMagick using your favorite package manager or <a href="https://www.imagemagick.org/script/download.php" target="_blank">download the latest release</a>.'
@@ -1192,6 +1244,7 @@ en:
     educate_until_posts: "When the user starts typing their first (n) new posts, show the pop-up new user education panel in the composer."
     title: "The name of this site, as used in the title tag."
     site_description: "Describe this site in one sentence, as used in the meta description tag."
+    short_site_description: "Short description, as used in the title tag on homepage."
     contact_email: "Email address of key contact responsible for this site. Used for critical notifications, as well as on the <a href='%{base_path}/about' target='_blank'>/about</a> contact form for urgent matters."
     contact_url: "Contact URL for this site. Used on the <a href='%{base_path}/about' target='_blank'>/about</a> contact form for urgent matters."
     crawl_images: "Retrieve images from remote URLs to insert the correct width and height dimensions."
@@ -1223,10 +1276,10 @@ en:
     enable_inline_onebox_on_all_domains: "Ignore inline_onebox_domain_whitelist site setting and allow inline onebox on all domains."
     max_oneboxes_per_post: "Maximum number of oneboxes in a post."
 
-    logo: "The logo image at the top left of your site, should be a wide rectangle shape. If left blank site title text will be shown."
-    logo_small: "The small logo image at the top left of your site, should be a square shape, seen when scrolling down. If left blank a home glyph will be shown."
-    digest_logo: "The alternate logo image used at the top of your site's email summary. Should be a wide rectangle shape. Should not be an SVG image. If left blank `logo_url` will be used."
-    mobile_logo: "Custom logo url used on mobile version of your site. If left blank, `logo_url` will be used. eg: https://example.com/uploads/default/logo.png"
+    logo: "The logo image at the top left of your site. Use a wide rectangular image with a height of 120px and an aspect ratio greater than 3:1. If left blank, the site title text will be shown."
+    logo_small: "The small logo image at the top left of your site, seen when scrolling down. Use a square image. The recommended size is 120px by 120px. If left blank, a home glyph will be shown."
+    digest_logo: "The alternate logo image used at the top of your site's email summary. Use a wide rectangle image. Don't use an SVG image. If left blank, the image from the `logo` setting will be used."
+    mobile_logo: "The logo used on mobile version of your site. Use a wide rectangular image with a height of 120px and an aspect ratio greater than 3:1. If left blank, the image from the `logo` setting will be used."
     large_icon: "Image used as logo/splash image on Android. Recommended size is 512px by 512px."
     favicon: "A favicon for your site, see <a href='https://en.wikipedia.org/wiki/Favicon' target='_blank'>https://en.wikipedia.org/wiki/Favicon</a>. To work correctly over a CDN it must be a png."
     apple_touch_icon: "Icon used for Apple touch devices. Recommended size is 144px by 144px."
@@ -1268,7 +1321,7 @@ en:
     num_tl3_flags_to_silence_new_user: "If a new user's posts get this many flags from num_tl3_users_to_silence_new_user different trust level 3 users, hide all their posts and prevent future posting. 0 to disable."
     num_tl3_users_to_silence_new_user: "If a new user's posts get num_tl3_flags_to_silence_new_user flags from this many different trust level 3 users, hide all their posts and prevent future posting. 0 to disable."
     notify_mods_when_user_silenced: "If a user is automatically silenced, send a message to all moderators."
-    flag_sockpuppets: "If a new user replies to a topic from the same IP address as the new user who started the topic, flag both of their posts as potential spam."
+    flag_sockpuppets: "If a new user replies to a topic from the same IP address as the user who started the topic, flag both of their posts as potential spam."
 
     traditional_markdown_linebreaks: "Use traditional linebreaks in Markdown, which require two trailing spaces for a linebreak."
     enable_markdown_typographer: "Use typography rules to improve readability of text: replace straight quotes ' with curly quotes ’, (c) (tm) with symbols, -- with emdash –, etc"
@@ -1297,6 +1350,7 @@ en:
     content_security_policy_report_only: EXPERIMENTAL - Turn on Content-Security-Policy-Report-Only
     content_security_policy_collect_reports: Enable CSP violation report collection at /csp_reports
     content_security_policy_script_src: Additional whitelisted script sources. The current host and CDN are included by default.
+    invalidate_inactive_admin_email_after_days: "Admin accounts that have not visited the site in this number of days will need to re-validate their email address before logging in. Set to 0 to disable."
     top_menu: "Determine which items appear in the homepage navigation, and in what order. Example latest|new|unread|categories|top|read|posted|bookmarks"
     post_menu: "Determine which items appear on the post menu, and in what order. Example like|edit|flag|delete|share|bookmark|reply"
     post_menu_hidden_items: "The menu items to hide by default in the post menu unless an expansion ellipsis is clicked on."
@@ -1306,13 +1360,14 @@ en:
     send_tl1_welcome_message: "Send new trust level 1 users a welcome message."
     suppress_reply_directly_below: "Don't show the expandable reply count on a post when there is only a single reply directly below this post."
     suppress_reply_directly_above: "Don't show the expandable in-reply-to on a post when there is only a single reply directly above this post."
+    remove_full_quote: "Automatically remove full quotes on direct replies."
     suppress_reply_when_quoting: "Don't show the expandable in-reply-to on a post when post quotes reply."
     max_reply_history: "Maximum number of replies to expand when expanding in-reply-to"
     topics_per_period_in_top_summary: "Number of top topics shown in the default top topics summary."
     topics_per_period_in_top_page: "Number of top topics shown on the expanded 'Show More' top topics."
     redirect_users_to_top_page: "Automatically redirect new and long absent users to the top page."
     top_page_default_timeframe: "Default timeframe for the top view page."
-    show_email_on_profile: "Show a user's email on their profile (only visible to themselves and staff)"
+    show_email_on_profile: "Allow moderators to view user emails"
     prioritize_username_in_ux: "Show username first on user page, user card and posts (when disabled name is shown first)"
     enable_rich_text_paste: "Enable automatic HTML to Markdown conversion when pasting text into the composer. (Experimental)"
 
@@ -1786,6 +1841,7 @@ en:
     enable_emoji_shortcuts: "Common smiley text such as :) :p :( will be converted to emojis"
     emoji_set: "How would you like your emoji?"
     emoji_autocomplete_min_chars: "Minimum number of characters required to trigger autocomplete emoji popup"
+    enable_inline_emoji_translation: "Enables translation for inline emojis (without any space or punctuation before)"
 
     approve_post_count: "The amount of posts from a new or basic user that must be approved"
     approve_unless_trust_level: "Posts for users below this trust level must be approved"
@@ -1867,6 +1923,8 @@ en:
 
     short_title: "The short title will be used on the user's home screen, launcher, or other places where space may be limited. A maximum of 12 characters is recommended."
 
+    dashboard_general_tab_activity_metrics: "Choose reports to be displayed as activity metrics on the general tab."
+
     errors:
       invalid_email: "Invalid email address."
       invalid_username: "There's no user with that username."
@@ -1942,11 +2000,11 @@ en:
 
   move_posts:
     new_topic_moderator_post:
-      one: "A post was split to a new topic: %{topic_link}"
-      other: "%{count} posts were split to a new topic: %{topic_link}"
+      one: "A post was split to a new %{entity}: %{topic_link}"
+      other: "%{count} posts were split to a new %{entity}: %{topic_link}"
     existing_topic_moderator_post:
-      one: "A post was merged into an existing topic: %{topic_link}"
-      other: "%{count} posts were merged into an existing topic: %{topic_link}"
+      one: "A post was merged into an existing %{entity}: %{topic_link}"
+      other: "%{count} posts were merged into an existing %{entity}: %{topic_link}"
 
   change_owner:
     post_revision_text: "Ownership transferred"
@@ -2049,7 +2107,6 @@ en:
     email:
       sent_test: "sent!"
       sent_test_disabled: "cannot send because emails are disabled"
-      sent_test_disabled_for_non_staff: "cannot send because emails are disabled for non-staff"
 
   user:
     deactivated: "Was deactivated due to too many bounced emails to '%{email}'."
@@ -2298,8 +2355,8 @@ en:
     deferred_and_deleted: "Thanks for letting us know. We've removed the post."
 
   temporarily_closed_due_to_flags:
-    one: "This topic is temporarily closed for 1 hour due to a large number of community flags."
-    other: "This topic is temporarily closed for %{count} hours due to a large number of community flags."
+    one: "This topic is temporarily closed for at least 1 hour due to a large number of community flags."
+    other: "This topic is temporarily closed for at least %{count} hours due to a large number of community flags."
 
   system_messages:
     private_topic_title: "Topic #%{id}"
@@ -2838,6 +2895,7 @@ en:
 
   subject_re: "Re: "
   subject_pm: "[PM] "
+  email_from: "%{user_name} via %{site_name}"
 
   user_notifications:
     previous_discussion: "Previous Replies"
@@ -3297,6 +3355,9 @@ en:
     welcome_message: |
       ## [Welcome to %{title}](#welcome)
       An account is required. Please create an account or log in to continue.
+    welcome_message_invite_only: |
+      ## [Welcome to %{title}](#welcome)
+      An account is required. Please ask an existing member for an invite or log in to continue.
 
   terms_of_service:
     title: "Terms of Service"
@@ -4007,6 +4068,11 @@ en:
     staff_tag_remove_disallowed: "The tag \"%{tag}\" may only be removed by staff."
     minimum_required_tags: "You must select at least %{count} tags."
     upload_row_too_long: "The CSV file should have one tag per line. Optionally the tag can be followed by a comma, then the tag group name."
+    forbidden:
+      in_this_category: "\"%{tag_name}\" cannot be used in this category"
+      restricted_to:
+        one: "\"%{tag_name}\" is restricted to the \"%{category_names}\" category"
+        other: "\"%{tag_name}\" is restricted to the following categories: %{category_names}"
   rss_by_tag: "Topics tagged %{tag}"
 
   finish_installation:
@@ -4051,13 +4117,16 @@ en:
           site_description:
             label: "Describe your community in one short sentence"
             placeholder: "A place for Jane and her friends to discuss cool stuff"
+          short_site_description:
+            label: "Describe your community in few words"
+            placeholder: "Best community ever"
 
       introduction:
         title: "Introduction"
-        disabled: "<p>We couldn’t find any topic with the title “Welcome to Discourse”.</p>
+        disabled: "<p>We couldn’t find any topic with the title “%{topic_title}”.</p>
           <ul>
           <li>If you have changed the title, edit that topic to modify your site’s introductory text.</li>
-          <li>If you have deleted this topic, create another topic with “Welcome to Discourse” as the title. The content of the first post is your site’s introductory text.</li>
+          <li>If you have deleted this topic, create another topic with “%{topic_title}” as the title. The content of the first post is your site’s introductory text.</li>
           </ul>"
 
         fields:
@@ -4133,10 +4202,10 @@ en:
         fields:
           logo:
             label: "Primary Logo"
-            description: "The logo image at the top left of your site. Use a wide rectangle shape."
+            description: "The logo image at the top left of your site. Use a wide rectangular image with a height of 120px and an aspect ratio greater than 3:1"
           logo_small:
             label: "Compact Logo"
-            description: "A compact version of your logo, shown at the top left of your site when scrolling down. Use a square shape."
+            description: "A compact version of your logo, shown at the top left of your site when scrolling down. Use a square image. The recommended size is 120x120"
 
       icons:
         title: "Icons"

@@ -43,7 +43,6 @@ describe Upload do
       upload.reload
       expect(upload.optimized_images.count).to eq(1)
     end
-
   end
 
   it "can reconstruct dimensions on demand" do
@@ -56,10 +55,23 @@ describe Upload do
     expect(upload.width).to eq(64250)
     expect(upload.height).to eq(64250)
 
+    upload.reload
+    expect(upload.read_attribute(:width)).to eq(64250)
+
     upload.update_columns(width: nil, height: nil, thumbnail_width: nil, thumbnail_height: nil)
 
     expect(upload.thumbnail_width).to eq(500)
     expect(upload.thumbnail_height).to eq(500)
+  end
+
+  it "dimension calculation returns nil on missing image" do
+    upload = UploadCreator.new(huge_image, "image.png").create_for(user_id)
+    upload.update_columns(width: nil, height: nil, thumbnail_width: nil, thumbnail_height: nil)
+
+    missing_url = "wrong_folder#{upload.url}"
+    upload.update_columns(url: missing_url)
+    expect(upload.thumbnail_height).to eq(nil)
+    expect(upload.thumbnail_width).to eq(nil)
   end
 
   it "extracts file extension" do

@@ -108,7 +108,6 @@ gl:
       close: 'pechar'
       twitter: 'compartir esta ligazón no Twitter'
       facebook: 'compartir esta ligazón no Facebook'
-      google+: 'compartir esta ligazón no Google+'
       email: 'enviar esta ligazón nun correo electrónico'
     action_codes:
       public_topic: "fixo esta publicación pública no %{when}"
@@ -246,7 +245,6 @@ gl:
     choose_topic:
       none_found: "Non se atoparon temas."
       title:
-        search: "Buscar un tema polo nome, URL ou ID:"
         placeholder: "escribe o título do tema aquí"
     queue:
       topic: "Tema:"
@@ -1093,7 +1091,6 @@ gl:
       split_topic:
         title: "Mover ao tema novo"
         action: "mover ao tema novo"
-        topic_name: "Nome do tema novo"
         error: "Produciuse un erro movendo as publicacións ao novo tema."
         instructions:
           one: "Vas crear un novo tema e enchelo coa publicación que seleccionaches."
@@ -1523,9 +1520,6 @@ gl:
         private_messages_short: "Mensaxes"
         private_messages_title: "Mensaxes"
         mobile_title: "Móbil"
-        space_free: "{{size}} libres"
-        uploads: "subidas"
-        backups: "copias de seguranza"
         traffic_short: "Tráfico"
         traffic: "Peticións web de aplicativos"
         show_traffic_report: "Amosar o informe detallado do tráfico"

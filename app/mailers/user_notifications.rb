@@ -35,7 +35,7 @@ class UserNotifications < ActionMailer::Base
 
   def suspicious_login(user, opts = {})
     ipinfo = DiscourseIpInfo.get(opts[:client_ip])
-    location = [ipinfo[:city], ipinfo[:region], ipinfo[:country]].reject(&:blank?).join(", ")
+    location = ipinfo[:location]
     browser = BrowserDetection.browser(opts[:user_agent])
     device = BrowserDetection.device(opts[:user_agent])
     os = BrowserDetection.os(opts[:user_agent])
@@ -235,7 +235,7 @@ class UserNotifications < ActionMailer::Base
       @preheader_text = I18n.t('user_notifications.digest.preheader', last_seen_at: @last_seen_at)
 
       opts = {
-        from_alias: I18n.t('user_notifications.digest.from', site_name: SiteSetting.title),
+        from_alias: I18n.t('user_notifications.digest.from', site_name: Email.site_title),
         subject: I18n.t('user_notifications.digest.subject_template', email_prefix: @email_prefix, date: short_date(Time.now)),
         add_unsubscribe_link: true,
         unsubscribe_url: "#{Discourse.base_url}/email/unsubscribe/#{@unsubscribe_key}",
@@ -412,7 +412,7 @@ class UserNotifications < ActionMailer::Base
       title: notification_data[:topic_title],
       post: post,
       username: original_username,
-      from_alias: user_name,
+      from_alias: I18n.t('email_from', user_name: user_name, site_name: Email.site_title),
       allow_reply_by_email: allow_reply_by_email,
       use_site_subject: opts[:use_site_subject],
       add_re_to_subject: opts[:add_re_to_subject],
@@ -575,7 +575,7 @@ class UserNotifications < ActionMailer::Base
       if SiteSetting.private_email?
         message = I18n.t('system_messages.contents_hidden')
       else
-        message = email_post_markdown(post) + (reached_limit ? "\n\n#{I18n.t "user_notifications.reached_limit", count: SiteSetting.max_emails_per_day_per_user}" : "");
+        message = email_post_markdown(post) + (reached_limit ? "\n\n#{I18n.t "user_notifications.reached_limit", count: SiteSetting.max_emails_per_day_per_user}" : "")
       end
 
       first_footer_classes = "hilight"

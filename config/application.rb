@@ -122,7 +122,6 @@ module Discourse
       google-tag-manager.js
       google-universal-analytics.js
       preload-application-data.js
-      authentication-complete.js
       print-page.js
       omniauth-complete.js
       activate-account.js
@@ -204,7 +203,7 @@ module Discourse
       config.middleware.insert_after Rack::MethodOverride, Middleware::EnforceHostname
     end
 
-    require 'content_security_policy'
+    require 'content_security_policy/middleware'
     config.middleware.swap ActionDispatch::ContentSecurityPolicy::Middleware, ContentSecurityPolicy::Middleware
 
     require 'middleware/discourse_public_exceptions'

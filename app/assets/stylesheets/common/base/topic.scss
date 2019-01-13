@@ -60,11 +60,18 @@
 .title-wrapper {
   display: flex;
   flex-wrap: wrap;
-  .btn-small {
-    margin: 0 6px 0 0;
+  button {
+    margin: 0 0.5em 0 0;
   }
   a.topic-featured-link {
     display: inline-block;
+  }
+  .topic-statuses {
+    line-height: 1.2em;
+    margin-right: 0.15em;
+    .d-icon {
+      color: $primary-medium;
+    }
   }
 }
 
@@ -81,9 +88,6 @@ a.badge-category {
     display: flex;
     flex-wrap: wrap;
     width: 90%;
-    .btn-small {
-      margin: 0 6px 0 0;
-    }
     a.topic-featured-link {
       display: inline-block;
     }

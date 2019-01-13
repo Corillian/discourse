@@ -216,7 +216,7 @@
     }
     .category-chooser {
       display: flex;
-      flex: 1;
+      flex: 1 0 auto;
       width: auto;
     }
   }
@@ -268,14 +268,6 @@
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
-  }
-
-  .d-editor-button-bar .btn {
-    padding: 4px 8px;
-    display: inline-block;
-    @media all and (max-width: 800px) {
-      padding: 5px;
-    }
   }
 
   .submit-panel {

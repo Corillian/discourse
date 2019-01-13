@@ -21,7 +21,6 @@
 //= require jquery.tagsinput.js
 //= require jquery.sortable.js
 //= require lodash.js
-//= require modernizr.custom.00874.js
 //= require mousetrap.js
 //= require rsvp.js
 //= require show-html.js
@@ -32,3 +31,4 @@
 //= require virtual-dom-amd
 //= require highlight.js
 //= require htmlparser.js
+//= require intersection-observer

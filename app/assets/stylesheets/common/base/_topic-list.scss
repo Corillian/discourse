@@ -131,34 +131,42 @@
     @extend .topic-list-main-link;
   }
 
-  .topic-featured-link {
-    padding-left: 5px;
+  .link-bottom-line {
+    font-size: $font-down-1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    .discourse-tags {
+      flex-wrap: wrap;
+      // IE11 is being very stubborn but this is only protection for topics with
+      // a very excessive number of extra long tags - edge case.
+      -ms-flex: 1 0 0px;
+    }
+    a.badge-wrapper.box,
+    a.discourse-tag.box {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    .discourse-tag.simple:after,
+    .discourse-tag.box {
+      margin-right: 0.25em;
+    }
   }
 
-  span.badge-category {
-    .category-name {
-      max-width: 150px;
-    }
+  .topic-featured-link {
+    padding-left: 5px;
   }
 
   .topic-excerpt {
     font-size: $font-down-1;
     margin-top: 5px;
-    color: dark-light-choose($primary-high, $secondary-high);
+    color: $primary-high;
     word-wrap: break-word;
     line-height: $line-height-large;
     padding-right: 20px;
   }
   .topic-statuses:empty {
     display: none;
-  }
-  .topic-status {
-    margin-right: 4px;
-    padding: 0;
-    font-size: 1.071em;
-    &:last-of-type {
-      margin-right: 0;
-    }
   }
 
   .num {
@@ -253,14 +261,6 @@ ol.category-breadcrumb {
 
 .d-icon-thumbtack.unpinned {
   @include fa-rotate(180deg, 1);
-  color: $primary;
-  /* because it is rotated, right becomes left! */
-  padding-left: 3px;
-  padding-right: 0 !important;
-}
-
-.topic-statuses .fa {
-  padding-right: 3px;
 }
 
 .top-title-buttons {

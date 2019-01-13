@@ -3,6 +3,10 @@
 require_dependency 'distributed_cache'
 
 class Category < ActiveRecord::Base
+  self.ignored_columns = %w{
+    uploaded_meta_id
+  }
+
   include Searchable
   include Positionable
   include HasCustomFields
@@ -478,6 +482,10 @@ class Category < ActiveRecord::Base
     self.name_lower = name.downcase if self.name
   end
 
+  def visible_group_names(user)
+    self.groups.visible_groups(user)
+  end
+
   def secure_group_ids
     if self.read_restricted?
       groups.pluck("groups.id")
@@ -567,11 +575,9 @@ class Category < ActiveRecord::Base
 
   def create_category_permalink
     old_slug = saved_changes.transform_values(&:first)["slug"]
-    if self.parent_category
-      url = "c/#{self.parent_category.slug}/#{old_slug}"
-    else
-      url = "c/#{old_slug}"
-    end
+    url = +"#{Discourse.base_uri}/c"
+    url << "/#{parent_category.slug}" if parent_category_id
+    url << "/#{old_slug}"
 
     if Permalink.where(url: url).exists?
       Permalink.where(url: url).update_all(category_id: id)
@@ -672,7 +678,7 @@ end
 #  default_top_period                :string(20)       default("all")
 #  mailinglist_mirror                :boolean          default(FALSE), not null
 #  suppress_from_latest              :boolean          default(FALSE)
-#  minimum_required_tags             :integer          default(0)
+#  minimum_required_tags             :integer          default(0), not null
 #  navigate_to_first_post_after_read :boolean          default(FALSE), not null
 #
 # Indexes

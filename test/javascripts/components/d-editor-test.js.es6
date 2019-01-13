@@ -686,7 +686,7 @@ componentTest("emoji", {
           id: "emoji",
           group: "extras",
           icon: "smile-o",
-          action: "emoji"
+          action: () => toolbar.context.send("emoji")
         });
       });
     });
@@ -804,6 +804,10 @@ composerTestCase("replace-text event for composer", async function(assert) {
       assert,
       textarea
     ) {
+      const focusEvent = $.Event("focus");
+      const $input = $('textarea.d-editor-input');
+      $input.trigger(focusEvent);
+
       this.set("value", BEFORE);
       await setSelection(textarea, CASE.before);
 

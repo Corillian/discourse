@@ -94,7 +94,6 @@ id:
       close: 'tutup'
       twitter: 'share link ini di Twitter'
       facebook: 'share link ini di Facebook'
-      google+: 'share link ini di Google+'
       email: 'kirim link ini melalui email'
     action_codes:
       public_topic: "membuat topik ini umum %{when}"
@@ -235,7 +234,6 @@ id:
     choose_topic:
       none_found: "Tidak ada topik ditemukan."
       title:
-        search: "Cari Topik berdasarkan nama, url atau id:"
         placeholder: "tulis judul topik disini"
     queue:
       topic: "Topik:"
@@ -889,7 +887,6 @@ id:
       split_topic:
         title: "Pindahkan sebagai Topik Baru"
         action: "pindahkan sebagai topik baru"
-        topic_name: "Nama Topik Baru"
         error: "Ada kesalahan dalam memindahkan posting sebagai topik baru"
       change_owner:
         placeholder: "username pemilik yang baru"

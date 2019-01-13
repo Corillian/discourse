@@ -15,7 +15,7 @@
     {{#if remote}}
       <div class="inputs">
         <div class='repo'>
-        {{input value=uploadUrl placeholder="https://github.com/discourse/sample_theme"}}
+        {{input value=uploadUrl placeholder=urlPlaceholder}}
         <span class="description">{{i18n 'admin.customize.theme.import_web_tip'}}</span>
         </div>
         <div class='branch'>
@@ -44,6 +44,6 @@
 {{/d-modal-body}}
 
 <div class="modal-footer">
-  {{d-button action="importTheme" disabled=importDisabled class='btn btn-primary' icon='upload' label='admin.customize.import'}}
-  {{d-modal-cancel close=(action "closeModal")}}
+  {{d-button action=(action "importTheme") disabled=importDisabled class='btn btn-primary' icon='upload' label='admin.customize.import'}}
+  {{d-modal-cancel close=(route-action "closeModal")}}
 </div>
