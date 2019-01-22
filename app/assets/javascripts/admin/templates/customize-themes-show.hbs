@@ -5,7 +5,7 @@
       {{d-button action=(action "finishedEditingName") class="btn-primary submit-edit" icon="check"}}
       {{d-button action=(action "cancelEditingName") class="btn-default cancel-edit" icon="times"}}
     {{else}}
-      {{model.name}} <a {{action "startEditingName"}}>{{d-icon "pencil"}}</a>
+      {{model.name}} <a {{action "startEditingName"}}>{{d-icon "pencil-alt"}}</a>
     {{/if}}
   </div>
 
@@ -17,6 +17,9 @@
   {{/each}}
 
   {{#if model.remote_theme}}
+    {{#if model.remote_theme.remote_url}}
+      <a class="remote-url" href="{{model.remote_theme.remote_url}}">{{model.remote_theme.remote_url}}</a>
+    {{/if}}
     <a class="url about-url" href="{{model.remote_theme.about_url}}">{{i18n "admin.customize.theme.about_theme"}}</a>
     {{#if model.remote_theme.license_url}}
       <a class="url license-url" href="{{model.remote_theme.license_url}}">{{i18n "admin.customize.theme.license"}} {{d-icon "copyright"}}</a>
@@ -135,7 +138,18 @@
       <div class="mini-title">{{i18n "admin.customize.theme.theme_settings"}}</div>
       {{#d-section class="form-horizontal theme settings"}}
         {{#each settings as |setting|}}
-          {{theme-setting setting=setting model=model class="theme-setting"}}
+          {{theme-setting-editor setting=setting model=model class="theme-setting"}}
+        {{/each}}
+      {{/d-section}}
+    </div>
+  {{/if}}
+
+  {{#if hasTranslations}}
+    <div class="control-unit">
+      <div class="mini-title">{{i18n "admin.customize.theme.theme_translations"}}</div>
+      {{#d-section class="form-horizontal theme settings translations"}}
+        {{#each translations as |translation|}}
+          {{theme-translation translation=translation model=model class="theme-translation"}}
         {{/each}}
       {{/d-section}}
     </div>
@@ -164,5 +178,5 @@
   <a class="btn btn-default export" target="_blank" href={{downloadUrl}}>{{d-icon "download"}} {{i18n 'admin.export_json.button_text'}}</a>
 
   {{d-button action=(action "switchType") label="admin.customize.theme.convert" icon=convertIcon class="btn-default btn-normal" title=convertTooltip}}
-  {{d-button action=(action "destroy") label="admin.customize.delete" icon="trash" class="btn-danger"}}
+  {{d-button action=(action "destroy") label="admin.customize.delete" icon="trash-alt" class="btn-danger"}}
 </div>

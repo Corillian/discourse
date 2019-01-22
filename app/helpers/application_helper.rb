@@ -109,7 +109,12 @@ module ApplicationHelper
   end
 
   def html_classes
-    "#{mobile_view? ? 'mobile-view' : 'desktop-view'} #{mobile_device? ? 'mobile-device' : 'not-mobile-device'} #{rtl_class} #{current_user ? '' : 'anon'}"
+    list = []
+    list << (mobile_view? ? 'mobile-view' : 'desktop-view')
+    list << (mobile_device? ? 'mobile-device' : 'not-mobile-device')
+    list << 'rtl' if rtl?
+    list << text_size_class
+    list.join(' ')
   end
 
   def body_classes
@@ -126,8 +131,9 @@ module ApplicationHelper
     result.join(' ')
   end
 
-  def rtl_class
-    rtl? ? 'rtl' : ''
+  def text_size_class
+    size = current_user&.user_option&.text_size || SiteSetting.default_text_size
+    "text-size-#{size}"
   end
 
   def escape_unicode(javascript)
@@ -275,7 +281,13 @@ module ApplicationHelper
   end
 
   def application_logo_url
-    @application_logo_url ||= (mobile_view? && SiteSetting.site_mobile_logo_url).presence || SiteSetting.site_logo_url
+    @application_logo_url ||= begin
+      if mobile_view? && SiteSetting.site_mobile_logo_url
+        SiteSetting.site_mobile_logo_url
+      else
+        SiteSetting.site_home_logo_url
+      end
+    end
   end
 
   def login_path
@@ -392,8 +404,13 @@ module ApplicationHelper
   end
 
   def theme_lookup(name)
-    lookup = Theme.lookup_field(theme_ids, mobile_view? ? :mobile : :desktop, name)
-    lookup.html_safe if lookup
+    Theme.lookup_field(theme_ids, mobile_view? ? :mobile : :desktop, name)
+      &.html_safe
+  end
+
+  def theme_translations_lookup
+    Theme.lookup_field(theme_ids, :translations, I18n.locale)
+      &.html_safe
   end
 
   def discourse_stylesheet_link_tag(name, opts = {})
