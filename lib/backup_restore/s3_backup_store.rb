@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_dependency "backup_restore/backup_store"
 require_dependency "s3_helper"
 
@@ -49,6 +51,9 @@ module BackupRestore
 
       ensure_cors!
       presigned_url(obj, :put, UPLOAD_URL_EXPIRES_AFTER_SECONDS)
+    rescue Aws::Errors::ServiceError => e
+      Rails.logger.warn("Failed to generate upload URL for S3: #{e.message.presence || e.class.name}")
+      raise StorageError
     end
 
     private

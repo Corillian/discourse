@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module UserNotificationsHelper
   include GlobalPath
 
   def indent(text, by = 2)
     spacer = " " * by
-    result = ""
+    result = +""
     text.each_line do |line|
       result << spacer << line
     end
@@ -22,8 +24,7 @@ module UserNotificationsHelper
     logo_url = SiteSetting.site_digest_logo_url
     logo_url = SiteSetting.site_logo_url if logo_url.blank? || logo_url =~ /\.svg$/i
     return nil if logo_url.blank? || logo_url =~ /\.svg$/i
-
-    full_cdn_url(logo_url)
+    logo_url
   end
 
   def html_site_link(color)
@@ -33,7 +34,7 @@ module UserNotificationsHelper
   def first_paragraphs_from(html)
     doc = Nokogiri::HTML(html)
 
-    result = ""
+    result = +""
     length = 0
 
     doc.css('body > p, aside.onebox, body > ul, body > blockquote').each do |node|

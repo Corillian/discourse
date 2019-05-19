@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BrowserDetection
 
   def self.browser(user_agent)
@@ -14,6 +16,8 @@ module BrowserDetection
       :safari
     when /MSIE/i, /Trident/i
       :ie
+    when /DiscourseHub/i
+      :discoursehub
     else
       :unknown
     end

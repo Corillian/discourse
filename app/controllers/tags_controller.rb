@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_dependency 'topic_list_responder'
 require_dependency 'topics_bulk_action'
 require_dependency 'topic_query'
@@ -98,6 +100,8 @@ class TagsController < ::ApplicationController
   end
 
   def show
+    raise Discourse::NotFound if DiscourseTagging.hidden_tag_names(guardian).include?(params[:tag_id])
+
     show_latest
   end
 

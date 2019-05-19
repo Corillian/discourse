@@ -134,28 +134,26 @@ export default Ember.Component.extend(
       this.removeObserver(
         `content.@each.${this.get("nameProperty")}`,
         this,
-        this._compute
+        "_compute"
       );
-      this.removeObserver(`content.[]`, this, this._compute);
-      this.removeObserver(`asyncContent.[]`, this, this._compute);
+      this.removeObserver(`content.[]`, this, "_compute");
+      this.removeObserver(`asyncContent.[]`, this, "_compute");
     },
 
     willComputeAttributes() {},
     didComputeAttributes() {},
 
     willComputeContent(content) {
-      return content;
+      return applyContentPluginApiCallbacks(
+        this.get("pluginApiIdentifiers"),
+        content,
+        this
+      );
     },
     computeContent(content) {
       return content;
     },
     _beforeDidComputeContent(content) {
-      content = applyContentPluginApiCallbacks(
-        this.get("pluginApiIdentifiers"),
-        content,
-        this
-      );
-
       let existingCreatedComputedContent = [];
       if (!this.get("allowContentReplacement")) {
         existingCreatedComputedContent = this.get("computedContent").filterBy(
@@ -403,6 +401,8 @@ export default Ember.Component.extend(
     willSelect() {},
     didSelect() {},
 
+    didClearSelection() {},
+
     willCreate() {},
     didCreate() {},
 
@@ -463,6 +463,7 @@ export default Ember.Component.extend(
     clearSelection() {
       this.deselect(this.get("selection"));
       this.focusFilterOrHeader();
+      this.didClearSelection();
     },
 
     actions: {

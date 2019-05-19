@@ -13,7 +13,6 @@ export default Ember.Controller.extend(CanCheckEmails, {
   availableGroups: null,
   userTitleValue: null,
 
-  showApproval: setting("must_approve_users"),
   showBadges: setting("enable_badges"),
   hasLockedTrustLevel: Ember.computed.notEmpty(
     "model.manual_locked_trust_level"
@@ -48,7 +47,7 @@ export default Ember.Controller.extend(CanCheckEmails, {
     return automaticGroups
       .map(group => {
         const name = Ember.String.htmlSafe(group.name);
-        return `<a href="/groups/${name}">${name}</a>`;
+        return `<a href="/g/${name}">${name}</a>`;
       })
       .join(", ");
   },
@@ -67,16 +66,7 @@ export default Ember.Controller.extend(CanCheckEmails, {
 
   @computed("model.user_fields.[]")
   userFields(userFields) {
-    const siteUserFields = this.site.get("user_fields");
-
-    if (!Ember.isEmpty(siteUserFields)) {
-      return siteUserFields.map(uf => {
-        const value = userFields ? userFields[uf.get("id").toString()] : null;
-        return { name: uf.get("name"), value };
-      });
-    }
-
-    return [];
+    return this.site.collectUserFields(userFields);
   },
 
   preferencesPath: fmt("model.username_lower", userPath("%@/preferences")),
@@ -142,9 +132,6 @@ export default Ember.Controller.extend(CanCheckEmails, {
     },
     resetBounceScore() {
       return this.get("model").resetBounceScore();
-    },
-    refreshBrowsers() {
-      return this.get("model").refreshBrowsers();
     },
     approve() {
       return this.get("model").approve();
@@ -217,9 +204,6 @@ export default Ember.Controller.extend(CanCheckEmails, {
       this.get("adminTools").showActionLogs(this, {
         target_user: this.get("model.username")
       });
-    },
-    showFlagsReceived() {
-      this.get("adminTools").showFlagsReceived(this.get("model"));
     },
     showSuspendModal() {
       this.get("adminTools").showSuspendModal(this.get("model"));

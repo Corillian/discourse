@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_dependency 'rate_limiter'
 
 class InvitesController < ApplicationController
@@ -45,7 +47,7 @@ class InvitesController < ApplicationController
 
     if invite.present?
       begin
-        user = invite.redeem(username: params[:username], name: params[:name], password: params[:password], user_custom_fields: params[:user_custom_fields])
+        user = invite.redeem(username: params[:username], name: params[:name], password: params[:password], user_custom_fields: params[:user_custom_fields], ip_address: request.remote_ip)
         if user.present?
           log_on_user(user) if user.active?
           post_process_invite(user)
@@ -63,7 +65,8 @@ class InvitesController < ApplicationController
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
         render json: {
           success: false,
-          errors: e.record&.errors&.to_hash || {}
+          errors: e.record&.errors&.to_hash || {},
+          message: I18n.t('invite.error_message')
         }
       end
     else
@@ -142,7 +145,7 @@ class InvitesController < ApplicationController
   def rescind_all_invites
     guardian.ensure_can_rescind_all_invites!(current_user)
 
-    Invite.rescind_all_invites_from(current_user)
+    Invite.rescind_all_expired_invites_from(current_user)
     render body: nil
   end
 

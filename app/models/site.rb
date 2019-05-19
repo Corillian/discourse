@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A class we can use to serialize the site data
 require_dependency 'score_calculator'
 require_dependency 'trust_level'
@@ -5,8 +7,12 @@ require_dependency 'trust_level'
 class Site
   include ActiveModel::Serialization
 
+  cattr_accessor :preloaded_category_custom_fields
+  self.preloaded_category_custom_fields = Set.new
+
   def initialize(guardian)
     @guardian = guardian
+    Category.preload_custom_fields(categories, preloaded_category_custom_fields) if preloaded_category_custom_fields.present?
   end
 
   def site_setting
@@ -69,6 +75,10 @@ class Site
       categories.reject! { |c| c.parent_category_id && !by_id[c.parent_category_id] }
       categories
     end
+  end
+
+  def groups
+    Group.visible_groups(@guardian.user, "name ASC", include_everyone: true)
   end
 
   def suppressed_from_latest_category_ids

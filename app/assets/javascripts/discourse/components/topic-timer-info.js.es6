@@ -53,7 +53,7 @@ export default Ember.Component.extend(
       if (categoryId) {
         const category = Category.findById(categoryId);
 
-        options = _.assign(
+        options = Object.assign(
           {
             categoryName: category.get("slug"),
             categoryUrl: category.get("url")
@@ -62,7 +62,12 @@ export default Ember.Component.extend(
         );
       }
 
-      buffer.push(`<span>${I18n.t(this._noticeKey(), options)}</span>`);
+      buffer.push(
+        `<span title="${moment(this.get("executeAt")).format("LLLL")}">${I18n.t(
+          this._noticeKey(),
+          options
+        )}</span>`
+      );
       buffer.push("</h3>");
 
       // TODO Sam: concerned this can cause a heavy rerender loop

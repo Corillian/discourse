@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe User do
@@ -13,7 +15,7 @@ describe User do
   end
 
   before do
-    SiteSetting.queue_jobs = false
+    Jobs.run_immediately!
     SiteSetting.discourse_narrative_bot_enabled = true
   end
 

@@ -99,7 +99,7 @@ const Category = RestModel.extend({
         color: this.get("color"),
         text_color: this.get("text_color"),
         secure: this.get("secure"),
-        permissions: this.get("permissionsForUpdate"),
+        permissions: this._permissionsForUpdate(),
         auto_close_hours: this.get("auto_close_hours"),
         auto_close_based_on_last_post: this.get(
           "auto_close_based_on_last_post"
@@ -118,6 +118,7 @@ const Category = RestModel.extend({
         all_topics_wiki: this.get("all_topics_wiki"),
         allowed_tags: this.get("allowed_tags"),
         allowed_tag_groups: this.get("allowed_tag_groups"),
+        allow_global_tags: this.get("allow_global_tags"),
         sort_order: this.get("sort_order"),
         sort_ascending: this.get("sort_ascending"),
         topic_featured_link_allowed: this.get("topic_featured_link_allowed"),
@@ -129,14 +130,16 @@ const Category = RestModel.extend({
         minimum_required_tags: this.get("minimum_required_tags"),
         navigate_to_first_post_after_read: this.get(
           "navigate_to_first_post_after_read"
-        )
+        ),
+        search_priority: this.get("search_priority"),
+        reviewable_by_group_name: this.get("reviewable_by_group_name")
       },
       type: id ? "PUT" : "POST"
     });
   },
 
-  @computed("permissions")
-  permissionsForUpdate(permissions) {
+  _permissionsForUpdate() {
+    const permissions = this.get("permissions");
     let rval = {};
     permissions.forEach(p => (rval[p.group_name] = p.permission.id));
     return rval;

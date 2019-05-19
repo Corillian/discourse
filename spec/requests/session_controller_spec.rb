@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe SessionController do
@@ -265,11 +267,7 @@ RSpec.describe SessionController do
       SiteSetting.enable_sso = true
       SiteSetting.sso_secret = @sso_secret
 
-      # We have 2 options, either fabricate an admin or don't
-      # send welcome messages
       Fabricate(:admin)
-      # skip for now
-      # SiteSetting.send_welcome_message = false
     end
 
     let(:headers) { { host: Discourse.current_hostname } }
@@ -401,6 +399,17 @@ RSpec.describe SessionController do
 
       logged_on_user = Discourse.current_user_provider.new(request.env).current_user
       expect(logged_on_user.admin).to eq(true)
+    end
+
+    it 'does not redirect offsite' do
+      sso = get_sso("#{Discourse.base_url}//site.com/xyz")
+      sso.external_id = '666'
+      sso.email = 'bob@bob.com'
+      sso.name = 'Sam Saffron'
+      sso.username = 'sam'
+
+      get "/session/sso_login", params: Rack::Utils.parse_query(sso.payload), headers: headers
+      expect(response).to redirect_to("#{Discourse.base_url}//site.com/xyz")
     end
 
     it 'redirects to a non-relative url' do
@@ -791,9 +800,13 @@ RSpec.describe SessionController do
         )
 
         @user.update_columns(uploaded_avatar_id: upload.id)
-        @user.user_profile.update_columns(
-          profile_background: "//test.s3.dualstack.us-east-1.amazonaws.com/something",
-          card_background: "//test.s3.dualstack.us-east-1.amazonaws.com/something"
+
+        upload1 = Fabricate(:upload_s3)
+        upload2 = Fabricate(:upload_s3)
+
+        @user.user_profile.update!(
+          profile_background_upload: upload1,
+          card_background_upload: upload2
         )
 
         @user.reload
@@ -1100,6 +1113,7 @@ RSpec.describe SessionController do
 
         context 'with an unapproved user' do
           before do
+            user.update_columns(approved: false)
             post "/session.json", params: {
               login: user.email, password: 'myawesomepassword'
             }
@@ -1133,7 +1147,6 @@ RSpec.describe SessionController do
       end
 
       context 'when admins are restricted by ip address' do
-        let(:permitted_ip_address) { '111.234.23.11' }
         before do
           SiteSetting.use_admin_ip_whitelist = true
           ScreenedIpAddress.all.destroy_all
@@ -1277,6 +1290,45 @@ RSpec.describe SessionController do
     end
   end
 
+  describe '#one_time_password' do
+    context 'missing token' do
+      it 'returns the right response' do
+        get "/session/otp"
+        expect(response.status).to eq(404)
+      end
+    end
+
+    context 'invalid token' do
+      it 'returns the right response' do
+        get "/session/otp/asd1231dasd123"
+
+        expect(response.status).to eq(404)
+      end
+
+      context 'when token is valid' do
+        it 'should authenticate user and delete token' do
+          user = Fabricate(:user)
+
+          get "/session/current.json"
+          expect(response.status).to eq(404)
+
+          token = SecureRandom.hex
+          $redis.setex "otp_#{token}", 10.minutes, user.username
+
+          get "/session/otp/#{token}"
+
+          expect(response.status).to eq(302)
+          expect(response).to redirect_to("/")
+          expect($redis.get("otp_#{token}")).to eq(nil)
+
+          get "/session/current.json"
+          expect(response.status).to eq(200)
+        end
+      end
+    end
+
+  end
+
   describe '#forgot_password' do
     it 'raises an error without a username parameter' do
       post "/session/forgot_password.json"
@@ -1293,7 +1345,7 @@ RSpec.describe SessionController do
     end
 
     context 'for an existing username' do
-      let(:user) { Fabricate(:user) }
+      fab!(:user) { Fabricate(:user) }
 
       context 'local login is disabled' do
         before do

@@ -16,7 +16,11 @@ export default Ember.Component.extend(UtilsMixin, {
     "ariaLabel:aria-label",
     "guid:data-guid"
   ],
-  classNameBindings: ["isHighlighted", "isSelected"],
+  classNameBindings: [
+    "isHighlighted",
+    "isSelected",
+    "computedContent.originalContent.classNames"
+  ],
 
   forceEscape: Ember.computed.alias("options.forceEscape"),
 
@@ -48,11 +52,10 @@ export default Ember.Component.extend(UtilsMixin, {
 
   @on("didReceiveAttrs")
   _setSelectionState() {
-    this.set("isSelected", this.get("computedValue") === this.get("value"));
-    this.set(
-      "isHighlighted",
-      this.get("highlighted.value") === this.get("value")
-    );
+    this.setProperties({
+      isSelected: this.get("computedValue") === this.get("value"),
+      isHighlighted: this.get("highlighted.value") === this.get("value")
+    });
   },
 
   @on("willDestroyElement")

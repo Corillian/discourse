@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'i18n/backend/discourse_i18n'
 require 'translation_override'
@@ -90,6 +92,25 @@ describe I18n::Backend::DiscourseI18n do
     it 'returns true when a key is given which is missing from the given locale and all its fallback locales' do
       expect(backend.exists?(:de, :baz)).to eq(false)
       expect(backend.exists?(:ru, :bogus)).to eq(false)
+    end
+  end
+
+  describe '#pluralize' do
+    it 'uses fallback locales when a pluralization key is missing' do
+      SiteSetting.default_locale = 'ru'
+
+      backend.store_translations(:ru, items: { one: '%{count} Russian item', other: '%{count} Russian items' })
+
+      expect(backend.translate(:ru, :items, count: 1)).to eq('1 Russian item')
+      expect(backend.translate(:ru, :items, count: 2)).to eq('2 items')
+      expect(backend.translate(:ru, :items, count: 5)).to eq('5 Russian items')
+
+      backend.store_translations(:ru, items: { one: '%{count} Russian item', few: '%{count} Russian items are a few', other: '%{count} Russian items' })
+      expect(backend.translate(:ru, :items, count: 2)).to eq('2 Russian items are a few')
+
+      backend.store_translations(:en, airplanes: { one: '%{count} airplane' })
+      expect(backend.translate(:ru, :airplanes, count: 1)).to eq('1 airplane')
+      expect { backend.translate(:ru, :airplanes, count: 2) }.to raise_error(I18n::InvalidPluralizationData)
     end
   end
 end

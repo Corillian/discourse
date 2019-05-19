@@ -2,6 +2,7 @@ import { default as computed } from "ember-addons/ember-computed-decorators";
 import { default as DiscourseURL, userPath } from "discourse/lib/url";
 import { popupAjaxError } from "discourse/lib/ajax-error";
 import { findAll } from "discourse/models/login-method";
+import { SECOND_FACTOR_METHODS } from "discourse/models/user";
 
 export default Ember.Controller.extend({
   loading: false,
@@ -13,6 +14,8 @@ export default Ember.Controller.extend({
   showSecondFactorKey: false,
   errorMessage: null,
   newUsername: null,
+  backupEnabled: Ember.computed.alias("model.second_factor_backup_enabled"),
+  secondFactorMethod: SECOND_FACTOR_METHODS.TOTP,
 
   loaded: Ember.computed.and("secondFactorImage", "secondFactorKey"),
 
@@ -36,12 +39,22 @@ export default Ember.Controller.extend({
     return findAll().length > 0;
   },
 
+  @computed("currentUser")
+  showEnforcedNotice(user) {
+    return user && user.get("enforcedSecondFactor");
+  },
+
   toggleSecondFactor(enable) {
     if (!this.get("secondFactorToken")) return;
     this.set("loading", true);
 
     this.get("model")
-      .toggleSecondFactor(this.get("secondFactorToken"), enable, 1)
+      .toggleSecondFactor(
+        this.get("secondFactorToken"),
+        this.get("secondFactorMethod"),
+        SECOND_FACTOR_METHODS.TOTP,
+        enable
+      )
       .then(response => {
         if (response.error) {
           this.set("errorMessage", response.error);

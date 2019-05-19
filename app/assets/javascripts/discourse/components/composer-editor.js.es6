@@ -30,7 +30,8 @@ import {
   validateUploadedFiles,
   authorizesOneOrMoreImageExtensions,
   formatUsername,
-  clipboardData
+  clipboardData,
+  safariHacksDisabled
 } from "discourse/lib/utilities";
 import {
   cacheShortUploadUrl,
@@ -106,6 +107,13 @@ export default Ember.Component.extend({
       this._xhr.abort();
     }
     this._resetUpload(true);
+  },
+
+  @observes("focusTarget")
+  setFocus() {
+    if (this.get("focusTarget") === "editor") {
+      this.$("textarea").putCursorAtEnd();
+    }
   },
 
   @computed
@@ -185,8 +193,19 @@ export default Ember.Component.extend({
       );
     }
 
+    if (!this.site.mobileView) {
+      $preview
+        .off("touchstart mouseenter", "img")
+        .on("touchstart mouseenter", "img", () => {
+          this._placeImageScaleButtons($preview);
+        });
+    }
+
     // Focus on the body unless we have a title
-    if (!this.get("composer.canEditTitle") && !this.capabilities.isIOS) {
+    if (
+      !this.get("composer.canEditTitle") &&
+      (!this.capabilities.isIOS || safariHacksDisabled())
+    ) {
       this.$(".d-editor-input").putCursorAtEnd();
     }
 
@@ -242,8 +261,9 @@ export default Ember.Component.extend({
     // when adding two separate files with the same filename search for matching
     // placeholder already existing in the editor ie [Uploading: test.png...]
     // and add order nr to the next one: [Uplodading: test.png(1)...]
+    const escapedFilename = filename.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regexString = `\\[${I18n.t("uploading_filename", {
-      filename: filename + "(?:\\()?([0-9])?(?:\\))?"
+      filename: escapedFilename + "(?:\\()?([0-9])?(?:\\))?"
     })}\\]\\(\\)`;
     const globalRegex = new RegExp(regexString, "g");
     const matchingPlaceholder = this.get("composer.reply").match(globalRegex);
@@ -681,8 +701,9 @@ export default Ember.Component.extend({
 
       const matchingHandler = uploadHandlers.find(matcher);
       if (data.files.length === 1 && matchingHandler) {
-        matchingHandler.method(data.files[0]);
-        return false;
+        if (!matchingHandler.method(data.files[0])) {
+          return false;
+        }
       }
 
       // If no plugin, continue as normal
@@ -766,6 +787,114 @@ export default Ember.Component.extend({
     }
   },
 
+  _appendImageScaleButtons($images, imageScaleRegex) {
+    const buttonScales = [100, 75, 50];
+    const imageWrapperTemplate = `<div class="image-wrapper"></div>`;
+    const buttonWrapperTemplate = `<div class="button-wrapper"></div>`;
+    const scaleButtonTemplate = `<span class="scale-btn"></a>`;
+
+    $images.each((i, e) => {
+      const $e = $(e);
+
+      const matches = this.get("composer.reply").match(imageScaleRegex);
+
+      // ignore previewed upload markdown in codeblock
+      if (!matches || $e.hasClass("codeblock-image")) return;
+
+      if (!$e.parent().hasClass("image-wrapper")) {
+        const match = matches[i];
+        const matchingPlaceholder = imageScaleRegex.exec(match);
+
+        if (!matchingPlaceholder) return;
+
+        const currentScale = matchingPlaceholder[2] || 100;
+
+        $e.data("index", i).wrap(imageWrapperTemplate);
+        $e.parent().append(
+          $(buttonWrapperTemplate).attr("data-image-index", i)
+        );
+
+        buttonScales.forEach((buttonScale, buttonIndex) => {
+          const activeClass =
+            parseInt(currentScale, 10) === buttonScale ? "active" : "";
+
+          const $scaleButton = $(scaleButtonTemplate)
+            .addClass(activeClass)
+            .attr("data-scale", buttonScale)
+            .text(`${buttonScale}%`);
+
+          const $buttonWrapper = $e.parent().find(".button-wrapper");
+          $buttonWrapper.append($scaleButton);
+
+          if (buttonIndex !== buttonScales.length - 1) {
+            $buttonWrapper.append(`<span class="separator"> • </span>`);
+          }
+        });
+      }
+    });
+  },
+
+  _registerImageScaleButtonClick($preview, imageScaleRegex) {
+    $preview.off("click", ".scale-btn").on("click", ".scale-btn", e => {
+      const index = parseInt(
+        $(e.target)
+          .parent()
+          .attr("data-image-index")
+      );
+
+      const scale = e.target.attributes["data-scale"].value;
+      const matchingPlaceholder = this.get("composer.reply").match(
+        imageScaleRegex
+      );
+
+      if (matchingPlaceholder) {
+        const match = matchingPlaceholder[index];
+        if (!match) {
+          return;
+        }
+
+        const replacement = match.replace(imageScaleRegex, `$1,${scale}%$3`);
+        this.appEvents.trigger(
+          "composer:replace-text",
+          matchingPlaceholder[index],
+          replacement,
+          { regex: imageScaleRegex, index }
+        );
+      }
+    });
+  },
+
+  _placeImageScaleButtons($preview) {
+    // regex matches only upload placeholders with size defined,
+    // which is required for resizing
+
+    // original string `![28|690x226,5%](upload://ceEfx3vO7bx7Cecv2co1SrnoTpW.png)`
+    // match 1 `![28|690x226`
+    // match 2 `5`
+    // match 3 `](upload://ceEfx3vO7bx7Cecv2co1SrnoTpW.png)`
+    const imageScaleRegex = /(!\[(?:\S*?(?=\|)\|)*?(?:\d{1,6}x\d{1,6})+?)(?:,?(\d{1,3})?%?)?(\]\(upload:\/\/\S*?\))/g;
+
+    // wraps previewed upload markdown in a codeblock in its own class to keep a track
+    // of indexes later on to replace the correct upload placeholder in the composer
+    if ($preview.find(".codeblock-image").length === 0) {
+      this.$(".d-editor-preview *")
+        .contents()
+        .each(function() {
+          if (this.nodeType !== 3) return; // TEXT_NODE
+          const $this = $(this);
+
+          if ($this.text().match(imageScaleRegex)) {
+            $this.wrap("<span class='codeblock-image'></span>");
+          }
+        });
+    }
+
+    const $images = $preview.find("img.resizable, span.codeblock-image");
+
+    this._appendImageScaleButtons($images, imageScaleRegex);
+    this._registerImageScaleButtonClick($preview, imageScaleRegex);
+  },
+
   @on("willDestroyElement")
   _unbindUploadTarget() {
     this._validUploads = 0;
@@ -784,9 +913,11 @@ export default Ember.Component.extend({
   _composerClosed() {
     this.appEvents.trigger("composer:will-close");
     Ember.run.next(() => {
-      $("#main-outlet").css("padding-bottom", 0);
       // need to wait a bit for the "slide down" transition of the composer
-      Ember.run.later(() => this.appEvents.trigger("composer:closed"), 400);
+      Ember.run.later(
+        () => this.appEvents.trigger("composer:closed"),
+        Ember.testing ? 0 : 400
+      );
     });
 
     if (this._enableAdvancedEditorPreviewSync())
@@ -801,6 +932,12 @@ export default Ember.Component.extend({
     const selected = toolbarEvent.selected;
     toolbarEvent.selectText(selected.start, selected.end - selected.start);
     this.storeToolbarState(toolbarEvent);
+  },
+
+  showPreview() {
+    const $preview = this.$(".d-editor-preview-wrapper");
+    this._placeImageScaleButtons($preview);
+    this.send("togglePreview");
   },
 
   actions: {
@@ -826,7 +963,11 @@ export default Ember.Component.extend({
         unshift: true
       });
 
-      if (this.get("allowUpload") && this.get("uploadIcon")) {
+      if (
+        this.get("allowUpload") &&
+        this.get("uploadIcon") &&
+        !this.site.mobileView
+      ) {
         toolbar.addButton({
           id: "upload",
           group: "insertions",
@@ -851,7 +992,7 @@ export default Ember.Component.extend({
           group: "mobileExtras",
           icon: "television",
           title: "composer.show_preview",
-          sendAction: this.get("togglePreview")
+          sendAction: this.showPreview.bind(this)
         });
       }
     },
@@ -957,6 +1098,10 @@ export default Ember.Component.extend({
           this.$(".d-editor-input"),
           $preview
         );
+      }
+
+      if (this.site.mobileView && $preview.is(":visible")) {
+        this._placeImageScaleButtons($preview);
       }
 
       this.trigger("previewRefreshed", $preview);

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe UserSearch do
@@ -28,7 +30,7 @@ describe UserSearch do
     Fabricate :post, user: user6, topic: topic
     Fabricate :post, user: staged, topic: topic4
 
-    user6.update_attributes(suspended_at: 1.day.ago, suspended_till: 1.year.from_now)
+    user6.update(suspended_at: 1.day.ago, suspended_till: 1.year.from_now)
   end
 
   def search_for(*args)
@@ -137,6 +139,11 @@ describe UserSearch do
 
     results = search_for(staged.username, include_staged_users: true)
     expect(results.first.username).to eq(staged.username)
+
+    results = search_for("", topic_id: topic.id, searching_user: user1)
+
+    # mrb is omitted, mrb is current user
+    expect(results.map(&:username)).to eq(["mrpink", "mrorange"])
   end
 
 end

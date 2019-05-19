@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # rake docker:test is designed to be used inside the discourse/docker_test image
 # running it anywhere else will likely fail
 #
@@ -13,6 +15,7 @@
 # => BISECT                    set to 1 to run rspec --bisect (applies to core rspec tests only)
 # => RSPEC_SEED                set to seed to use for rspec tests (applies to core rspec tests only)
 # => PAUSE_ON_TERMINATE        set to 1 to pause prior to terminating redis and pg
+# => JS_TIMEOUT                set timeout for qunit tests in ms
 #
 # Other useful environment variables (not specific to this rake task)
 # => COMMIT_HASH    used by the discourse_test docker image to load a specific commit of discourse
@@ -99,6 +102,9 @@ task 'docker:test' do
       @pg_pid = Process.spawn("#{@postgres_bin}postmaster -D tmp/test_data/pg")
 
       ENV["RAILS_ENV"] = "test"
+      # this shaves all the creation of the multisite db off
+      # for js tests
+      ENV["SKIP_MULTISITE"] = "1" if ENV["JS_ONLY"]
 
       @good &&= run_or_fail("bundle exec rake db:create")
 
@@ -118,12 +124,32 @@ task 'docker:test' do
         puts "travis_fold:start:ruby_tests" if ENV["TRAVIS"]
         unless ENV["SKIP_CORE"]
           params = []
+          params << "--profile"
+          params << "--fail-fast"
           if ENV["BISECT"]
             params << "--bisect"
           end
           if ENV["RSPEC_SEED"]
             params << "--seed #{ENV["RSPEC_SEED"]}"
           end
+
+          if ENV['PARALLEL']
+            parts = ENV['PARALLEL'].split("/")
+            total = parts[1].to_i
+            subset = parts[0].to_i - 1
+
+            spec_partials = Dir["spec/**/*_spec.rb"].sort.in_groups(total, false)
+            # quick and dirty load balancing
+            if (spec_partials.count > 3)
+              spec_partials[0].concat(spec_partials[total - 1].shift(30))
+              spec_partials[1].concat(spec_partials[total - 2].shift(30))
+            end
+
+            params << spec_partials[subset].join(' ')
+
+            puts "Running spec subset #{subset + 1} of #{total}"
+          end
+
           @good &&= run_or_fail("bundle exec rspec #{params.join(' ')}".strip)
         end
 
@@ -131,24 +157,26 @@ task 'docker:test' do
           if ENV["SINGLE_PLUGIN"]
             @good &&= run_or_fail("bundle exec rake plugin:spec['#{ENV["SINGLE_PLUGIN"]}']")
           else
-            @good &&= run_or_fail("bundle exec rake plugin:spec")
+            @good &&= run_or_fail("RSPEC_FAILFAST=1 bundle exec rake plugin:spec")
           end
         end
         puts "travis_fold:end:ruby_tests" if ENV["TRAVIS"]
       end
 
       unless ENV["RUBY_ONLY"]
+        js_timeout = ENV["JS_TIMEOUT"].presence || 900_000 # 15 minutes
+
         puts "travis_fold:start:js_tests" if ENV["TRAVIS"]
         unless ENV["SKIP_CORE"]
-          @good &&= run_or_fail("bundle exec rake qunit:test['600000']")
-          @good &&= run_or_fail("bundle exec rake qunit:test['600000','/wizard/qunit']")
+          @good &&= run_or_fail("bundle exec rake qunit:test['#{js_timeout}']")
+          @good &&= run_or_fail("bundle exec rake qunit:test['#{js_timeout}','/wizard/qunit']")
         end
 
         unless ENV["SKIP_PLUGINS"]
           if ENV["SINGLE_PLUGIN"]
-            @good &&= run_or_fail("bundle exec rake plugin:qunit['#{ENV['SINGLE_PLUGIN']}','600000']")
+            @good &&= run_or_fail("bundle exec rake plugin:qunit['#{ENV['SINGLE_PLUGIN']}','#{js_timeout}']")
           else
-            @good &&= run_or_fail("bundle exec rake plugin:qunit['*','600000']")
+            @good &&= run_or_fail("bundle exec rake plugin:qunit['*','#{js_timeout}']")
           end
         end
         puts "travis_fold:end:js_tests" if ENV["TRAVIS"]

@@ -12,13 +12,17 @@ class Group < ActiveRecord::Base
 
   has_many :category_groups, dependent: :destroy
   has_many :group_users, dependent: :destroy
+  has_many :group_requests, dependent: :destroy
   has_many :group_mentions, dependent: :destroy
 
   has_many :group_archived_messages, dependent: :destroy
 
   has_many :categories, through: :category_groups
   has_many :users, through: :group_users
+  has_many :requesters, through: :group_requests, source: :user
   has_many :group_histories, dependent: :destroy
+  has_many :category_reviews, class_name: 'Category', foreign_key: :reviewable_by_group_id, dependent: :nullify
+  has_many :reviewables, foreign_key: :reviewable_by_group_id, dependent: :nullify
 
   has_and_belongs_to_many :web_hooks
 
@@ -43,6 +47,12 @@ class Group < ActiveRecord::Base
   def expire_cache
     ApplicationSerializer.expire_cache_fragment!("group_names")
     SvgSprite.expire_cache
+  end
+
+  def remove_review_groups
+    puts self.id!
+    Category.where(review_group_id: self.id).update_all(review_group_id: nil)
+    Category.where(review_group_id: self.id).update_all(review_group_id: nil)
   end
 
   validate :name_format_validator
@@ -88,8 +98,12 @@ class Group < ActiveRecord::Base
   validates :mentionable_level, inclusion: { in: ALIAS_LEVELS.values }
   validates :messageable_level, inclusion: { in: ALIAS_LEVELS.values }
 
-  scope :visible_groups, Proc.new { |user, order|
-    groups = Group.order(order || "name ASC").where("groups.id > 0")
+  scope :visible_groups, Proc.new { |user, order, opts|
+    groups = self.order(order || "name ASC")
+
+    if !opts || !opts[:include_everyone]
+      groups = groups.where("groups.id > 0")
+    end
 
     unless user&.admin
       sql = <<~SQL
@@ -275,10 +289,10 @@ class Group < ActiveRecord::Base
     end
 
     # don't allow shoddy localization to break this
-    localized_name = I18n.t("groups.default_names.#{name}").downcase
+    localized_name = User.normalize_username(I18n.t("groups.default_names.#{name}", locale: SiteSetting.default_locale))
     validator = UsernameValidator.new(localized_name)
 
-    if !Group.where("LOWER(name) = ?", localized_name).exists? && validator.valid_format?
+    if validator.valid_format? && !User.username_exists?(localized_name)
       group.name = localized_name
     end
 
@@ -286,7 +300,7 @@ class Group < ActiveRecord::Base
     # way to have the membership in a table
     case name
     when :everyone
-      group.visibility_level = Group.visibility_levels[:owners]
+      group.visibility_level = Group.visibility_levels[:staff]
       group.save!
       return group
     when :moderators
@@ -615,22 +629,15 @@ class Group < ActiveRecord::Base
     # avoid strip! here, it works now
     # but may not continue to work long term, especially
     # once we start returning frozen strings
-    if self.name != (stripped = self.name.strip)
+    if self.name != (stripped = self.name.unicode_normalize.strip)
       self.name = stripped
     end
 
     UsernameValidator.perform_validation(self, 'name') || begin
-      name_lower = self.name.downcase
+      normalized_name = User.normalize_username(self.name)
 
-      if self.will_save_change_to_name? && self.name_was&.downcase != name_lower
-
-        existing = DB.exec(
-          User::USERNAME_EXISTS_SQL, username: name_lower
-        ) > 0
-
-        if existing
-          errors.add(:name, I18n.t("activerecord.errors.messages.taken"))
-        end
+      if self.will_save_change_to_name? && User.normalize_username(self.name_was) != normalized_name && User.username_exists?(self.name)
+        errors.add(:name, I18n.t("activerecord.errors.messages.taken"))
       end
     end
   end

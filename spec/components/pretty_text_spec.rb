@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'pretty_text'
 
@@ -16,13 +18,12 @@ describe PrettyText do
   end
 
   let(:wrapped_image) { "<div class=\"lightbox-wrapper\"><a href=\"//localhost:3000/uploads/default/4399/33691397e78b4d75.png\" class=\"lightbox\" title=\"Screen Shot 2014-04-14 at 9.47.10 PM.png\"><img src=\"//localhost:3000/uploads/default/_optimized/bd9/b20/bbbcd6a0c0_655x500.png\" width=\"655\" height=\"500\"><div class=\"meta\">\n<span class=\"filename\">Screen Shot 2014-04-14 at 9.47.10 PM.png</span><span class=\"informations\">966x737 1.47 MB</span><span class=\"expand\"></span>\n</div></a></div>" }
-  let(:wrapped_image_excerpt) {}
 
   describe "Quoting" do
 
     describe "with avatar" do
       let(:default_avatar) { "//test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/{size}.png" }
-      let(:user) { Fabricate(:user) }
+      fab!(:user) { Fabricate(:user) }
 
       before do
         User.stubs(:default_template).returns(default_avatar)
@@ -133,8 +134,8 @@ describe PrettyText do
 
     describe "with primary user group" do
       let(:default_avatar) { "//test.localhost/uploads/default/avatars/42d/57c/46ce7ee487/{size}.png" }
-      let(:group) { Fabricate(:group) }
-      let!(:user) { Fabricate(:user, primary_group: group) }
+      fab!(:group) { Fabricate(:group) }
+      fab!(:user) { Fabricate(:user, primary_group: group) }
 
       before do
         User.stubs(:default_template).returns(default_avatar)
@@ -201,7 +202,7 @@ describe PrettyText do
     end
 
     describe "with letter avatar" do
-      let(:user) { Fabricate(:user) }
+      fab!(:user) { Fabricate(:user) }
 
       context "subfolder" do
         before do
@@ -336,6 +337,21 @@ describe PrettyText do
       expect(PrettyText.cook(". http://test/@sam")).not_to include('mention')
     end
 
+    context "with Unicode usernames disabled" do
+      before { SiteSetting.unicode_usernames = false }
+
+      it 'does not detect mention' do
+        expect(PrettyText.cook("Hello @狮子")).to_not include("mention")
+      end
+    end
+
+    context "with Unicode usernames enabled" do
+      before { SiteSetting.unicode_usernames = true }
+
+      it 'does detect mention' do
+        expect(PrettyText.cook("Hello @狮子")).to match_html '<p>Hello <span class="mention">@狮子</span></p>'
+      end
+    end
   end
 
   describe "code fences" do
@@ -697,7 +713,7 @@ describe PrettyText do
 
   describe 'format_for_email' do
     let(:base_url) { "http://baseurl.net" }
-    let(:post) { Fabricate(:post) }
+    fab!(:post) { Fabricate(:post) }
 
     before do
       Discourse.stubs(:base_url).returns(base_url)
@@ -731,6 +747,11 @@ describe PrettyText do
     it "doesn't change mailto" do
       html = "<p>Contact me at <a href=\"mailto:username@me.com\">this address</a>.</p>"
       expect(PrettyText.format_for_email(html, post)).to eq(html)
+    end
+
+    it "prefers data-original-href attribute to get Vimeo iframe link and escapes it" do
+      html = "<p>Check out this video – <iframe src='https://player.vimeo.com/video/329875646' data-original-href='https://vimeo.com/329875646/> <script>alert(1)</script>'></iframe>.</p>"
+      expect(PrettyText.format_for_email(html, post)).to match(Regexp.escape("https://vimeo.com/329875646/%3E%20%3Cscript%3Ealert(1)%3C/script%3E"))
     end
   end
 
@@ -777,81 +798,6 @@ describe PrettyText do
     HTML
 
     expect(PrettyText.cook(raw)).to eq(html.strip)
-  end
-
-  describe 's3_cdn' do
-
-    def test_s3_cdn
-      # add extra img tag to ensure it does not blow up
-      raw = <<~HTML
-        <img>
-        <img src='https:#{Discourse.store.absolute_base_url}/original/9/9/99c9384b8b6d87f8509f8395571bc7512ca3cad1.jpg'>
-        <img src='http:#{Discourse.store.absolute_base_url}/original/9/9/99c9384b8b6d87f8509f8395571bc7512ca3cad1.jpg'>
-        <img src='#{Discourse.store.absolute_base_url}/original/9/9/99c9384b8b6d87f8509f8395571bc7512ca3cad1.jpg'>
-      HTML
-
-      html = <<~HTML
-        <p><img><br>
-        <img src="https://awesome.cdn/original/9/9/99c9384b8b6d87f8509f8395571bc7512ca3cad1.jpg"><br>
-        <img src="https://awesome.cdn/original/9/9/99c9384b8b6d87f8509f8395571bc7512ca3cad1.jpg"><br>
-        <img src="https://awesome.cdn/original/9/9/99c9384b8b6d87f8509f8395571bc7512ca3cad1.jpg"></p>
-      HTML
-
-      expect(PrettyText.cook(raw)).to eq(html.strip)
-    end
-
-    before do
-      GlobalSetting.reset_s3_cache!
-    end
-
-    after do
-      GlobalSetting.reset_s3_cache!
-    end
-
-    it 'can substitute s3 cdn when added via global setting' do
-
-      global_setting :s3_access_key_id, 'XXX'
-      global_setting :s3_secret_access_key, 'XXX'
-      global_setting :s3_bucket, 'XXX'
-      global_setting :s3_region, 'XXX'
-      global_setting :s3_cdn_url, 'https://awesome.cdn'
-
-      test_s3_cdn
-    end
-
-    it 'can substitute s3 cdn correctly' do
-      SiteSetting.s3_access_key_id = "XXX"
-      SiteSetting.s3_secret_access_key = "XXX"
-      SiteSetting.s3_upload_bucket = "test"
-      SiteSetting.s3_cdn_url = "https://awesome.cdn"
-
-      SiteSetting.enable_s3_uploads = true
-
-      test_s3_cdn
-    end
-
-    def test_s3_with_subfolder_cdn
-      raw = <<~RAW
-        <img src='https:#{Discourse.store.absolute_base_url}/subfolder/original/9/9/99c9384b8b6d87f8509f8395571bc7512ca3cad1.jpg'>
-      RAW
-
-      html = <<~HTML
-        <p><img src="https://awesome.cdn/subfolder/original/9/9/99c9384b8b6d87f8509f8395571bc7512ca3cad1.jpg"></p>
-      HTML
-
-      expect(PrettyText.cook(raw)).to eq(html.strip)
-    end
-
-    it 'can substitute s3 with subfolder cdn when added via global setting' do
-
-      global_setting :s3_access_key_id, 'XXX'
-      global_setting :s3_secret_access_key, 'XXX'
-      global_setting :s3_bucket, 'XXX/subfolder'
-      global_setting :s3_region, 'XXX'
-      global_setting :s3_cdn_url, 'https://awesome.cdn/subfolder'
-
-      test_s3_with_subfolder_cdn
-    end
   end
 
   describe "emoji" do
@@ -1228,16 +1174,20 @@ HTML
       expect(cooked).to eq(html.strip)
     end
 
-    it "allows whitespace before the percent scaler" do
+    it "ignores whitespace and allows scaling by percent, width, height" do
       cooked = PrettyText.cook <<~MD
         ![|220x100, 50%](http://png.com/my.png)
         ![|220x100 , 50%](http://png.com/my.png)
         ![|220x100 ,50%](http://png.com/my.png)
+        ![|220x100,150x](http://png.com/my.png)
+        ![|220x100, x50](http://png.com/my.png)
       MD
 
       html = <<~HTML
         <p><img src="http://png.com/my.png" alt width="110" height="50"><br>
         <img src="http://png.com/my.png" alt width="110" height="50"><br>
+        <img src="http://png.com/my.png" alt width="110" height="50"><br>
+        <img src="http://png.com/my.png" alt width="150" height="68"><br>
         <img src="http://png.com/my.png" alt width="110" height="50"></p>
       HTML
 
@@ -1259,7 +1209,7 @@ HTML
       - test
           - ![upload](#{upload.short_url})
 
-      ![upload](#{upload.short_url.gsub!(".png", "")})
+      ![upload](#{upload.short_url.gsub(".png", "")})
       RAW
 
       cooked = <<~HTML
@@ -1381,4 +1331,94 @@ HTML
     expect(cooked).to eq(html)
   end
 
+  describe "d-wrap" do
+    it "wraps the [wrap] tag inline" do
+      cooked = PrettyText.cook("[wrap=toc]taco[/wrap]")
+
+      html = <<~HTML
+        <div class="d-wrap" data-wrap="toc">
+        <p>taco</p>
+        </div>
+      HTML
+
+      expect(cooked).to eq(html.strip)
+
+      cooked = PrettyText.cook("Hello [wrap=toc id=1]taco[/wrap] world")
+
+      html = <<~HTML
+        <p>Hello <span class="d-wrap" data-wrap="toc" data-id="1">taco</span> world</p>
+      HTML
+
+      expect(cooked).to eq(html.strip)
+    end
+
+    it "wraps the [wrap] tag in block" do
+      md = <<~MD
+        [wrap=toc]
+        taco
+        [/wrap]
+      MD
+
+      cooked = PrettyText.cook(md)
+
+      html = <<~HTML
+        <div class="d-wrap" data-wrap="toc">
+        <p>taco</p>
+        </div>
+      HTML
+
+      expect(cooked).to eq(html.strip)
+    end
+
+    it "wraps the [wrap] tag without content" do
+      md = <<~MD
+        [wrap=toc]
+        [/wrap]
+      MD
+
+      cooked = PrettyText.cook(md)
+
+      html = <<~HTML
+        <div class="d-wrap" data-wrap="toc"></div>
+      HTML
+
+      expect(cooked).to eq(html.strip)
+    end
+
+    it "adds attributes as data-attributes" do
+      cooked = PrettyText.cook("[wrap=toc name=\"pepper bell\" id=1]taco[/wrap]")
+
+      html = <<~HTML
+        <div class="d-wrap" data-wrap="toc" data-name="pepper bell" data-id="1">
+        <p>taco</p>
+        </div>
+      HTML
+
+      expect(cooked).to eq(html.strip)
+    end
+
+    it "prevents xss" do
+      cooked = PrettyText.cook('[wrap=toc foo="<script>console.log(1)</script>"]taco[/wrap]')
+
+      html = <<~HTML
+        <div class="d-wrap" data-wrap="toc" data-foo="&amp;lt;script&amp;gt;console.log(1)&amp;lt;/script&amp;gt;">
+        <p>taco</p>
+        </div>
+      HTML
+
+      expect(cooked).to eq(html.strip)
+    end
+
+    it "allows a limited set of attributes chars" do
+      cooked = PrettyText.cook('[wrap=toc fo@"èk-"!io=bar]taco[/wrap]')
+
+      html = <<~HTML
+        <div class=\"d-wrap\" data-wrap=\"toc\" data-io=\"bar\">
+        <p>taco</p>
+        </div>
+      HTML
+
+      expect(cooked).to eq(html.strip)
+    end
+  end
 end

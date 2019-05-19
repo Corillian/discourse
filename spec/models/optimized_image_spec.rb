@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe OptimizedImage do
@@ -155,8 +157,8 @@ describe OptimizedImage do
   describe ".safe_path?" do
 
     it "correctly detects unsafe paths" do
-      expect(OptimizedImage.safe_path?("/path/A-AA/22_00.TIFF")).to eq(true)
-      expect(OptimizedImage.safe_path?("/path/AAA/2200.TIFF")).to eq(true)
+      expect(OptimizedImage.safe_path?("/path/A-AA/22_00.JPG")).to eq(true)
+      expect(OptimizedImage.safe_path?("/path/AAA/2200.JPG")).to eq(true)
       expect(OptimizedImage.safe_path?("/tmp/a.png")).to eq(true)
       expect(OptimizedImage.safe_path?("../a.png")).to eq(false)
       expect(OptimizedImage.safe_path?("/tmp/a.png\\test")).to eq(false)
@@ -328,6 +330,18 @@ describe OptimizedImage do
 
     end
 
+  end
+
+  describe '#destroy' do
+    describe 'when upload_id is no longer valid' do
+      it 'should still destroy the record' do
+        image = Fabricate(:optimized_image)
+        image.upload.delete
+        image.reload.destroy
+
+        expect(OptimizedImage.exists?(id: image.id)).to eq(false)
+      end
+    end
   end
 
 end

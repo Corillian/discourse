@@ -21,8 +21,8 @@ export default Ember.Controller.extend(CanCheckEmails, {
     return !profileHidden && viewingSelf;
   },
 
-  @computed("model.profileBackground")
-  hasProfileBackground(background) {
+  @computed("model.profileBackgroundUrl")
+  hasProfileBackgroundUrl(background) {
     return !Ember.isEmpty(background.toString());
   },
 
@@ -33,7 +33,10 @@ export default Ember.Controller.extend(CanCheckEmails, {
     }
     return (!indexStream || viewingSelf) && !forceExpand;
   },
-
+  canMuteOrIgnoreUser: Ember.computed.or(
+    "model.can_ignore_user",
+    "model.can_mute_user"
+  ),
   hasGivenFlags: Ember.computed.gt("model.number_of_flags_given", 0),
   hasFlaggedPosts: Ember.computed.gt("model.number_of_flagged_posts", 0),
   hasDeletedPosts: Ember.computed.gt("model.number_of_deleted_posts", 0),
@@ -145,6 +148,11 @@ export default Ember.Controller.extend(CanCheckEmails, {
 
     adminDelete() {
       this.get("adminTools").deleteUser(this.get("model.id"));
+    },
+
+    updateNotificationLevel(level) {
+      const user = this.get("model");
+      return user.updateNotificationLevel(level);
     }
   }
 });

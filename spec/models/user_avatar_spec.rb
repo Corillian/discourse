@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe UserAvatar do
-  let(:user) { Fabricate(:user) }
+  fab!(:user) { Fabricate(:user) }
   let(:avatar) { user.create_user_avatar! }
 
   describe '#update_gravatar!' do
     let(:temp) { Tempfile.new('test') }
-    let(:upload) { Fabricate(:upload, user: user) }
+    fab!(:upload) { Fabricate(:upload, user: user) }
 
     describe "when working" do
 
@@ -106,6 +108,13 @@ describe UserAvatar do
       end
     end
 
+    it "should not raise an error when there's no primary_email" do
+      avatar.user.primary_email.destroy
+      avatar.user.reload
+
+      # If raises an error, test fails
+      avatar.update_gravatar!
+    end
   end
 
   context '.import_url_for_user' do

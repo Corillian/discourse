@@ -1,3 +1,5 @@
+import computed from "ember-addons/ember-computed-decorators";
+
 export default Ember.ArrayProxy.extend({
   loading: false,
   loadingMore: false,
@@ -10,10 +12,12 @@ export default Ember.ArrayProxy.extend({
   findArgs: null,
   store: null,
   __type: null,
+  resultSetMeta: null,
 
-  canLoadMore: function() {
-    return this.get("length") < this.get("totalRows");
-  }.property("totalRows", "length"),
+  @computed("totalRows", "length")
+  canLoadMore(totalRows, length) {
+    return length < totalRows;
+  },
 
   loadMore() {
     const loadMoreUrl = this.get("loadMoreUrl");

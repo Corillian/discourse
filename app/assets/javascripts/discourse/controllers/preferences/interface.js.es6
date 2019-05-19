@@ -5,12 +5,12 @@ import {
   observes
 } from "ember-addons/ember-computed-decorators";
 import {
-  currentThemeId,
   listThemes,
   previewTheme,
   setLocalTheme
 } from "discourse/lib/theme-selector";
 import { popupAjaxError } from "discourse/lib/ajax-error";
+import { safariHacksDisabled, isiPad } from "discourse/lib/utilities";
 
 const USER_HOMES = {
   1: "latest",
@@ -21,6 +21,7 @@ const USER_HOMES = {
 };
 
 const TEXT_SIZES = ["smaller", "normal", "larger", "largest"];
+const TITLE_COUNT_MODES = ["notifications", "contextual"];
 
 export default Ember.Controller.extend(PreferencesTabController, {
   @computed("makeThemeDefault")
@@ -30,12 +31,12 @@ export default Ember.Controller.extend(PreferencesTabController, {
       "external_links_in_new_tab",
       "dynamic_favicon",
       "enable_quoting",
-      "disable_jump_reply",
       "automatically_unpin_topics",
       "allow_private_messages",
       "homepage_id",
       "hide_profile_and_presence",
-      "text_size"
+      "text_size",
+      "title_count_mode"
     ];
 
     if (makeDefault) {
@@ -46,17 +47,20 @@ export default Ember.Controller.extend(PreferencesTabController, {
   },
 
   preferencesController: Ember.inject.controller("preferences"),
-  makeThemeDefault: true,
-  makeTextSizeDefault: true,
+
+  @computed()
+  isiPad() {
+    return isiPad();
+  },
+
+  @computed()
+  disableSafariHacks() {
+    return safariHacksDisabled();
+  },
 
   @computed()
   availableLocales() {
     return JSON.parse(this.siteSettings.available_locales);
-  },
-
-  @computed()
-  themeId() {
-    return currentThemeId();
   },
 
   @computed
@@ -66,9 +70,17 @@ export default Ember.Controller.extend(PreferencesTabController, {
     });
   },
 
-  userSelectableThemes: function() {
+  @computed
+  titleCountModes() {
+    return TITLE_COUNT_MODES.map(value => {
+      return { name: I18n.t(`user.title_count_mode.${value}`), value };
+    });
+  },
+
+  @computed
+  userSelectableThemes() {
     return listThemes(this.site);
-  }.property(),
+  },
 
   @computed("userSelectableThemes")
   showThemeSelector(themes) {
@@ -81,6 +93,16 @@ export default Ember.Controller.extend(PreferencesTabController, {
     previewTheme([id]);
   },
 
+  @computed("model.user_option.theme_ids", "themeId")
+  showThemeSetDefault(userOptionThemes, selectedTheme) {
+    return !userOptionThemes || userOptionThemes[0] !== selectedTheme;
+  },
+
+  @computed("model.user_option.text_size", "textSize")
+  showTextSetDefault(userOptionTextSize, selectedTextSize) {
+    return userOptionTextSize !== selectedTextSize;
+  },
+
   homeChanged() {
     const siteHome = this.siteSettings.top_menu.split("|")[0].split(",")[0];
     const userHome = USER_HOMES[this.get("model.user_option.homepage_id")];
@@ -90,7 +112,11 @@ export default Ember.Controller.extend(PreferencesTabController, {
 
   @computed()
   userSelectableHome() {
-    let homeValues = _.invert(USER_HOMES);
+    let homeValues = {};
+    Object.keys(USER_HOMES).forEach(newValue => {
+      const newKey = USER_HOMES[newValue];
+      homeValues[newKey] = newValue;
+    });
 
     let result = [];
     this.siteSettings.top_menu.split("|").forEach(m => {
@@ -120,17 +146,31 @@ export default Ember.Controller.extend(PreferencesTabController, {
         .then(() => {
           this.set("saved", true);
 
-          if (!makeThemeDefault) {
+          if (makeThemeDefault) {
+            setLocalTheme([]);
+          } else {
             setLocalTheme(
               [this.get("themeId")],
               this.get("model.user_option.theme_key_seq")
             );
           }
-          if (!makeTextSizeDefault) {
+          if (makeTextSizeDefault) {
+            this.get("model").updateTextSizeCookie(null);
+          } else {
             this.get("model").updateTextSizeCookie(this.get("textSize"));
           }
 
           this.homeChanged();
+
+          if (this.get("isiPad")) {
+            if (safariHacksDisabled() !== this.get("disableSafariHacks")) {
+              Discourse.set("assetVersion", "forceRefresh");
+            }
+            localStorage.setItem(
+              "safari-hacks-disabled",
+              this.get("disableSafariHacks").toString()
+            );
+          }
         })
         .catch(popupAjaxError);
     },

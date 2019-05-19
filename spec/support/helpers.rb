@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Helpers
   extend ActiveSupport::Concern
 
@@ -14,6 +16,11 @@ module Helpers
   def log_in_user(user)
     provider = Discourse.current_user_provider.new(request.env)
     provider.log_on_user(user, session, cookies)
+    provider
+  end
+
+  def log_out_user(provider)
+    provider.log_off_user(session, cookies)
   end
 
   def fixture_file(filename)
@@ -97,6 +104,16 @@ module Helpers
       tag_group: tag_group,
       group_id: Group::AUTO_GROUPS[:staff],
       permission_type: TagGroupPermission.permission_types[:full]
+    )
+    tag_names.each do |name|
+      tag_group.tags << (Tag.where(name: name).first || Fabricate(:tag, name: name))
+    end
+  end
+
+  def create_hidden_tags(tag_names)
+    tag_group = Fabricate(:tag_group,
+      name: 'Hidden Tags',
+      permissions: { staff: :full }
     )
     tag_names.each do |name|
       tag_group.tags << (Tag.where(name: name).first || Fabricate(:tag, name: name))

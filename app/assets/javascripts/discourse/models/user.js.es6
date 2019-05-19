@@ -77,8 +77,8 @@ const User = RestModel.extend({
     return username;
   },
 
-  @computed("profile_background")
-  profileBackground(bgUrl) {
+  @computed("profile_background_upload_url")
+  profileBackgroundUrl(bgUrl) {
     if (
       Ember.isEmpty(bgUrl) ||
       !Discourse.SiteSettings.allow_profile_backgrounds
@@ -249,8 +249,9 @@ const User = RestModel.extend({
       "custom_fields",
       "user_fields",
       "muted_usernames",
-      "profile_background",
-      "card_background",
+      "ignored_usernames",
+      "profile_background_upload_url",
+      "card_background_upload_url",
       "muted_tags",
       "tracked_tags",
       "watched_tags",
@@ -263,18 +264,16 @@ const User = RestModel.extend({
     );
 
     let userOptionFields = [
-      "email_always",
       "mailing_list_mode",
       "mailing_list_mode_frequency",
       "external_links_in_new_tab",
       "email_digests",
-      "email_direct",
       "email_in_reply_to",
-      "email_private_messages",
+      "email_messages_level",
+      "email_level",
       "email_previous_replies",
       "dynamic_favicon",
       "enable_quoting",
-      "disable_jump_reply",
       "automatically_unpin_topics",
       "digest_after_minutes",
       "new_topic_duration_minutes",
@@ -286,7 +285,8 @@ const User = RestModel.extend({
       "allow_private_messages",
       "homepage_id",
       "hide_profile_and_presence",
-      "text_size"
+      "text_size",
+      "title_count_mode"
     ];
 
     if (fields) {
@@ -367,20 +367,24 @@ const User = RestModel.extend({
     });
   },
 
-  toggleSecondFactor(token, enable, method) {
+  toggleSecondFactor(authToken, authMethod, targetMethod, enable) {
     return ajax("/u/second_factor.json", {
       data: {
-        second_factor_token: token,
-        second_factor_method: method,
+        second_factor_token: authToken,
+        second_factor_method: authMethod,
+        second_factor_target: targetMethod,
         enable
       },
       type: "PUT"
     });
   },
 
-  generateSecondFactorCodes(token) {
+  generateSecondFactorCodes(authToken, authMethod) {
     return ajax("/u/second_factors_backup.json", {
-      data: { second_factor_token: token },
+      data: {
+        second_factor_token: authToken,
+        second_factor_method: authMethod
+      },
       type: "PUT"
     });
   },
@@ -611,6 +615,22 @@ const User = RestModel.extend({
     }
   },
 
+  updateNotificationLevel(level, expiringAt) {
+    return ajax(`${userPath(this.get("username"))}/notification_level.json`, {
+      type: "PUT",
+      data: { notification_level: level, expiring_at: expiringAt }
+    }).then(() => {
+      const currentUser = Discourse.User.current();
+      if (currentUser) {
+        if (level === "normal" || level === "mute") {
+          currentUser.ignored_users.removeObject(this.get("username"));
+        } else if (level === "ignore") {
+          currentUser.ignored_users.addObject(this.get("username"));
+        }
+      }
+    });
+  },
+
   dismissBanner(bannerKey) {
     this.set("dismissed_banner_key", bannerKey);
     ajax(userPath(this.get("username") + ".json"), {
@@ -719,11 +739,24 @@ const User = RestModel.extend({
   },
 
   updateTextSizeCookie(newSize) {
-    const seq = this.get("user_option.text_size_seq");
-    $.cookie("text_size", `${newSize}|${seq}`, {
-      path: "/",
-      expires: 9999
-    });
+    if (newSize) {
+      const seq = this.get("user_option.text_size_seq");
+      $.cookie("text_size", `${newSize}|${seq}`, {
+        path: "/",
+        expires: 9999
+      });
+    } else {
+      $.removeCookie("text_size", { path: "/", expires: 1 });
+    }
+  },
+
+  @computed("second_factor_enabled", "staff")
+  enforcedSecondFactor(secondFactorEnabled, staff) {
+    const enforce = Discourse.SiteSettings.enforce_second_factor;
+    return (
+      !secondFactorEnabled &&
+      (enforce === "all" || (enforce === "staff" && staff))
+    );
   }
 });
 

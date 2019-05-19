@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class GlobalSetting
 
   def self.register(key, default)
@@ -111,7 +113,7 @@ class GlobalSetting
       replica_host
       replica_port
     }.each do |s|
-      if val = self.send("db_#{s}")
+      if val = self.public_send("db_#{s}")
         hash[s] = val
       end
     end
@@ -225,7 +227,7 @@ class GlobalSetting
 
   class EnvProvider < BaseProvider
     def lookup(key, default)
-      var = ENV["DISCOURSE_" << key.to_s.upcase]
+      var = ENV["DISCOURSE_" + key.to_s.upcase]
       resolve(var , var.nil? ? default : nil)
     end
 
@@ -236,6 +238,10 @@ class GlobalSetting
 
   class BlankProvider < BaseProvider
     def lookup(key, default)
+
+      if key == :redis_port
+        return ENV["DISCOURSE_REDIS_PORT"] if ENV["DISCOURSE_REDIS_PORT"]
+      end
       default
     end
 

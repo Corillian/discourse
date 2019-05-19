@@ -1,3 +1,5 @@
+/*eslint no-console: ["error", { allow: ["log", "error"] }] */
+
 // Chrome QUnit Test Runner
 // Author: David Taylor
 // Requires chrome-launcher and chrome-remote-interface from npm
@@ -21,7 +23,12 @@ const fs = require("fs");
 if (QUNIT_RESULT) {
   (async () => {
     await fs.stat(QUNIT_RESULT, (err, stats) => {
-      if (stats && stats.isFile()) fs.unlink(QUNIT_RESULT);
+      if (stats && stats.isFile())
+        fs.unlink(QUNIT_RESULT, unlinkErr => {
+          if (unlinkErr) {
+            console.log("Error deleting " + QUNIT_RESULT + " " + unlinkErr);
+          }
+        });
     });
   })();
 }
@@ -42,9 +49,18 @@ async function runAllTests() {
   let chrome = await launchChrome();
   let protocol = await CDP({ port: chrome.port });
 
-  const { Page, Runtime } = protocol;
+  const { Inspector, Page, Runtime } = protocol;
 
-  await Promise.all([Page.enable(), Runtime.enable()]);
+  await Promise.all([Inspector.enable(), Page.enable(), Runtime.enable()]);
+
+  Inspector.targetCrashed(entry => {
+    console.log("Chrome target crashed:");
+    console.log(entry);
+  });
+
+  Runtime.exceptionThrown(exceptionInfo => {
+    console.log(exceptionInfo.exceptionDetails.exception.description);
+  });
 
   Runtime.consoleAPICalled(response => {
     const message = response["args"][0].value;

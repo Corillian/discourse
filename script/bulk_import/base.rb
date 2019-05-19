@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 if ARGV.include?('bbcode-to-md')
   # Replace (most) bbcode with markdown before creating posts.
   # This will dramatically clean up the final posts in Discourse.
@@ -300,14 +302,6 @@ class BulkImport::Base
         record_id: @imported_usernames[username],
         value: username,
       }
-    end
-  end
-
-  def create_categories(rows, &block)
-    create_records(rows, "category", CATEGORY_COLUMNS, &block)
-
-    Category.where(topic_id: nil).each do |c|
-      c.create_category_definition
     end
   end
 

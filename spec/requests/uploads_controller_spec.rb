@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe UploadsController do
@@ -196,10 +198,10 @@ describe UploadsController do
   describe '#show' do
     let(:site) { "default" }
     let(:sha) { Digest::SHA1.hexdigest("discourse") }
-    let(:user) { Fabricate(:user) }
+    fab!(:user) { Fabricate(:user) }
 
-    def upload_file(file)
-      fake_logo = Rack::Test::UploadedFile.new(file_from_fixtures(file))
+    def upload_file(file, folder = "images")
+      fake_logo = Rack::Test::UploadedFile.new(file_from_fixtures(file, folder))
       SiteSetting.authorized_extensions = "*"
       sign_in(user)
 
@@ -207,18 +209,35 @@ describe UploadsController do
         file: fake_logo,
         type: "composer",
       }
+
+      expect(response.status).to eq(200)
+
       url = JSON.parse(response.body)["url"]
       upload = Upload.where(url: url).first
       upload
     end
 
-    it "returns 404 when using external storage" do
-      SiteSetting.enable_s3_uploads = true
-      SiteSetting.s3_access_key_id = "fakeid7974664"
-      SiteSetting.s3_secret_access_key = "fakesecretid7974664"
+    context "when using external storage" do
+      fab!(:upload) { upload_file("small.pdf", "pdf") }
 
-      get "/uploads/#{site}/#{sha}.pdf"
-      expect(response.response_code).to eq(404)
+      before do
+        SiteSetting.enable_s3_uploads = true
+        SiteSetting.s3_access_key_id = "fakeid7974664"
+        SiteSetting.s3_secret_access_key = "fakesecretid7974664"
+      end
+
+      it "returns 404 " do
+        upload = Fabricate(:upload_s3)
+        get "/uploads/#{site}/#{upload.sha1}.#{upload.extension}"
+
+        expect(response.response_code).to eq(404)
+      end
+
+      it "returns upload if url not migrated" do
+        get "/uploads/#{site}/#{upload.sha1}.#{upload.extension}"
+
+        expect(response.status).to eq(200)
+      end
     end
 
     it "returns 404 when the upload doesn't exist" do
@@ -238,7 +257,9 @@ describe UploadsController do
       upload = upload_file("logo.png")
       get "/uploads/#{site}/#{upload.sha1}.#{upload.extension}"
       expect(response.status).to eq(200)
-      expect(response.headers["Content-Disposition"]).to eq("attachment; filename=\"logo.png\"")
+
+      # rails 6 adds UTF-8 filename to disposition
+      expect(response.headers["Content-Disposition"]).to include("attachment; filename=\"logo.png\"")
     end
 
     it "handles image without extension" do
@@ -247,7 +268,7 @@ describe UploadsController do
 
       get "/uploads/#{site}/#{upload.sha1}.json"
       expect(response.status).to eq(200)
-      expect(response.headers["Content-Disposition"]).to eq("attachment; filename=\"image_no_extension.png\"")
+      expect(response.headers["Content-Disposition"]).to include("attachment; filename=\"image_no_extension.png\"")
     end
 
     it "handles file without extension" do
@@ -256,16 +277,17 @@ describe UploadsController do
 
       get "/uploads/#{site}/#{upload.sha1}.json"
       expect(response.status).to eq(200)
-      expect(response.headers["Content-Disposition"]).to eq("attachment; filename=\"not_an_image\"")
+      expect(response.headers["Content-Disposition"]).to include("attachment; filename=\"not_an_image\"")
     end
 
     context "prevent anons from downloading files" do
       it "returns 404 when an anonymous user tries to download a file" do
-        upload = upload_file("logo.png")
+        skip("this only works when nginx/apache is asset server") if Discourse::Application.config.public_file_server.enabled
+        upload = upload_file("small.pdf", "pdf")
         delete "/session/#{user.username}.json" # upload a file, then sign out
 
         SiteSetting.prevent_anons_from_downloading_files = true
-        get "/uploads/#{site}/#{upload.sha1}.#{upload.extension}"
+        get upload.url
         expect(response.status).to eq(404)
       end
     end
@@ -281,6 +303,53 @@ describe UploadsController do
 
       result = JSON.parse(response.body)
       expect(result[0]["url"]).to eq(upload.url)
+    end
+  end
+
+  describe '#metadata' do
+    fab!(:upload) { Fabricate(:upload) }
+
+    describe 'when url is missing' do
+      it 'should return the right response' do
+        post "/uploads/lookup-metadata.json"
+
+        expect(response.status).to eq(403)
+      end
+    end
+
+    describe 'when not signed in' do
+      it 'should return the right response' do
+        post "/uploads/lookup-metadata.json", params: { url: upload.url }
+
+        expect(response.status).to eq(403)
+      end
+    end
+
+    describe 'when signed in' do
+      before do
+        sign_in(Fabricate(:user))
+      end
+
+      describe 'when url is invalid' do
+        it 'should return the right response' do
+          post "/uploads/lookup-metadata.json", params: { url: 'abc' }
+
+          expect(response.status).to eq(404)
+        end
+      end
+
+      it "should return the right response" do
+        post "/uploads/lookup-metadata.json", params: { url: upload.url }
+
+        expect(response.status).to eq(200)
+
+        result = JSON.parse(response.body)
+
+        expect(result["original_filename"]).to eq(upload.original_filename)
+        expect(result["width"]).to eq(upload.width)
+        expect(result["height"]).to eq(upload.height)
+        expect(result["human_filesize"]).to eq(upload.human_filesize)
+      end
     end
   end
 end

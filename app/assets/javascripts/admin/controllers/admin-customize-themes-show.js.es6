@@ -147,6 +147,10 @@ export default Ember.Controller.extend({
       "scss"
     );
   },
+  sourceIsHttp: Ember.computed.match(
+    "model.remote_theme.remote_url",
+    /^http(s)?:\/\//
+  ),
   actions: {
     updateToLatest() {
       this.set("updatingRemote", true);
@@ -259,7 +263,9 @@ export default Ember.Controller.extend({
 
     destroy() {
       return bootbox.confirm(
-        I18n.t("admin.customize.delete_confirm"),
+        I18n.t("admin.customize.delete_confirm", {
+          theme_name: this.get("model.name")
+        }),
         I18n.t("no_value"),
         I18n.t("yes_value"),
         result => {

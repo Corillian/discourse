@@ -12,7 +12,8 @@ import { findRawTemplate } from "discourse/lib/raw-templates";
 import { siteDir } from "discourse/lib/text-direction";
 import {
   determinePostReplaceSelection,
-  clipboardData
+  clipboardData,
+  safariHacksDisabled
 } from "discourse/lib/utilities";
 import toMarkdown from "discourse/lib/to-markdown";
 import deprecated from "discourse-common/lib/deprecated";
@@ -80,7 +81,7 @@ class Toolbar {
       icon: "italic",
       label: getButtonLabel("composer.italic_label", "I"),
       shortcut: "I",
-      perform: e => e.applySurround("_", "_", "italic_text")
+      perform: e => e.applySurround("*", "*", "italic_text")
     });
 
     if (opts.showLink) {
@@ -256,15 +257,6 @@ export default Ember.Component.extend({
     const mouseTrap = Mousetrap(this.$(".d-editor-input")[0]);
     const shortcuts = this.get("toolbar.shortcuts");
 
-    // for some reason I am having trouble bubbling this so hack it in
-    mouseTrap.bind(["ctrl+alt+f"], event => {
-      this.appEvents.trigger("header:keyboard-trigger", {
-        type: "search",
-        event
-      });
-      return true;
-    });
-
     Object.keys(shortcuts).forEach(sc => {
       const button = shortcuts[sc];
       mouseTrap.bind(sc, () => {
@@ -298,32 +290,33 @@ export default Ember.Component.extend({
     });
 
     if (this.get("composerEvents")) {
-      this.appEvents.on("composer:insert-block", text =>
-        this._addBlock(this._getSelected(), text)
-      );
-      this.appEvents.on("composer:insert-text", (text, options) =>
-        this._addText(this._getSelected(), text, options)
-      );
-      this.appEvents.on("composer:replace-text", (oldVal, newVal) =>
-        this._replaceText(oldVal, newVal)
-      );
+      this.appEvents.on("composer:insert-block", this, "_insertBlock");
+      this.appEvents.on("composer:insert-text", this, "_insertText");
+      this.appEvents.on("composer:replace-text", this, "_replaceText");
     }
     this._mouseTrap = mouseTrap;
+  },
+
+  _insertBlock(text) {
+    this._addBlock(this._getSelected(), text);
+  },
+
+  _insertText(text, options) {
+    this._addText(this._getSelected(), text, options);
   },
 
   @on("willDestroyElement")
   _shutDown() {
     if (this.get("composerEvents")) {
-      this.appEvents.off("composer:insert-block");
-      this.appEvents.off("composer:insert-text");
-      this.appEvents.off("composer:replace-text");
+      this.appEvents.off("composer:insert-block", this, "_insertBlock");
+      this.appEvents.off("composer:insert-text", this, "_insertText");
+      this.appEvents.off("composer:replace-text", this, "_replaceText");
     }
 
     const mouseTrap = this._mouseTrap;
     Object.keys(this.get("toolbar.shortcuts")).forEach(sc =>
       mouseTrap.unbind(sc)
     );
-    mouseTrap.unbind("ctrl+/", "command+/");
     this.$(".d-editor-preview").off("click.preview");
   },
 
@@ -385,24 +378,21 @@ export default Ember.Component.extend({
 
   _applyCategoryHashtagAutocomplete() {
     const siteSettings = this.siteSettings;
-    const self = this;
 
     this.$(".d-editor-input").autocomplete({
       template: findRawTemplate("category-tag-autocomplete"),
       key: "#",
-      afterComplete() {
-        self._focusTextArea();
-      },
-      transformComplete(obj) {
+      afterComplete: () => this._focusTextArea(),
+      transformComplete: obj => {
         return obj.text;
       },
-      dataSource(term) {
+      dataSource: term => {
         if (term.match(/\s/)) {
           return null;
         }
         return searchCategoryTag(term, siteSettings);
       },
-      triggerRule(textarea, opts) {
+      triggerRule: (textarea, opts) => {
         return categoryHashtagTriggerRule(textarea, opts);
       }
     });
@@ -413,17 +403,15 @@ export default Ember.Component.extend({
       return;
     }
 
-    const self = this;
-
     $editorInput.autocomplete({
       template: findRawTemplate("emoji-selector-autocomplete"),
       key: ":",
-      afterComplete(text) {
-        self.set("value", text);
-        self._focusTextArea();
+      afterComplete: text => {
+        this.set("value", text);
+        this._focusTextArea();
       },
 
-      onKeyUp(text, cp) {
+      onKeyUp: (text, cp) => {
         const matches = /(?:^|[^a-z])(:(?!:).?[\w-]*:?(?!:)(?:t\d?)?:?) ?$/gi.exec(
           text.substring(0, cp)
         );
@@ -433,22 +421,40 @@ export default Ember.Component.extend({
         }
       },
 
-      transformComplete(v) {
+      transformComplete: v => {
         if (v.code) {
           return `${v.code}:`;
         } else {
           $editorInput.autocomplete({ cancel: true });
-          self.set("emojiPickerIsActive", true);
+          this.setProperties({
+            isEditorFocused: $("textarea.d-editor-input").is(":focus"),
+            emojiPickerIsActive: true
+          });
+
+          Ember.run.schedule("afterRender", () => {
+            const filterInput = document.querySelector(
+              ".emoji-picker input[name='filter']"
+            );
+            if (filterInput) {
+              filterInput.value = v.term;
+
+              Ember.run.later(
+                () => filterInput.dispatchEvent(new Event("input")),
+                50
+              );
+            }
+          });
+
           return "";
         }
       },
 
-      dataSource(term) {
+      dataSource: term => {
         return new Ember.RSVP.Promise(resolve => {
           const full = `:${term}`;
           term = term.toLowerCase();
 
-          if (term.length < self.siteSettings.emoji_autocomplete_min_chars) {
+          if (term.length < this.siteSettings.emoji_autocomplete_min_chars) {
             return resolve([]);
           }
 
@@ -485,7 +491,7 @@ export default Ember.Component.extend({
           )
           .then(list => {
             if (list.length) {
-              list.push({ label: I18n.t("composer.more_emoji") });
+              list.push({ label: I18n.t("composer.more_emoji"), term });
             }
             return list;
           });
@@ -534,7 +540,7 @@ export default Ember.Component.extend({
       const $textarea = this.$("textarea.d-editor-input");
       const textarea = $textarea[0];
       const oldScrollPos = $textarea.scrollTop();
-      if (!this.capabilities.isIOS) {
+      if (!this.capabilities.isIOS || safariHacksDisabled()) {
         $textarea.focus();
       }
       textarea.selectionStart = from;
@@ -669,7 +675,7 @@ export default Ember.Component.extend({
     }
   },
 
-  _replaceText(oldVal, newVal) {
+  _replaceText(oldVal, newVal, opts = {}) {
     const val = this.get("value");
     const needleStart = val.indexOf(oldVal);
 
@@ -687,10 +693,19 @@ export default Ember.Component.extend({
       replacement: { start: needleStart, end: needleStart + newVal.length }
     });
 
-    // Replace value (side effect: cursor at the end).
-    this.set("value", val.replace(oldVal, newVal));
+    if (opts.index && opts.regex) {
+      let i = -1;
+      const newValue = val.replace(opts.regex, match => {
+        i++;
+        return i === opts.index ? newVal : match;
+      });
+      this.set("value", newValue);
+    } else {
+      // Replace value (side effect: cursor at the end).
+      this.set("value", val.replace(oldVal, newVal));
+    }
 
-    if ($("textarea.d-editor-input").is(":focus")) {
+    if (opts.forceFocus || $("textarea.d-editor-input").is(":focus")) {
       // Restore cursor.
       this._selectText(
         newSelection.start,
@@ -801,7 +816,16 @@ export default Ember.Component.extend({
     let html = clipboard.getData("text/html");
     let handled = false;
 
-    if (plainText) {
+    const { pre, lineVal } = this._getSelected(null, { lineVal: true });
+    const isInlinePasting = pre.match(/[^\n]$/);
+    const isCodeBlock = isInside(pre, /(^|\n)```/g);
+
+    if (
+      plainText &&
+      this.siteSettings.enable_rich_text_paste &&
+      !isInlinePasting &&
+      !isCodeBlock
+    ) {
       plainText = plainText.trim().replace(/\r/g, "");
       const table = this._extractTable(plainText);
       if (table) {
@@ -809,9 +833,6 @@ export default Ember.Component.extend({
         handled = true;
       }
     }
-
-    const { pre, lineVal } = this._getSelected(null, { lineVal: true });
-    const isInlinePasting = pre.match(/[^\n]$/);
 
     if (canPasteHtml && plainText) {
       if (isInlinePasting) {
@@ -821,7 +842,7 @@ export default Ember.Component.extend({
           lineVal.match(/^    /)
         );
       } else {
-        canPasteHtml = !isInside(pre, /(^|\n)```/g);
+        canPasteHtml = !isCodeBlock;
       }
     }
 
@@ -856,6 +877,7 @@ export default Ember.Component.extend({
         return;
       }
 
+      this.set("isEditorFocused", $("textarea.d-editor-input").is(":focus"));
       this.set("emojiPickerIsActive", !this.get("emojiPickerIsActive"));
     },
 

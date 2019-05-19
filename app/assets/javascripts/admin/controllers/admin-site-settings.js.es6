@@ -12,12 +12,16 @@ export default Ember.Controller.extend({
 
     let filter;
     if (this.get("filter")) {
-      filter = this.get("filter").toLowerCase();
+      filter = this.get("filter")
+        .toLowerCase()
+        .trim();
     }
 
     if ((!filter || 0 === filter.length) && !this.get("onlyOverridden")) {
       this.set("visibleSiteSettings", this.get("allSiteSettings"));
-      this.transitionToRoute("adminSiteSettings");
+      if (this.get("categoryNameKey") === "all_results") {
+        this.transitionToRoute("adminSiteSettings");
+      }
       return;
     }
 
@@ -77,7 +81,7 @@ export default Ember.Controller.extend({
     } else {
       this.filterContentNow();
     }
-  }, 250).observes("filter", "onlyOverridden"),
+  }, 250).observes("filter", "onlyOverridden", "model"),
 
   actions: {
     clearFilter() {

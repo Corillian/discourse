@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 directory 'plugins'
 
 desc 'install all official plugins (use GIT_WRITE=1 to pull with write access)'
@@ -29,8 +31,8 @@ task 'plugin:install_all_official' do
 
     if ENV['GIT_WRITE']
       STDERR.puts "Allowing write to all repos!"
-      repo.gsub!("https://github.com/", "git@github.com:")
-      repo << ".git"
+      repo = repo.gsub("https://github.com/", "git@github.com:")
+      repo += ".git"
     end
 
     status = system("git clone #{repo} #{path}")
@@ -86,10 +88,11 @@ end
 desc 'run plugin specs'
 task 'plugin:spec', :plugin do |t, args|
   args.with_defaults(plugin: "*")
+  params = ENV['RSPEC_FAILFAST'] ? '--profile --fail-fast' : '--profile'
   ruby = `which ruby`.strip
   files = Dir.glob("./plugins/#{args[:plugin]}/spec/**/*_spec.rb")
   if files.length > 0
-    sh "LOAD_PLUGINS=1 #{ruby} -S rspec #{files.join(' ')}"
+    sh "LOAD_PLUGINS=1 #{ruby} -S rspec #{files.join(' ')} #{params}"
   else
     abort "No specs found."
   end

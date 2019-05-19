@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_dependency 'letter_avatar'
 
 class UserAvatarsController < ApplicationController
@@ -35,7 +37,7 @@ class UserAvatarsController < ApplicationController
   def show_proxy_letter
     is_asset_path
 
-    if SiteSetting.external_system_avatars_url !~ /^\/letter_avatar_proxy/
+    if SiteSetting.external_system_avatars_url !~ /^\/letter(_avatar)?_proxy/
       raise Discourse::NotFound
     end
 
@@ -45,15 +47,11 @@ class UserAvatarsController < ApplicationController
     params.require(:size)
 
     hijack do
-      identity = LetterAvatar::Identity.new
-      identity.letter = params[:letter].to_s[0].upcase
-      identity.color = params[:color].scan(/../).map(&:hex)
-      image = LetterAvatar.generate(params[:letter].to_s, params[:size].to_i, identity: identity)
-
-      response.headers["Last-Modified"] = File.ctime(image).httpdate
-      response.headers["Content-Length"] = File.size(image).to_s
-      immutable_for(1.year)
-      send_file image, disposition: nil
+      begin
+        proxy_avatar("https://avatars.discourse.org/#{params[:version]}/letter/#{params[:letter]}/#{params[:color]}/#{params[:size]}.png", Time.new('1990-01-01'))
+      rescue OpenURI::HTTPError
+        render_blank
+      end
     end
   end
 

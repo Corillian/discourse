@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe AnonymousShadowCreator do
@@ -10,7 +12,7 @@ describe AnonymousShadowCreator do
 
     before { SiteSetting.allow_anonymous_posting = true }
 
-    let(:user) { Fabricate(:user_single_email, trust_level: 3) }
+    fab!(:user) { Fabricate(:user, trust_level: 3) }
 
     it "returns no shadow if trust level is not met" do
       expect(AnonymousShadowCreator.get(Fabricate.build(:user, trust_level: 0))).to eq(nil)
@@ -36,7 +38,7 @@ describe AnonymousShadowCreator do
       shadow3 = AnonymousShadowCreator.get(user)
 
       expect(shadow3.user_option.email_digests).to eq(false)
-      expect(shadow3.user_option.email_private_messages).to eq(false)
+      expect(shadow3.user_option.email_messages_level).to eq(UserOption.email_level_types[:never])
 
       expect(shadow2.id).not_to eq(shadow3.id)
 
