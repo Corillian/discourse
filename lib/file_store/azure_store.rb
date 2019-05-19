@@ -37,7 +37,7 @@ module FileStore
       metadata[:content_disposition] = "attachment; filename=\"#{filename}\"" unless FileHelper.is_supported_image?(filename)
       
       # create azure options
-      options = { :metadata => metadata }
+      options = { :metadata => metadata, :content_encoding => "" }
 
       # add a "content type" header when provided
       if content_type
