@@ -66,7 +66,7 @@ gem 'fast_xor', platform: :mri
 
 gem 'fastimage'
 
-gem 'azure', require: false
+gem 'azure-storage-blob', require: false
 
 gem 'aws-sdk-s3', require: false
 gem 'aws-sdk-sns', require: false

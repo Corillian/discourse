@@ -6,7 +6,7 @@ require_dependency "file_store/base_store"
 require_dependency "file_store/local_store"
 require_dependency "file_helper"
 
-require "azure"
+require "azure/storage/blob"
 
 module FileStore
 
@@ -37,7 +37,7 @@ module FileStore
       metadata[:content_disposition] = "attachment; filename=\"#{filename}\"" unless FileHelper.is_supported_image?(filename)
       
       # create azure options
-      options = { :metadata => metadata, :content_encoding => "identity" }
+      options = { :metadata => metadata }
 
       # add a "content type" header when provided
       if content_type
@@ -100,36 +100,29 @@ module FileStore
       SiteSetting.azure_storage_account.downcase
     end
 
-    def load_azure_settings
-      Azure.configure do |config|
-        config.storage_account_name = azure_storage_account
-        config.storage_access_key   = SiteSetting.azure_storage_access_key
-      end
-    end
-
     def check_missing_site_settings
       raise Discourse::SiteSettingMissing.new("azure_blob_container")      if SiteSetting.azure_blob_container.blank?
       raise Discourse::SiteSettingMissing.new("azure_storage_account")     if SiteSetting.azure_storage_account.blank?
       raise Discourse::SiteSettingMissing.new("azure_storage_access_key")  if SiteSetting.azure_storage_access_key.blank?
-
-      load_azure_settings()
     end
 
     def get_or_create_directory(container)
       check_missing_site_settings()
 
       # NOTE: An Azure.blobs object MUST be created before a call to Azure::BlobService.new
-      blobs = Azure.blobs
+      blob_client = Azure::Storage::Blob::BlobService
+
+      blob_client = Azure::Storage::Blob::BlobService.create(storage_account_name: SiteSetting.azure_storage_account, storage_access_key: SiteSetting.azure_storage_access_key)
 
       begin
-        blobs.create_container(container, { :public_access_level => "blob" })
+        blob_client.create_container(container, { :public_access_level => "blob" })
       rescue Exception => e
         # NOTE: If the container already exists an exception will be thrown
         # so eat it
         # Rails.logger.warn(e.message)
       end
 
-      Azure::BlobService.new
+      blob_client
     end
 
     def remove(unique_filename)
