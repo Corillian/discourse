@@ -106,13 +106,17 @@ module FileStore
       raise Discourse::SiteSettingMissing.new("azure_storage_access_key")  if SiteSetting.azure_storage_access_key.blank?
     end
 
-    def get_or_create_directory(container)
+    def create_blob_client
       check_missing_site_settings()
 
       # NOTE: An Azure.blobs object MUST be created before a call to Azure::BlobService.new
       blob_client = Azure::Storage::Blob::BlobService
 
-      blob_client = Azure::Storage::Blob::BlobService.create(storage_account_name: SiteSetting.azure_storage_account, storage_access_key: SiteSetting.azure_storage_access_key)
+      Azure::Storage::Blob::BlobService.create(storage_account_name: azure_storage_account(), storage_access_key: SiteSetting.azure_storage_access_key)
+    end
+
+    def get_or_create_directory(container)
+      blob_client = create_blob_client()
 
       begin
         blob_client.create_container(container, { :public_access_level => "blob" })
@@ -126,14 +130,10 @@ module FileStore
     end
 
     def remove(unique_filename)
-      check_missing_site_settings()
-
-      # NOTE: An Azure.blobs object MUST be created before a call to Azure::BlobService.new
-      blobs = Azure.blobs
+      blobs = create_blob_client()
 
       begin
-        azure_blob_service = Azure::BlobService.new
-        azure_blob_service.delete_blob(azure_container, unique_filename)
+        blobs.delete_blob(azure_container(), unique_filename)
       rescue Exception => e
         Rails.logger.error("Failed to remove file #{unique_filename}")
         Rails.logger.error(e.message)
